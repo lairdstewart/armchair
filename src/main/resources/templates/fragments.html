@@ -1,7 +1,7 @@
 <!doctype html>
 <html xmlns:th="http://www.thymeleaf.org">
   <body>
-    <div th:fragment="navbar" style="margin-bottom: 20px;">
+    <div th:fragment="navbar" class="navbar">
       <form action="/" method="GET" style="display: inline">
         <button type="submit" th:disabled="${currentPage == 'about'}">Armchair</button>
       </form>
@@ -11,12 +11,85 @@
       <form action="/explore" method="GET" style="display: inline">
         <button type="submit" th:disabled="${currentPage == 'explore'}">Explore Profiles</button>
       </form>
+      <form action="/curated" method="GET" style="display: inline">
+        <button type="submit" th:disabled="${currentPage == 'curated'}">Curated Lists</button>
+      </form>
       <form th:if="${isLoggedIn}" action="/profile" method="GET" style="display: inline">
         <button type="submit" th:disabled="${currentPage == 'profile' || currentPage == 'setup'}">My Profile</button>
       </form>
       <form th:if="${!isLoggedIn}" action="/oauth2/authorization/google" method="GET" style="display: inline">
         <button type="submit">Login/Signup</button>
       </form>
+    </div>
+
+    <div th:fragment="bookLists(fictionBooks, nonfictionBooks, displayName, showHeaders)" style="display: flex; gap: 40px">
+      <div style="flex: 1">
+        <h3>Fiction</h3>
+        <div th:if="${!fictionBooks.liked().isEmpty()}">
+          <p th:if="${showHeaders}" th:text="${displayName} + ' liked...'"></p>
+          <ol start="1">
+            <li th:each="book : ${fictionBooks.liked()}">
+              <a th:if="${book.googleBooksId() != null}" th:href="${'https://books.google.com/books?id=' + book.googleBooksId()}" th:text="${book.title()}" target="_blank"></a>
+              <span th:if="${book.googleBooksId() == null}" th:text="${book.title()}"></span>
+              <span th:if="${book.author() != null && !book.author().isBlank()}" th:text="${', ' + book.author()}"></span>
+            </li>
+          </ol>
+        </div>
+        <div th:if="${!fictionBooks.ok().isEmpty()}">
+          <p th:if="${showHeaders}" th:text="${displayName} + ' is lukewarm on...'"></p>
+          <ol th:start="${fictionBooks.liked().size() + 1}">
+            <li th:each="book : ${fictionBooks.ok()}">
+              <a th:if="${book.googleBooksId() != null}" th:href="${'https://books.google.com/books?id=' + book.googleBooksId()}" th:text="${book.title()}" target="_blank"></a>
+              <span th:if="${book.googleBooksId() == null}" th:text="${book.title()}"></span>
+              <span th:if="${book.author() != null && !book.author().isBlank()}" th:text="${', ' + book.author()}"></span>
+            </li>
+          </ol>
+        </div>
+        <div th:if="${!fictionBooks.disliked().isEmpty()}">
+          <p th:if="${showHeaders}" th:text="${displayName} + ' did not like...'"></p>
+          <ol th:start="${fictionBooks.liked().size() + fictionBooks.ok().size() + 1}">
+            <li th:each="book : ${fictionBooks.disliked()}">
+              <a th:if="${book.googleBooksId() != null}" th:href="${'https://books.google.com/books?id=' + book.googleBooksId()}" th:text="${book.title()}" target="_blank"></a>
+              <span th:if="${book.googleBooksId() == null}" th:text="${book.title()}"></span>
+              <span th:if="${book.author() != null && !book.author().isBlank()}" th:text="${', ' + book.author()}"></span>
+            </li>
+          </ol>
+        </div>
+      </div>
+
+      <div style="flex: 1">
+        <h3>Non-Fiction</h3>
+        <div th:if="${!nonfictionBooks.liked().isEmpty()}">
+          <p th:if="${showHeaders}" th:text="${displayName} + ' liked...'"></p>
+          <ol start="1">
+            <li th:each="book : ${nonfictionBooks.liked()}">
+              <a th:if="${book.googleBooksId() != null}" th:href="${'https://books.google.com/books?id=' + book.googleBooksId()}" th:text="${book.title()}" target="_blank"></a>
+              <span th:if="${book.googleBooksId() == null}" th:text="${book.title()}"></span>
+              <span th:if="${book.author() != null && !book.author().isBlank()}" th:text="${', ' + book.author()}"></span>
+            </li>
+          </ol>
+        </div>
+        <div th:if="${!nonfictionBooks.ok().isEmpty()}">
+          <p th:if="${showHeaders}" th:text="${displayName} + ' is lukewarm on...'"></p>
+          <ol th:start="${nonfictionBooks.liked().size() + 1}">
+            <li th:each="book : ${nonfictionBooks.ok()}">
+              <a th:if="${book.googleBooksId() != null}" th:href="${'https://books.google.com/books?id=' + book.googleBooksId()}" th:text="${book.title()}" target="_blank"></a>
+              <span th:if="${book.googleBooksId() == null}" th:text="${book.title()}"></span>
+              <span th:if="${book.author() != null && !book.author().isBlank()}" th:text="${', ' + book.author()}"></span>
+            </li>
+          </ol>
+        </div>
+        <div th:if="${!nonfictionBooks.disliked().isEmpty()}">
+          <p th:if="${showHeaders}" th:text="${displayName} + ' did not like...'"></p>
+          <ol th:start="${nonfictionBooks.liked().size() + nonfictionBooks.ok().size() + 1}">
+            <li th:each="book : ${nonfictionBooks.disliked()}">
+              <a th:if="${book.googleBooksId() != null}" th:href="${'https://books.google.com/books?id=' + book.googleBooksId()}" th:text="${book.title()}" target="_blank"></a>
+              <span th:if="${book.googleBooksId() == null}" th:text="${book.title()}"></span>
+              <span th:if="${book.author() != null && !book.author().isBlank()}" th:text="${', ' + book.author()}"></span>
+            </li>
+          </ol>
+        </div>
+      </div>
     </div>
   </body>
 </html>

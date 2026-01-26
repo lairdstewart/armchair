@@ -21,6 +21,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
@@ -30,7 +31,8 @@ import java.util.List;
 
 @Controller
 public class BookController {
-    public record BookWithCategory(String title, String author, BookCategory category) {}
+    public record BookInfo(String googleBooksId, String title, String author) {}
+    public record BookLists(List<BookInfo> liked, List<BookInfo> ok, List<BookInfo> disliked) {}
 
     private enum Mode {
         LIST,
@@ -168,9 +170,10 @@ public class BookController {
         }
         model.addAttribute("userName", userName);
 
-        List<BookWithCategory> fictionBooks = getBooksWithCategory(BookType.FICTION, userId);
-        List<BookWithCategory> nonfictionBooks = getBooksWithCategory(BookType.NONFICTION, userId);
-        boolean hasAnyBooks = !fictionBooks.isEmpty() || !nonfictionBooks.isEmpty();
+        BookLists fictionBooks = getBookLists(BookType.FICTION, userId);
+        BookLists nonfictionBooks = getBookLists(BookType.NONFICTION, userId);
+        boolean hasAnyBooks = !fictionBooks.liked().isEmpty() || !fictionBooks.ok().isEmpty() || !fictionBooks.disliked().isEmpty()
+            || !nonfictionBooks.liked().isEmpty() || !nonfictionBooks.ok().isEmpty() || !nonfictionBooks.disliked().isEmpty();
 
         model.addAttribute("fictionBooks", fictionBooks);
         model.addAttribute("nonfictionBooks", nonfictionBooks);
@@ -205,34 +208,14 @@ public class BookController {
         return Mode.RANK;
     }
 
-    private List<BookWithCategory> getBooksWithCategory(BookType type, Long userId) {
-        List<BookWithCategory> result = new ArrayList<>();
-
-        // Get liked books first
-        List<Book> likedBooks = bookRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(
-            userId, type, BookCategory.LIKED
-        );
-        for (Book book : likedBooks) {
-            result.add(new BookWithCategory(book.getTitle(), book.getAuthor(), BookCategory.LIKED));
-        }
-
-        // Then ok books
-        List<Book> okBooks = bookRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(
-            userId, type, BookCategory.OK
-        );
-        for (Book book : okBooks) {
-            result.add(new BookWithCategory(book.getTitle(), book.getAuthor(), BookCategory.OK));
-        }
-
-        // Finally disliked books
-        List<Book> dislikedBooks = bookRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(
-            userId, type, BookCategory.DISLIKED
-        );
-        for (Book book : dislikedBooks) {
-            result.add(new BookWithCategory(book.getTitle(), book.getAuthor(), BookCategory.DISLIKED));
-        }
-
-        return result;
+    private BookLists getBookLists(BookType type, Long userId) {
+        List<BookInfo> liked = bookRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(userId, type, BookCategory.LIKED)
+            .stream().map(b -> new BookInfo(b.getGoogleBooksId(), b.getTitle(), b.getAuthor())).toList();
+        List<BookInfo> ok = bookRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(userId, type, BookCategory.OK)
+            .stream().map(b -> new BookInfo(b.getGoogleBooksId(), b.getTitle(), b.getAuthor())).toList();
+        List<BookInfo> disliked = bookRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(userId, type, BookCategory.DISLIKED)
+            .stream().map(b -> new BookInfo(b.getGoogleBooksId(), b.getTitle(), b.getAuthor())).toList();
+        return new BookLists(liked, ok, disliked);
     }
 
     private String generateCsv(Long userId) {
@@ -435,7 +418,45 @@ public class BookController {
         getCurrentUserId(session);
         addNavigationAttributes(model, "explore");
         model.addAttribute("query", query);
+
+        if (query != null && !query.isBlank()) {
+            List<User> results = userRepository.findByPublishListsTrueAndUsernameContainingIgnoreCase(query.trim());
+            model.addAttribute("searchResults", results);
+        }
+
         return "explore";
+    }
+
+    @GetMapping("/curated")
+    public String showCurated(Model model, HttpSession session) {
+        getCurrentUserId(session);
+        addNavigationAttributes(model, "curated");
+        List<User> curatedUsers = userRepository.findByIsCurated(true);
+        model.addAttribute("curatedUsers", curatedUsers);
+        return "curated";
+    }
+
+    @GetMapping("/user/{username}")
+    public String viewUser(@PathVariable String username, Model model, HttpSession session) {
+        getCurrentUserId(session);
+
+        User user = userRepository.findByUsername(username).orElse(null);
+        if (user == null) {
+            return "redirect:/";
+        }
+
+        // Keep the appropriate nav button selected based on user type
+        addNavigationAttributes(model, user.isCurated() ? "curated" : "explore");
+
+        BookLists fictionBooks = getBookLists(BookType.FICTION, user.getId());
+        BookLists nonfictionBooks = getBookLists(BookType.NONFICTION, user.getId());
+
+        model.addAttribute("viewUsername", user.getUsername());
+        model.addAttribute("fictionBooks", fictionBooks);
+        model.addAttribute("nonfictionBooks", nonfictionBooks);
+        model.addAttribute("isCurated", user.isCurated());
+
+        return "view-user";
     }
 
     @GetMapping("/profile")
@@ -477,8 +498,27 @@ public class BookController {
         model.addAttribute("fictionCount", fictionCount);
         model.addAttribute("nonfictionCount", nonfictionCount);
         model.addAttribute("hasAnyBooks", fictionCount + nonfictionCount > 0);
+        model.addAttribute("publishLists", user.isPublishLists());
 
         return "profile";
+    }
+
+    @PostMapping("/toggle-publish")
+    public String togglePublish(HttpSession session) {
+        Long userId = getCurrentUserId(session);
+        if (userId == null) {
+            return "redirect:/";
+        }
+
+        User user = userRepository.findById(userId).orElse(null);
+        if (user == null || user.isGuest()) {
+            return "redirect:/";
+        }
+
+        user.setPublishLists(!user.isPublishLists());
+        userRepository.save(user);
+
+        return "redirect:/profile";
     }
 
     @GetMapping("/setup-username")
@@ -525,8 +565,8 @@ public class BookController {
         User newUser = new User(username, oauthSubject);
         newUser.setGuest(false);
 
-        // Set signup tracking - count real users (exclude guests)
-        long realUserCount = userRepository.countByIsGuest(false);
+        // Set signup tracking - count real users (exclude guests and curated lists)
+        long realUserCount = userRepository.countByIsGuestAndIsCurated(false, false);
         newUser.setSignupNumber(realUserCount + 1);
         newUser.setSignupDate(LocalDateTime.now());
 

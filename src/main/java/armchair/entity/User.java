@@ -24,6 +24,10 @@ public class User {
 
     private boolean isGuest; // True if this is a temporary guest user
 
+    private boolean isCurated = false; // True if this is a curated/imported list (e.g., NYT Best Books)
+
+    private boolean publishLists = false; // True if user wants their lists visible in Explore Profiles
+
     public User() {}
 
     public User(String username) {
@@ -81,5 +85,21 @@ public class User {
 
     public void setGuest(boolean guest) {
         isGuest = guest;
+    }
+
+    public boolean isCurated() {
+        return isCurated;
+    }
+
+    public void setCurated(boolean curated) {
+        isCurated = curated;
+    }
+
+    public boolean isPublishLists() {
+        return publishLists;
+    }
+
+    public void setPublishLists(boolean publishLists) {
+        this.publishLists = publishLists;
     }
 }
