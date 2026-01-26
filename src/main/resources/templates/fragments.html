@@ -3,19 +3,19 @@
   <body>
     <div th:fragment="navbar" class="navbar">
       <form action="/" method="GET" style="display: inline">
-        <button type="submit" th:disabled="${currentPage == 'about'}">Armchair</button>
+        <button type="submit">Armchair</button>
       </form>
       <form action="/list" method="GET" style="display: inline">
-        <button type="submit" th:disabled="${currentPage == 'list'}">My Books</button>
+        <button type="submit">My Books</button>
       </form>
       <form action="/explore" method="GET" style="display: inline">
-        <button type="submit" th:disabled="${currentPage == 'explore'}">Explore Profiles</button>
+        <button type="submit">Explore Profiles</button>
       </form>
       <form action="/curated" method="GET" style="display: inline">
-        <button type="submit" th:disabled="${currentPage == 'curated'}">Curated Lists</button>
+        <button type="submit">Curated Lists</button>
       </form>
       <form th:if="${isLoggedIn}" action="/profile" method="GET" style="display: inline">
-        <button type="submit" th:disabled="${currentPage == 'profile' || currentPage == 'setup'}">My Profile</button>
+        <button type="submit">My Profile</button>
       </form>
       <form th:if="${!isLoggedIn}" action="/oauth2/authorization/google" method="GET" style="display: inline">
         <button type="submit">Login/Signup</button>
