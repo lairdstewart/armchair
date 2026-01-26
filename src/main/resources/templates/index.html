@@ -1,0 +1,99 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <title>My Simple List</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}" />
+  </head>
+  <body>
+    <div th:replace="~{fragments :: navbar}"></div>
+    <div th:switch="${mode.name()}">
+      <div th:case="'LIST'">
+        <h2 th:text="${pageHeading}"></h2>
+        <div style="display: flex; gap: 40px">
+          <div style="flex: 1">
+            <h3>Fiction</h3>
+            <ol>
+              <li
+                th:each="book : ${fictionBooks}"
+                th:class="${book.category().name() == 'LIKED' ? 'green-text' : (book.category().name() == 'OK' ? 'yellow-text' : 'red-text')}"
+              >
+                <span th:text="${book.title()}"></span><span th:if="${book.author() != null && !book.author().isBlank()}" th:text="${', ' + book.author()}"></span>
+              </li>
+            </ol>
+
+            <form th:action="@{/start-add}" method="POST">
+              <input type="hidden" name="type" value="fiction" />
+              <button type="submit">Add Book</button>
+            </form>
+          </div>
+
+          <div style="flex: 1">
+            <h3>Non-Fiction</h3>
+            <ol>
+              <li
+                th:each="book : ${nonfictionBooks}"
+                th:class="${book.category().name() == 'LIKED' ? 'green-text' : (book.category().name() == 'OK' ? 'yellow-text' : 'red-text')}"
+              >
+                <span th:text="${book.title()}"></span><span th:if="${book.author() != null && !book.author().isBlank()}" th:text="${', ' + book.author()}"></span>
+              </li>
+            </ol>
+
+            <form th:action="@{/start-add}" method="POST">
+              <input type="hidden" name="type" value="nonfiction" />
+              <button type="submit">Add Book</button>
+            </form>
+          </div>
+        </div>
+      </div>
+      <div th:case="'ADD'">
+        <h3>Add book</h3>
+        <form th:action="@{/search-books}" method="POST">
+          <input
+            type="text"
+            name="query"
+            placeholder="Search for a book..."
+            required
+            autofocus
+          />
+          <button type="submit">Search</button>
+        </form>
+        <div th:if="${searchResults != null && !searchResults.isEmpty()}">
+          <h4>Search Results:</h4>
+          <div th:each="book : ${searchResults}" style="margin-bottom: 15px; padding: 10px; border: 1px solid #ccc;">
+            <strong th:text="${book.title()}"></strong>
+            <span th:text="' by ' + ${book.author()}"></span>
+            <br>
+            <form th:action="@{/categorize}" method="POST" style="display: inline;">
+              <input type="hidden" name="bookName" th:value="${book.title()}" />
+              <input type="hidden" name="author" th:value="${book.author()}" />
+              <button type="submit" name="category" value="liked">liked it</button>
+              <button type="submit" name="category" value="ok">it was ok</button>
+              <button type="submit" name="category" value="disliked">didn't like it</button>
+            </form>
+          </div>
+        </div>
+        <br>
+        <form th:action="@{/cancel-add}" method="POST">
+          <button type="submit">back</button>
+        </form>
+      </div>
+      <div th:case="'RANK'">
+        <h3>Which is better?</h3>
+        <form th:action="@{/choose}" method="POST">
+          <button
+            type="submit"
+            name="choice"
+            value="new"
+            th:text="${rankingState.titleBeingRanked}"
+          ></button>
+          <button
+            type="submit"
+            name="choice"
+            value="existing"
+            th:text="${comparisonBook}"
+          ></button>
+        </form>
+      </div>
+    </div>
+  </body>
+</html>

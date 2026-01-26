@@ -1,0 +1,19 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+  <body>
+    <div th:fragment="navbar" style="margin-bottom: 20px;">
+      <form action="/" method="GET" style="display: inline">
+        <button type="submit" th:disabled="${currentPage == 'about'}">About Armchair</button>
+      </form>
+      <form action="/list" method="GET" style="display: inline">
+        <button type="submit" th:disabled="${currentPage == 'list'}">My Lists</button>
+      </form>
+      <form th:if="${isLoggedIn}" action="/profile" method="GET" style="display: inline">
+        <button type="submit" th:disabled="${currentPage == 'profile' || currentPage == 'setup'}">Profile</button>
+      </form>
+      <form th:if="${!isLoggedIn}" action="/oauth2/authorization/google" method="GET" style="display: inline">
+        <button type="submit">Login/Signup</button>
+      </form>
+    </div>
+  </body>
+</html>

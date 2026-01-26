@@ -1,0 +1,6 @@
+development-notes.txt
+src/main/resources/application-secret.properties
+target/
+.idea/
+*.iml
+CLAUDE.md

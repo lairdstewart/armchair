@@ -1,0 +1,105 @@
+package armchair.entity;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+
+@Entity
+@Table(name = "ranking_state")
+public class RankingState {
+    @Id
+    private Long userId;
+
+    private String titleBeingRanked;
+    private String authorBeingRanked;
+
+    @Enumerated(EnumType.STRING)
+    private BookType type;
+
+    @Enumerated(EnumType.STRING)
+    private BookCategory category;
+
+    private Integer compareToIndex;
+    private Integer lowIndex;
+    private Integer highIndex;
+
+    public RankingState() {}
+
+    public RankingState(Long userId, String titleBeingRanked, String authorBeingRanked, BookType type, BookCategory category,
+                        Integer compareToIndex, Integer lowIndex, Integer highIndex) {
+        this.userId = userId;
+        this.titleBeingRanked = titleBeingRanked;
+        this.authorBeingRanked = authorBeingRanked;
+        this.type = type;
+        this.category = category;
+        this.compareToIndex = compareToIndex;
+        this.lowIndex = lowIndex;
+        this.highIndex = highIndex;
+    }
+
+    public Long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
+    }
+
+    public String getTitleBeingRanked() {
+        return titleBeingRanked;
+    }
+
+    public void setTitleBeingRanked(String titleBeingRanked) {
+        this.titleBeingRanked = titleBeingRanked;
+    }
+
+    public String getAuthorBeingRanked() {
+        return authorBeingRanked;
+    }
+
+    public void setAuthorBeingRanked(String authorBeingRanked) {
+        this.authorBeingRanked = authorBeingRanked;
+    }
+
+    public BookType getType() {
+        return type;
+    }
+
+    public void setType(BookType type) {
+        this.type = type;
+    }
+
+    public BookCategory getCategory() {
+        return category;
+    }
+
+    public void setCategory(BookCategory category) {
+        this.category = category;
+    }
+
+    public Integer getCompareToIndex() {
+        return compareToIndex;
+    }
+
+    public void setCompareToIndex(Integer compareToIndex) {
+        this.compareToIndex = compareToIndex;
+    }
+
+    public Integer getLowIndex() {
+        return lowIndex;
+    }
+
+    public void setLowIndex(Integer lowIndex) {
+        this.lowIndex = lowIndex;
+    }
+
+    public Integer getHighIndex() {
+        return highIndex;
+    }
+
+    public void setHighIndex(Integer highIndex) {
+        this.highIndex = highIndex;
+    }
+}

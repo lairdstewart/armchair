@@ -1,0 +1,27 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <title>Profile</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}" />
+  </head>
+  <body>
+    <div th:replace="~{fragments :: navbar}"></div>
+    <h2>Profile</h2>
+
+    <p><strong>Username:</strong> <span th:text="${username}"></span></p>
+    <p><strong>User since:</strong> <span th:text="${#temporals.format(signupDate, 'MMMM d, yyyy')}"></span></p>
+    <p><strong>User number:</strong> <span th:text="${signupNumber}"></span></p>
+    <p><strong>Fiction books:</strong> <span th:text="${fictionCount}"></span></p>
+    <p><strong>Non-Fiction books:</strong> <span th:text="${nonfictionCount}"></span></p>
+
+    <div style="margin-top: 20px;">
+
+      <a th:if="${hasAnyBooks}" th:href="@{/export-csv}" style="text-decoration: none;">
+        <button type="button">Export to .csv</button>
+      </a>
+      </a><form th:action="@{/logout}" method="POST" style="display: inline; margin-left: 10px;">
+        <button type="submit">Logout</button>
+      </form>
+    </div>
+  </body>
+</html>

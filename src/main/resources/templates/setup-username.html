@@ -1,0 +1,27 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <title>Setup Username</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}" />
+  </head>
+  <body>
+    <div th:replace="~{fragments :: navbar}"></div>
+    <h2>Choose Your Username</h2>
+    <p>Please choose a username for your account.</p>
+
+    <form th:action="@{/setup-username}" method="POST">
+      <input
+        type="text"
+        name="username"
+        th:value="${username}"
+        placeholder="Enter username..."
+        required
+        autofocus
+      />
+      <br>
+      <br>
+      <div th:if="${error}" style="color: red; margin-bottom: 10px;" th:text="${error}"></div>
+      <button type="submit">Continue</button>
+    </form>
+  </body>
+</html>

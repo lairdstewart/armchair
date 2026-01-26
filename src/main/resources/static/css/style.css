@@ -1,0 +1,21 @@
+body {
+  font-family: sans-serif;
+  max-width: 400px;
+  margin: 40px auto;
+}
+
+form {
+  margin-bottom: 20px;
+}
+
+.green-text {
+  color: #4CAF50;
+}
+
+.yellow-text {
+  color: #FFC107;
+}
+
+.red-text {
+  color: #F44336;
+}
