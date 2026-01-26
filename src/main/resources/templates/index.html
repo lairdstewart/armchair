@@ -103,7 +103,7 @@
         <div th:if="${searchResults != null && !searchResults.isEmpty()}">
           <h4>Search Results:</h4>
           <div th:each="book : ${searchResults}" style="margin-bottom: 15px; padding: 10px; border: 1px solid #ccc;">
-            <strong th:text="${book.title()}"></strong>
+            <a th:href="${'https://books.google.com/books?id=' + book.googleBooksId()}" target="_blank"><strong th:text="${book.title()}"></strong></a>
             <span th:text="' by ' + ${book.author()}"></span>
             <br>
             <form th:action="@{/categorize}" method="POST" style="display: inline;">
