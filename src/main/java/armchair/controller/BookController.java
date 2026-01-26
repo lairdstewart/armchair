@@ -131,7 +131,7 @@ public class BookController {
     }
 
     @GetMapping("/my-books")
-    public String showPage(Model model, HttpSession session) {
+    public String showPage(@RequestParam(required = false) String cancel, Model model, HttpSession session) {
         Long userId = getCurrentUserId(session);
 
         // If user is authenticated via OAuth but hasn't set up username, use guest mode for now
@@ -155,6 +155,12 @@ public class BookController {
                 session.setAttribute(SESSION_GUEST_USER_ID, tempGuest.getId());
                 userId = tempGuest.getId();
             }
+        }
+
+        // If cancel parameter is present, clear any in-progress add/rank state
+        if ("true".equals(cancel) && userId != null) {
+            rankingStateRepository.deleteById(userId);
+            session.removeAttribute("bookSearchResults");
         }
 
         addNavigationAttributes(model, "list");
