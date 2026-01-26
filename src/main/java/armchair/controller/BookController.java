@@ -428,6 +428,13 @@ public class BookController {
         if (query != null && !query.isBlank()) {
             List<User> results = userRepository.findByPublishListsTrueAndUsernameContainingIgnoreCase(query.trim());
             model.addAttribute("searchResults", results);
+        } else {
+            // Show recent published profiles when not searching
+            List<User> recentProfiles = userRepository.findTop10ByPublishListsTrueAndIsGuestFalseOrderBySignupDateDesc();
+            long totalPublished = userRepository.countByPublishListsTrueAndIsGuestFalse();
+            long moreCount = Math.max(0, totalPublished - recentProfiles.size());
+            model.addAttribute("recentProfiles", recentProfiles);
+            model.addAttribute("moreProfilesCount", moreCount);
         }
 
         return "explore";
