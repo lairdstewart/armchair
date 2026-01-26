@@ -11,36 +11,32 @@
         <div style="display: flex; gap: 40px">
           <div style="flex: 1">
             <h3>Fiction</h3>
-            <div th:if="${!fictionBooks.liked().isEmpty()}">
-              <p>I liked...</p>
-              <ol start="1">
-                <li th:each="book : ${fictionBooks.liked()}">
+            <ol>
+              <li th:each="book, iter : ${fictionBooks.liked()}">
+                <span class="book-number liked" th:text="${iter.index + 1}"></span>
+                <span>
                   <a th:if="${book.googleBooksId() != null}" th:href="${'https://books.google.com/books?id=' + book.googleBooksId()}" th:text="${book.title()}" target="_blank"></a>
                   <span th:if="${book.googleBooksId() == null}" th:text="${book.title()}"></span>
                   <span th:if="${book.author() != null && !book.author().isBlank()}" th:text="${', ' + book.author()}"></span>
-                </li>
-              </ol>
-            </div>
-            <div th:if="${!fictionBooks.ok().isEmpty()}">
-              <p>I'm lukewarm on...</p>
-              <ol th:start="${fictionBooks.liked().size() + 1}">
-                <li th:each="book : ${fictionBooks.ok()}">
+                </span>
+              </li>
+              <li th:each="book, iter : ${fictionBooks.ok()}">
+                <span class="book-number ok" th:text="${fictionBooks.liked().size() + iter.index + 1}"></span>
+                <span>
                   <a th:if="${book.googleBooksId() != null}" th:href="${'https://books.google.com/books?id=' + book.googleBooksId()}" th:text="${book.title()}" target="_blank"></a>
                   <span th:if="${book.googleBooksId() == null}" th:text="${book.title()}"></span>
                   <span th:if="${book.author() != null && !book.author().isBlank()}" th:text="${', ' + book.author()}"></span>
-                </li>
-              </ol>
-            </div>
-            <div th:if="${!fictionBooks.disliked().isEmpty()}">
-              <p>I did not like...</p>
-              <ol th:start="${fictionBooks.liked().size() + fictionBooks.ok().size() + 1}">
-                <li th:each="book : ${fictionBooks.disliked()}">
+                </span>
+              </li>
+              <li th:each="book, iter : ${fictionBooks.disliked()}">
+                <span class="book-number disliked" th:text="${fictionBooks.liked().size() + fictionBooks.ok().size() + iter.index + 1}"></span>
+                <span>
                   <a th:if="${book.googleBooksId() != null}" th:href="${'https://books.google.com/books?id=' + book.googleBooksId()}" th:text="${book.title()}" target="_blank"></a>
                   <span th:if="${book.googleBooksId() == null}" th:text="${book.title()}"></span>
                   <span th:if="${book.author() != null && !book.author().isBlank()}" th:text="${', ' + book.author()}"></span>
-                </li>
-              </ol>
-            </div>
+                </span>
+              </li>
+            </ol>
 
             <form th:action="@{/start-add}" method="POST">
               <input type="hidden" name="type" value="fiction" />
@@ -50,36 +46,32 @@
 
           <div style="flex: 1">
             <h3>Non-Fiction</h3>
-            <div th:if="${!nonfictionBooks.liked().isEmpty()}">
-              <p>I liked...</p>
-              <ol start="1">
-                <li th:each="book : ${nonfictionBooks.liked()}">
+            <ol>
+              <li th:each="book, iter : ${nonfictionBooks.liked()}">
+                <span class="book-number liked" th:text="${iter.index + 1}"></span>
+                <span>
                   <a th:if="${book.googleBooksId() != null}" th:href="${'https://books.google.com/books?id=' + book.googleBooksId()}" th:text="${book.title()}" target="_blank"></a>
                   <span th:if="${book.googleBooksId() == null}" th:text="${book.title()}"></span>
                   <span th:if="${book.author() != null && !book.author().isBlank()}" th:text="${', ' + book.author()}"></span>
-                </li>
-              </ol>
-            </div>
-            <div th:if="${!nonfictionBooks.ok().isEmpty()}">
-              <p>I'm lukewarm on...</p>
-              <ol th:start="${nonfictionBooks.liked().size() + 1}">
-                <li th:each="book : ${nonfictionBooks.ok()}">
+                </span>
+              </li>
+              <li th:each="book, iter : ${nonfictionBooks.ok()}">
+                <span class="book-number ok" th:text="${nonfictionBooks.liked().size() + iter.index + 1}"></span>
+                <span>
                   <a th:if="${book.googleBooksId() != null}" th:href="${'https://books.google.com/books?id=' + book.googleBooksId()}" th:text="${book.title()}" target="_blank"></a>
                   <span th:if="${book.googleBooksId() == null}" th:text="${book.title()}"></span>
                   <span th:if="${book.author() != null && !book.author().isBlank()}" th:text="${', ' + book.author()}"></span>
-                </li>
-              </ol>
-            </div>
-            <div th:if="${!nonfictionBooks.disliked().isEmpty()}">
-              <p>I did not like...</p>
-              <ol th:start="${nonfictionBooks.liked().size() + nonfictionBooks.ok().size() + 1}">
-                <li th:each="book : ${nonfictionBooks.disliked()}">
+                </span>
+              </li>
+              <li th:each="book, iter : ${nonfictionBooks.disliked()}">
+                <span class="book-number disliked" th:text="${nonfictionBooks.liked().size() + nonfictionBooks.ok().size() + iter.index + 1}"></span>
+                <span>
                   <a th:if="${book.googleBooksId() != null}" th:href="${'https://books.google.com/books?id=' + book.googleBooksId()}" th:text="${book.title()}" target="_blank"></a>
                   <span th:if="${book.googleBooksId() == null}" th:text="${book.title()}"></span>
                   <span th:if="${book.author() != null && !book.author().isBlank()}" th:text="${', ' + book.author()}"></span>
-                </li>
-              </ol>
-            </div>
+                </span>
+              </li>
+            </ol>
 
             <form th:action="@{/start-add}" method="POST">
               <input type="hidden" name="type" value="nonfiction" />
