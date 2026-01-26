@@ -60,11 +60,11 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/", "/list", "/css/**", "/start-add", "/search-books", "/categorize", "/choose", "/cancel-add", "/setup-username", "/export-csv", "/profile", "/explore", "/curated", "/user/**").permitAll()
+                .requestMatchers("/", "/my-books", "/css/**", "/start-add", "/search-books", "/categorize", "/choose", "/cancel-add", "/setup-username", "/export-csv", "/my-profile", "/explore-profiles", "/curated-lists", "/user/**").permitAll()
                 .anyRequest().authenticated()
             )
             .oauth2Login(oauth2 -> oauth2
-                .defaultSuccessUrl("/profile", true)
+                .defaultSuccessUrl("/my-profile", true)
                 .authorizationEndpoint(authorization -> authorization
                     .authorizationRequestResolver(customAuthorizationRequestResolver())
                 )

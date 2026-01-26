@@ -130,7 +130,7 @@ public class BookController {
         return "welcome";
     }
 
-    @GetMapping("/list")
+    @GetMapping("/my-books")
     public String showPage(Model model, HttpSession session) {
         Long userId = getCurrentUserId(session);
 
@@ -258,7 +258,7 @@ public class BookController {
         }
         RankingState rankingState = rankingStateRepository.findById(userId).orElse(null);
         if (rankingState == null) {
-            return "redirect:/list";
+            return "redirect:/my-books";
         }
 
         List<Book> currentList = bookRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(
@@ -292,7 +292,7 @@ public class BookController {
             rankingStateRepository.save(rankingState);
         }
 
-        return "redirect:/list";
+        return "redirect:/my-books";
     }
 
     private void insertBookAtPosition(String googleBooksId, String title, String author, BookType type, BookCategory category, int position, Long userId) {
@@ -322,7 +322,7 @@ public class BookController {
         rankingStateRepository.save(rankingState);
         // Clear any previous search results
         session.removeAttribute("bookSearchResults");
-        return "redirect:/list";
+        return "redirect:/my-books";
     }
 
     @PostMapping("/search-books")
@@ -334,7 +334,7 @@ public class BookController {
 
         List<GoogleBooksService.BookResult> results = googleBooksService.searchBooks(query);
         session.setAttribute("bookSearchResults", results);
-        return "redirect:/list";
+        return "redirect:/my-books";
     }
 
     @PostMapping("/cancel-add")
@@ -346,7 +346,7 @@ public class BookController {
         rankingStateRepository.deleteById(userId);
         // Clear search results
         session.removeAttribute("bookSearchResults");
-        return "redirect:/list";
+        return "redirect:/my-books";
     }
 
     @PostMapping("/categorize")
@@ -361,7 +361,7 @@ public class BookController {
         }
         RankingState rankingState = rankingStateRepository.findById(userId).orElse(null);
         if (rankingState == null || bookName == null || bookName.isBlank()) {
-            return "redirect:/list";
+            return "redirect:/my-books";
         }
 
         BookCategory bookCategory = BookCategory.fromString(category);
@@ -391,7 +391,7 @@ public class BookController {
             rankingStateRepository.save(rankingState);
         }
 
-        return "redirect:/list";
+        return "redirect:/my-books";
     }
 
     @GetMapping("/export-csv")
@@ -413,7 +413,7 @@ public class BookController {
             .body(csv);
     }
 
-    @GetMapping("/explore")
+    @GetMapping("/explore-profiles")
     public String showExplore(@RequestParam(required = false) String query, Model model, HttpSession session) {
         getCurrentUserId(session);
         addNavigationAttributes(model, "explore");
@@ -427,7 +427,7 @@ public class BookController {
         return "explore";
     }
 
-    @GetMapping("/curated")
+    @GetMapping("/curated-lists")
     public String showCurated(Model model, HttpSession session) {
         getCurrentUserId(session);
         addNavigationAttributes(model, "curated");
@@ -459,7 +459,7 @@ public class BookController {
         return "view-user";
     }
 
-    @GetMapping("/profile")
+    @GetMapping("/my-profile")
     public String showProfile(Model model, HttpSession session) {
         // If user is authenticated via OAuth but hasn't set up username, send them to setup
         if (getOauthSubject() != null) {
@@ -518,7 +518,7 @@ public class BookController {
         user.setPublishLists(!user.isPublishLists());
         userRepository.save(user);
 
-        return "redirect:/profile";
+        return "redirect:/my-profile";
     }
 
     @GetMapping("/setup-username")
@@ -532,7 +532,7 @@ public class BookController {
         User existingUser = userRepository.findByOauthSubject(oauthSubject).orElse(null);
         if (existingUser != null) {
             // User already has username, redirect to list
-            return "redirect:/list";
+            return "redirect:/my-books";
         }
 
         addNavigationAttributes(model, "setup");
@@ -580,7 +580,7 @@ public class BookController {
             session.removeAttribute(SESSION_GUEST_USER_ID);
         }
 
-        return "redirect:/profile";
+        return "redirect:/my-profile";
     }
 
     @PostMapping("/delete-profile")

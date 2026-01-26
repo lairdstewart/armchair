@@ -5,16 +5,16 @@
       <form action="/" method="GET" style="display: inline">
         <button type="submit">Armchair</button>
       </form>
-      <form action="/list" method="GET" style="display: inline">
+      <form action="/my-books" method="GET" style="display: inline">
         <button type="submit">My Books</button>
       </form>
-      <form action="/explore" method="GET" style="display: inline">
+      <form action="/explore-profiles" method="GET" style="display: inline">
         <button type="submit">Explore Profiles</button>
       </form>
-      <form action="/curated" method="GET" style="display: inline">
+      <form action="/curated-lists" method="GET" style="display: inline">
         <button type="submit">Curated Lists</button>
       </form>
-      <form th:if="${isLoggedIn}" action="/profile" method="GET" style="display: inline">
+      <form th:if="${isLoggedIn}" action="/my-profile" method="GET" style="display: inline">
         <button type="submit">My Profile</button>
       </form>
       <form th:if="${!isLoggedIn}" action="/oauth2/authorization/google" method="GET" style="display: inline">
