@@ -6,9 +6,6 @@
   </head>
   <body>
     <div th:replace="~{fragments :: navbar}"></div>
-    <form th:action="${isCurated} ? @{/curated} : @{/explore}" method="GET" style="margin-bottom: 10px;">
-      <button type="submit">Back</button>
-    </form>
     <h2 th:text="${isCurated} ? ${viewUsername} : |${viewUsername}'s Books|"></h2>
 
     <div th:replace="~{fragments :: bookLists(${fictionBooks}, ${nonfictionBooks}, ${viewUsername}, ${!isCurated})}"></div>

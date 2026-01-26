@@ -89,9 +89,6 @@
         </div>
       </div>
       <div th:case="'ADD'">
-        <form th:action="@{/cancel-add}" method="POST" style="margin-bottom: 10px;">
-          <button type="submit">Back</button>
-        </form>
         <h3>Add book</h3>
         <form th:action="@{/search-books}" method="POST">
           <input
