@@ -162,14 +162,11 @@ public class BookController {
 
         // Add username for display if logged in
         String userName = null;
-        String pageHeading = "My Books";
         User user = userRepository.findById(userId).orElse(null);
         if (user != null && !user.isGuest()) {
             userName = user.getUsername();
-            pageHeading = userName + "'s Books";
         }
         model.addAttribute("userName", userName);
-        model.addAttribute("pageHeading", pageHeading);
 
         List<BookWithCategory> fictionBooks = getBooksWithCategory(BookType.FICTION, userId);
         List<BookWithCategory> nonfictionBooks = getBooksWithCategory(BookType.NONFICTION, userId);
@@ -298,7 +295,7 @@ public class BookController {
 
         if (newLowIndex > newHighIndex) {
             // Found the insertion position - insert the book
-            insertBookAtPosition(rankingState.getTitleBeingRanked(), rankingState.getAuthorBeingRanked(),
+            insertBookAtPosition(rankingState.getGoogleBooksIdBeingRanked(), rankingState.getTitleBeingRanked(), rankingState.getAuthorBeingRanked(),
                 rankingState.getType(), rankingState.getCategory(), newLowIndex, userId);
             rankingStateRepository.deleteById(userId);
             // Clear search results
@@ -315,7 +312,7 @@ public class BookController {
         return "redirect:/list";
     }
 
-    private void insertBookAtPosition(String title, String author, BookType type, BookCategory category, int position, Long userId) {
+    private void insertBookAtPosition(String googleBooksId, String title, String author, BookType type, BookCategory category, int position, Long userId) {
         // Shift all books at or after the insertion position
         List<Book> booksToShift = bookRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(
             userId, type, category
@@ -327,7 +324,7 @@ public class BookController {
         }
 
         // Insert the new book
-        Book newBook = new Book(userId, title, author, type, category, position);
+        Book newBook = new Book(userId, googleBooksId, title, author, type, category, position);
         bookRepository.save(newBook);
     }
 
@@ -338,7 +335,7 @@ public class BookController {
             return "redirect:/setup-username";
         }
         BookType bookType = BookType.fromString(type);
-        RankingState rankingState = new RankingState(userId, null, null, bookType, null, 0, 0, 0);
+        RankingState rankingState = new RankingState(userId, null, null, null, bookType, null, 0, 0, 0);
         rankingStateRepository.save(rankingState);
         // Clear any previous search results
         session.removeAttribute("bookSearchResults");
@@ -370,7 +367,8 @@ public class BookController {
     }
 
     @PostMapping("/categorize")
-    public String categorizeBook(@RequestParam String bookName,
+    public String categorizeBook(@RequestParam String googleBooksId,
+                                  @RequestParam String bookName,
                                   @RequestParam String author,
                                   @RequestParam String category,
                                   HttpSession session) {
@@ -390,7 +388,7 @@ public class BookController {
 
         if (currentList.isEmpty()) {
             // Category is empty, insert at the start
-            Book newBook = new Book(userId, bookName, author, rankingState.getType(), bookCategory, 0);
+            Book newBook = new Book(userId, googleBooksId, bookName, author, rankingState.getType(), bookCategory, 0);
             bookRepository.save(newBook);
             rankingStateRepository.deleteById(userId);
             // Clear search results
@@ -400,6 +398,7 @@ public class BookController {
             int lowIndex = 0;
             int highIndex = currentList.size() - 1;
             int compareToIndex = (lowIndex + highIndex) / 2;
+            rankingState.setGoogleBooksIdBeingRanked(googleBooksId);
             rankingState.setTitleBeingRanked(bookName);
             rankingState.setAuthorBeingRanked(author);
             rankingState.setCategory(bookCategory);
@@ -429,6 +428,14 @@ public class BookController {
         return ResponseEntity.ok()
             .headers(headers)
             .body(csv);
+    }
+
+    @GetMapping("/explore")
+    public String showExplore(@RequestParam(required = false) String query, Model model, HttpSession session) {
+        getCurrentUserId(session);
+        addNavigationAttributes(model, "explore");
+        model.addAttribute("query", query);
+        return "explore";
     }
 
     @GetMapping("/profile")
@@ -536,6 +543,40 @@ public class BookController {
         return "redirect:/profile";
     }
 
+    @PostMapping("/delete-profile")
+    public String deleteProfile(HttpSession session) {
+        String oauthSubject = getOauthSubject();
+        if (oauthSubject == null) {
+            return "redirect:/";
+        }
+
+        User user = userRepository.findByOauthSubject(oauthSubject).orElse(null);
+        if (user == null || user.isGuest()) {
+            return "redirect:/";
+        }
+
+        Long userId = user.getId();
+
+        // Delete all user's books
+        for (BookType type : BookType.values()) {
+            for (BookCategory category : BookCategory.values()) {
+                bookRepository.deleteAll(bookRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(userId, type, category));
+            }
+        }
+
+        // Delete ranking state if exists
+        rankingStateRepository.deleteById(userId);
+
+        // Delete the user record
+        userRepository.delete(user);
+
+        // Invalidate the session
+        session.invalidate();
+
+        // Redirect to logout to clear OAuth session
+        return "redirect:/logout";
+    }
+
     private void migrateGuestDataToUser(Long guestUserId, Long newUserId) {
         // Migrate all books from guest to new user
         for (BookType type : BookType.values()) {
@@ -557,6 +598,7 @@ public class BookController {
             rankingStateRepository.deleteById(guestUserId);
             RankingState newRankingState = new RankingState(
                 newUserId,
+                guestRankingState.getGoogleBooksIdBeingRanked(),
                 guestRankingState.getTitleBeingRanked(),
                 guestRankingState.getAuthorBeingRanked(),
                 guestRankingState.getType(),

@@ -8,7 +8,6 @@
     <div th:replace="~{fragments :: navbar}"></div>
     <div th:switch="${mode.name()}">
       <div th:case="'LIST'">
-        <h2 th:text="${pageHeading}"></h2>
         <div style="display: flex; gap: 40px">
           <div style="flex: 1">
             <h3>Fiction</h3>
@@ -64,6 +63,7 @@
             <span th:text="' by ' + ${book.author()}"></span>
             <br>
             <form th:action="@{/categorize}" method="POST" style="display: inline;">
+              <input type="hidden" name="googleBooksId" th:value="${book.googleBooksId()}" />
               <input type="hidden" name="bookName" th:value="${book.title()}" />
               <input type="hidden" name="author" th:value="${book.author()}" />
               <button type="submit" name="category" value="liked">liked it</button>

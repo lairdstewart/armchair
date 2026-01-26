@@ -16,6 +16,7 @@ public class Book {
     private Long id;
 
     private Long userId;
+    private String googleBooksId;
     private String title;
     private String author;
 
@@ -29,8 +30,9 @@ public class Book {
 
     public Book() {}
 
-    public Book(Long userId, String title, String author, BookType type, BookCategory category, Integer position) {
+    public Book(Long userId, String googleBooksId, String title, String author, BookType type, BookCategory category, Integer position) {
         this.userId = userId;
+        this.googleBooksId = googleBooksId;
         this.title = title;
         this.author = author;
         this.type = type;
@@ -52,6 +54,14 @@ public class Book {
 
     public void setUserId(Long userId) {
         this.userId = userId;
+    }
+
+    public String getGoogleBooksId() {
+        return googleBooksId;
+    }
+
+    public void setGoogleBooksId(String googleBooksId) {
+        this.googleBooksId = googleBooksId;
     }
 
     public String getTitle() {

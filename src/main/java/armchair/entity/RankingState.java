@@ -12,6 +12,7 @@ public class RankingState {
     @Id
     private Long userId;
 
+    private String googleBooksIdBeingRanked;
     private String titleBeingRanked;
     private String authorBeingRanked;
 
@@ -27,9 +28,11 @@ public class RankingState {
 
     public RankingState() {}
 
-    public RankingState(Long userId, String titleBeingRanked, String authorBeingRanked, BookType type, BookCategory category,
-                        Integer compareToIndex, Integer lowIndex, Integer highIndex) {
+    public RankingState(Long userId, String googleBooksIdBeingRanked, String titleBeingRanked, String authorBeingRanked,
+                        BookType type, BookCategory category, Integer compareToIndex, Integer lowIndex,
+                        Integer highIndex) {
         this.userId = userId;
+        this.googleBooksIdBeingRanked = googleBooksIdBeingRanked;
         this.titleBeingRanked = titleBeingRanked;
         this.authorBeingRanked = authorBeingRanked;
         this.type = type;
@@ -45,6 +48,14 @@ public class RankingState {
 
     public void setUserId(Long userId) {
         this.userId = userId;
+    }
+
+    public String getGoogleBooksIdBeingRanked() {
+        return googleBooksIdBeingRanked;
+    }
+
+    public void setGoogleBooksIdBeingRanked(String googleBooksIdBeingRanked) {
+        this.googleBooksIdBeingRanked = googleBooksIdBeingRanked;
     }
 
     public String getTitleBeingRanked() {
