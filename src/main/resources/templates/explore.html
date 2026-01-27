@@ -6,9 +6,9 @@
   </head>
   <body>
     <div th:replace="~{fragments :: navbar}"></div>
-    <h2>Explore Profiles</h2>
+    <h2>Search Profiles</h2>
 
-    <form action="/explore-profiles" method="GET" style="margin-bottom: 20px;">
+    <form action="/search-profiles" method="GET" style="margin-bottom: 20px;">
       <input type="text" name="query" placeholder="Search usernames..."
              th:value="${query}" autofocus style="width: 200px;" />
       <button type="submit">Search</button>

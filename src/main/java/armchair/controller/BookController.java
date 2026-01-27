@@ -586,10 +586,10 @@ public class BookController {
             .body(csv);
     }
 
-    @GetMapping("/explore-profiles")
+    @GetMapping("/search-profiles")
     public String showExplore(@RequestParam(required = false) String query, Model model, HttpSession session) {
         getCurrentUserId(session);
-        addNavigationAttributes(model, "explore");
+        addNavigationAttributes(model, "search");
         model.addAttribute("query", query);
 
         if (query != null && !query.isBlank()) {
