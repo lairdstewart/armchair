@@ -14,6 +14,15 @@
     <p><strong>Non-Fiction books:</strong> <span th:text="${nonfictionCount}"></span></p>
 
     <div style="margin-top: 20px;">
+      <form th:action="@{/toggle-publish-lists}" method="POST" style="display: inline;">
+        <label>
+          <input type="checkbox" th:checked="${publishLists}" onchange="this.form.submit()" />
+          Publish my lists (visible in Search Profiles)
+        </label>
+      </form>
+    </div>
+
+    <div style="margin-top: 20px;">
 
       <a th:if="${hasAnyBooks}" th:href="@{/export-csv}" style="text-decoration: none;">
         <button type="button">Export Book Lists to .csv</button>

@@ -593,18 +593,18 @@ public class BookController {
         model.addAttribute("query", query);
 
         if (query != null && !query.isBlank()) {
-            List<User> results = userRepository.findByIsGuestFalseAndIsCuratedFalseAndUsernameContainingIgnoreCase(query.trim());
+            List<User> results = userRepository.findByIsGuestFalseAndIsCuratedFalseAndPublishListsTrueAndUsernameContainingIgnoreCase(query.trim());
             List<ProfileDisplay> profileDisplays = results.stream()
                 .map(this::createProfileDisplay)
                 .toList();
             model.addAttribute("searchResults", profileDisplays);
         } else {
-            // Show recent profiles when not searching (excluding curated lists)
-            List<User> recentProfiles = userRepository.findTop10ByIsGuestFalseAndIsCuratedFalseOrderBySignupDateDesc();
+            // Show recent profiles when not searching (excluding curated lists, only those who opted in)
+            List<User> recentProfiles = userRepository.findTop10ByIsGuestFalseAndIsCuratedFalseAndPublishListsTrueOrderBySignupDateDesc();
             List<ProfileDisplay> profileDisplays = recentProfiles.stream()
                 .map(this::createProfileDisplay)
                 .toList();
-            long totalProfiles = userRepository.countByIsGuestFalseAndIsCuratedFalse();
+            long totalProfiles = userRepository.countByIsGuestFalseAndIsCuratedFalseAndPublishListsTrue();
             long moreCount = Math.max(0, totalProfiles - recentProfiles.size());
             model.addAttribute("recentProfiles", profileDisplays);
             model.addAttribute("moreProfilesCount", moreCount);
@@ -645,6 +645,11 @@ public class BookController {
 
         User user = userRepository.findByUsername(username).orElse(null);
         if (user == null) {
+            return "redirect:/";
+        }
+
+        // Block access if user hasn't opted in to publish their lists (curated lists are always visible)
+        if (!user.isCurated() && !user.isPublishLists()) {
             return "redirect:/";
         }
 
@@ -701,8 +706,27 @@ public class BookController {
         model.addAttribute("fictionCount", fictionCount);
         model.addAttribute("nonfictionCount", nonfictionCount);
         model.addAttribute("hasAnyBooks", fictionCount + nonfictionCount > 0);
+        model.addAttribute("publishLists", user.isPublishLists());
 
         return "profile";
+    }
+
+    @PostMapping("/toggle-publish-lists")
+    public String togglePublishLists(HttpSession session) {
+        String oauthSubject = getOauthSubject();
+        if (oauthSubject == null) {
+            return "redirect:/";
+        }
+
+        User user = userRepository.findByOauthSubject(oauthSubject).orElse(null);
+        if (user == null || user.isGuest()) {
+            return "redirect:/";
+        }
+
+        user.setPublishLists(!user.isPublishLists());
+        userRepository.save(user);
+
+        return "redirect:/my-profile";
     }
 
     @GetMapping("/setup-username")

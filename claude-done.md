@@ -1,0 +1,15 @@
+- [x] make the browser tab always say "Armchair" not something different for each tab
+- [x] add a "remove" button which is like "rerank" but has an "x" and removes that book from the user's list
+- [x] remove the "publish my lists toggle". All users lists should be public and every username should appear in the "explore profiles" page
+- [x] in the "explore profiles" page, make each line look like: "<username> #<num-fiction> fiction, #<num-non-fiction> non-fiction, user #<num-user>". Please do the string creation in java (like always) if it isn't in your claude.md to do as much work as you can in java (rather than in thymelaf tags in html) please add that
+- [x] after the user clicks "re-rank" or "remove" replace the 3 buttons underneath the list with one that says "cancel" which cancels the operation (effectively going back to their original list page)
+- [x] in the "Explore Profiles" page, do not include curated lists
+- [x] in the "Explore Profiles page, only the username should be a hyperlink, not the entire line
+- [x] in the "Explore Profiles" page and the "Curated Lists" page, don't use an html bulleted list, just put each entry on a new line.
+- [x] make the remove "x" button grey -- the same color as the "re-rank" arrow button
+- [x] remove the # from the explore profiles. It should just say "5 fiction, 10 non-fiction ..."
+- [x] rename "Explore profiles" to "search profiles" in the code and on the page.
+- [x] make the body of the page a light, off-white paper color. it should only span as far as the navigation bar (not the entire screen) and it should only go down as far as the text goes on the page
+- [x] move the "My Profile" and "Login" button to the right-end of the nav bar
+- [x] in the nav bar, replace the buttons with text (the same text) the text should be white. each button should be separated by a vertical line | (except for the profile button on the far right). functionally it should be the same, clicking on the text does the same thing, this is just a visual change.
+- [x] re-implement private profiles. Add a "publish lists" toggle to the profile page (defaults to false). Only show users with publishLists=true in Search Profiles, and block access to /user/{username} for private profiles.
