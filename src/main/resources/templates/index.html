@@ -75,6 +75,9 @@
                 <input type="hidden" name="type" value="fiction" />
                 <button type="submit">Remove</button>
               </form>
+              <form th:if="${rerankType == 'FICTION' || removeType == 'FICTION'}" th:action="@{/cancel-add}" method="POST">
+                <button type="submit">Cancel</button>
+              </form>
             </div>
           </div>
 
@@ -143,6 +146,9 @@
               <form th:if="${rerankType != 'NONFICTION' && removeType != 'NONFICTION' && (!nonfictionBooks.liked().isEmpty() || !nonfictionBooks.ok().isEmpty() || !nonfictionBooks.disliked().isEmpty())}" th:action="@{/start-remove}" method="POST">
                 <input type="hidden" name="type" value="nonfiction" />
                 <button type="submit">Remove</button>
+              </form>
+              <form th:if="${rerankType == 'NONFICTION' || removeType == 'NONFICTION'}" th:action="@{/cancel-add}" method="POST">
+                <button type="submit">Cancel</button>
               </form>
             </div>
           </div>
