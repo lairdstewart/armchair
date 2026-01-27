@@ -190,8 +190,16 @@ public class BookController {
         model.addAttribute("fictionBooks", fictionBooks);
         model.addAttribute("nonfictionBooks", nonfictionBooks);
         model.addAttribute("hasAnyBooks", hasAnyBooks);
-        model.addAttribute("mode", mode);
         model.addAttribute("rankingState", rankingState);
+
+        // For RE_RANK mode, show LIST view but with rerank type set
+        if (mode == Mode.RE_RANK) {
+            model.addAttribute("mode", Mode.LIST);
+            model.addAttribute("rerankType", rankingState.getType().name());
+        } else {
+            model.addAttribute("mode", mode);
+            model.addAttribute("rerankType", null);
+        }
 
         // Add search results if in ADD mode
         if (mode == Mode.ADD && rankingState != null) {
