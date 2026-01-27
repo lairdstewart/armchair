@@ -15,3 +15,4 @@
 - [x] re-implement private profiles. Add a "publish lists" toggle to the profile page (defaults to false). Only show users with publishLists=true in Search Profiles, and block access to /user/{username} for private profiles.
 - [x] make a single "Add Book" button at the bottom of the page. After clicking, user searches for a book, then selects type (fiction/non-fiction) and category (liked/ok/disliked) on one screen before continuing to binary search ranking.
 - [x] Create a new "Search Books" tab in the navigation bar with book search functionality. The "+" button adds the book to the categorization page.
+- [x] Remove the "Add Book" buttons from the "My Books" tab - users now add books via the Search Books tab.

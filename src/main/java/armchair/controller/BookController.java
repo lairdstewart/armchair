@@ -37,7 +37,6 @@ public class BookController {
 
     private enum Mode {
         LIST,
-        ADD,
         CATEGORIZE,
         RANK,
         RE_RANK,
@@ -209,13 +208,6 @@ public class BookController {
             model.addAttribute("removeType", null);
         }
 
-        // Add search results if in ADD mode
-        if (mode == Mode.ADD && rankingState != null) {
-            List<GoogleBooksService.BookResult> searchResults =
-                (List<GoogleBooksService.BookResult>) session.getAttribute("bookSearchResults");
-            model.addAttribute("searchResults", searchResults != null ? searchResults : List.of());
-        }
-
         if (rankingState != null && mode == Mode.RANK && rankingState.getTitleBeingRanked() != null) {
             List<Book> currentList = bookRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(
                 userId, rankingState.getType(), rankingState.getCategory()
@@ -237,7 +229,8 @@ public class BookController {
             if (rankingState.isRemove()) {
                 return Mode.REMOVE;
             }
-            return Mode.ADD;
+            // No longer using ADD mode - orphaned RankingStates show LIST
+            return Mode.LIST;
         }
         if (rankingState.getCategory() == null) {
             return Mode.CATEGORIZE;
@@ -346,19 +339,6 @@ public class BookController {
         // Insert the new book
         Book newBook = new Book(userId, googleBooksId, title, author, type, category, position);
         bookRepository.save(newBook);
-    }
-
-    @PostMapping("/start-add")
-    public String startAdd(HttpSession session) {
-        Long userId = getCurrentUserId(session);
-        if (userId == null) {
-            return "redirect:/setup-username";
-        }
-        RankingState rankingState = new RankingState(userId, null, null, null, null, null, 0, 0, 0);
-        rankingStateRepository.save(rankingState);
-        // Clear any previous search results
-        session.removeAttribute("bookSearchResults");
-        return "redirect:/my-books";
     }
 
     @PostMapping("/start-rerank")
