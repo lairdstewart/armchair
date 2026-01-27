@@ -46,6 +46,16 @@ ol li {
   background-color: #F44336;
 }
 
+.add-book-btn {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  font-size: 18px;
+  font-weight: bold;
+  line-height: 1;
+  cursor: pointer;
+}
+
 .navbar {
   background-color: #722F37;
   padding: 5px;

@@ -37,6 +37,7 @@ public class BookController {
     private enum Mode {
         LIST,
         ADD,
+        CATEGORIZE,
         RANK;
     }
 
@@ -211,6 +212,9 @@ public class BookController {
         if (rankingState.getTitleBeingRanked() == null) {
             return Mode.ADD;
         }
+        if (rankingState.getCategory() == null) {
+            return Mode.CATEGORIZE;
+        }
         return Mode.RANK;
     }
 
@@ -355,20 +359,44 @@ public class BookController {
         return "redirect:/my-books";
     }
 
+    @PostMapping("/select-book")
+    public String selectBook(@RequestParam String googleBooksId,
+                             @RequestParam String bookName,
+                             @RequestParam String author,
+                             HttpSession session) {
+        Long userId = getCurrentUserId(session);
+        if (userId == null) {
+            return "redirect:/setup-username";
+        }
+        RankingState rankingState = rankingStateRepository.findById(userId).orElse(null);
+        if (rankingState == null) {
+            return "redirect:/my-books";
+        }
+
+        // Set the book info, leave category null to enter CATEGORIZE mode
+        rankingState.setGoogleBooksIdBeingRanked(googleBooksId);
+        rankingState.setTitleBeingRanked(bookName);
+        rankingState.setAuthorBeingRanked(author);
+        rankingStateRepository.save(rankingState);
+
+        return "redirect:/my-books";
+    }
+
     @PostMapping("/categorize")
-    public String categorizeBook(@RequestParam String googleBooksId,
-                                  @RequestParam String bookName,
-                                  @RequestParam String author,
-                                  @RequestParam String category,
+    public String categorizeBook(@RequestParam String category,
                                   HttpSession session) {
         Long userId = getCurrentUserId(session);
         if (userId == null) {
             return "redirect:/setup-username";
         }
         RankingState rankingState = rankingStateRepository.findById(userId).orElse(null);
-        if (rankingState == null || bookName == null || bookName.isBlank()) {
+        if (rankingState == null || rankingState.getTitleBeingRanked() == null) {
             return "redirect:/my-books";
         }
+
+        String googleBooksId = rankingState.getGoogleBooksIdBeingRanked();
+        String bookName = rankingState.getTitleBeingRanked();
+        String author = rankingState.getAuthorBeingRanked();
 
         BookCategory bookCategory = BookCategory.fromString(category);
         List<Book> currentList = bookRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(

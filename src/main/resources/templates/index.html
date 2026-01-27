@@ -97,17 +97,23 @@
           <div th:each="book : ${searchResults}" style="margin-bottom: 15px; padding: 10px; border: 1px solid #ccc;">
             <a th:href="${'https://books.google.com/books?id=' + book.googleBooksId()}" target="_blank"><strong th:text="${book.title()}"></strong></a>
             <span th:text="' by ' + ${book.author()}"></span>
-            <br>
-            <form th:action="@{/categorize}" method="POST" style="display: inline;">
+            <form th:action="@{/select-book}" method="POST" style="display: inline; margin-left: 10px;">
               <input type="hidden" name="googleBooksId" th:value="${book.googleBooksId()}" />
               <input type="hidden" name="bookName" th:value="${book.title()}" />
               <input type="hidden" name="author" th:value="${book.author()}" />
-              <button type="submit" name="category" value="liked">liked it</button>
-              <button type="submit" name="category" value="ok">it was ok</button>
-              <button type="submit" name="category" value="disliked">didn't like it</button>
+              <button type="submit" class="add-book-btn">+</button>
             </form>
           </div>
         </div>
+      </div>
+      <div th:case="'CATEGORIZE'">
+        <h3>How did you like it?</h3>
+        <p><strong th:text="${rankingState.titleBeingRanked}"></strong></p>
+        <form th:action="@{/categorize}" method="POST">
+          <button type="submit" name="category" value="liked">liked it</button>
+          <button type="submit" name="category" value="ok">it was ok</button>
+          <button type="submit" name="category" value="disliked">didn't like it</button>
+        </form>
       </div>
       <div th:case="'RANK'">
         <h3>Which is better?</h3>
