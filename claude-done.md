@@ -13,3 +13,4 @@
 - [x] move the "My Profile" and "Login" button to the right-end of the nav bar
 - [x] in the nav bar, replace the buttons with text (the same text) the text should be white. each button should be separated by a vertical line | (except for the profile button on the far right). functionally it should be the same, clicking on the text does the same thing, this is just a visual change.
 - [x] re-implement private profiles. Add a "publish lists" toggle to the profile page (defaults to false). Only show users with publishLists=true in Search Profiles, and block access to /user/{username} for private profiles.
+- [x] make a single "Add Book" button at the bottom of the page. After clicking, user searches for a book, then selects type (fiction/non-fiction) and category (liked/ok/disliked) on one screen before continuing to binary search ranking.

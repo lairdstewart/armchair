@@ -349,13 +349,12 @@ public class BookController {
     }
 
     @PostMapping("/start-add")
-    public String startAdd(@RequestParam String type, HttpSession session) {
+    public String startAdd(HttpSession session) {
         Long userId = getCurrentUserId(session);
         if (userId == null) {
             return "redirect:/setup-username";
         }
-        BookType bookType = BookType.fromString(type);
-        RankingState rankingState = new RankingState(userId, null, null, null, bookType, null, 0, 0, 0);
+        RankingState rankingState = new RankingState(userId, null, null, null, null, null, 0, 0, 0);
         rankingStateRepository.save(rankingState);
         // Clear any previous search results
         session.removeAttribute("bookSearchResults");
@@ -522,7 +521,8 @@ public class BookController {
     }
 
     @PostMapping("/categorize")
-    public String categorizeBook(@RequestParam String category,
+    public String categorizeBook(@RequestParam String type,
+                                  @RequestParam String category,
                                   HttpSession session) {
         Long userId = getCurrentUserId(session);
         if (userId == null) {
@@ -537,14 +537,15 @@ public class BookController {
         String bookName = rankingState.getTitleBeingRanked();
         String author = rankingState.getAuthorBeingRanked();
 
+        BookType bookType = BookType.fromString(type);
         BookCategory bookCategory = BookCategory.fromString(category);
         List<Book> currentList = bookRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(
-            userId, rankingState.getType(), bookCategory
+            userId, bookType, bookCategory
         );
 
         if (currentList.isEmpty()) {
             // Category is empty, insert at the start
-            Book newBook = new Book(userId, googleBooksId, bookName, author, rankingState.getType(), bookCategory, 0);
+            Book newBook = new Book(userId, googleBooksId, bookName, author, bookType, bookCategory, 0);
             bookRepository.save(newBook);
             rankingStateRepository.deleteById(userId);
             // Clear search results
@@ -557,6 +558,7 @@ public class BookController {
             rankingState.setGoogleBooksIdBeingRanked(googleBooksId);
             rankingState.setTitleBeingRanked(bookName);
             rankingState.setAuthorBeingRanked(author);
+            rankingState.setType(bookType);
             rankingState.setCategory(bookCategory);
             rankingState.setCompareToIndex(compareToIndex);
             rankingState.setLowIndex(lowIndex);
