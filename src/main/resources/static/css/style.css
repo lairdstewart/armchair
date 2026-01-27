@@ -38,6 +38,7 @@ ol li form {
   flex-shrink: 0;
   border-width: 2px;
   border-style: solid;
+  box-sizing: content-box;
 }
 
 .book-number.liked {
@@ -65,11 +66,15 @@ ol li form {
   cursor: pointer;
 }
 
-.book-number.rerank {
+button.book-number.rerank {
   background-color: #E0E0E0;
   border-color: #9E9E9E;
   cursor: pointer;
   font-size: 12px;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  box-sizing: content-box;
 }
 
 .navbar {
