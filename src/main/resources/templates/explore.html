@@ -26,7 +26,7 @@
           <a th:href="@{/user/{username}(username=${user.username})}" th:text="${user.username}"></a>
         </li>
       </ul>
-      <p th:if="${recentProfiles.isEmpty()}">No published profiles yet.</p>
+      <p th:if="${recentProfiles.isEmpty()}">No profiles yet.</p>
       <p th:text="${'... ' + moreProfilesCount + ' more profiles'}"></p>
     </div>
 

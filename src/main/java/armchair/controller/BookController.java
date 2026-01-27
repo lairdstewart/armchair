@@ -592,13 +592,13 @@ public class BookController {
         model.addAttribute("query", query);
 
         if (query != null && !query.isBlank()) {
-            List<User> results = userRepository.findByPublishListsTrueAndUsernameContainingIgnoreCase(query.trim());
+            List<User> results = userRepository.findByIsGuestFalseAndUsernameContainingIgnoreCase(query.trim());
             model.addAttribute("searchResults", results);
         } else {
-            // Show recent published profiles when not searching
-            List<User> recentProfiles = userRepository.findTop10ByPublishListsTrueAndIsGuestFalseOrderBySignupDateDesc();
-            long totalPublished = userRepository.countByPublishListsTrueAndIsGuestFalse();
-            long moreCount = Math.max(0, totalPublished - recentProfiles.size());
+            // Show recent profiles when not searching
+            List<User> recentProfiles = userRepository.findTop10ByIsGuestFalseOrderBySignupDateDesc();
+            long totalProfiles = userRepository.countByIsGuestFalse();
+            long moreCount = Math.max(0, totalProfiles - recentProfiles.size());
             model.addAttribute("recentProfiles", recentProfiles);
             model.addAttribute("moreProfilesCount", moreCount);
         }
@@ -677,27 +677,8 @@ public class BookController {
         model.addAttribute("fictionCount", fictionCount);
         model.addAttribute("nonfictionCount", nonfictionCount);
         model.addAttribute("hasAnyBooks", fictionCount + nonfictionCount > 0);
-        model.addAttribute("publishLists", user.isPublishLists());
 
         return "profile";
-    }
-
-    @PostMapping("/toggle-publish")
-    public String togglePublish(HttpSession session) {
-        Long userId = getCurrentUserId(session);
-        if (userId == null) {
-            return "redirect:/";
-        }
-
-        User user = userRepository.findById(userId).orElse(null);
-        if (user == null || user.isGuest()) {
-            return "redirect:/";
-        }
-
-        user.setPublishLists(!user.isPublishLists());
-        userRepository.save(user);
-
-        return "redirect:/my-profile";
     }
 
     @GetMapping("/setup-username")

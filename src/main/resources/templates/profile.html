@@ -12,16 +12,6 @@
     <p><strong>Fiction books:</strong> <span th:text="${fictionCount}"></span></p>
     <p><strong>Non-Fiction books:</strong> <span th:text="${nonfictionCount}"></span></p>
 
-    <div style="margin-top: 20px; margin-bottom: 20px;">
-      <form th:action="@{/toggle-publish}" method="POST" style="display: flex; align-items: center; gap: 10px;">
-        <label class="switch">
-          <input type="checkbox" th:checked="${publishLists}" onchange="this.form.submit()" />
-          <span class="slider"></span>
-        </label>
-        <span>Publish My Lists</span>
-      </form>
-    </div>
-
     <div style="margin-top: 20px;">
 
       <a th:if="${hasAnyBooks}" th:href="@{/export-csv}" style="text-decoration: none;">

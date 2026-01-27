@@ -16,7 +16,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     long countByIsGuest(boolean isGuest);
     List<User> findByIsCurated(boolean isCurated);
     long countByIsGuestAndIsCurated(boolean isGuest, boolean isCurated);
-    List<User> findByPublishListsTrueAndUsernameContainingIgnoreCase(String username);
-    List<User> findTop10ByPublishListsTrueAndIsGuestFalseOrderBySignupDateDesc();
-    long countByPublishListsTrueAndIsGuestFalse();
+    List<User> findByIsGuestFalseAndUsernameContainingIgnoreCase(String username);
+    List<User> findTop10ByIsGuestFalseOrderBySignupDateDesc();
+    long countByIsGuestFalse();
 }
