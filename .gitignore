@@ -3,4 +3,5 @@ target/
 .idea/
 *.iml
 CLAUDE.md
-todo-claude.md
+claude-todo.md
+claude-done.md

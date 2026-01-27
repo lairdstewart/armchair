@@ -15,7 +15,7 @@ ol {
 
 ol li {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   margin-bottom: 4px;
 }
 
