@@ -14,20 +14,20 @@
       <button type="submit">Search</button>
     </form>
 
-    <ul th:if="${searchResults != null && !searchResults.isEmpty()}">
-      <li th:each="profile : ${searchResults}">
+    <div th:if="${searchResults != null && !searchResults.isEmpty()}">
+      <div th:each="profile : ${searchResults}">
         <a th:href="@{/user/{username}(username=${profile.username()})}" th:text="${profile.username()}"></a>
         <span th:text="${' ' + profile.stats()}"></span>
-      </li>
-    </ul>
+      </div>
+    </div>
 
     <div th:if="${recentProfiles != null}">
-      <ul th:if="${!recentProfiles.isEmpty()}">
-        <li th:each="profile : ${recentProfiles}">
+      <div th:if="${!recentProfiles.isEmpty()}">
+        <div th:each="profile : ${recentProfiles}">
           <a th:href="@{/user/{username}(username=${profile.username()})}" th:text="${profile.username()}"></a>
           <span th:text="${' ' + profile.stats()}"></span>
-        </li>
-      </ul>
+        </div>
+      </div>
       <p th:if="${recentProfiles.isEmpty()}">No profiles yet.</p>
       <p th:text="${'... ' + moreProfilesCount + ' more profiles'}"></p>
     </div>
