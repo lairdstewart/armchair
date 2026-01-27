@@ -593,18 +593,18 @@ public class BookController {
         model.addAttribute("query", query);
 
         if (query != null && !query.isBlank()) {
-            List<User> results = userRepository.findByIsGuestFalseAndUsernameContainingIgnoreCase(query.trim());
+            List<User> results = userRepository.findByIsGuestFalseAndIsCuratedFalseAndUsernameContainingIgnoreCase(query.trim());
             List<ProfileDisplay> profileDisplays = results.stream()
                 .map(this::createProfileDisplay)
                 .toList();
             model.addAttribute("searchResults", profileDisplays);
         } else {
-            // Show recent profiles when not searching
-            List<User> recentProfiles = userRepository.findTop10ByIsGuestFalseOrderBySignupDateDesc();
+            // Show recent profiles when not searching (excluding curated lists)
+            List<User> recentProfiles = userRepository.findTop10ByIsGuestFalseAndIsCuratedFalseOrderBySignupDateDesc();
             List<ProfileDisplay> profileDisplays = recentProfiles.stream()
                 .map(this::createProfileDisplay)
                 .toList();
-            long totalProfiles = userRepository.countByIsGuestFalse();
+            long totalProfiles = userRepository.countByIsGuestFalseAndIsCuratedFalse();
             long moreCount = Math.max(0, totalProfiles - recentProfiles.size());
             model.addAttribute("recentProfiles", profileDisplays);
             model.addAttribute("moreProfilesCount", moreCount);
