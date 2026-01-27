@@ -33,6 +33,7 @@ import java.util.List;
 public class BookController {
     public record BookInfo(Long id, String googleBooksId, String title, String author) {}
     public record BookLists(List<BookInfo> liked, List<BookInfo> ok, List<BookInfo> disliked) {}
+    public record ProfileDisplay(String username, String displayText) {}
 
     private enum Mode {
         LIST,
@@ -593,17 +594,40 @@ public class BookController {
 
         if (query != null && !query.isBlank()) {
             List<User> results = userRepository.findByIsGuestFalseAndUsernameContainingIgnoreCase(query.trim());
-            model.addAttribute("searchResults", results);
+            List<ProfileDisplay> profileDisplays = results.stream()
+                .map(this::createProfileDisplay)
+                .toList();
+            model.addAttribute("searchResults", profileDisplays);
         } else {
             // Show recent profiles when not searching
             List<User> recentProfiles = userRepository.findTop10ByIsGuestFalseOrderBySignupDateDesc();
+            List<ProfileDisplay> profileDisplays = recentProfiles.stream()
+                .map(this::createProfileDisplay)
+                .toList();
             long totalProfiles = userRepository.countByIsGuestFalse();
             long moreCount = Math.max(0, totalProfiles - recentProfiles.size());
-            model.addAttribute("recentProfiles", recentProfiles);
+            model.addAttribute("recentProfiles", profileDisplays);
             model.addAttribute("moreProfilesCount", moreCount);
         }
 
         return "explore";
+    }
+
+    private ProfileDisplay createProfileDisplay(User user) {
+        long fictionCount = 0;
+        long nonfictionCount = 0;
+        for (BookCategory category : BookCategory.values()) {
+            fictionCount += bookRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(
+                user.getId(), BookType.FICTION, category).size();
+            nonfictionCount += bookRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(
+                user.getId(), BookType.NONFICTION, category).size();
+        }
+
+        String displayText = String.format("%s #%d fiction, #%d non-fiction, user #%d",
+            user.getUsername(), fictionCount, nonfictionCount,
+            user.getSignupNumber() != null ? user.getSignupNumber() : 0);
+
+        return new ProfileDisplay(user.getUsername(), displayText);
     }
 
     @GetMapping("/curated-lists")

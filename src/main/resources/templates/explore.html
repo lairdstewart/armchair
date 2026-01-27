@@ -15,15 +15,15 @@
     </form>
 
     <ul th:if="${searchResults != null && !searchResults.isEmpty()}">
-      <li th:each="user : ${searchResults}">
-        <a th:href="@{/user/{username}(username=${user.username})}" th:text="${user.username}"></a>
+      <li th:each="profile : ${searchResults}">
+        <a th:href="@{/user/{username}(username=${profile.username()})}" th:text="${profile.displayText()}"></a>
       </li>
     </ul>
 
     <div th:if="${recentProfiles != null}">
       <ul th:if="${!recentProfiles.isEmpty()}">
-        <li th:each="user : ${recentProfiles}">
-          <a th:href="@{/user/{username}(username=${user.username})}" th:text="${user.username}"></a>
+        <li th:each="profile : ${recentProfiles}">
+          <a th:href="@{/user/{username}(username=${profile.username()})}" th:text="${profile.displayText()}"></a>
         </li>
       </ul>
       <p th:if="${recentProfiles.isEmpty()}">No profiles yet.</p>
