@@ -473,6 +473,19 @@ public class BookController {
         return "redirect:/my-books";
     }
 
+    @GetMapping("/search-books")
+    public String showSearchBooks(Model model, HttpSession session) {
+        getCurrentUserId(session);
+        addNavigationAttributes(model, "search-books");
+
+        List<GoogleBooksService.BookResult> searchResults =
+            (List<GoogleBooksService.BookResult>) session.getAttribute("bookSearchResults");
+        model.addAttribute("searchResults", searchResults != null ? searchResults : List.of());
+        model.addAttribute("query", session.getAttribute("bookSearchQuery"));
+
+        return "search-books";
+    }
+
     @PostMapping("/search-books")
     public String searchBooks(@RequestParam String query, HttpSession session) {
         Long userId = getCurrentUserId(session);
@@ -482,7 +495,15 @@ public class BookController {
 
         List<GoogleBooksService.BookResult> results = googleBooksService.searchBooks(query);
         session.setAttribute("bookSearchResults", results);
-        return "redirect:/my-books";
+        session.setAttribute("bookSearchQuery", query);
+
+        // Check if user is in ADD mode (came from My Books page)
+        RankingState rankingState = rankingStateRepository.findById(userId).orElse(null);
+        if (rankingState != null && rankingState.getTitleBeingRanked() == null) {
+            return "redirect:/my-books";
+        }
+
+        return "redirect:/search-books";
     }
 
     @PostMapping("/cancel-add")
@@ -508,7 +529,8 @@ public class BookController {
         }
         RankingState rankingState = rankingStateRepository.findById(userId).orElse(null);
         if (rankingState == null) {
-            return "redirect:/my-books";
+            // Create new RankingState for user coming from Search Books tab
+            rankingState = new RankingState(userId, null, null, null, null, null, 0, 0, 0);
         }
 
         // Set the book info, leave category null to enter CATEGORIZE mode
