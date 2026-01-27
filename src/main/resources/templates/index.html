@@ -38,10 +38,16 @@
               </li>
             </ol>
 
-            <form th:action="@{/start-add}" method="POST">
-              <input type="hidden" name="type" value="fiction" />
-              <button type="submit">Add Book</button>
-            </form>
+            <div style="display: flex; gap: 10px;">
+              <form th:action="@{/start-add}" method="POST">
+                <input type="hidden" name="type" value="fiction" />
+                <button type="submit">Add Book</button>
+              </form>
+              <form th:if="${!fictionBooks.liked().isEmpty() || !fictionBooks.ok().isEmpty() || !fictionBooks.disliked().isEmpty()}" th:action="@{/start-rerank}" method="POST">
+                <input type="hidden" name="type" value="fiction" />
+                <button type="submit">Re-Rank</button>
+              </form>
+            </div>
           </div>
 
           <div style="flex: 1">
@@ -73,10 +79,91 @@
               </li>
             </ol>
 
-            <form th:action="@{/start-add}" method="POST">
-              <input type="hidden" name="type" value="nonfiction" />
-              <button type="submit">Add Book</button>
-            </form>
+            <div style="display: flex; gap: 10px;">
+              <form th:action="@{/start-add}" method="POST">
+                <input type="hidden" name="type" value="nonfiction" />
+                <button type="submit">Add Book</button>
+              </form>
+              <form th:if="${!nonfictionBooks.liked().isEmpty() || !nonfictionBooks.ok().isEmpty() || !nonfictionBooks.disliked().isEmpty()}" th:action="@{/start-rerank}" method="POST">
+                <input type="hidden" name="type" value="nonfiction" />
+                <button type="submit">Re-Rank</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div th:case="'RE_RANK'">
+        <h3>Select a book to re-rank</h3>
+        <div style="display: flex; gap: 40px">
+          <div th:if="${rankingState.type.name() == 'FICTION'}" style="flex: 1">
+            <h3>Fiction</h3>
+            <ol>
+              <li th:each="book : ${fictionBooks.liked()}">
+                <form th:action="@{/select-rerank-book}" method="POST" style="display: inline;">
+                  <input type="hidden" name="bookId" th:value="${book.id()}" />
+                  <button type="submit" class="book-number rerank">-&gt;</button>
+                </form>
+                <span>
+                  <span th:text="${book.title()}"></span>
+                  <span th:if="${book.author() != null && !book.author().isBlank()}" th:text="${', ' + book.author()}"></span>
+                </span>
+              </li>
+              <li th:each="book : ${fictionBooks.ok()}">
+                <form th:action="@{/select-rerank-book}" method="POST" style="display: inline;">
+                  <input type="hidden" name="bookId" th:value="${book.id()}" />
+                  <button type="submit" class="book-number rerank">-&gt;</button>
+                </form>
+                <span>
+                  <span th:text="${book.title()}"></span>
+                  <span th:if="${book.author() != null && !book.author().isBlank()}" th:text="${', ' + book.author()}"></span>
+                </span>
+              </li>
+              <li th:each="book : ${fictionBooks.disliked()}">
+                <form th:action="@{/select-rerank-book}" method="POST" style="display: inline;">
+                  <input type="hidden" name="bookId" th:value="${book.id()}" />
+                  <button type="submit" class="book-number rerank">-&gt;</button>
+                </form>
+                <span>
+                  <span th:text="${book.title()}"></span>
+                  <span th:if="${book.author() != null && !book.author().isBlank()}" th:text="${', ' + book.author()}"></span>
+                </span>
+              </li>
+            </ol>
+          </div>
+          <div th:if="${rankingState.type.name() == 'NONFICTION'}" style="flex: 1">
+            <h3>Non-Fiction</h3>
+            <ol>
+              <li th:each="book : ${nonfictionBooks.liked()}">
+                <form th:action="@{/select-rerank-book}" method="POST" style="display: inline;">
+                  <input type="hidden" name="bookId" th:value="${book.id()}" />
+                  <button type="submit" class="book-number rerank">-&gt;</button>
+                </form>
+                <span>
+                  <span th:text="${book.title()}"></span>
+                  <span th:if="${book.author() != null && !book.author().isBlank()}" th:text="${', ' + book.author()}"></span>
+                </span>
+              </li>
+              <li th:each="book : ${nonfictionBooks.ok()}">
+                <form th:action="@{/select-rerank-book}" method="POST" style="display: inline;">
+                  <input type="hidden" name="bookId" th:value="${book.id()}" />
+                  <button type="submit" class="book-number rerank">-&gt;</button>
+                </form>
+                <span>
+                  <span th:text="${book.title()}"></span>
+                  <span th:if="${book.author() != null && !book.author().isBlank()}" th:text="${', ' + book.author()}"></span>
+                </span>
+              </li>
+              <li th:each="book : ${nonfictionBooks.disliked()}">
+                <form th:action="@{/select-rerank-book}" method="POST" style="display: inline;">
+                  <input type="hidden" name="bookId" th:value="${book.id()}" />
+                  <button type="submit" class="book-number rerank">-&gt;</button>
+                </form>
+                <span>
+                  <span th:text="${book.title()}"></span>
+                  <span th:if="${book.author() != null && !book.author().isBlank()}" th:text="${', ' + book.author()}"></span>
+                </span>
+              </li>
+            </ol>
           </div>
         </div>
       </div>

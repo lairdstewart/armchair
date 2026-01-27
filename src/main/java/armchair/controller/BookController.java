@@ -31,14 +31,15 @@ import java.util.List;
 
 @Controller
 public class BookController {
-    public record BookInfo(String googleBooksId, String title, String author) {}
+    public record BookInfo(Long id, String googleBooksId, String title, String author) {}
     public record BookLists(List<BookInfo> liked, List<BookInfo> ok, List<BookInfo> disliked) {}
 
     private enum Mode {
         LIST,
         ADD,
         CATEGORIZE,
-        RANK;
+        RANK,
+        RE_RANK;
     }
 
     private static final String SESSION_GUEST_USER_ID = "guestUserId";
@@ -210,6 +211,9 @@ public class BookController {
             return Mode.LIST;
         }
         if (rankingState.getTitleBeingRanked() == null) {
+            if (rankingState.isReRank()) {
+                return Mode.RE_RANK;
+            }
             return Mode.ADD;
         }
         if (rankingState.getCategory() == null) {
@@ -220,11 +224,11 @@ public class BookController {
 
     private BookLists getBookLists(BookType type, Long userId) {
         List<BookInfo> liked = bookRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(userId, type, BookCategory.LIKED)
-            .stream().map(b -> new BookInfo(b.getGoogleBooksId(), b.getTitle(), b.getAuthor())).toList();
+            .stream().map(b -> new BookInfo(b.getId(), b.getGoogleBooksId(), b.getTitle(), b.getAuthor())).toList();
         List<BookInfo> ok = bookRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(userId, type, BookCategory.OK)
-            .stream().map(b -> new BookInfo(b.getGoogleBooksId(), b.getTitle(), b.getAuthor())).toList();
+            .stream().map(b -> new BookInfo(b.getId(), b.getGoogleBooksId(), b.getTitle(), b.getAuthor())).toList();
         List<BookInfo> disliked = bookRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(userId, type, BookCategory.DISLIKED)
-            .stream().map(b -> new BookInfo(b.getGoogleBooksId(), b.getTitle(), b.getAuthor())).toList();
+            .stream().map(b -> new BookInfo(b.getId(), b.getGoogleBooksId(), b.getTitle(), b.getAuthor())).toList();
         return new BookLists(liked, ok, disliked);
     }
 
@@ -332,6 +336,63 @@ public class BookController {
         rankingStateRepository.save(rankingState);
         // Clear any previous search results
         session.removeAttribute("bookSearchResults");
+        return "redirect:/my-books";
+    }
+
+    @PostMapping("/start-rerank")
+    public String startRerank(@RequestParam String type, HttpSession session) {
+        Long userId = getCurrentUserId(session);
+        if (userId == null) {
+            return "redirect:/setup-username";
+        }
+        BookType bookType = BookType.fromString(type);
+        RankingState rankingState = new RankingState(userId, null, null, null, bookType, null, 0, 0, 0);
+        rankingState.setReRank(true);
+        rankingStateRepository.save(rankingState);
+        return "redirect:/my-books";
+    }
+
+    @PostMapping("/select-rerank-book")
+    public String selectRerankBook(@RequestParam Long bookId, HttpSession session) {
+        Long userId = getCurrentUserId(session);
+        if (userId == null) {
+            return "redirect:/setup-username";
+        }
+
+        // Find the book and verify it belongs to this user
+        Book book = bookRepository.findById(bookId).orElse(null);
+        if (book == null || !book.getUserId().equals(userId)) {
+            return "redirect:/my-books";
+        }
+
+        // Store book info in ranking state
+        RankingState rankingState = rankingStateRepository.findById(userId).orElse(null);
+        if (rankingState == null || !rankingState.isReRank()) {
+            return "redirect:/my-books";
+        }
+
+        rankingState.setGoogleBooksIdBeingRanked(book.getGoogleBooksId());
+        rankingState.setTitleBeingRanked(book.getTitle());
+        rankingState.setAuthorBeingRanked(book.getAuthor());
+        rankingStateRepository.save(rankingState);
+
+        // Remove the book from its current position
+        BookType type = book.getType();
+        BookCategory category = book.getCategory();
+        int removedPosition = book.getPosition();
+        bookRepository.delete(book);
+
+        // Shift remaining books in that category to fill the gap
+        List<Book> booksToShift = bookRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(
+            userId, type, category
+        );
+        for (Book b : booksToShift) {
+            if (b.getPosition() > removedPosition) {
+                b.setPosition(b.getPosition() - 1);
+                bookRepository.save(b);
+            }
+        }
+
         return "redirect:/my-books";
     }
 

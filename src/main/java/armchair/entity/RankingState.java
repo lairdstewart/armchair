@@ -26,6 +26,8 @@ public class RankingState {
     private Integer lowIndex;
     private Integer highIndex;
 
+    private boolean reRank;
+
     public RankingState() {}
 
     public RankingState(Long userId, String googleBooksIdBeingRanked, String titleBeingRanked, String authorBeingRanked,
@@ -112,5 +114,13 @@ public class RankingState {
 
     public void setHighIndex(Integer highIndex) {
         this.highIndex = highIndex;
+    }
+
+    public boolean isReRank() {
+        return reRank;
+    }
+
+    public void setReRank(boolean reRank) {
+        this.reRank = reRank;
     }
 }
