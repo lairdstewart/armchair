@@ -194,8 +194,7 @@
         </div>
       </div>
       <div th:case="'CATEGORIZE'">
-        <h3>How did you like it?</h3>
-        <p><strong th:text="${rankingState.titleBeingRanked}"></strong></p>
+        <h3>How did you like <span th:text="${rankingState.titleBeingRanked}"></span>?</h3>
         <form th:action="@{/categorize}" method="POST">
           <button type="submit" name="category" value="liked">liked it</button>
           <button type="submit" name="category" value="ok">it was ok</button>

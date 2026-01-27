@@ -23,27 +23,32 @@ ol li {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 24px;
-  height: 24px;
-  padding: 0 6px;
-  border-radius: 6px;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border-radius: 4px;
   font-size: 14px;
   font-weight: bold;
   color: black;
   margin-right: 8px;
   flex-shrink: 0;
+  border-width: 2px;
+  border-style: solid;
 }
 
 .book-number.liked {
-  background-color: #4CAF50;
+  background-color: #E8F5E9;
+  border-color: #4CAF50;
 }
 
 .book-number.ok {
-  background-color: #FFEB3B;
+  background-color: #FFFDE7;
+  border-color: #FBC02D;
 }
 
 .book-number.disliked {
-  background-color: #F44336;
+  background-color: #FFEBEE;
+  border-color: #F44336;
 }
 
 .add-book-btn {
