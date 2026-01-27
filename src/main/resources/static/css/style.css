@@ -1,3 +1,7 @@
+html {
+  background-color: white;
+}
+
 body {
   font-family: sans-serif;
   max-width: 800px;
@@ -95,7 +99,7 @@ button.book-number.remove {
 .navbar {
   background-color: #722F37;
   padding: 5px;
-  margin-bottom: 20px;
+  margin-bottom: 0;
   display: flex;
   justify-content: space-between;
   align-items: center;
