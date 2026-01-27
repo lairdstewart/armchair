@@ -6,6 +6,7 @@
   </head>
   <body>
     <div th:replace="~{fragments :: navbar}"></div>
+    <div class="page-content">
     <div th:switch="${mode.name()}">
       <div th:case="'LIST'">
         <div style="display: flex; gap: 40px">
@@ -205,6 +206,7 @@
           ></button>
         </form>
       </div>
+    </div>
     </div>
   </body>
 </html>

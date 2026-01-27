@@ -6,6 +6,7 @@
   </head>
   <body>
     <div th:replace="~{fragments :: navbar}"></div>
+    <div class="page-content">
     <h2>Choose Your Username</h2>
     <p>Please choose a username for your account.</p>
 
@@ -23,5 +24,6 @@
       <div th:if="${error}" style="color: red; margin-bottom: 10px;" th:text="${error}"></div>
       <button type="submit">Continue</button>
     </form>
+    </div>
   </body>
 </html>

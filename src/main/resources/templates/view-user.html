@@ -6,10 +6,12 @@
   </head>
   <body>
     <div th:replace="~{fragments :: navbar}"></div>
+    <div class="page-content">
     <h2 th:text="${isCurated} ? ${viewUsername} : |${viewUsername}'s Books|"></h2>
 
     <div th:replace="~{fragments :: bookLists(${fictionBooks}, ${nonfictionBooks})}"></div>
 
     <p th:if="${fictionBooks.liked().isEmpty() && fictionBooks.ok().isEmpty() && fictionBooks.disliked().isEmpty() && nonfictionBooks.liked().isEmpty() && nonfictionBooks.ok().isEmpty() && nonfictionBooks.disliked().isEmpty()}">No books yet.</p>
+    </div>
   </body>
 </html>

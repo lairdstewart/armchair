@@ -6,6 +6,9 @@ body {
   font-family: sans-serif;
   max-width: 800px;
   margin: 40px auto;
+}
+
+.page-content {
   background-color: #FAF8F5;
   padding: 20px;
 }

@@ -6,6 +6,7 @@
   </head>
   <body>
     <div th:replace="~{fragments :: navbar}"></div>
+    <div class="page-content">
     <h2>Search Profiles</h2>
 
     <form action="/search-profiles" method="GET" style="margin-bottom: 20px;">
@@ -31,6 +32,6 @@
       <p th:if="${recentProfiles.isEmpty()}">No profiles yet.</p>
       <p th:text="${'... ' + moreProfilesCount + ' more profiles'}"></p>
     </div>
-
+    </div>
   </body>
 </html>

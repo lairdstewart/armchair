@@ -6,6 +6,7 @@
   </head>
   <body>
     <div th:replace="~{fragments :: navbar}"></div>
+    <div class="page-content">
     <p><strong>Username:</strong> <span th:text="${username}"></span></p>
     <p th:if="${signupDate != null}"><strong>User since:</strong> <span th:text="${#temporals.format(signupDate, 'MMMM d, yyyy')}"></span></p>
     <p th:if="${signupNumber != null}"><strong>User number:</strong> <span th:text="${signupNumber}"></span></p>
@@ -24,6 +25,7 @@
             onsubmit="return confirm('Are you sure you want to delete your profile? This will permanently remove all your data and cannot be undone.');">
         <button type="submit">Delete Profile</button>
       </form>
+    </div>
     </div>
   </body>
 </html>
