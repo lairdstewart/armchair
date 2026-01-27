@@ -623,7 +623,7 @@ public class BookController {
                 user.getId(), BookType.NONFICTION, category).size();
         }
 
-        String stats = String.format("#%d fiction, #%d non-fiction, user #%d",
+        String stats = String.format("%d fiction, %d non-fiction, user %d",
             fictionCount, nonfictionCount,
             user.getSignupNumber() != null ? user.getSignupNumber() : 0);
 
