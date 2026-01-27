@@ -80,8 +80,8 @@ button.book-number.rerank {
 }
 
 button.book-number.remove {
-  background-color: #FFEBEE;
-  border-color: #F44336;
+  background-color: #E0E0E0;
+  border-color: #9E9E9E;
   cursor: pointer;
   font-size: 12px;
   width: 26px;
