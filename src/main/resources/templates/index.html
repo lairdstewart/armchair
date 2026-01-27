@@ -13,10 +13,14 @@
             <h3>Fiction</h3>
             <ol>
               <li th:each="book, iter : ${fictionBooks.liked()}">
-                <span th:if="${rerankType != 'FICTION'}" class="book-number liked" th:text="${iter.index + 1}"></span>
+                <span th:if="${rerankType != 'FICTION' && removeType != 'FICTION'}" class="book-number liked" th:text="${iter.index + 1}"></span>
                 <form th:if="${rerankType == 'FICTION'}" th:action="@{/select-rerank-book}" method="POST" style="display: inline;">
                   <input type="hidden" name="bookId" th:value="${book.id()}" />
                   <button type="submit" class="book-number rerank">-&gt;</button>
+                </form>
+                <form th:if="${removeType == 'FICTION'}" th:action="@{/select-remove-book}" method="POST" style="display: inline;">
+                  <input type="hidden" name="bookId" th:value="${book.id()}" />
+                  <button type="submit" class="book-number remove">x</button>
                 </form>
                 <span>
                   <a th:if="${book.googleBooksId() != null}" th:href="${'https://books.google.com/books?id=' + book.googleBooksId()}" th:text="${book.title()}" target="_blank"></a>
@@ -25,10 +29,14 @@
                 </span>
               </li>
               <li th:each="book, iter : ${fictionBooks.ok()}">
-                <span th:if="${rerankType != 'FICTION'}" class="book-number ok" th:text="${fictionBooks.liked().size() + iter.index + 1}"></span>
+                <span th:if="${rerankType != 'FICTION' && removeType != 'FICTION'}" class="book-number ok" th:text="${fictionBooks.liked().size() + iter.index + 1}"></span>
                 <form th:if="${rerankType == 'FICTION'}" th:action="@{/select-rerank-book}" method="POST" style="display: inline;">
                   <input type="hidden" name="bookId" th:value="${book.id()}" />
                   <button type="submit" class="book-number rerank">-&gt;</button>
+                </form>
+                <form th:if="${removeType == 'FICTION'}" th:action="@{/select-remove-book}" method="POST" style="display: inline;">
+                  <input type="hidden" name="bookId" th:value="${book.id()}" />
+                  <button type="submit" class="book-number remove">x</button>
                 </form>
                 <span>
                   <a th:if="${book.googleBooksId() != null}" th:href="${'https://books.google.com/books?id=' + book.googleBooksId()}" th:text="${book.title()}" target="_blank"></a>
@@ -37,10 +45,14 @@
                 </span>
               </li>
               <li th:each="book, iter : ${fictionBooks.disliked()}">
-                <span th:if="${rerankType != 'FICTION'}" class="book-number disliked" th:text="${fictionBooks.liked().size() + fictionBooks.ok().size() + iter.index + 1}"></span>
+                <span th:if="${rerankType != 'FICTION' && removeType != 'FICTION'}" class="book-number disliked" th:text="${fictionBooks.liked().size() + fictionBooks.ok().size() + iter.index + 1}"></span>
                 <form th:if="${rerankType == 'FICTION'}" th:action="@{/select-rerank-book}" method="POST" style="display: inline;">
                   <input type="hidden" name="bookId" th:value="${book.id()}" />
                   <button type="submit" class="book-number rerank">-&gt;</button>
+                </form>
+                <form th:if="${removeType == 'FICTION'}" th:action="@{/select-remove-book}" method="POST" style="display: inline;">
+                  <input type="hidden" name="bookId" th:value="${book.id()}" />
+                  <button type="submit" class="book-number remove">x</button>
                 </form>
                 <span>
                   <a th:if="${book.googleBooksId() != null}" th:href="${'https://books.google.com/books?id=' + book.googleBooksId()}" th:text="${book.title()}" target="_blank"></a>
@@ -51,13 +63,17 @@
             </ol>
 
             <div style="display: flex; gap: 10px;">
-              <form th:if="${rerankType != 'FICTION'}" th:action="@{/start-add}" method="POST">
+              <form th:if="${rerankType != 'FICTION' && removeType != 'FICTION'}" th:action="@{/start-add}" method="POST">
                 <input type="hidden" name="type" value="fiction" />
                 <button type="submit">Add Book</button>
               </form>
-              <form th:if="${rerankType != 'FICTION' && (!fictionBooks.liked().isEmpty() || !fictionBooks.ok().isEmpty() || !fictionBooks.disliked().isEmpty())}" th:action="@{/start-rerank}" method="POST">
+              <form th:if="${rerankType != 'FICTION' && removeType != 'FICTION' && (!fictionBooks.liked().isEmpty() || !fictionBooks.ok().isEmpty() || !fictionBooks.disliked().isEmpty())}" th:action="@{/start-rerank}" method="POST">
                 <input type="hidden" name="type" value="fiction" />
                 <button type="submit">Re-Rank</button>
+              </form>
+              <form th:if="${rerankType != 'FICTION' && removeType != 'FICTION' && (!fictionBooks.liked().isEmpty() || !fictionBooks.ok().isEmpty() || !fictionBooks.disliked().isEmpty())}" th:action="@{/start-remove}" method="POST">
+                <input type="hidden" name="type" value="fiction" />
+                <button type="submit">Remove</button>
               </form>
             </div>
           </div>
@@ -66,10 +82,14 @@
             <h3>Non-Fiction</h3>
             <ol>
               <li th:each="book, iter : ${nonfictionBooks.liked()}">
-                <span th:if="${rerankType != 'NONFICTION'}" class="book-number liked" th:text="${iter.index + 1}"></span>
+                <span th:if="${rerankType != 'NONFICTION' && removeType != 'NONFICTION'}" class="book-number liked" th:text="${iter.index + 1}"></span>
                 <form th:if="${rerankType == 'NONFICTION'}" th:action="@{/select-rerank-book}" method="POST" style="display: inline;">
                   <input type="hidden" name="bookId" th:value="${book.id()}" />
                   <button type="submit" class="book-number rerank">-&gt;</button>
+                </form>
+                <form th:if="${removeType == 'NONFICTION'}" th:action="@{/select-remove-book}" method="POST" style="display: inline;">
+                  <input type="hidden" name="bookId" th:value="${book.id()}" />
+                  <button type="submit" class="book-number remove">x</button>
                 </form>
                 <span>
                   <a th:if="${book.googleBooksId() != null}" th:href="${'https://books.google.com/books?id=' + book.googleBooksId()}" th:text="${book.title()}" target="_blank"></a>
@@ -78,10 +98,14 @@
                 </span>
               </li>
               <li th:each="book, iter : ${nonfictionBooks.ok()}">
-                <span th:if="${rerankType != 'NONFICTION'}" class="book-number ok" th:text="${nonfictionBooks.liked().size() + iter.index + 1}"></span>
+                <span th:if="${rerankType != 'NONFICTION' && removeType != 'NONFICTION'}" class="book-number ok" th:text="${nonfictionBooks.liked().size() + iter.index + 1}"></span>
                 <form th:if="${rerankType == 'NONFICTION'}" th:action="@{/select-rerank-book}" method="POST" style="display: inline;">
                   <input type="hidden" name="bookId" th:value="${book.id()}" />
                   <button type="submit" class="book-number rerank">-&gt;</button>
+                </form>
+                <form th:if="${removeType == 'NONFICTION'}" th:action="@{/select-remove-book}" method="POST" style="display: inline;">
+                  <input type="hidden" name="bookId" th:value="${book.id()}" />
+                  <button type="submit" class="book-number remove">x</button>
                 </form>
                 <span>
                   <a th:if="${book.googleBooksId() != null}" th:href="${'https://books.google.com/books?id=' + book.googleBooksId()}" th:text="${book.title()}" target="_blank"></a>
@@ -90,10 +114,14 @@
                 </span>
               </li>
               <li th:each="book, iter : ${nonfictionBooks.disliked()}">
-                <span th:if="${rerankType != 'NONFICTION'}" class="book-number disliked" th:text="${nonfictionBooks.liked().size() + nonfictionBooks.ok().size() + iter.index + 1}"></span>
+                <span th:if="${rerankType != 'NONFICTION' && removeType != 'NONFICTION'}" class="book-number disliked" th:text="${nonfictionBooks.liked().size() + nonfictionBooks.ok().size() + iter.index + 1}"></span>
                 <form th:if="${rerankType == 'NONFICTION'}" th:action="@{/select-rerank-book}" method="POST" style="display: inline;">
                   <input type="hidden" name="bookId" th:value="${book.id()}" />
                   <button type="submit" class="book-number rerank">-&gt;</button>
+                </form>
+                <form th:if="${removeType == 'NONFICTION'}" th:action="@{/select-remove-book}" method="POST" style="display: inline;">
+                  <input type="hidden" name="bookId" th:value="${book.id()}" />
+                  <button type="submit" class="book-number remove">x</button>
                 </form>
                 <span>
                   <a th:if="${book.googleBooksId() != null}" th:href="${'https://books.google.com/books?id=' + book.googleBooksId()}" th:text="${book.title()}" target="_blank"></a>
@@ -104,13 +132,17 @@
             </ol>
 
             <div style="display: flex; gap: 10px;">
-              <form th:if="${rerankType != 'NONFICTION'}" th:action="@{/start-add}" method="POST">
+              <form th:if="${rerankType != 'NONFICTION' && removeType != 'NONFICTION'}" th:action="@{/start-add}" method="POST">
                 <input type="hidden" name="type" value="nonfiction" />
                 <button type="submit">Add Book</button>
               </form>
-              <form th:if="${rerankType != 'NONFICTION' && (!nonfictionBooks.liked().isEmpty() || !nonfictionBooks.ok().isEmpty() || !nonfictionBooks.disliked().isEmpty())}" th:action="@{/start-rerank}" method="POST">
+              <form th:if="${rerankType != 'NONFICTION' && removeType != 'NONFICTION' && (!nonfictionBooks.liked().isEmpty() || !nonfictionBooks.ok().isEmpty() || !nonfictionBooks.disliked().isEmpty())}" th:action="@{/start-rerank}" method="POST">
                 <input type="hidden" name="type" value="nonfiction" />
                 <button type="submit">Re-Rank</button>
+              </form>
+              <form th:if="${rerankType != 'NONFICTION' && removeType != 'NONFICTION' && (!nonfictionBooks.liked().isEmpty() || !nonfictionBooks.ok().isEmpty() || !nonfictionBooks.disliked().isEmpty())}" th:action="@{/start-remove}" method="POST">
+                <input type="hidden" name="type" value="nonfiction" />
+                <button type="submit">Remove</button>
               </form>
             </div>
           </div>

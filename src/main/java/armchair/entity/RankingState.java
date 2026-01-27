@@ -27,6 +27,7 @@ public class RankingState {
     private Integer highIndex;
 
     private boolean reRank;
+    private boolean remove;
 
     public RankingState() {}
 
@@ -122,5 +123,13 @@ public class RankingState {
 
     public void setReRank(boolean reRank) {
         this.reRank = reRank;
+    }
+
+    public boolean isRemove() {
+        return remove;
+    }
+
+    public void setRemove(boolean remove) {
+        this.remove = remove;
     }
 }

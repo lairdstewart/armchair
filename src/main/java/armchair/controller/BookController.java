@@ -39,7 +39,8 @@ public class BookController {
         ADD,
         CATEGORIZE,
         RANK,
-        RE_RANK;
+        RE_RANK,
+        REMOVE;
     }
 
     private static final String SESSION_GUEST_USER_ID = "guestUserId";
@@ -196,9 +197,15 @@ public class BookController {
         if (mode == Mode.RE_RANK) {
             model.addAttribute("mode", Mode.LIST);
             model.addAttribute("rerankType", rankingState.getType().name());
+            model.addAttribute("removeType", null);
+        } else if (mode == Mode.REMOVE) {
+            model.addAttribute("mode", Mode.LIST);
+            model.addAttribute("rerankType", null);
+            model.addAttribute("removeType", rankingState.getType().name());
         } else {
             model.addAttribute("mode", mode);
             model.addAttribute("rerankType", null);
+            model.addAttribute("removeType", null);
         }
 
         // Add search results if in ADD mode
@@ -225,6 +232,9 @@ public class BookController {
         if (rankingState.getTitleBeingRanked() == null) {
             if (rankingState.isReRank()) {
                 return Mode.RE_RANK;
+            }
+            if (rankingState.isRemove()) {
+                return Mode.REMOVE;
             }
             return Mode.ADD;
         }
@@ -404,6 +414,61 @@ public class BookController {
                 bookRepository.save(b);
             }
         }
+
+        return "redirect:/my-books";
+    }
+
+    @PostMapping("/start-remove")
+    public String startRemove(@RequestParam String type, HttpSession session) {
+        Long userId = getCurrentUserId(session);
+        if (userId == null) {
+            return "redirect:/setup-username";
+        }
+        BookType bookType = BookType.fromString(type);
+        RankingState rankingState = new RankingState(userId, null, null, null, bookType, null, 0, 0, 0);
+        rankingState.setRemove(true);
+        rankingStateRepository.save(rankingState);
+        return "redirect:/my-books";
+    }
+
+    @PostMapping("/select-remove-book")
+    public String selectRemoveBook(@RequestParam Long bookId, HttpSession session) {
+        Long userId = getCurrentUserId(session);
+        if (userId == null) {
+            return "redirect:/setup-username";
+        }
+
+        // Find the book and verify it belongs to this user
+        Book book = bookRepository.findById(bookId).orElse(null);
+        if (book == null || !book.getUserId().equals(userId)) {
+            return "redirect:/my-books";
+        }
+
+        // Verify we're in remove mode
+        RankingState rankingState = rankingStateRepository.findById(userId).orElse(null);
+        if (rankingState == null || !rankingState.isRemove()) {
+            return "redirect:/my-books";
+        }
+
+        // Remove the book
+        BookType type = book.getType();
+        BookCategory category = book.getCategory();
+        int removedPosition = book.getPosition();
+        bookRepository.delete(book);
+
+        // Shift remaining books in that category to fill the gap
+        List<Book> booksToShift = bookRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(
+            userId, type, category
+        );
+        for (Book b : booksToShift) {
+            if (b.getPosition() > removedPosition) {
+                b.setPosition(b.getPosition() - 1);
+                bookRepository.save(b);
+            }
+        }
+
+        // Clear the ranking state
+        rankingStateRepository.deleteById(userId);
 
         return "redirect:/my-books";
     }
