@@ -3,26 +3,19 @@
   <body>
     <div th:fragment="navbar" class="navbar">
       <div class="navbar-left">
-        <form action="/" method="GET" style="display: inline">
-          <button type="submit">Armchair</button>
-        </form>
+        <a href="/" class="navbar-link">Armchair</a>
+        <span class="navbar-separator">|</span>
         <form th:action="@{/my-books}" method="POST" style="display: inline">
-          <button type="submit">My Books</button>
+          <button type="submit" class="navbar-link-button">My Books</button>
         </form>
-        <form action="/search-profiles" method="GET" style="display: inline">
-          <button type="submit">Search Profiles</button>
-        </form>
-        <form action="/curated-lists" method="GET" style="display: inline">
-          <button type="submit">Curated Lists</button>
-        </form>
+        <span class="navbar-separator">|</span>
+        <a href="/search-profiles" class="navbar-link">Search Profiles</a>
+        <span class="navbar-separator">|</span>
+        <a href="/curated-lists" class="navbar-link">Curated Lists</a>
       </div>
       <div class="navbar-right">
-        <form th:if="${isLoggedIn}" action="/my-profile" method="GET" style="display: inline">
-          <button type="submit">My Profile</button>
-        </form>
-        <form th:if="${!isLoggedIn}" action="/oauth2/authorization/google" method="GET" style="display: inline">
-          <button type="submit">Login/Signup</button>
-        </form>
+        <a th:if="${isLoggedIn}" href="/my-profile" class="navbar-link">My Profile</a>
+        <a th:if="${!isLoggedIn}" href="/oauth2/authorization/google" class="navbar-link">Login/Signup</a>
       </div>
     </div>
 
