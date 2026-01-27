@@ -2,24 +2,28 @@
 <html xmlns:th="http://www.thymeleaf.org">
   <body>
     <div th:fragment="navbar" class="navbar">
-      <form action="/" method="GET" style="display: inline">
-        <button type="submit">Armchair</button>
-      </form>
-      <form th:action="@{/my-books}" method="POST" style="display: inline">
-        <button type="submit">My Books</button>
-      </form>
-      <form action="/search-profiles" method="GET" style="display: inline">
-        <button type="submit">Search Profiles</button>
-      </form>
-      <form action="/curated-lists" method="GET" style="display: inline">
-        <button type="submit">Curated Lists</button>
-      </form>
-      <form th:if="${isLoggedIn}" action="/my-profile" method="GET" style="display: inline">
-        <button type="submit">My Profile</button>
-      </form>
-      <form th:if="${!isLoggedIn}" action="/oauth2/authorization/google" method="GET" style="display: inline">
-        <button type="submit">Login/Signup</button>
-      </form>
+      <div class="navbar-left">
+        <form action="/" method="GET" style="display: inline">
+          <button type="submit">Armchair</button>
+        </form>
+        <form th:action="@{/my-books}" method="POST" style="display: inline">
+          <button type="submit">My Books</button>
+        </form>
+        <form action="/search-profiles" method="GET" style="display: inline">
+          <button type="submit">Search Profiles</button>
+        </form>
+        <form action="/curated-lists" method="GET" style="display: inline">
+          <button type="submit">Curated Lists</button>
+        </form>
+      </div>
+      <div class="navbar-right">
+        <form th:if="${isLoggedIn}" action="/my-profile" method="GET" style="display: inline">
+          <button type="submit">My Profile</button>
+        </form>
+        <form th:if="${!isLoggedIn}" action="/oauth2/authorization/google" method="GET" style="display: inline">
+          <button type="submit">Login/Signup</button>
+        </form>
+      </div>
     </div>
 
     <div th:fragment="bookLists(fictionBooks, nonfictionBooks)" style="display: flex; gap: 40px">
