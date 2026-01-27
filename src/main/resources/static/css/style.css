@@ -2,6 +2,8 @@ body {
   font-family: sans-serif;
   max-width: 800px;
   margin: 40px auto;
+  background-color: #FAF8F5;
+  padding: 20px;
 }
 
 form {
