@@ -33,7 +33,7 @@ import java.util.List;
 public class BookController {
     public record BookInfo(Long id, String googleBooksId, String title, String author) {}
     public record BookLists(List<BookInfo> liked, List<BookInfo> ok, List<BookInfo> disliked) {}
-    public record ProfileDisplay(String username, String displayText) {}
+    public record ProfileDisplay(String username, String stats) {}
 
     private enum Mode {
         LIST,
@@ -623,11 +623,11 @@ public class BookController {
                 user.getId(), BookType.NONFICTION, category).size();
         }
 
-        String displayText = String.format("%s #%d fiction, #%d non-fiction, user #%d",
-            user.getUsername(), fictionCount, nonfictionCount,
+        String stats = String.format("#%d fiction, #%d non-fiction, user #%d",
+            fictionCount, nonfictionCount,
             user.getSignupNumber() != null ? user.getSignupNumber() : 0);
 
-        return new ProfileDisplay(user.getUsername(), displayText);
+        return new ProfileDisplay(user.getUsername(), stats);
     }
 
     @GetMapping("/curated-lists")

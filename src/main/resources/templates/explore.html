@@ -16,14 +16,16 @@
 
     <ul th:if="${searchResults != null && !searchResults.isEmpty()}">
       <li th:each="profile : ${searchResults}">
-        <a th:href="@{/user/{username}(username=${profile.username()})}" th:text="${profile.displayText()}"></a>
+        <a th:href="@{/user/{username}(username=${profile.username()})}" th:text="${profile.username()}"></a>
+        <span th:text="${' ' + profile.stats()}"></span>
       </li>
     </ul>
 
     <div th:if="${recentProfiles != null}">
       <ul th:if="${!recentProfiles.isEmpty()}">
         <li th:each="profile : ${recentProfiles}">
-          <a th:href="@{/user/{username}(username=${profile.username()})}" th:text="${profile.displayText()}"></a>
+          <a th:href="@{/user/{username}(username=${profile.username()})}" th:text="${profile.username()}"></a>
+          <span th:text="${' ' + profile.stats()}"></span>
         </li>
       </ul>
       <p th:if="${recentProfiles.isEmpty()}">No profiles yet.</p>
