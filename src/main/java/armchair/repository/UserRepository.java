@@ -19,4 +19,5 @@ public interface UserRepository extends JpaRepository<User, Long> {
     List<User> findByIsGuestFalseAndIsCuratedFalseAndPublishListsTrueAndUsernameContainingIgnoreCase(String username);
     List<User> findTop10ByIsGuestFalseAndIsCuratedFalseAndPublishListsTrueOrderBySignupDateDesc();
     long countByIsGuestFalseAndIsCuratedFalseAndPublishListsTrue();
+    List<User> findByIsCuratedTrueAndUsernameContainingIgnoreCase(String username);
 }

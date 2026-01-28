@@ -590,6 +590,50 @@ public class BookController {
             .body(csv);
     }
 
+    @GetMapping("/search")
+    public String showUnifiedSearch(@RequestParam(required = false, defaultValue = "curated") String type,
+                                     @RequestParam(required = false) String query,
+                                     Model model, HttpSession session) {
+        getCurrentUserId(session);
+        addNavigationAttributes(model, "search");
+        model.addAttribute("searchType", type);
+        model.addAttribute("query", query);
+
+        if ("books".equals(type)) {
+            if (query != null && !query.isBlank()) {
+                List<GoogleBooksService.BookResult> results = googleBooksService.searchBooks(query);
+                model.addAttribute("bookResults", results);
+            }
+        } else if ("profiles".equals(type)) {
+            if (query != null && !query.isBlank()) {
+                List<User> results = userRepository.findByIsGuestFalseAndIsCuratedFalseAndPublishListsTrueAndUsernameContainingIgnoreCase(query.trim());
+                List<ProfileDisplay> profileDisplays = results.stream()
+                    .map(this::createProfileDisplay)
+                    .toList();
+                model.addAttribute("profileResults", profileDisplays);
+            } else {
+                List<User> recentProfiles = userRepository.findTop10ByIsGuestFalseAndIsCuratedFalseAndPublishListsTrueOrderBySignupDateDesc();
+                List<ProfileDisplay> profileDisplays = recentProfiles.stream()
+                    .map(this::createProfileDisplay)
+                    .toList();
+                long totalProfiles = userRepository.countByIsGuestFalseAndIsCuratedFalseAndPublishListsTrue();
+                long moreCount = Math.max(0, totalProfiles - recentProfiles.size());
+                model.addAttribute("profileResults", profileDisplays);
+                model.addAttribute("moreProfilesCount", moreCount);
+            }
+        } else if ("curated".equals(type)) {
+            if (query != null && !query.isBlank()) {
+                List<User> results = userRepository.findByIsCuratedTrueAndUsernameContainingIgnoreCase(query.trim());
+                model.addAttribute("curatedResults", results);
+            } else {
+                List<User> curatedUsers = userRepository.findByIsCurated(true);
+                model.addAttribute("curatedResults", curatedUsers);
+            }
+        }
+
+        return "search";
+    }
+
     @GetMapping("/search-profiles")
     public String showExplore(@RequestParam(required = false) String query, Model model, HttpSession session) {
         getCurrentUserId(session);
