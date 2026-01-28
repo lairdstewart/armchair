@@ -28,8 +28,8 @@ public class Book {
 
     private Integer position; // rank within the type+category list
 
-    @jakarta.persistence.Column(columnDefinition = "TEXT")
-    private String review; // optional user review
+    @jakarta.persistence.Column(length = 5000)
+    private String review; // optional user review, max 5000 chars
 
     public Book() {}
 

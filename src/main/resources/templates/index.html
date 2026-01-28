@@ -248,7 +248,7 @@
           </div>
           <div style="margin-bottom: 15px;">
             <label for="review">Review (optional):</label><br />
-            <textarea id="review" name="review" rows="4" cols="50" placeholder="Write your thoughts about this book..."></textarea>
+            <textarea id="review" name="review" rows="4" cols="50" maxlength="5000" placeholder="Write your thoughts about this book..."></textarea>
           </div>
           <button type="submit">Continue</button>
         </form>
@@ -285,7 +285,7 @@
           </div>
           <div style="margin-bottom: 15px;">
             <label for="review">Review (optional):</label><br />
-            <textarea id="review" name="review" rows="4" cols="50" placeholder="Write your thoughts about this book..." th:text="${reviewBook.review}"></textarea>
+            <textarea id="review" name="review" rows="4" cols="50" maxlength="5000" placeholder="Write your thoughts about this book..." th:text="${reviewBook.review}"></textarea>
           </div>
           <button type="submit">Done</button>
         </form>

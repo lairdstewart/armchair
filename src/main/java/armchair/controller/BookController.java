@@ -48,6 +48,7 @@ public class BookController {
     }
 
     private static final String SESSION_GUEST_USER_ID = "guestUserId";
+    private static final int MAX_REVIEW_LENGTH = 5000;
 
     @Autowired
     private UserRepository userRepository;
@@ -542,8 +543,11 @@ public class BookController {
         // Find the book and update its review
         Book book = bookRepository.findById(rankingState.getBookIdBeingReviewed()).orElse(null);
         if (book != null && book.getUserId().equals(userId)) {
-            // Trim review and treat empty as null
+            // Trim review, treat empty as null, and limit length
             String trimmedReview = (review != null && !review.isBlank()) ? review.trim() : null;
+            if (trimmedReview != null && trimmedReview.length() > MAX_REVIEW_LENGTH) {
+                trimmedReview = trimmedReview.substring(0, MAX_REVIEW_LENGTH);
+            }
             book.setReview(trimmedReview);
             bookRepository.save(book);
         }
@@ -640,8 +644,11 @@ public class BookController {
         String googleBooksId = rankingState.getGoogleBooksIdBeingRanked();
         String bookName = rankingState.getTitleBeingRanked();
         String author = rankingState.getAuthorBeingRanked();
-        // Trim review and treat empty as null
+        // Trim review, treat empty as null, and limit length
         String trimmedReview = (review != null && !review.isBlank()) ? review.trim() : null;
+        if (trimmedReview != null && trimmedReview.length() > MAX_REVIEW_LENGTH) {
+            trimmedReview = trimmedReview.substring(0, MAX_REVIEW_LENGTH);
+        }
 
         BookType bookType = BookType.fromString(type);
         BookCategory bookCategory = BookCategory.fromString(category);
