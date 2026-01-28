@@ -24,7 +24,7 @@ ol {
 
 ol li {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   margin-bottom: 4px;
 }
 
