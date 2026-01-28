@@ -29,3 +29,5 @@
 - [x] Show user's existing book rank instead of "+" button in search results.
 - [x] Switch places of "My Books" and "Search" in navbar, rename "My Books" to "Lists".
 - [x] Add "Recs" nav entry with placeholder page showing "coming soon ...".
+- [x] Remove grey boxes from book search results, match Lists tab spacing.
+- [x] Show 10 random books from database when search is empty, change text to "... 40 million more books".

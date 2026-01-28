@@ -21,7 +21,7 @@
       <!-- Books results -->
       <div th:if="${searchType == 'books'}">
         <div th:if="${bookResults != null && !bookResults.isEmpty()}">
-          <div th:each="book : ${bookResults}" style="margin-bottom: 15px; padding: 10px; border: 1px solid #ccc;">
+          <div th:each="book : ${bookResults}">
             <span th:if="${userBooks != null && userBooks.containsKey(book.googleBooksId())}"
                   th:class="${'book-number ' + userBooks.get(book.googleBooksId()).category()}"
                   th:text="${userBooks.get(book.googleBooksId()).rank()}"></span>
@@ -31,11 +31,11 @@
               <input type="hidden" name="author" th:value="${book.author()}" />
               <button type="submit" class="add-book-btn">+</button>
             </form>
-            <a th:href="${'https://books.google.com/books?id=' + book.googleBooksId()}" target="_blank"><strong th:text="${book.title()}"></strong></a>
-            <span th:text="' by ' + ${book.author()}"></span>
+            <a th:href="${'https://books.google.com/books?id=' + book.googleBooksId()}" target="_blank" th:text="${book.title()}"></a>
+            <span th:if="${book.author() != null && !book.author().isBlank()}" th:text="${', ' + book.author()}"></span>
           </div>
         </div>
-        <p th:if="${bookResults == null || bookResults.isEmpty()}">... 40 million books</p>
+        <p>... 40 million more books</p>
       </div>
 
       <!-- Profiles results -->
