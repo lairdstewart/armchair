@@ -28,6 +28,8 @@ public class Book {
 
     private Integer position; // rank within the type+category list
 
+    private String review; // optional user review
+
     public Book() {}
 
     public Book(Long userId, String googleBooksId, String title, String author, BookType type, BookCategory category, Integer position) {
@@ -102,5 +104,13 @@ public class Book {
 
     public void setPosition(Integer position) {
         this.position = position;
+    }
+
+    public String getReview() {
+        return review;
+    }
+
+    public void setReview(String review) {
+        this.review = review;
     }
 }

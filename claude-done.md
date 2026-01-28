@@ -1,33 +1,3 @@
-- [x] make the browser tab always say "Armchair" not something different for each tab
-- [x] add a "remove" button which is like "rerank" but has an "x" and removes that book from the user's list
-- [x] remove the "publish my lists toggle". All users lists should be public and every username should appear in the "explore profiles" page
-- [x] in the "explore profiles" page, make each line look like: "<username> #<num-fiction> fiction, #<num-non-fiction> non-fiction, user #<num-user>". Please do the string creation in java (like always) if it isn't in your claude.md to do as much work as you can in java (rather than in thymelaf tags in html) please add that
-- [x] after the user clicks "re-rank" or "remove" replace the 3 buttons underneath the list with one that says "cancel" which cancels the operation (effectively going back to their original list page)
-- [x] in the "Explore Profiles" page, do not include curated lists
-- [x] in the "Explore Profiles page, only the username should be a hyperlink, not the entire line
-- [x] in the "Explore Profiles" page and the "Curated Lists" page, don't use an html bulleted list, just put each entry on a new line.
-- [x] make the remove "x" button grey -- the same color as the "re-rank" arrow button
-- [x] remove the # from the explore profiles. It should just say "5 fiction, 10 non-fiction ..."
-- [x] rename "Explore profiles" to "search profiles" in the code and on the page.
-- [x] make the body of the page a light, off-white paper color. it should only span as far as the navigation bar (not the entire screen) and it should only go down as far as the text goes on the page
-- [x] move the "My Profile" and "Login" button to the right-end of the nav bar
-- [x] in the nav bar, replace the buttons with text (the same text) the text should be white. each button should be separated by a vertical line | (except for the profile button on the far right). functionally it should be the same, clicking on the text does the same thing, this is just a visual change.
-- [x] re-implement private profiles. Add a "publish lists" toggle to the profile page (defaults to false). Only show users with publishLists=true in Search Profiles, and block access to /user/{username} for private profiles.
-- [x] make a single "Add Book" button at the bottom of the page. After clicking, user searches for a book, then selects type (fiction/non-fiction) and category (liked/ok/disliked) on one screen before continuing to binary search ranking.
-- [x] Create a new "Search Books" tab in the navigation bar with book search functionality. The "+" button adds the book to the categorization page.
-- [x] Remove the "Add Book" buttons from the "My Books" tab - users now add books via the Search Books tab.
-- [x] Combine Search Books, Search Profiles, and Curated Lists into a single "Search" tab with radio buttons to switch between types. Curated lists selected by default.
-- [x] Hide "... 40 million books" when showing search results.
-- [x] Wording changes: placeholder text "Search books/profiles/curated lists...", removed "Search" header, renamed "My Profile" to "Profile", added "(visible in search)" next to publish toggle.
-- [x] "Which is better" screen: each book on its own line with clickable title link and author.
-- [x] "Which is better" screen: use rerank-style arrow buttons.
-- [x] Show "Add books via the search tab" message when user has no books.
-- [x] Make "books" the default search radio button.
-- [x] Update welcome page privacy text.
-- [x] Bold "Armchair" in navbar, add padding left and right.
-- [x] Change "Login/Signup" to "Login".
-- [x] Show user's existing book rank instead of "+" button in search results.
-- [x] Switch places of "My Books" and "Search" in navbar, rename "My Books" to "Lists".
-- [x] Add "Recs" nav entry with placeholder page showing "coming soon ...".
-- [x] Remove grey boxes from book search results, match Lists tab spacing.
-- [x] Show 10 random books from database when search is empty, change text to "... 40 million more books".
+# Completed Tasks
+
+- [x] Feature: Reviews - Added optional text reviews when adding books. Reviews are shown with a memo emoji that expands when clicked. Added "Review" button to edit existing reviews. Reviews included in CSV export.

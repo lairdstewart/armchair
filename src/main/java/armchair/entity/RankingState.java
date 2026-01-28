@@ -15,6 +15,7 @@ public class RankingState {
     private String googleBooksIdBeingRanked;
     private String titleBeingRanked;
     private String authorBeingRanked;
+    private String reviewBeingRanked;
 
     @Enumerated(EnumType.STRING)
     private BookType type;
@@ -28,6 +29,8 @@ public class RankingState {
 
     private boolean reRank;
     private boolean remove;
+    private boolean review;
+    private Long bookIdBeingReviewed;
 
     public RankingState() {}
 
@@ -75,6 +78,14 @@ public class RankingState {
 
     public void setAuthorBeingRanked(String authorBeingRanked) {
         this.authorBeingRanked = authorBeingRanked;
+    }
+
+    public String getReviewBeingRanked() {
+        return reviewBeingRanked;
+    }
+
+    public void setReviewBeingRanked(String reviewBeingRanked) {
+        this.reviewBeingRanked = reviewBeingRanked;
     }
 
     public BookType getType() {
@@ -131,5 +142,21 @@ public class RankingState {
 
     public void setRemove(boolean remove) {
         this.remove = remove;
+    }
+
+    public boolean isReview() {
+        return review;
+    }
+
+    public void setReview(boolean review) {
+        this.review = review;
+    }
+
+    public Long getBookIdBeingReviewed() {
+        return bookIdBeingReviewed;
+    }
+
+    public void setBookIdBeingReviewed(Long bookIdBeingReviewed) {
+        this.bookIdBeingReviewed = bookIdBeingReviewed;
     }
 }

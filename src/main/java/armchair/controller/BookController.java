@@ -33,7 +33,7 @@ import java.util.Map;
 
 @Controller
 public class BookController {
-    public record BookInfo(Long id, String googleBooksId, String title, String author) {}
+    public record BookInfo(Long id, String googleBooksId, String title, String author, String review) {}
     public record BookLists(List<BookInfo> liked, List<BookInfo> ok, List<BookInfo> disliked) {}
     public record ProfileDisplay(String username, String stats) {}
     public record UserBookRank(int rank, String category, String type) {}
@@ -43,7 +43,8 @@ public class BookController {
         CATEGORIZE,
         RANK,
         RE_RANK,
-        REMOVE;
+        REMOVE,
+        REVIEW;
     }
 
     private static final String SESSION_GUEST_USER_ID = "guestUserId";
@@ -201,14 +202,34 @@ public class BookController {
             model.addAttribute("mode", Mode.LIST);
             model.addAttribute("rerankType", rankingState.getType().name());
             model.addAttribute("removeType", null);
+            model.addAttribute("reviewType", null);
         } else if (mode == Mode.REMOVE) {
             model.addAttribute("mode", Mode.LIST);
             model.addAttribute("rerankType", null);
             model.addAttribute("removeType", rankingState.getType().name());
+            model.addAttribute("reviewType", null);
+        } else if (mode == Mode.REVIEW && rankingState.getBookIdBeingReviewed() == null) {
+            // Review mode but no book selected yet - show LIST with review type
+            model.addAttribute("mode", Mode.LIST);
+            model.addAttribute("rerankType", null);
+            model.addAttribute("removeType", null);
+            model.addAttribute("reviewType", rankingState.getType().name());
+        } else if (mode == Mode.REVIEW) {
+            // Review mode with book selected - show REVIEW screen
+            model.addAttribute("mode", mode);
+            model.addAttribute("rerankType", null);
+            model.addAttribute("removeType", null);
+            model.addAttribute("reviewType", null);
+            // Load the book being reviewed
+            Book bookBeingReviewed = bookRepository.findById(rankingState.getBookIdBeingReviewed()).orElse(null);
+            if (bookBeingReviewed != null) {
+                model.addAttribute("reviewBook", bookBeingReviewed);
+            }
         } else {
             model.addAttribute("mode", mode);
             model.addAttribute("rerankType", null);
             model.addAttribute("removeType", null);
+            model.addAttribute("reviewType", null);
         }
 
         if (rankingState != null && mode == Mode.RANK && rankingState.getTitleBeingRanked() != null) {
@@ -228,12 +249,18 @@ public class BookController {
         if (rankingState == null) {
             return Mode.LIST;
         }
+        if (rankingState.isReview() && rankingState.getBookIdBeingReviewed() != null) {
+            return Mode.REVIEW;
+        }
         if (rankingState.getTitleBeingRanked() == null) {
             if (rankingState.isReRank()) {
                 return Mode.RE_RANK;
             }
             if (rankingState.isRemove()) {
                 return Mode.REMOVE;
+            }
+            if (rankingState.isReview()) {
+                return Mode.REVIEW;
             }
             // No longer using ADD mode - orphaned RankingStates show LIST
             return Mode.LIST;
@@ -246,17 +273,17 @@ public class BookController {
 
     private BookLists getBookLists(BookType type, Long userId) {
         List<BookInfo> liked = bookRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(userId, type, BookCategory.LIKED)
-            .stream().map(b -> new BookInfo(b.getId(), b.getGoogleBooksId(), b.getTitle(), b.getAuthor())).toList();
+            .stream().map(b -> new BookInfo(b.getId(), b.getGoogleBooksId(), b.getTitle(), b.getAuthor(), b.getReview())).toList();
         List<BookInfo> ok = bookRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(userId, type, BookCategory.OK)
-            .stream().map(b -> new BookInfo(b.getId(), b.getGoogleBooksId(), b.getTitle(), b.getAuthor())).toList();
+            .stream().map(b -> new BookInfo(b.getId(), b.getGoogleBooksId(), b.getTitle(), b.getAuthor(), b.getReview())).toList();
         List<BookInfo> disliked = bookRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(userId, type, BookCategory.DISLIKED)
-            .stream().map(b -> new BookInfo(b.getId(), b.getGoogleBooksId(), b.getTitle(), b.getAuthor())).toList();
+            .stream().map(b -> new BookInfo(b.getId(), b.getGoogleBooksId(), b.getTitle(), b.getAuthor(), b.getReview())).toList();
         return new BookLists(liked, ok, disliked);
     }
 
     private String generateCsv(Long userId) {
         StringBuilder csv = new StringBuilder();
-        csv.append("Rank,Title,Author,Category,Type\n");
+        csv.append("Rank,Title,Author,Category,Type,Review\n");
 
         int rank = 1;
 
@@ -271,7 +298,8 @@ public class BookController {
                     csv.append("\"").append(escapeCsv(book.getTitle())).append("\",");
                     csv.append("\"").append(escapeCsv(book.getAuthor())).append("\",");
                     csv.append("\"").append(category.getValue()).append("\",");
-                    csv.append("\"").append(type.getValue()).append("\"\n");
+                    csv.append("\"").append(type.getValue()).append("\",");
+                    csv.append("\"").append(escapeCsv(book.getReview())).append("\"\n");
                 }
             }
         }
@@ -315,7 +343,7 @@ public class BookController {
         if (newLowIndex > newHighIndex) {
             // Found the insertion position - insert the book
             insertBookAtPosition(rankingState.getGoogleBooksIdBeingRanked(), rankingState.getTitleBeingRanked(), rankingState.getAuthorBeingRanked(),
-                rankingState.getType(), rankingState.getCategory(), newLowIndex, userId);
+                rankingState.getReviewBeingRanked(), rankingState.getType(), rankingState.getCategory(), newLowIndex, userId);
             rankingStateRepository.deleteById(userId);
             // Clear search results
             session.removeAttribute("bookSearchResults");
@@ -331,7 +359,7 @@ public class BookController {
         return "redirect:/my-books";
     }
 
-    private void insertBookAtPosition(String googleBooksId, String title, String author, BookType type, BookCategory category, int position, Long userId) {
+    private void insertBookAtPosition(String googleBooksId, String title, String author, String review, BookType type, BookCategory category, int position, Long userId) {
         // Shift all books at or after the insertion position
         List<Book> booksToShift = bookRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(
             userId, type, category
@@ -344,6 +372,7 @@ public class BookController {
 
         // Insert the new book
         Book newBook = new Book(userId, googleBooksId, title, author, type, category, position);
+        newBook.setReview(review);
         bookRepository.save(newBook);
     }
 
@@ -459,6 +488,72 @@ public class BookController {
         return "redirect:/my-books";
     }
 
+    @PostMapping("/start-review")
+    public String startReview(@RequestParam String type, HttpSession session) {
+        Long userId = getCurrentUserId(session);
+        if (userId == null) {
+            return "redirect:/setup-username";
+        }
+        BookType bookType = BookType.fromString(type);
+        RankingState rankingState = new RankingState(userId, null, null, null, bookType, null, 0, 0, 0);
+        rankingState.setReview(true);
+        rankingStateRepository.save(rankingState);
+        return "redirect:/my-books";
+    }
+
+    @PostMapping("/select-review-book")
+    public String selectReviewBook(@RequestParam Long bookId, HttpSession session) {
+        Long userId = getCurrentUserId(session);
+        if (userId == null) {
+            return "redirect:/setup-username";
+        }
+
+        // Find the book and verify it belongs to this user
+        Book book = bookRepository.findById(bookId).orElse(null);
+        if (book == null || !book.getUserId().equals(userId)) {
+            return "redirect:/my-books";
+        }
+
+        // Verify we're in review mode
+        RankingState rankingState = rankingStateRepository.findById(userId).orElse(null);
+        if (rankingState == null || !rankingState.isReview()) {
+            return "redirect:/my-books";
+        }
+
+        // Set the book being reviewed
+        rankingState.setBookIdBeingReviewed(bookId);
+        rankingStateRepository.save(rankingState);
+
+        return "redirect:/my-books";
+    }
+
+    @PostMapping("/save-review")
+    public String saveReview(@RequestParam(required = false) String review, HttpSession session) {
+        Long userId = getCurrentUserId(session);
+        if (userId == null) {
+            return "redirect:/setup-username";
+        }
+
+        RankingState rankingState = rankingStateRepository.findById(userId).orElse(null);
+        if (rankingState == null || !rankingState.isReview() || rankingState.getBookIdBeingReviewed() == null) {
+            return "redirect:/my-books";
+        }
+
+        // Find the book and update its review
+        Book book = bookRepository.findById(rankingState.getBookIdBeingReviewed()).orElse(null);
+        if (book != null && book.getUserId().equals(userId)) {
+            // Trim review and treat empty as null
+            String trimmedReview = (review != null && !review.isBlank()) ? review.trim() : null;
+            book.setReview(trimmedReview);
+            bookRepository.save(book);
+        }
+
+        // Clear the ranking state
+        rankingStateRepository.deleteById(userId);
+
+        return "redirect:/my-books";
+    }
+
     @GetMapping("/search-books")
     public String showSearchBooks(Model model, HttpSession session) {
         getCurrentUserId(session);
@@ -531,6 +626,7 @@ public class BookController {
     @PostMapping("/categorize")
     public String categorizeBook(@RequestParam String type,
                                   @RequestParam String category,
+                                  @RequestParam(required = false) String review,
                                   HttpSession session) {
         Long userId = getCurrentUserId(session);
         if (userId == null) {
@@ -544,6 +640,8 @@ public class BookController {
         String googleBooksId = rankingState.getGoogleBooksIdBeingRanked();
         String bookName = rankingState.getTitleBeingRanked();
         String author = rankingState.getAuthorBeingRanked();
+        // Trim review and treat empty as null
+        String trimmedReview = (review != null && !review.isBlank()) ? review.trim() : null;
 
         BookType bookType = BookType.fromString(type);
         BookCategory bookCategory = BookCategory.fromString(category);
@@ -554,6 +652,7 @@ public class BookController {
         if (currentList.isEmpty()) {
             // Category is empty, insert at the start
             Book newBook = new Book(userId, googleBooksId, bookName, author, bookType, bookCategory, 0);
+            newBook.setReview(trimmedReview);
             bookRepository.save(newBook);
             rankingStateRepository.deleteById(userId);
             // Clear search results
@@ -566,6 +665,7 @@ public class BookController {
             rankingState.setGoogleBooksIdBeingRanked(googleBooksId);
             rankingState.setTitleBeingRanked(bookName);
             rankingState.setAuthorBeingRanked(author);
+            rankingState.setReviewBeingRanked(trimmedReview);
             rankingState.setType(bookType);
             rankingState.setCategory(bookCategory);
             rankingState.setCompareToIndex(compareToIndex);
