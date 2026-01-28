@@ -207,9 +207,19 @@ input:checked + .slider:before {
   display: none;
 }
 
-.memo-icon {
+.review-toggle {
   margin-left: 4px;
   cursor: pointer;
+  color: #888;
+  text-decoration: none;
+}
+
+.review-toggle::after {
+  content: "[+]";
+}
+
+details[open] .review-toggle::after {
+  content: "[-]";
 }
 
 .review-text {
