@@ -20,8 +20,8 @@
 
       <!-- Books results -->
       <div th:if="${searchType == 'books'}">
-        <div th:if="${bookResults != null && !bookResults.isEmpty()}">
-          <div th:each="book : ${bookResults}">
+        <ol th:if="${bookResults != null && !bookResults.isEmpty()}" style="list-style: none; padding-left: 0;">
+          <li th:each="book : ${bookResults}">
             <span th:if="${userBooks != null && userBooks.containsKey(book.googleBooksId())}"
                   th:class="${'book-number ' + userBooks.get(book.googleBooksId()).category()}"
                   th:text="${userBooks.get(book.googleBooksId()).rank()}"></span>
@@ -33,8 +33,8 @@
             </form>
             <a th:href="${'https://books.google.com/books?id=' + book.googleBooksId()}" target="_blank" th:text="${book.title()}"></a>
             <span th:if="${book.author() != null && !book.author().isBlank()}" th:text="${', ' + book.author()}"></span>
-          </div>
-        </div>
+          </li>
+        </ol>
         <p>... 40 million more books</p>
       </div>
 
