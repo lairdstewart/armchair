@@ -23,3 +23,6 @@
 - [x] "Which is better" screen: use rerank-style arrow buttons.
 - [x] Show "Add books via the search tab" message when user has no books.
 - [x] Make "books" the default search radio button.
+- [x] Update welcome page privacy text.
+- [x] Bold "Armchair" in navbar, add padding left and right.
+- [x] Change "Login/Signup" to "Login".
