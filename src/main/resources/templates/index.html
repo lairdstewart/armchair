@@ -165,18 +165,18 @@
       <div th:case="'RANK'">
         <h3>Which is better?</h3>
         <form th:action="@{/choose}" method="POST">
-          <button
-            type="submit"
-            name="choice"
-            value="new"
-            th:text="${rankingState.titleBeingRanked}"
-          ></button>
-          <button
-            type="submit"
-            name="choice"
-            value="existing"
-            th:text="${comparisonBook}"
-          ></button>
+          <div style="margin-bottom: 10px;">
+            <button type="submit" name="choice" value="new" style="margin-right: 10px;">^</button>
+            <a th:if="${rankingState.googleBooksIdBeingRanked != null}" th:href="${'https://books.google.com/books?id=' + rankingState.googleBooksIdBeingRanked}" target="_blank" th:text="${rankingState.titleBeingRanked}"></a>
+            <span th:if="${rankingState.googleBooksIdBeingRanked == null}" th:text="${rankingState.titleBeingRanked}"></span>
+            <span th:if="${rankingState.authorBeingRanked != null && !rankingState.authorBeingRanked.isBlank()}" th:text="${', ' + rankingState.authorBeingRanked}"></span>
+          </div>
+          <div>
+            <button type="submit" name="choice" value="existing" style="margin-right: 10px;">^</button>
+            <a th:if="${comparisonBookGoogleId != null}" th:href="${'https://books.google.com/books?id=' + comparisonBookGoogleId}" target="_blank" th:text="${comparisonBookTitle}"></a>
+            <span th:if="${comparisonBookGoogleId == null}" th:text="${comparisonBookTitle}"></span>
+            <span th:if="${comparisonBookAuthor != null && !comparisonBookAuthor.isBlank()}" th:text="${', ' + comparisonBookAuthor}"></span>
+          </div>
         </form>
       </div>
     </div>

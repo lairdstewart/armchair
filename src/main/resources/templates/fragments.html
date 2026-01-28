@@ -12,7 +12,7 @@
         <a href="/search" class="navbar-link">Search</a>
       </div>
       <div class="navbar-right">
-        <a th:if="${isLoggedIn}" href="/my-profile" class="navbar-link">My Profile</a>
+        <a th:if="${isLoggedIn}" href="/my-profile" class="navbar-link">Profile</a>
         <a th:if="${!isLoggedIn}" href="/oauth2/authorization/google" class="navbar-link">Login/Signup</a>
       </div>
     </div>

@@ -17,8 +17,9 @@
       <form th:action="@{/toggle-publish-lists}" method="POST" style="display: inline;">
         <label>
           <input type="checkbox" th:checked="${publishLists}" onchange="this.form.submit()" />
-          Publish my lists (visible in Search Profiles)
+          Publish my lists
         </label>
+        <span>(visible in search)</span>
       </form>
     </div>
 

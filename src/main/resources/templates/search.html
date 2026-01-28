@@ -7,15 +7,13 @@
   <body>
     <div th:replace="~{fragments :: navbar}"></div>
     <div class="page-content">
-      <h2>Search</h2>
-
       <form th:action="@{/search}" method="GET" style="margin-bottom: 20px;">
         <div style="margin-bottom: 15px;">
           <label><input type="radio" name="type" value="books" th:checked="${searchType == 'books'}" onchange="this.form.submit()" /> Books</label>
           <label style="margin-left: 15px;"><input type="radio" name="type" value="profiles" th:checked="${searchType == 'profiles'}" onchange="this.form.submit()" /> Profiles</label>
           <label style="margin-left: 15px;"><input type="radio" name="type" value="curated" th:checked="${searchType == 'curated'}" onchange="this.form.submit()" /> Curated Lists</label>
         </div>
-        <input type="text" name="query" th:placeholder="${searchType == 'books' ? 'Search for a book...' : (searchType == 'profiles' ? 'Search usernames...' : 'Search curated lists...')}"
+        <input type="text" name="query" th:placeholder="${searchType == 'books' ? 'Search books...' : (searchType == 'profiles' ? 'Search profiles...' : 'Search curated lists...')}"
                th:value="${query}" autofocus style="width: 200px;" />
         <button type="submit">Search</button>
       </form>
@@ -34,7 +32,7 @@
             </form>
           </div>
         </div>
-        <p>... 40 million books</p>
+        <p th:if="${bookResults == null || bookResults.isEmpty()}">... 40 million books</p>
       </div>
 
       <!-- Profiles results -->

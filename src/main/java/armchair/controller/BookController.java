@@ -212,7 +212,10 @@ public class BookController {
             List<Book> currentList = bookRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(
                 userId, rankingState.getType(), rankingState.getCategory()
             );
-            model.addAttribute("comparisonBook", currentList.get(rankingState.getCompareToIndex()).getTitle());
+            Book compBook = currentList.get(rankingState.getCompareToIndex());
+            model.addAttribute("comparisonBookTitle", compBook.getTitle());
+            model.addAttribute("comparisonBookAuthor", compBook.getAuthor());
+            model.addAttribute("comparisonBookGoogleId", compBook.getGoogleBooksId());
         }
 
         return "index";

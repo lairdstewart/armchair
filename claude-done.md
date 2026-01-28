@@ -17,3 +17,6 @@
 - [x] Create a new "Search Books" tab in the navigation bar with book search functionality. The "+" button adds the book to the categorization page.
 - [x] Remove the "Add Book" buttons from the "My Books" tab - users now add books via the Search Books tab.
 - [x] Combine Search Books, Search Profiles, and Curated Lists into a single "Search" tab with radio buttons to switch between types. Curated lists selected by default.
+- [x] Hide "... 40 million books" when showing search results.
+- [x] Wording changes: placeholder text "Search books/profiles/curated lists...", removed "Search" header, renamed "My Profile" to "Profile", added "(visible in search)" next to publish toggle.
+- [x] "Which is better" screen: each book on its own line with clickable title link and author.
