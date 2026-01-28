@@ -28,6 +28,7 @@ public class Book {
 
     private Integer position; // rank within the type+category list
 
+    @jakarta.persistence.Column(columnDefinition = "TEXT")
     private String review; // optional user review
 
     public Book() {}
