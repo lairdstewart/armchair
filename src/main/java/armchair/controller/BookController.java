@@ -719,6 +719,13 @@ public class BookController {
         return "curated";
     }
 
+    @GetMapping("/recs")
+    public String showRecs(Model model, HttpSession session) {
+        getCurrentUserId(session);
+        addNavigationAttributes(model, "recs");
+        return "recs";
+    }
+
     @GetMapping("/user/{username}")
     public String viewUser(@PathVariable String username, Model model, HttpSession session) {
         getCurrentUserId(session);

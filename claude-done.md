@@ -27,3 +27,5 @@
 - [x] Bold "Armchair" in navbar, add padding left and right.
 - [x] Change "Login/Signup" to "Login".
 - [x] Show user's existing book rank instead of "+" button in search results.
+- [x] Switch places of "My Books" and "Search" in navbar, rename "My Books" to "Lists".
+- [x] Add "Recs" nav entry with placeholder page showing "coming soon ...".
