@@ -20,7 +20,7 @@
     </div>
 
     <div th:fragment="bookLists(fictionBooks, nonfictionBooks)" style="display: flex; gap: 40px">
-      <div style="flex: 1">
+      <div th:if="${!fictionBooks.liked().isEmpty() || !fictionBooks.ok().isEmpty() || !fictionBooks.disliked().isEmpty()}" style="flex: 1">
         <h3>Fiction</h3>
         <ol>
           <li th:each="book, iter : ${fictionBooks.liked()}">
@@ -77,7 +77,7 @@
         </ol>
       </div>
 
-      <div style="flex: 1">
+      <div th:if="${!nonfictionBooks.liked().isEmpty() || !nonfictionBooks.ok().isEmpty() || !nonfictionBooks.disliked().isEmpty()}" style="flex: 1">
         <h3>Non-Fiction</h3>
         <ol>
           <li th:each="book, iter : ${nonfictionBooks.liked()}">
