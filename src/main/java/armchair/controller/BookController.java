@@ -27,13 +27,16 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Controller
 public class BookController {
     public record BookInfo(Long id, String googleBooksId, String title, String author) {}
     public record BookLists(List<BookInfo> liked, List<BookInfo> ok, List<BookInfo> disliked) {}
     public record ProfileDisplay(String username, String stats) {}
+    public record UserBookRank(int rank, String category, String type) {}
 
     private enum Mode {
         LIST,
@@ -606,6 +609,13 @@ public class BookController {
             if (query != null && !query.isBlank()) {
                 List<GoogleBooksService.BookResult> results = googleBooksService.searchBooks(query);
                 model.addAttribute("bookResults", results);
+
+                // Build map of user's existing books for display
+                Long userId = getCurrentUserId(session);
+                if (userId != null) {
+                    Map<String, UserBookRank> userBooks = buildUserBooksMap(userId);
+                    model.addAttribute("userBooks", userBooks);
+                }
             }
         } else if ("profiles".equals(type)) {
             if (query != null && !query.isBlank()) {
@@ -662,6 +672,25 @@ public class BookController {
         }
 
         return "explore";
+    }
+
+    private Map<String, UserBookRank> buildUserBooksMap(Long userId) {
+        Map<String, UserBookRank> userBooks = new HashMap<>();
+
+        for (BookType bookType : BookType.values()) {
+            int rank = 1;
+            for (BookCategory category : BookCategory.values()) {
+                List<Book> books = bookRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(userId, bookType, category);
+                for (Book book : books) {
+                    if (book.getGoogleBooksId() != null) {
+                        userBooks.put(book.getGoogleBooksId(), new UserBookRank(rank, category.name().toLowerCase(), bookType.name().toLowerCase()));
+                    }
+                    rank++;
+                }
+            }
+        }
+
+        return userBooks;
     }
 
     private ProfileDisplay createProfileDisplay(User user) {
