@@ -594,7 +594,7 @@ public class BookController {
     }
 
     @GetMapping("/search")
-    public String showUnifiedSearch(@RequestParam(required = false, defaultValue = "curated") String type,
+    public String showUnifiedSearch(@RequestParam(required = false, defaultValue = "books") String type,
                                      @RequestParam(required = false) String query,
                                      Model model, HttpSession session) {
         getCurrentUserId(session);

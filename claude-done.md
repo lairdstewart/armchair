@@ -20,3 +20,6 @@
 - [x] Hide "... 40 million books" when showing search results.
 - [x] Wording changes: placeholder text "Search books/profiles/curated lists...", removed "Search" header, renamed "My Profile" to "Profile", added "(visible in search)" next to publish toggle.
 - [x] "Which is better" screen: each book on its own line with clickable title link and author.
+- [x] "Which is better" screen: use rerank-style arrow buttons.
+- [x] Show "Add books via the search tab" message when user has no books.
+- [x] Make "books" the default search radio button.
