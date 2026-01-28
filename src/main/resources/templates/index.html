@@ -104,7 +104,7 @@
             </ol>
 
             <div style="display: flex; gap: 10px;">
-              <form th:if="${rerankType != 'FICTION' && removeType != 'FICTION' && reviewType != 'FICTION' && (!fictionBooks.liked().isEmpty() || !fictionBooks.ok().isEmpty() || !fictionBooks.disliked().isEmpty())}" th:action="@{/start-rerank}" method="POST">
+              <form th:if="${rerankType != 'FICTION' && removeType != 'FICTION' && reviewType != 'FICTION' && (fictionBooks.liked().size() + fictionBooks.ok().size() + fictionBooks.disliked().size() > 1)}" th:action="@{/start-rerank}" method="POST">
                 <input type="hidden" name="type" value="fiction" />
                 <button type="submit">Re-Rank</button>
               </form>
@@ -215,7 +215,7 @@
             </ol>
 
             <div style="display: flex; gap: 10px;">
-              <form th:if="${rerankType != 'NONFICTION' && removeType != 'NONFICTION' && reviewType != 'NONFICTION' && (!nonfictionBooks.liked().isEmpty() || !nonfictionBooks.ok().isEmpty() || !nonfictionBooks.disliked().isEmpty())}" th:action="@{/start-rerank}" method="POST">
+              <form th:if="${rerankType != 'NONFICTION' && removeType != 'NONFICTION' && reviewType != 'NONFICTION' && (nonfictionBooks.liked().size() + nonfictionBooks.ok().size() + nonfictionBooks.disliked().size() > 1)}" th:action="@{/start-rerank}" method="POST">
                 <input type="hidden" name="type" value="nonfiction" />
                 <button type="submit">Re-Rank</button>
               </form>
