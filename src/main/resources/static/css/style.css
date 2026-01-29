@@ -263,7 +263,7 @@ details[open] .review-toggle::after {
 
 /* Book action styles for search results */
 .book-action-text {
-  margin-left: 4px;
+  margin-left: 1em;
   color: #888;
 }
 
@@ -274,7 +274,10 @@ details[open] .review-toggle::after {
   font: inherit;
   cursor: pointer;
   padding: 0;
-  margin-left: 4px;
+}
+
+.book-action-link:first-of-type {
+  margin-left: 1em;
 }
 
 .book-action-link:hover {

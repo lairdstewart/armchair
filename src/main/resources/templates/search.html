@@ -123,7 +123,7 @@
       <!-- Curated lists results -->
       <div th:if="${searchType == 'curated'}">
         <div th:if="${curatedResults != null && !curatedResults.isEmpty()}">
-          <div th:each="user : ${curatedResults}">
+          <div th:each="user : ${curatedResults}" style="margin-bottom: 4px;">
             <a th:href="@{/user/{username}(username=${user.username})}" th:text="${user.username}"></a>
           </div>
         </div>
