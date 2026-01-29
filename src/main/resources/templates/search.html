@@ -33,7 +33,7 @@
                   class="book-action-text" th:text="${'[#' + userBooks.get(book.googleBooksId()).rank() + ']'}"></span>
             <!-- Already bookmarked -->
             <span th:if="${userBooks != null && userBooks.containsKey(book.googleBooksId()) && userBooks.get(book.googleBooksId()).category() == 'want_to_read'}"
-                  class="book-action-text">[bookmarked]</span>
+                  class="book-action-text">[want to read]</span>
             <!-- Not in library - show action links -->
             <span th:if="${userBooks == null || !userBooks.containsKey(book.googleBooksId())}" class="book-actions">
               <form th:action="@{/select-book}" method="POST" style="display: inline;">
@@ -46,7 +46,7 @@
                 <input type="hidden" name="googleBooksId" th:value="${book.googleBooksId()}" />
                 <input type="hidden" name="bookName" th:value="${book.title()}" />
                 <input type="hidden" name="author" th:value="${book.author()}" />
-                <button type="submit" class="book-action-link">[bookmark]</button>
+                <button type="submit" class="book-action-link">[want to read]</button>
               </form>
             </span>
           </li>
@@ -57,22 +57,20 @@
       <!-- Profiles results -->
       <div th:if="${searchType == 'profiles'}">
         <div th:if="${profileResults != null && !profileResults.isEmpty()}">
-          <div th:each="profile : ${profileResults}" style="display: flex; align-items: center; margin-bottom: 4px;">
-            <!-- Follow button (grey +) -->
-            <form th:if="${canFollow && !profile.isFollowing()}" th:action="@{/follow}" method="POST" style="display: inline; margin: 0; margin-right: 8px;">
+          <div th:each="profile : ${profileResults}" style="margin-bottom: 4px;">
+            <a th:href="@{/user/{username}(username=${profile.username()})}" th:text="${profile.username()}"></a>
+            <span th:text="${' ' + profile.stats()}"></span>
+            <form th:if="${canFollow && !profile.isFollowing()}" th:action="@{/follow}" method="POST" style="display: inline;" class="book-actions">
               <input type="hidden" name="userId" th:value="${profile.userId()}" />
               <input type="hidden" name="returnUrl" th:value="${'/search?type=profiles' + (query != null ? '&query=' + query : '')}" />
-              <button type="submit" class="follow-btn">+</button>
+              <button type="submit" class="book-action-link">[follow]</button>
             </form>
-            <!-- Following indicator (green checkmark) -->
-            <form th:if="${canFollow && profile.isFollowing()}" th:action="@{/unfollow}" method="POST" style="display: inline; margin: 0; margin-right: 8px;"
+            <form th:if="${canFollow && profile.isFollowing()}" th:action="@{/unfollow}" method="POST" style="display: inline;" class="book-actions"
                   onsubmit="return confirm('Are you sure you want to unfollow this user?');">
               <input type="hidden" name="userId" th:value="${profile.userId()}" />
               <input type="hidden" name="returnUrl" th:value="${'/search?type=profiles' + (query != null ? '&query=' + query : '')}" />
-              <button type="submit" class="follow-btn following">&#x2713;</button>
+              <button type="submit" class="book-action-link">[unfollow]</button>
             </form>
-            <a th:href="@{/user/{username}(username=${profile.username()})}" th:text="${profile.username()}"></a>
-            <span th:text="${' ' + profile.stats()}"></span>
           </div>
         </div>
         <p th:if="${profileResults == null || profileResults.isEmpty()}">No profiles found.</p>
@@ -82,16 +80,15 @@
       <!-- Following results -->
       <div th:if="${searchType == 'following'}">
         <div th:if="${profileResults != null && !profileResults.isEmpty()}">
-          <div th:each="profile : ${profileResults}" style="display: flex; align-items: center; margin-bottom: 4px;">
-            <!-- Following indicator (green checkmark) with unfollow -->
-            <form th:if="${canFollow}" th:action="@{/unfollow}" method="POST" style="display: inline; margin: 0; margin-right: 8px;"
+          <div th:each="profile : ${profileResults}" style="margin-bottom: 4px;">
+            <a th:href="@{/user/{username}(username=${profile.username()})}" th:text="${profile.username()}"></a>
+            <span th:text="${' ' + profile.stats()}"></span>
+            <form th:if="${canFollow}" th:action="@{/unfollow}" method="POST" style="display: inline;" class="book-actions"
                   onsubmit="return confirm('Are you sure you want to unfollow this user?');">
               <input type="hidden" name="userId" th:value="${profile.userId()}" />
               <input type="hidden" name="returnUrl" value="/search?type=following" />
-              <button type="submit" class="follow-btn following">&#x2713;</button>
+              <button type="submit" class="book-action-link">[unfollow]</button>
             </form>
-            <a th:href="@{/user/{username}(username=${profile.username()})}" th:text="${profile.username()}"></a>
-            <span th:text="${' ' + profile.stats()}"></span>
           </div>
         </div>
         <p th:if="${profileResults == null || profileResults.isEmpty()}">You're not following anyone yet.</p>
@@ -100,21 +97,20 @@
       <!-- Followers results -->
       <div th:if="${searchType == 'followers'}">
         <div th:if="${profileResults != null && !profileResults.isEmpty()}">
-          <div th:each="profile : ${profileResults}" style="display: flex; align-items: center; margin-bottom: 4px;">
-            <!-- Follow back button (grey + if not following, green check if following) -->
-            <form th:if="${canFollow && !profile.isFollowing()}" th:action="@{/follow}" method="POST" style="display: inline; margin: 0; margin-right: 8px;">
+          <div th:each="profile : ${profileResults}" style="margin-bottom: 4px;">
+            <a th:href="@{/user/{username}(username=${profile.username()})}" th:text="${profile.username()}"></a>
+            <span th:text="${' ' + profile.stats()}"></span>
+            <form th:if="${canFollow && !profile.isFollowing()}" th:action="@{/follow}" method="POST" style="display: inline;" class="book-actions">
               <input type="hidden" name="userId" th:value="${profile.userId()}" />
               <input type="hidden" name="returnUrl" value="/search?type=followers" />
-              <button type="submit" class="follow-btn">+</button>
+              <button type="submit" class="book-action-link">[follow]</button>
             </form>
-            <form th:if="${canFollow && profile.isFollowing()}" th:action="@{/unfollow}" method="POST" style="display: inline; margin: 0; margin-right: 8px;"
+            <form th:if="${canFollow && profile.isFollowing()}" th:action="@{/unfollow}" method="POST" style="display: inline;" class="book-actions"
                   onsubmit="return confirm('Are you sure you want to unfollow this user?');">
               <input type="hidden" name="userId" th:value="${profile.userId()}" />
               <input type="hidden" name="returnUrl" value="/search?type=followers" />
-              <button type="submit" class="follow-btn following">&#x2713;</button>
+              <button type="submit" class="book-action-link">[unfollow]</button>
             </form>
-            <a th:href="@{/user/{username}(username=${profile.username()})}" th:text="${profile.username()}"></a>
-            <span th:text="${' ' + profile.stats()}"></span>
           </div>
         </div>
         <p th:if="${profileResults == null || profileResults.isEmpty()}">You don't have any followers yet.</p>
