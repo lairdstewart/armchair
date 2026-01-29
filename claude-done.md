@@ -27,3 +27,4 @@
 - [x] Pre-populate review text when re-ranking a book that already has a review.
 - [x] Prevent unpublished users from following - shows alert explaining they need to publish their lists first.
 - [x] Bold the current tab in navigation bar (except "Armchair" unless on that page).
+- [x] Reworded privacy section to: "Armchair is not given your email, profile picture, or account data."
