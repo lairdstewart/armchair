@@ -899,21 +899,22 @@ public class BookController {
         model.addAttribute("query", query);
 
         if ("books".equals(type)) {
+            Long userId = getCurrentUserId(session);
+            Map<String, UserBookRank> userBooks = userId != null ? buildUserBooksMap(userId) : Map.of();
+
             List<GoogleBooksService.BookResult> results;
             if (query != null && !query.isBlank()) {
                 results = googleBooksService.searchBooks(query);
             } else {
-                // Show 10 random books from database when search is empty
+                // Show 10 random books from database when search is empty, excluding user's books
                 results = bookRepository.findRandom10UniqueBooks().stream()
+                    .filter(b -> !userBooks.containsKey(b.getGoogleBooksId()))
                     .map(b -> new GoogleBooksService.BookResult(b.getGoogleBooksId(), b.getTitle(), b.getAuthor()))
                     .toList();
             }
             model.addAttribute("bookResults", results);
 
-            // Build map of user's existing books for display
-            Long userId = getCurrentUserId(session);
             if (userId != null) {
-                Map<String, UserBookRank> userBooks = buildUserBooksMap(userId);
                 model.addAttribute("userBooks", userBooks);
             }
         } else if ("profiles".equals(type)) {
