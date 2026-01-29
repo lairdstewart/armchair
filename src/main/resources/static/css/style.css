@@ -263,12 +263,12 @@ details[open] .review-toggle::after {
 
 /* Book action styles for search results */
 .book-action-text {
-  margin-left: 1em;
+  margin-left: 0.5em;
   color: #888;
 }
 
 .book-actions {
-  margin-left: 1em;
+  margin-left: 0.5em;
 }
 
 .book-action-link {
