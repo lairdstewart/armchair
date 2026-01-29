@@ -566,6 +566,35 @@ public class BookController {
         return "redirect:/my-books";
     }
 
+    @PostMapping("/remove-from-reading-list")
+    public String removeFromReadingList(@RequestParam Long bookId, HttpSession session) {
+        Long userId = getCurrentUserId(session);
+        if (userId == null) {
+            return "redirect:/setup-username";
+        }
+
+        // Find the book and verify it belongs to this user and is in want-to-read
+        Book book = bookRepository.findById(bookId).orElse(null);
+        if (book == null || !book.getUserId().equals(userId) || book.getCategory() != BookCategory.WANT_TO_READ) {
+            return "redirect:/my-books?selectedType=WANT_TO_READ";
+        }
+
+        // Remove the book
+        int removedPosition = book.getPosition();
+        bookRepository.delete(book);
+
+        // Shift remaining books to fill the gap
+        List<Book> booksToShift = bookRepository.findByUserIdAndCategoryOrderByPositionAsc(userId, BookCategory.WANT_TO_READ);
+        for (Book b : booksToShift) {
+            if (b.getPosition() > removedPosition) {
+                b.setPosition(b.getPosition() - 1);
+                bookRepository.save(b);
+            }
+        }
+
+        return "redirect:/my-books?selectedType=WANT_TO_READ";
+    }
+
     @PostMapping("/select-remove-book")
     public String selectRemoveBook(@RequestParam Long bookId, HttpSession session) {
         Long userId = getCurrentUserId(session);
