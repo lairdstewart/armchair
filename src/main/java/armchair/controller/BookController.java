@@ -149,7 +149,7 @@ public class BookController {
     }
 
     @GetMapping("/my-books")
-    public String showPage(Model model, HttpSession session) {
+    public String showPage(Model model, HttpSession session, @RequestParam(required = false) String selectedType) {
         Long userId = getCurrentUserId(session);
 
         // If user is authenticated via OAuth but hasn't set up username, use guest mode for now
@@ -190,12 +190,28 @@ public class BookController {
 
         BookLists fictionBooks = getBookLists(BookType.FICTION, userId);
         BookLists nonfictionBooks = getBookLists(BookType.NONFICTION, userId);
-        boolean hasAnyBooks = !fictionBooks.liked().isEmpty() || !fictionBooks.ok().isEmpty() || !fictionBooks.disliked().isEmpty()
-            || !nonfictionBooks.liked().isEmpty() || !nonfictionBooks.ok().isEmpty() || !nonfictionBooks.disliked().isEmpty();
+        boolean hasFiction = !fictionBooks.liked().isEmpty() || !fictionBooks.ok().isEmpty() || !fictionBooks.disliked().isEmpty();
+        boolean hasNonfiction = !nonfictionBooks.liked().isEmpty() || !nonfictionBooks.ok().isEmpty() || !nonfictionBooks.disliked().isEmpty();
+        boolean hasAnyBooks = hasFiction || hasNonfiction;
+
+        // Determine selected type (default to fiction if both exist, otherwise the one that exists)
+        String effectiveSelectedType = selectedType;
+        if (effectiveSelectedType == null || effectiveSelectedType.isEmpty()) {
+            if (hasFiction) {
+                effectiveSelectedType = "FICTION";
+            } else if (hasNonfiction) {
+                effectiveSelectedType = "NONFICTION";
+            } else {
+                effectiveSelectedType = "FICTION"; // Default for empty state
+            }
+        }
 
         model.addAttribute("fictionBooks", fictionBooks);
         model.addAttribute("nonfictionBooks", nonfictionBooks);
+        model.addAttribute("hasFiction", hasFiction);
+        model.addAttribute("hasNonfiction", hasNonfiction);
         model.addAttribute("hasAnyBooks", hasAnyBooks);
+        model.addAttribute("selectedType", effectiveSelectedType);
         model.addAttribute("rankingState", rankingState);
 
         // For RE_RANK mode, show LIST view but with rerank type set
@@ -858,10 +874,14 @@ public class BookController {
 
         BookLists fictionBooks = getBookLists(BookType.FICTION, user.getId());
         BookLists nonfictionBooks = getBookLists(BookType.NONFICTION, user.getId());
+        boolean hasFiction = !fictionBooks.liked().isEmpty() || !fictionBooks.ok().isEmpty() || !fictionBooks.disliked().isEmpty();
+        boolean hasNonfiction = !nonfictionBooks.liked().isEmpty() || !nonfictionBooks.ok().isEmpty() || !nonfictionBooks.disliked().isEmpty();
 
         model.addAttribute("viewUsername", user.getUsername());
         model.addAttribute("fictionBooks", fictionBooks);
         model.addAttribute("nonfictionBooks", nonfictionBooks);
+        model.addAttribute("hasFiction", hasFiction);
+        model.addAttribute("hasNonfiction", hasNonfiction);
         model.addAttribute("isCurated", user.isCurated());
 
         return "view-user";
