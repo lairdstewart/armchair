@@ -35,7 +35,7 @@
             <span th:if="${userBooks != null && userBooks.containsKey(book.googleBooksId()) && userBooks.get(book.googleBooksId()).category() == 'want_to_read'}"
                   class="book-action-text">[bookmarked]</span>
             <!-- Not in library - show action links -->
-            <span th:if="${userBooks == null || !userBooks.containsKey(book.googleBooksId())}">
+            <span th:if="${userBooks == null || !userBooks.containsKey(book.googleBooksId())}" class="book-actions">
               <form th:action="@{/select-book}" method="POST" style="display: inline;">
                 <input type="hidden" name="googleBooksId" th:value="${book.googleBooksId()}" />
                 <input type="hidden" name="bookName" th:value="${book.title()}" />

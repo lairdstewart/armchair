@@ -267,6 +267,10 @@ details[open] .review-toggle::after {
   color: #888;
 }
 
+.book-actions {
+  margin-left: 1em;
+}
+
 .book-action-link {
   background: none;
   border: none;
@@ -274,10 +278,6 @@ details[open] .review-toggle::after {
   font: inherit;
   cursor: pointer;
   padding: 0;
-}
-
-.book-action-link:first-of-type {
-  margin-left: 1em;
 }
 
 .book-action-link:hover {
