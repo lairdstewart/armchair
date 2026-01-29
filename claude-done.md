@@ -23,3 +23,7 @@
 - [x] Always show all 3 radio buttons (Fiction, Non-Fiction, Want to Read) in Library tab, always enabled. Show "Add books via the search tab." for empty lists.
 - [x] Replace +/checkmark icons with [follow]/[unfollow] text links in profiles, following, and followers tabs.
 - [x] Add inline [review] [re-rank] [remove] links to each book in Fiction/Non-Fiction lists. Removed bottom Re-Rank/Remove/Review buttons. Removed unused CSS for +, ->, x button styles and follow button styles.
+- [x] Add browser confirmation prompt when removing books.
+- [x] Pre-populate review text when re-ranking a book that already has a review.
+- [x] Prevent unpublished users from following - shows alert explaining they need to publish their lists first.
+- [x] Bold the current tab in navigation bar (except "Armchair" unless on that page).
