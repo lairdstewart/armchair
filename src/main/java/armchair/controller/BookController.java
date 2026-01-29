@@ -892,9 +892,8 @@ public class BookController {
                 user.getId(), BookType.NONFICTION, category).size();
         }
 
-        String stats = String.format("%d fiction, %d non-fiction, Armchair user #%d",
-            fictionCount, nonfictionCount,
-            user.getSignupNumber() != null ? user.getSignupNumber() : 0);
+        String stats = String.format("| %d fiction | %d non-fiction",
+            fictionCount, nonfictionCount);
 
         return new ProfileDisplay(user.getUsername(), stats);
     }
@@ -909,9 +908,8 @@ public class BookController {
                 user.getId(), BookType.NONFICTION, category).size();
         }
 
-        String stats = String.format("%d fiction, %d non-fiction, Armchair user #%d",
-            fictionCount, nonfictionCount,
-            user.getSignupNumber() != null ? user.getSignupNumber() : 0);
+        String stats = String.format("| %d fiction | %d non-fiction",
+            fictionCount, nonfictionCount);
 
         boolean isFollowing = currentUserId != null && followRepository.existsByFollowerIdAndFollowedId(currentUserId, user.getId());
 
