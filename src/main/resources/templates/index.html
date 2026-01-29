@@ -9,23 +9,26 @@
     <div class="page-content">
     <div th:switch="${mode.name()}">
       <div th:case="'LIST'">
-        <p th:if="${!hasAnyBooks}">Add books via the search tab.</p>
-        <div th:if="${hasAnyBooks}">
-          <!-- Type selector radio buttons -->
-          <div style="margin-bottom: 15px;">
-            <label th:if="${hasFiction}">
-              <input type="radio" name="typeSelector" value="FICTION" th:checked="${selectedType == 'FICTION'}" onchange="window.location.href='/my-books?selectedType=FICTION'" />
-              Fiction
-            </label>
-            <label th:if="${hasNonfiction}" th:style="${hasFiction ? 'margin-left: 15px;' : ''}">
-              <input type="radio" name="typeSelector" value="NONFICTION" th:checked="${selectedType == 'NONFICTION'}" onchange="window.location.href='/my-books?selectedType=NONFICTION'" />
-              Non-Fiction
-            </label>
-            <label th:if="${hasWantToRead}" th:style="${hasFiction || hasNonfiction ? 'margin-left: 15px;' : ''}">
-              <input type="radio" name="typeSelector" value="WANT_TO_READ" th:checked="${selectedType == 'WANT_TO_READ'}" onchange="window.location.href='/my-books?selectedType=WANT_TO_READ'" />
-              Want to Read
-            </label>
-          </div>
+        <!-- Type selector radio buttons - always show all 3 -->
+        <div style="margin-bottom: 15px;">
+          <label>
+            <input type="radio" name="typeSelector" value="FICTION" th:checked="${selectedType == 'FICTION'}" onchange="window.location.href='/my-books?selectedType=FICTION'" />
+            Fiction
+          </label>
+          <label style="margin-left: 15px;">
+            <input type="radio" name="typeSelector" value="NONFICTION" th:checked="${selectedType == 'NONFICTION'}" onchange="window.location.href='/my-books?selectedType=NONFICTION'" />
+            Non-Fiction
+          </label>
+          <label style="margin-left: 15px;">
+            <input type="radio" name="typeSelector" value="WANT_TO_READ" th:checked="${selectedType == 'WANT_TO_READ'}" onchange="window.location.href='/my-books?selectedType=WANT_TO_READ'" />
+            Want to Read
+          </label>
+        </div>
+
+        <!-- Empty state message -->
+        <p th:if="${selectedType == 'FICTION' && !hasFiction}">Add books via the search tab.</p>
+        <p th:if="${selectedType == 'NONFICTION' && !hasNonfiction}">Add books via the search tab.</p>
+        <p th:if="${selectedType == 'WANT_TO_READ' && !hasWantToRead}">Add books via the search tab.</p>
 
           <!-- Fiction books list -->
           <div th:if="${selectedType == 'FICTION' && hasFiction}">
@@ -269,7 +272,6 @@
               </li>
             </ol>
           </div>
-        </div>
       </div>
       <div th:case="'CATEGORIZE'">
         <h3>Add <span th:text="${rankingState.titleBeingRanked}"></span></h3>
