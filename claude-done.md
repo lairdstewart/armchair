@@ -9,3 +9,4 @@
 - [x] Add Support section to welcome page.
 - [x] Hide empty Fiction/Non-Fiction sections in curated lists (view-user page).
 - [x] Hide Re-Rank button when list has only one book.
+- [x] Allow guest accounts to remove books (added /start-remove and /select-remove-book to security permit list).
