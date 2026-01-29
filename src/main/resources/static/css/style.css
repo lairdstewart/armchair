@@ -68,38 +68,6 @@ ol li form {
   border-color: #F44336;
 }
 
-.add-book-btn {
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  font-size: 18px;
-  font-weight: bold;
-  line-height: 1;
-  cursor: pointer;
-}
-
-button.book-number.rerank {
-  background-color: #E0E0E0;
-  border-color: #9E9E9E;
-  cursor: pointer;
-  font-size: 12px;
-  width: 26px;
-  height: 26px;
-  padding: 0;
-  box-sizing: content-box;
-}
-
-button.book-number.remove {
-  background-color: #E0E0E0;
-  border-color: #9E9E9E;
-  cursor: pointer;
-  font-size: 12px;
-  width: 26px;
-  height: 26px;
-  padding: 0;
-  box-sizing: content-box;
-}
-
 .navbar {
   background-color: #722F37;
   padding: 5px;
@@ -228,37 +196,6 @@ details[open] .review-toggle::after {
   margin-left: 0;
   padding: 8px 0;
   white-space: pre-wrap;
-}
-
-/* Follow button styles */
-.follow-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 26px;
-  height: 26px;
-  padding: 0;
-  border-radius: 4px;
-  font-size: 18px;
-  font-weight: bold;
-  cursor: pointer;
-  border-width: 2px;
-  border-style: solid;
-  box-sizing: content-box;
-  background-color: #E0E0E0;
-  border-color: #9E9E9E;
-  color: #666;
-}
-
-.follow-btn.following {
-  background-color: #E8F5E9;
-  border-color: #4CAF50;
-  color: #4CAF50;
-}
-
-.book-number.want_to_read {
-  background-color: #E0E0E0;
-  border-color: #9E9E9E;
 }
 
 /* Book action styles for search results */

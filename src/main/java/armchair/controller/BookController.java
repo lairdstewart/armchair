@@ -533,6 +533,92 @@ public class BookController {
         return "redirect:/my-books?selectedType=WANT_TO_READ";
     }
 
+    @PostMapping("/direct-review")
+    public String directReview(@RequestParam Long bookId, HttpSession session) {
+        Long userId = getCurrentUserId(session);
+        if (userId == null) {
+            return "redirect:/setup-username";
+        }
+
+        Book book = bookRepository.findById(bookId).orElse(null);
+        if (book == null || !book.getUserId().equals(userId)) {
+            return "redirect:/my-books";
+        }
+
+        // Set up review mode directly
+        RankingState rankingState = new RankingState(userId, null, null, null, book.getType(), null, 0, 0, 0);
+        rankingState.setReview(true);
+        rankingState.setBookIdBeingReviewed(bookId);
+        rankingStateRepository.save(rankingState);
+
+        return "redirect:/my-books";
+    }
+
+    @PostMapping("/direct-rerank")
+    public String directRerank(@RequestParam Long bookId, HttpSession session) {
+        Long userId = getCurrentUserId(session);
+        if (userId == null) {
+            return "redirect:/setup-username";
+        }
+
+        Book book = bookRepository.findById(bookId).orElse(null);
+        if (book == null || !book.getUserId().equals(userId)) {
+            return "redirect:/my-books";
+        }
+
+        // Store book info in ranking state
+        RankingState rankingState = new RankingState(userId, book.getGoogleBooksId(), book.getTitle(), book.getAuthor(), book.getType(), null, 0, 0, 0);
+        rankingState.setReRank(true);
+        rankingStateRepository.save(rankingState);
+
+        // Remove the book from its current position
+        BookType type = book.getType();
+        BookCategory category = book.getCategory();
+        int removedPosition = book.getPosition();
+        bookRepository.delete(book);
+
+        // Shift remaining books in that category to fill the gap
+        List<Book> booksToShift = bookRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(userId, type, category);
+        for (Book b : booksToShift) {
+            if (b.getPosition() > removedPosition) {
+                b.setPosition(b.getPosition() - 1);
+                bookRepository.save(b);
+            }
+        }
+
+        return "redirect:/my-books";
+    }
+
+    @PostMapping("/direct-remove")
+    public String directRemove(@RequestParam Long bookId, HttpSession session) {
+        Long userId = getCurrentUserId(session);
+        if (userId == null) {
+            return "redirect:/setup-username";
+        }
+
+        Book book = bookRepository.findById(bookId).orElse(null);
+        if (book == null || !book.getUserId().equals(userId)) {
+            return "redirect:/my-books";
+        }
+
+        BookType type = book.getType();
+        BookCategory category = book.getCategory();
+        int removedPosition = book.getPosition();
+        String selectedType = type != null ? type.name() : "FICTION";
+        bookRepository.delete(book);
+
+        // Shift remaining books in that category to fill the gap
+        List<Book> booksToShift = bookRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(userId, type, category);
+        for (Book b : booksToShift) {
+            if (b.getPosition() > removedPosition) {
+                b.setPosition(b.getPosition() - 1);
+                bookRepository.save(b);
+            }
+        }
+
+        return "redirect:/my-books?selectedType=" + selectedType;
+    }
+
     @PostMapping("/mark-as-read")
     public String markAsRead(@RequestParam Long bookId, HttpSession session) {
         Long userId = getCurrentUserId(session);
