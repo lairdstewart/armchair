@@ -253,7 +253,6 @@
           <div th:if="${selectedType == 'WANT_TO_READ' && hasWantToRead}">
             <ol>
               <li th:each="book, iter : ${wantToReadBooks}">
-                <span th:if="${removeType != 'WANT_TO_READ'}" class="book-number want_to_read">&#x26B2;</span>
                 <form th:if="${removeType == 'WANT_TO_READ'}" th:action="@{/select-remove-wtr-book}" method="POST" style="display: inline;">
                   <input type="hidden" name="bookId" th:value="${book.id()}" />
                   <button type="submit" class="book-number remove">x</button>
@@ -261,9 +260,9 @@
                 <a th:if="${book.googleBooksId() != null}" th:href="${'https://books.google.com/books?id=' + book.googleBooksId()}" th:text="${book.title()}" target="_blank"></a>
                 <span th:if="${book.googleBooksId() == null}" th:text="${book.title()}"></span>
                 <span th:if="${book.author() != null && !book.author().isBlank()}" th:text="${', ' + book.author()}"></span>
-                <form th:if="${removeType != 'WANT_TO_READ'}" th:action="@{/mark-as-read}" method="POST" style="display: inline; margin-left: 8px;">
+                <form th:if="${removeType != 'WANT_TO_READ'}" th:action="@{/mark-as-read}" method="POST" style="display: inline;" class="book-actions">
                   <input type="hidden" name="bookId" th:value="${book.id()}" />
-                  <button type="submit" style="font-size: 12px; padding: 2px 6px;">Mark as Read</button>
+                  <button type="submit" class="book-action-link">[rank]</button>
                 </form>
               </li>
             </ol>
