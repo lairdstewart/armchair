@@ -7,7 +7,7 @@
   <body>
     <div th:replace="~{fragments :: navbar}"></div>
     <div class="page-content">
-    <h2 th:text="${isCurated} ? ${viewUsername} : |${viewUsername}'s Books|"></h2>
+    <h2 th:text="${viewUsername}"></h2>
 
     <div th:if="${hasFiction || hasNonfiction}">
       <!-- Type selector radio buttons -->
