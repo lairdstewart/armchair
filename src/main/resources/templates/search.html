@@ -10,8 +10,8 @@
       <form th:action="@{/search}" method="GET" style="margin-bottom: 20px;">
         <div style="margin-bottom: 15px;">
           <label><input type="radio" name="type" value="books" th:checked="${searchType == 'books'}" onchange="this.form.submit()" /> Books</label>
-          <label style="margin-left: 15px;"><input type="radio" name="type" value="profiles" th:checked="${searchType == 'profiles'}" onchange="this.form.submit()" /> Profiles</label>
           <label style="margin-left: 15px;"><input type="radio" name="type" value="curated" th:checked="${searchType == 'curated'}" onchange="this.form.submit()" /> Curated Lists</label>
+          <label style="margin-left: 15px;"><input type="radio" name="type" value="profiles" th:checked="${searchType == 'profiles'}" onchange="this.form.submit()" /> Profiles</label>
           <label style="margin-left: 15px;"><input type="radio" name="type" value="following" th:checked="${searchType == 'following'}" onchange="this.form.submit()" /> Following</label>
           <label style="margin-left: 15px;"><input type="radio" name="type" value="followers" th:checked="${searchType == 'followers'}" onchange="this.form.submit()" /> Followers</label>
         </div>
