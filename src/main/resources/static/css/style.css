@@ -260,3 +260,23 @@ details[open] .review-toggle::after {
   background-color: #E0E0E0;
   border-color: #9E9E9E;
 }
+
+/* Book action styles for search results */
+.book-action-text {
+  margin-left: 4px;
+  color: #888;
+}
+
+.book-action-link {
+  background: none;
+  border: none;
+  color: #888;
+  font: inherit;
+  cursor: pointer;
+  padding: 0;
+  margin-left: 4px;
+}
+
+.book-action-link:hover {
+  text-decoration: underline;
+}
