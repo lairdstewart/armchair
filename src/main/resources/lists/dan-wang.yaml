@@ -30,6 +30,8 @@ fiction:
   - "Heart of Darkness"
   - "Patrick Melrose series"
   - "Discworld series"
+fiction-unranked:
+  - "Project Hail Mary"
 non-fiction:
   - "The Theory of Moral Sentiments"
   - "In Praise of Commercial Culture"

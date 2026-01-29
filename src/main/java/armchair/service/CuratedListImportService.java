@@ -72,14 +72,28 @@ public class CuratedListImportService {
             @SuppressWarnings("unchecked")
             List<String> fictionTitles = (List<String>) data.get("fiction");
             if (fictionTitles != null) {
-                importBooks(user.getId(), fictionTitles, BookType.FICTION);
+                importBooks(user.getId(), fictionTitles, BookType.FICTION, BookCategory.LIKED);
+            }
+
+            // Import fiction-unranked books
+            @SuppressWarnings("unchecked")
+            List<String> fictionUnrankedTitles = (List<String>) data.get("fiction-unranked");
+            if (fictionUnrankedTitles != null) {
+                importBooks(user.getId(), fictionUnrankedTitles, BookType.FICTION, BookCategory.UNRANKED);
             }
 
             // Import non-fiction books
             @SuppressWarnings("unchecked")
             List<String> nonfictionTitles = (List<String>) data.get("non-fiction");
             if (nonfictionTitles != null) {
-                importBooks(user.getId(), nonfictionTitles, BookType.NONFICTION);
+                importBooks(user.getId(), nonfictionTitles, BookType.NONFICTION, BookCategory.LIKED);
+            }
+
+            // Import non-fiction-unranked books
+            @SuppressWarnings("unchecked")
+            List<String> nonfictionUnrankedTitles = (List<String>) data.get("non-fiction-unranked");
+            if (nonfictionUnrankedTitles != null) {
+                importBooks(user.getId(), nonfictionUnrankedTitles, BookType.NONFICTION, BookCategory.UNRANKED);
             }
 
             System.out.println("Finished importing: " + username);
@@ -89,7 +103,7 @@ public class CuratedListImportService {
         }
     }
 
-    private void importBooks(Long userId, List<String> titles, BookType type) {
+    private void importBooks(Long userId, List<String> titles, BookType type, BookCategory category) {
         int position = 0;
         for (String title : titles) {
             // Look up book via Google Books API
@@ -104,7 +118,7 @@ public class CuratedListImportService {
                 author = firstResult.author();
             }
 
-            Book book = new Book(userId, googleBooksId, title, author, type, BookCategory.LIKED, position);
+            Book book = new Book(userId, googleBooksId, title, author, type, category, position);
             bookRepository.save(book);
 
             position++;

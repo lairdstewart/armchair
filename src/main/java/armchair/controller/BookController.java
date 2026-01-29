@@ -36,7 +36,7 @@ import java.util.Map;
 @Controller
 public class BookController {
     public record BookInfo(Long id, String googleBooksId, String title, String author, String review) {}
-    public record BookLists(List<BookInfo> liked, List<BookInfo> ok, List<BookInfo> disliked) {}
+    public record BookLists(List<BookInfo> liked, List<BookInfo> ok, List<BookInfo> disliked, List<BookInfo> unranked) {}
     public record ProfileDisplay(String username, String stats) {}
     public record ProfileDisplayWithFollow(String username, String stats, Long userId, boolean isFollowing) {}
     public record UserBookRank(int rank, String category, String type) {}
@@ -315,7 +315,9 @@ public class BookController {
             .stream().map(b -> new BookInfo(b.getId(), b.getGoogleBooksId(), b.getTitle(), b.getAuthor(), b.getReview())).toList();
         List<BookInfo> disliked = bookRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(userId, type, BookCategory.DISLIKED)
             .stream().map(b -> new BookInfo(b.getId(), b.getGoogleBooksId(), b.getTitle(), b.getAuthor(), b.getReview())).toList();
-        return new BookLists(liked, ok, disliked);
+        List<BookInfo> unranked = bookRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(userId, type, BookCategory.UNRANKED)
+            .stream().map(b -> new BookInfo(b.getId(), b.getGoogleBooksId(), b.getTitle(), b.getAuthor(), b.getReview())).toList();
+        return new BookLists(liked, ok, disliked, unranked);
     }
 
     private String generateCsv(Long userId) {
@@ -1214,8 +1216,8 @@ public class BookController {
 
         BookLists fictionBooks = getBookLists(BookType.FICTION, user.getId());
         BookLists nonfictionBooks = getBookLists(BookType.NONFICTION, user.getId());
-        boolean hasFiction = !fictionBooks.liked().isEmpty() || !fictionBooks.ok().isEmpty() || !fictionBooks.disliked().isEmpty();
-        boolean hasNonfiction = !nonfictionBooks.liked().isEmpty() || !nonfictionBooks.ok().isEmpty() || !nonfictionBooks.disliked().isEmpty();
+        boolean hasFiction = !fictionBooks.liked().isEmpty() || !fictionBooks.ok().isEmpty() || !fictionBooks.disliked().isEmpty() || !fictionBooks.unranked().isEmpty();
+        boolean hasNonfiction = !nonfictionBooks.liked().isEmpty() || !nonfictionBooks.ok().isEmpty() || !nonfictionBooks.disliked().isEmpty() || !nonfictionBooks.unranked().isEmpty();
 
         model.addAttribute("viewUsername", user.getUsername());
         model.addAttribute("fictionBooks", fictionBooks);
