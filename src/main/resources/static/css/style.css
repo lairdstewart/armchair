@@ -228,3 +228,29 @@ details[open] .review-toggle::after {
   padding: 8px 0;
   white-space: pre-wrap;
 }
+
+/* Follow button styles */
+.follow-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border-radius: 4px;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  border-width: 2px;
+  border-style: solid;
+  box-sizing: content-box;
+  background-color: #E0E0E0;
+  border-color: #9E9E9E;
+  color: #666;
+}
+
+.follow-btn.following {
+  background-color: #E8F5E9;
+  border-color: #4CAF50;
+  color: #4CAF50;
+}

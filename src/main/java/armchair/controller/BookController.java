@@ -3,9 +3,11 @@ package armchair.controller;
 import armchair.entity.Book;
 import armchair.entity.BookCategory;
 import armchair.entity.BookType;
+import armchair.entity.Follow;
 import armchair.entity.RankingState;
 import armchair.entity.User;
 import armchair.repository.BookRepository;
+import armchair.repository.FollowRepository;
 import armchair.repository.RankingStateRepository;
 import armchair.repository.UserRepository;
 import armchair.service.GoogleBooksService;
@@ -36,6 +38,7 @@ public class BookController {
     public record BookInfo(Long id, String googleBooksId, String title, String author, String review) {}
     public record BookLists(List<BookInfo> liked, List<BookInfo> ok, List<BookInfo> disliked) {}
     public record ProfileDisplay(String username, String stats) {}
+    public record ProfileDisplayWithFollow(String username, String stats, Long userId, boolean isFollowing) {}
     public record UserBookRank(int rank, String category, String type) {}
 
     private enum Mode {
@@ -58,6 +61,9 @@ public class BookController {
 
     @Autowired
     private RankingStateRepository rankingStateRepository;
+
+    @Autowired
+    private FollowRepository followRepository;
 
     @Autowired
     private GoogleBooksService googleBooksService;
@@ -747,22 +753,76 @@ public class BookController {
                 model.addAttribute("userBooks", userBooks);
             }
         } else if ("profiles".equals(type)) {
+            Long currentUserId = getCurrentUserId(session);
+            boolean isLoggedIn = getOauthSubject() != null && currentUserId != null;
+            User currentUser = isLoggedIn ? userRepository.findById(currentUserId).orElse(null) : null;
+            boolean isRealUser = currentUser != null && !currentUser.isGuest();
+
             if (query != null && !query.isBlank()) {
-                List<User> results = userRepository.findByIsGuestFalseAndIsCuratedFalseAndPublishListsTrueAndUsernameContainingIgnoreCase(query.trim());
-                List<ProfileDisplay> profileDisplays = results.stream()
-                    .map(this::createProfileDisplay)
+                List<User> results;
+                if (isRealUser) {
+                    results = userRepository.findByIsGuestFalseAndIsCuratedFalseAndPublishListsTrueAndUsernameContainingIgnoreCaseAndIdNot(query.trim(), currentUserId);
+                } else {
+                    results = userRepository.findByIsGuestFalseAndIsCuratedFalseAndPublishListsTrueAndUsernameContainingIgnoreCase(query.trim());
+                }
+                List<ProfileDisplayWithFollow> profileDisplays = results.stream()
+                    .map(u -> createProfileDisplayWithFollow(u, isRealUser ? currentUserId : null))
                     .toList();
                 model.addAttribute("profileResults", profileDisplays);
             } else {
-                List<User> recentProfiles = userRepository.findTop10ByIsGuestFalseAndIsCuratedFalseAndPublishListsTrueOrderBySignupDateDesc();
-                List<ProfileDisplay> profileDisplays = recentProfiles.stream()
-                    .map(this::createProfileDisplay)
+                List<User> recentProfiles;
+                long totalProfiles;
+                if (isRealUser) {
+                    recentProfiles = userRepository.findTop10ByIsGuestFalseAndIsCuratedFalseAndPublishListsTrueAndIdNotOrderBySignupDateDesc(currentUserId);
+                    totalProfiles = userRepository.countByIsGuestFalseAndIsCuratedFalseAndPublishListsTrueAndIdNot(currentUserId);
+                } else {
+                    recentProfiles = userRepository.findTop10ByIsGuestFalseAndIsCuratedFalseAndPublishListsTrueOrderBySignupDateDesc();
+                    totalProfiles = userRepository.countByIsGuestFalseAndIsCuratedFalseAndPublishListsTrue();
+                }
+                List<ProfileDisplayWithFollow> profileDisplays = recentProfiles.stream()
+                    .map(u -> createProfileDisplayWithFollow(u, isRealUser ? currentUserId : null))
                     .toList();
-                long totalProfiles = userRepository.countByIsGuestFalseAndIsCuratedFalseAndPublishListsTrue();
                 long moreCount = Math.max(0, totalProfiles - recentProfiles.size());
                 model.addAttribute("profileResults", profileDisplays);
                 model.addAttribute("moreProfilesCount", moreCount);
             }
+            model.addAttribute("canFollow", isRealUser);
+        } else if ("following".equals(type)) {
+            Long currentUserId = getCurrentUserId(session);
+            boolean isLoggedIn = getOauthSubject() != null && currentUserId != null;
+            User currentUser = isLoggedIn ? userRepository.findById(currentUserId).orElse(null) : null;
+            boolean isRealUser = currentUser != null && !currentUser.isGuest();
+
+            if (isRealUser) {
+                List<Follow> follows = followRepository.findByFollowerId(currentUserId);
+                List<ProfileDisplayWithFollow> profileDisplays = follows.stream()
+                    .map(f -> userRepository.findById(f.getFollowedId()).orElse(null))
+                    .filter(u -> u != null)
+                    .map(u -> createProfileDisplayWithFollow(u, currentUserId))
+                    .toList();
+                model.addAttribute("profileResults", profileDisplays);
+            } else {
+                model.addAttribute("profileResults", List.of());
+            }
+            model.addAttribute("canFollow", isRealUser);
+        } else if ("followers".equals(type)) {
+            Long currentUserId = getCurrentUserId(session);
+            boolean isLoggedIn = getOauthSubject() != null && currentUserId != null;
+            User currentUser = isLoggedIn ? userRepository.findById(currentUserId).orElse(null) : null;
+            boolean isRealUser = currentUser != null && !currentUser.isGuest();
+
+            if (isRealUser) {
+                List<Follow> followers = followRepository.findByFollowedId(currentUserId);
+                List<ProfileDisplayWithFollow> profileDisplays = followers.stream()
+                    .map(f -> userRepository.findById(f.getFollowerId()).orElse(null))
+                    .filter(u -> u != null)
+                    .map(u -> createProfileDisplayWithFollow(u, currentUserId))
+                    .toList();
+                model.addAttribute("profileResults", profileDisplays);
+            } else {
+                model.addAttribute("profileResults", List.of());
+            }
+            model.addAttribute("canFollow", isRealUser);
         } else if ("curated".equals(type)) {
             if (query != null && !query.isBlank()) {
                 List<User> results = userRepository.findByIsCuratedTrueAndUsernameContainingIgnoreCase(query.trim());
@@ -837,6 +897,25 @@ public class BookController {
             user.getSignupNumber() != null ? user.getSignupNumber() : 0);
 
         return new ProfileDisplay(user.getUsername(), stats);
+    }
+
+    private ProfileDisplayWithFollow createProfileDisplayWithFollow(User user, Long currentUserId) {
+        long fictionCount = 0;
+        long nonfictionCount = 0;
+        for (BookCategory category : BookCategory.values()) {
+            fictionCount += bookRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(
+                user.getId(), BookType.FICTION, category).size();
+            nonfictionCount += bookRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(
+                user.getId(), BookType.NONFICTION, category).size();
+        }
+
+        String stats = String.format("%d fiction, %d non-fiction, Armchair user #%d",
+            fictionCount, nonfictionCount,
+            user.getSignupNumber() != null ? user.getSignupNumber() : 0);
+
+        boolean isFollowing = currentUserId != null && followRepository.existsByFollowerIdAndFollowedId(currentUserId, user.getId());
+
+        return new ProfileDisplayWithFollow(user.getUsername(), stats, user.getId(), isFollowing);
     }
 
     @GetMapping("/curated-lists")
@@ -929,6 +1008,59 @@ public class BookController {
         model.addAttribute("publishLists", user.isPublishLists());
 
         return "profile";
+    }
+
+    @PostMapping("/follow")
+    public String followUser(@RequestParam Long userId, @RequestParam(required = false) String returnUrl, HttpSession session) {
+        String oauthSubject = getOauthSubject();
+        if (oauthSubject == null) {
+            return "redirect:/search?type=profiles";
+        }
+
+        Long currentUserId = getCurrentUserId(session);
+        User currentUser = currentUserId != null ? userRepository.findById(currentUserId).orElse(null) : null;
+        if (currentUser == null || currentUser.isGuest()) {
+            return "redirect:/search?type=profiles";
+        }
+
+        // Can't follow yourself
+        if (currentUserId.equals(userId)) {
+            return "redirect:/search?type=profiles";
+        }
+
+        // Check if target user exists
+        User targetUser = userRepository.findById(userId).orElse(null);
+        if (targetUser == null) {
+            return "redirect:/search?type=profiles";
+        }
+
+        // Check if already following
+        if (!followRepository.existsByFollowerIdAndFollowedId(currentUserId, userId)) {
+            Follow follow = new Follow(currentUserId, userId);
+            followRepository.save(follow);
+        }
+
+        return "redirect:" + (returnUrl != null ? returnUrl : "/search?type=profiles");
+    }
+
+    @PostMapping("/unfollow")
+    public String unfollowUser(@RequestParam Long userId, @RequestParam(required = false) String returnUrl, HttpSession session) {
+        String oauthSubject = getOauthSubject();
+        if (oauthSubject == null) {
+            return "redirect:/search?type=profiles";
+        }
+
+        Long currentUserId = getCurrentUserId(session);
+        User currentUser = currentUserId != null ? userRepository.findById(currentUserId).orElse(null) : null;
+        if (currentUser == null || currentUser.isGuest()) {
+            return "redirect:/search?type=profiles";
+        }
+
+        // Delete the follow relationship
+        followRepository.findByFollowerIdAndFollowedId(currentUserId, userId)
+            .ifPresent(followRepository::delete);
+
+        return "redirect:" + (returnUrl != null ? returnUrl : "/search?type=profiles");
     }
 
     @PostMapping("/toggle-publish-lists")
@@ -1034,6 +1166,10 @@ public class BookController {
 
         // Delete ranking state if exists
         rankingStateRepository.deleteById(userId);
+
+        // Delete all follow relationships (both where user is follower and followed)
+        followRepository.findByFollowerId(userId).forEach(followRepository::delete);
+        followRepository.findByFollowedId(userId).forEach(followRepository::delete);
 
         // Delete the user record
         userRepository.delete(user);
