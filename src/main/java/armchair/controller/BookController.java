@@ -566,9 +566,10 @@ public class BookController {
             return "redirect:/my-books";
         }
 
-        // Store book info in ranking state
+        // Store book info in ranking state (including existing review)
         RankingState rankingState = new RankingState(userId, book.getGoogleBooksId(), book.getTitle(), book.getAuthor(), book.getType(), null, 0, 0, 0);
         rankingState.setReRank(true);
+        rankingState.setReviewBeingRanked(book.getReview());
         rankingStateRepository.save(rankingState);
 
         // Remove the book from its current position
@@ -1038,6 +1039,7 @@ public class BookController {
                 model.addAttribute("moreProfilesCount", moreCount);
             }
             model.addAttribute("canFollow", isRealUser);
+            model.addAttribute("userHasPublished", currentUser != null && currentUser.isPublishLists());
         } else if ("following".equals(type)) {
             Long currentUserId = getCurrentUserId(session);
             boolean isLoggedIn = getOauthSubject() != null && currentUserId != null;
@@ -1056,6 +1058,7 @@ public class BookController {
                 model.addAttribute("profileResults", List.of());
             }
             model.addAttribute("canFollow", isRealUser);
+            model.addAttribute("userHasPublished", currentUser != null && currentUser.isPublishLists());
         } else if ("followers".equals(type)) {
             Long currentUserId = getCurrentUserId(session);
             boolean isLoggedIn = getOauthSubject() != null && currentUserId != null;
@@ -1074,6 +1077,7 @@ public class BookController {
                 model.addAttribute("profileResults", List.of());
             }
             model.addAttribute("canFollow", isRealUser);
+            model.addAttribute("userHasPublished", currentUser != null && currentUser.isPublishLists());
         } else if ("curated".equals(type)) {
             if (query != null && !query.isBlank()) {
                 List<User> results = userRepository.findByIsCuratedTrueAndUsernameContainingIgnoreCase(query.trim());
