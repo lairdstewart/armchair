@@ -16,5 +16,5 @@
 - [x] Added following feature: grey + button to follow users in profile search, green checkmark to unfollow (with confirmation). Added Following and Followers tabs. Users don't see themselves in profile search. Guests can't follow.
 - [x] Swapped Profiles and Curated Lists radio button positions in search (now: Books, Curated Lists, Profiles, Following, Followers).
 - [x] Simplified profile search display format from "<username> 7 fiction, 10 non-fiction, Armchair user #3" to "<username> | 7 fiction | 10 non-fiction".
-- [x] Added "Want to Read" list feature. Added grey ߉ button next to + button in search to add books to reading list. Want to Read appears as a tab in Library. Books can be removed or marked as read (which moves them to categorization).
+- [x] Added "Want to Read" list feature. Added grey ⚲ button next to + button in search to add books to reading list. Want to Read appears as a tab in Library. Books can be removed or marked as read (which moves them to categorization).
 - [x] Renamed "Lists" tab to "Library" in navbar.

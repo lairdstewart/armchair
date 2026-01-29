@@ -253,7 +253,7 @@
           <div th:if="${selectedType == 'WANT_TO_READ' && hasWantToRead}">
             <ol>
               <li th:each="book, iter : ${wantToReadBooks}">
-                <span th:if="${removeType != 'WANT_TO_READ'}" class="book-number want_to_read">&#x07C9;</span>
+                <span th:if="${removeType != 'WANT_TO_READ'}" class="book-number want_to_read">&#x26B2;</span>
                 <form th:if="${removeType == 'WANT_TO_READ'}" th:action="@{/select-remove-wtr-book}" method="POST" style="display: inline;">
                   <input type="hidden" name="bookId" th:value="${book.id()}" />
                   <button type="submit" class="book-number remove">x</button>
