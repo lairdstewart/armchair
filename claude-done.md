@@ -18,3 +18,7 @@
 - [x] Simplified profile search display format from "<username> 7 fiction, 10 non-fiction, Armchair user #3" to "<username> | 7 fiction | 10 non-fiction".
 - [x] Added "Want to Read" list feature. Added grey ⚲ button next to + button in search to add books to reading list. Want to Read appears as a tab in Library. Books can be removed or marked as read (which moves them to categorization).
 - [x] Renamed "Lists" tab to "Library" in navbar.
+- [x] Hide user's existing books from default book search results (when no query).
+- [x] Replace [bookmark] with [want to read] throughout search results.
+- [x] Always show all 3 radio buttons (Fiction, Non-Fiction, Want to Read) in Library tab, always enabled. Show "Add books via the search tab." for empty lists.
+- [x] Replace +/checkmark icons with [follow]/[unfollow] text links in profiles, following, and followers tabs.
