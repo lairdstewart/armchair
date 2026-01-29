@@ -12,26 +12,18 @@
         <p th:if="${!hasAnyBooks}">Add books via the search tab.</p>
         <div th:if="${hasAnyBooks}">
           <!-- Type selector radio buttons -->
-          <div th:if="${hasFiction && hasNonfiction}" style="margin-bottom: 15px;">
-            <label>
+          <div style="margin-bottom: 15px;">
+            <label th:if="${hasFiction}">
               <input type="radio" name="typeSelector" value="FICTION" th:checked="${selectedType == 'FICTION'}" onchange="window.location.href='/my-books?selectedType=FICTION'" />
               Fiction
             </label>
-            <label style="margin-left: 15px;">
+            <label th:if="${hasNonfiction}" th:style="${hasFiction ? 'margin-left: 15px;' : ''}">
               <input type="radio" name="typeSelector" value="NONFICTION" th:checked="${selectedType == 'NONFICTION'}" onchange="window.location.href='/my-books?selectedType=NONFICTION'" />
               Non-Fiction
             </label>
-          </div>
-          <div th:if="${hasFiction && !hasNonfiction}" style="margin-bottom: 15px;">
-            <label>
-              <input type="radio" name="typeSelector" value="FICTION" checked disabled />
-              Fiction
-            </label>
-          </div>
-          <div th:if="${!hasFiction && hasNonfiction}" style="margin-bottom: 15px;">
-            <label>
-              <input type="radio" name="typeSelector" value="NONFICTION" checked disabled />
-              Non-Fiction
+            <label th:if="${hasWantToRead}" th:style="${hasFiction || hasNonfiction ? 'margin-left: 15px;' : ''}">
+              <input type="radio" name="typeSelector" value="WANT_TO_READ" th:checked="${selectedType == 'WANT_TO_READ'}" onchange="window.location.href='/my-books?selectedType=WANT_TO_READ'" />
+              Want to Read
             </label>
           </div>
 
@@ -252,6 +244,35 @@
                 <button type="submit">Review</button>
               </form>
               <form th:if="${rerankType == 'NONFICTION' || removeType == 'NONFICTION' || reviewType == 'NONFICTION'}" th:action="@{/cancel-add}" method="POST">
+                <button type="submit">Cancel</button>
+              </form>
+            </div>
+          </div>
+
+          <!-- Want to Read books list -->
+          <div th:if="${selectedType == 'WANT_TO_READ' && hasWantToRead}">
+            <ol>
+              <li th:each="book, iter : ${wantToReadBooks}">
+                <span th:if="${removeType != 'WANT_TO_READ'}" class="book-number want_to_read">&#x07C9;</span>
+                <form th:if="${removeType == 'WANT_TO_READ'}" th:action="@{/select-remove-wtr-book}" method="POST" style="display: inline;">
+                  <input type="hidden" name="bookId" th:value="${book.id()}" />
+                  <button type="submit" class="book-number remove">x</button>
+                </form>
+                <a th:if="${book.googleBooksId() != null}" th:href="${'https://books.google.com/books?id=' + book.googleBooksId()}" th:text="${book.title()}" target="_blank"></a>
+                <span th:if="${book.googleBooksId() == null}" th:text="${book.title()}"></span>
+                <span th:if="${book.author() != null && !book.author().isBlank()}" th:text="${', ' + book.author()}"></span>
+                <form th:if="${removeType != 'WANT_TO_READ'}" th:action="@{/mark-as-read}" method="POST" style="display: inline; margin-left: 8px;">
+                  <input type="hidden" name="bookId" th:value="${book.id()}" />
+                  <button type="submit" style="font-size: 12px; padding: 2px 6px;">Mark as Read</button>
+                </form>
+              </li>
+            </ol>
+
+            <div style="display: flex; gap: 10px;">
+              <form th:if="${removeType != 'WANT_TO_READ'}" th:action="@{/start-remove-wtr}" method="POST">
+                <button type="submit">Remove</button>
+              </form>
+              <form th:if="${removeType == 'WANT_TO_READ'}" th:action="@{/cancel-add}" method="POST">
                 <button type="submit">Cancel</button>
               </form>
             </div>

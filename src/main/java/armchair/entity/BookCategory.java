@@ -3,7 +3,8 @@ package armchair.entity;
 public enum BookCategory {
     LIKED("liked"),
     OK("ok"),
-    DISLIKED("disliked");
+    DISLIKED("disliked"),
+    WANT_TO_READ("want_to_read");
 
     private final String value;
 

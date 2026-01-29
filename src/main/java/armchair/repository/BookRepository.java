@@ -16,4 +16,6 @@ public interface BookRepository extends JpaRepository<Book, Long> {
 
     @Query(value = "SELECT DISTINCT ON (google_books_id) * FROM books WHERE google_books_id IS NOT NULL ORDER BY google_books_id, RANDOM() LIMIT 10", nativeQuery = true)
     List<Book> findRandom10UniqueBooks();
+
+    List<Book> findByUserIdAndCategoryOrderByPositionAsc(Long userId, BookCategory category);
 }

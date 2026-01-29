@@ -254,3 +254,22 @@ details[open] .review-toggle::after {
   border-color: #4CAF50;
   color: #4CAF50;
 }
+
+/* Want to read button styles */
+.want-to-read-btn {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  font-size: 16px;
+  font-weight: bold;
+  line-height: 1;
+  cursor: pointer;
+  background-color: #E0E0E0;
+  border: 1px solid #9E9E9E;
+  margin-left: 4px;
+}
+
+.book-number.want_to_read {
+  background-color: #E0E0E0;
+  border-color: #9E9E9E;
+}

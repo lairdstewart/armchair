@@ -13,3 +13,7 @@
 - [x] Replace two-column Fiction/Non-Fiction layout with radio button selector. Shows only selected type's list. If only one type exists, shows disabled radio button.
 - [x] Changed user page header from "<username>'s Books" to just "<username>".
 - [x] Fixed review collapse button to use Unicode minus sign (−) which matches plus sign width.
+- [x] Added following feature: grey + button to follow users in profile search, green checkmark to unfollow (with confirmation). Added Following and Followers tabs. Users don't see themselves in profile search. Guests can't follow.
+- [x] Swapped Profiles and Curated Lists radio button positions in search (now: Books, Curated Lists, Profiles, Following, Followers).
+- [x] Simplified profile search display format from "<username> 7 fiction, 10 non-fiction, Armchair user #3" to "<username> | 7 fiction | 10 non-fiction".
+- [x] Added "Want to Read" list feature. Added grey ߉ button next to + button in search to add books to reading list. Want to Read appears as a tab in Library. Books can be removed or marked as read (which moves them to categorization).

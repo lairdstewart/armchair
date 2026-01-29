@@ -196,17 +196,22 @@ public class BookController {
 
         BookLists fictionBooks = getBookLists(BookType.FICTION, userId);
         BookLists nonfictionBooks = getBookLists(BookType.NONFICTION, userId);
+        List<BookInfo> wantToReadBooks = bookRepository.findByUserIdAndCategoryOrderByPositionAsc(userId, BookCategory.WANT_TO_READ)
+            .stream().map(b -> new BookInfo(b.getId(), b.getGoogleBooksId(), b.getTitle(), b.getAuthor(), b.getReview())).toList();
         boolean hasFiction = !fictionBooks.liked().isEmpty() || !fictionBooks.ok().isEmpty() || !fictionBooks.disliked().isEmpty();
         boolean hasNonfiction = !nonfictionBooks.liked().isEmpty() || !nonfictionBooks.ok().isEmpty() || !nonfictionBooks.disliked().isEmpty();
-        boolean hasAnyBooks = hasFiction || hasNonfiction;
+        boolean hasWantToRead = !wantToReadBooks.isEmpty();
+        boolean hasAnyBooks = hasFiction || hasNonfiction || hasWantToRead;
 
-        // Determine selected type (default to fiction if both exist, otherwise the one that exists)
+        // Determine selected type (default to fiction if exists, then nonfiction, then want-to-read)
         String effectiveSelectedType = selectedType;
         if (effectiveSelectedType == null || effectiveSelectedType.isEmpty()) {
             if (hasFiction) {
                 effectiveSelectedType = "FICTION";
             } else if (hasNonfiction) {
                 effectiveSelectedType = "NONFICTION";
+            } else if (hasWantToRead) {
+                effectiveSelectedType = "WANT_TO_READ";
             } else {
                 effectiveSelectedType = "FICTION"; // Default for empty state
             }
@@ -214,8 +219,10 @@ public class BookController {
 
         model.addAttribute("fictionBooks", fictionBooks);
         model.addAttribute("nonfictionBooks", nonfictionBooks);
+        model.addAttribute("wantToReadBooks", wantToReadBooks);
         model.addAttribute("hasFiction", hasFiction);
         model.addAttribute("hasNonfiction", hasNonfiction);
+        model.addAttribute("hasWantToRead", hasWantToRead);
         model.addAttribute("hasAnyBooks", hasAnyBooks);
         model.addAttribute("selectedType", effectiveSelectedType);
         model.addAttribute("rankingState", rankingState);
@@ -229,7 +236,14 @@ public class BookController {
         } else if (mode == Mode.REMOVE) {
             model.addAttribute("mode", Mode.LIST);
             model.addAttribute("rerankType", null);
-            model.addAttribute("removeType", rankingState.getType().name());
+            // For want-to-read, type is null but category is WANT_TO_READ
+            if (rankingState.getType() != null) {
+                model.addAttribute("removeType", rankingState.getType().name());
+            } else if (rankingState.getCategory() == BookCategory.WANT_TO_READ) {
+                model.addAttribute("removeType", "WANT_TO_READ");
+            } else {
+                model.addAttribute("removeType", null);
+            }
             model.addAttribute("reviewType", null);
         } else if (mode == Mode.REVIEW && rankingState.getBookIdBeingReviewed() == null) {
             // Review mode but no book selected yet - show LIST with review type
@@ -469,6 +483,89 @@ public class BookController {
         return "redirect:/my-books";
     }
 
+    @PostMapping("/start-remove-wtr")
+    public String startRemoveWantToRead(HttpSession session) {
+        Long userId = getCurrentUserId(session);
+        if (userId == null) {
+            return "redirect:/setup-username";
+        }
+        RankingState rankingState = new RankingState(userId, null, null, null, null, BookCategory.WANT_TO_READ, 0, 0, 0);
+        rankingState.setRemove(true);
+        rankingStateRepository.save(rankingState);
+        return "redirect:/my-books?selectedType=WANT_TO_READ";
+    }
+
+    @PostMapping("/select-remove-wtr-book")
+    public String selectRemoveWantToReadBook(@RequestParam Long bookId, HttpSession session) {
+        Long userId = getCurrentUserId(session);
+        if (userId == null) {
+            return "redirect:/setup-username";
+        }
+
+        // Find the book and verify it belongs to this user
+        Book book = bookRepository.findById(bookId).orElse(null);
+        if (book == null || !book.getUserId().equals(userId) || book.getCategory() != BookCategory.WANT_TO_READ) {
+            return "redirect:/my-books?selectedType=WANT_TO_READ";
+        }
+
+        // Verify we're in remove mode for want-to-read
+        RankingState rankingState = rankingStateRepository.findById(userId).orElse(null);
+        if (rankingState == null || !rankingState.isRemove() || rankingState.getCategory() != BookCategory.WANT_TO_READ) {
+            return "redirect:/my-books?selectedType=WANT_TO_READ";
+        }
+
+        // Remove the book
+        int removedPosition = book.getPosition();
+        bookRepository.delete(book);
+
+        // Shift remaining books to fill the gap
+        List<Book> booksToShift = bookRepository.findByUserIdAndCategoryOrderByPositionAsc(userId, BookCategory.WANT_TO_READ);
+        for (Book b : booksToShift) {
+            if (b.getPosition() > removedPosition) {
+                b.setPosition(b.getPosition() - 1);
+                bookRepository.save(b);
+            }
+        }
+
+        // Clear the ranking state
+        rankingStateRepository.deleteById(userId);
+
+        return "redirect:/my-books?selectedType=WANT_TO_READ";
+    }
+
+    @PostMapping("/mark-as-read")
+    public String markAsRead(@RequestParam Long bookId, HttpSession session) {
+        Long userId = getCurrentUserId(session);
+        if (userId == null) {
+            return "redirect:/setup-username";
+        }
+
+        // Find the book and verify it belongs to this user and is in want-to-read
+        Book book = bookRepository.findById(bookId).orElse(null);
+        if (book == null || !book.getUserId().equals(userId) || book.getCategory() != BookCategory.WANT_TO_READ) {
+            return "redirect:/my-books?selectedType=WANT_TO_READ";
+        }
+
+        // Store book info in ranking state for categorization
+        RankingState rankingState = new RankingState(userId, book.getGoogleBooksId(), book.getTitle(), book.getAuthor(), null, null, 0, 0, 0);
+        rankingStateRepository.save(rankingState);
+
+        // Remove the book from want-to-read list
+        int removedPosition = book.getPosition();
+        bookRepository.delete(book);
+
+        // Shift remaining books to fill the gap
+        List<Book> booksToShift = bookRepository.findByUserIdAndCategoryOrderByPositionAsc(userId, BookCategory.WANT_TO_READ);
+        for (Book b : booksToShift) {
+            if (b.getPosition() > removedPosition) {
+                b.setPosition(b.getPosition() - 1);
+                bookRepository.save(b);
+            }
+        }
+
+        return "redirect:/my-books";
+    }
+
     @PostMapping("/select-remove-book")
     public String selectRemoveBook(@RequestParam Long bookId, HttpSession session) {
         Long userId = getCurrentUserId(session);
@@ -647,6 +744,44 @@ public class BookController {
         rankingStateRepository.save(rankingState);
 
         return "redirect:/my-books";
+    }
+
+    @PostMapping("/add-to-reading-list")
+    public String addToReadingList(@RequestParam String googleBooksId,
+                                   @RequestParam String bookName,
+                                   @RequestParam String author,
+                                   HttpSession session) {
+        Long userId = getCurrentUserId(session);
+        if (userId == null) {
+            return "redirect:/setup-username";
+        }
+
+        // Check if book is already in user's library (any category)
+        for (BookType type : BookType.values()) {
+            for (BookCategory category : BookCategory.values()) {
+                List<Book> books = bookRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(userId, type, category);
+                for (Book book : books) {
+                    if (googleBooksId.equals(book.getGoogleBooksId())) {
+                        // Book already exists, just redirect back
+                        return "redirect:/search?type=books";
+                    }
+                }
+            }
+        }
+        // Also check want-to-read list (which has null type)
+        List<Book> wantToReadBooks = bookRepository.findByUserIdAndCategoryOrderByPositionAsc(userId, BookCategory.WANT_TO_READ);
+        for (Book book : wantToReadBooks) {
+            if (googleBooksId.equals(book.getGoogleBooksId())) {
+                return "redirect:/search?type=books";
+            }
+        }
+
+        // Add book directly to want-to-read list at the end
+        int position = wantToReadBooks.size();
+        Book newBook = new Book(userId, googleBooksId, bookName, author, null, BookCategory.WANT_TO_READ, position);
+        bookRepository.save(newBook);
+
+        return "redirect:/search?type=books";
     }
 
     @PostMapping("/categorize")
@@ -868,7 +1003,7 @@ public class BookController {
 
         for (BookType bookType : BookType.values()) {
             int rank = 1;
-            for (BookCategory category : BookCategory.values()) {
+            for (BookCategory category : List.of(BookCategory.LIKED, BookCategory.OK, BookCategory.DISLIKED)) {
                 List<Book> books = bookRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(userId, bookType, category);
                 for (Book book : books) {
                     if (book.getGoogleBooksId() != null) {
@@ -876,6 +1011,14 @@ public class BookController {
                     }
                     rank++;
                 }
+            }
+        }
+
+        // Add want-to-read books
+        List<Book> wantToReadBooks = bookRepository.findByUserIdAndCategoryOrderByPositionAsc(userId, BookCategory.WANT_TO_READ);
+        for (Book book : wantToReadBooks) {
+            if (book.getGoogleBooksId() != null) {
+                userBooks.put(book.getGoogleBooksId(), new UserBookRank(0, "want_to_read", ""));
             }
         }
 
@@ -892,7 +1035,7 @@ public class BookController {
                 user.getId(), BookType.NONFICTION, category).size();
         }
 
-        String stats = String.format("| %d fiction | %d non-fiction",
+        String stats = String.format(" | %d fiction | %d non-fiction",
             fictionCount, nonfictionCount);
 
         return new ProfileDisplay(user.getUsername(), stats);
