@@ -219,7 +219,7 @@ input:checked + .slider:before {
 }
 
 details[open] .review-toggle::after {
-  content: "[-]";
+  content: "[−]";
 }
 
 .review-text {
