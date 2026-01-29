@@ -3,18 +3,18 @@
   <body>
     <div th:fragment="navbar" class="navbar">
       <div class="navbar-left" style="padding-left: 1em;">
-        <a href="/" class="navbar-link" style="font-weight: bold;">Armchair</a>
+        <a href="/" class="navbar-link" th:style="${currentPage == 'about' ? 'font-weight: bold;' : ''}">Armchair</a>
         <span class="navbar-separator">|</span>
-        <a href="/search" class="navbar-link">Search</a>
+        <a href="/search" class="navbar-link" th:style="${currentPage == 'search' ? 'font-weight: bold;' : ''}">Search</a>
         <span class="navbar-separator">|</span>
         <form th:action="@{/my-books}" method="POST" style="display: inline">
-          <button type="submit" class="navbar-link-button">Library</button>
+          <button type="submit" class="navbar-link-button" th:style="${currentPage == 'list' ? 'font-weight: bold;' : ''}">Library</button>
         </form>
         <span class="navbar-separator">|</span>
-        <a href="/recs" class="navbar-link">Recs</a>
+        <a href="/recs" class="navbar-link" th:style="${currentPage == 'recs' ? 'font-weight: bold;' : ''}">Recs</a>
       </div>
       <div class="navbar-right" style="padding-right: 1em;">
-        <a th:if="${isLoggedIn}" href="/my-profile" class="navbar-link">Profile</a>
+        <a th:if="${isLoggedIn}" href="/my-profile" class="navbar-link" th:style="${currentPage == 'profile' ? 'font-weight: bold;' : ''}">Profile</a>
         <a th:if="${!isLoggedIn}" href="/oauth2/authorization/google" class="navbar-link">Login</a>
       </div>
     </div>
