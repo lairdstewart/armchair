@@ -29,3 +29,4 @@
 - [x] Bold the current tab in navigation bar (except "Armchair" unless on that page).
 - [x] Reworded privacy section to: "Armchair is not given your email, profile picture, or account data."
 - [x] Added UNRANKED book category for curated lists. Books imported via fiction-unranked/non-fiction-unranked YAML keys appear below disliked books with a grey ? box. Users cannot select this category.
+- [x] Replaced auto-import on startup with standalone CLI tool. Deleted CuratedListImportService. Created CuratedListImporter in armchair.tool package — runs with `mvn spring-boot:run -Dspring-boot.run.mainClass=armchair.tool.CuratedListImporter -Dspring-boot.run.arguments="/path/to/list.yaml"`.
