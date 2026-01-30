@@ -4,8 +4,10 @@ import armchair.entity.Book;
 import armchair.entity.BookCategory;
 import armchair.entity.BookType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -18,4 +20,7 @@ public interface BookRepository extends JpaRepository<Book, Long> {
     List<Book> findRandom10UniqueBooks();
 
     List<Book> findByUserIdAndCategoryOrderByPositionAsc(Long userId, BookCategory category);
+    @Modifying
+    @Transactional
+    void deleteByUserId(Long userId);
 }
