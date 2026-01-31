@@ -8,3 +8,7 @@
 - [x] Added unique constraint on isbn_13 in books table.
 - [x] Added ISBN-13 column to CSV export.
 - [x] Fixed varchar(255) overflow bug on ranking_state and books — increased review column to 5000, title/author to 1000. The 429 API error was already handled correctly (logged and returns empty list).
+- [x] Added "rank all" button to Unranked page — sequentially ranks all unranked books, shows remaining count, redirects to correct type when done.
+- [x] After ranking a book, redirect to Fiction or Non-Fiction based on the book's type instead of always defaulting to Fiction.
+- [x] Username validation: uniqueness check was already in place, added 50-character length limit with server-side and client-side enforcement.
+- [x] Added change username button in profile — [change] link next to username navigates to a form with the same validation (unique, < 50 chars).
