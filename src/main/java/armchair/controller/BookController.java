@@ -503,7 +503,12 @@ public class BookController {
         if (userId == null) {
             return "redirect:/setup-username";
         }
-        BookType bookType = BookType.fromString(type);
+        BookType bookType;
+        try {
+            bookType = BookType.fromString(type);
+        } catch (IllegalArgumentException e) {
+            return "redirect:/my-books";
+        }
         RankingState rankingState = new RankingState(userId, null, null, null, bookType, null, 0, 0, 0);
         rankingState.setReRank(true);
         rankingStateRepository.save(rankingState);
@@ -561,7 +566,12 @@ public class BookController {
         if (userId == null) {
             return "redirect:/setup-username";
         }
-        BookType bookType = BookType.fromString(type);
+        BookType bookType;
+        try {
+            bookType = BookType.fromString(type);
+        } catch (IllegalArgumentException e) {
+            return "redirect:/my-books";
+        }
         RankingState rankingState = new RankingState(userId, null, null, null, bookType, null, 0, 0, 0);
         rankingState.setRemove(true);
         rankingStateRepository.save(rankingState);
@@ -817,7 +827,12 @@ public class BookController {
         if (userId == null) {
             return "redirect:/setup-username";
         }
-        BookType bookType = BookType.fromString(type);
+        BookType bookType;
+        try {
+            bookType = BookType.fromString(type);
+        } catch (IllegalArgumentException e) {
+            return "redirect:/my-books";
+        }
         RankingState rankingState = new RankingState(userId, null, null, null, bookType, null, 0, 0, 0);
         rankingState.setReview(true);
         rankingStateRepository.save(rankingState);
@@ -1007,8 +1022,14 @@ public class BookController {
             trimmedReview = trimmedReview.substring(0, MAX_REVIEW_LENGTH);
         }
 
-        BookType bookType = BookType.fromString(type);
-        BookCategory bookCategory = BookCategory.fromString(category);
+        BookType bookType;
+        BookCategory bookCategory;
+        try {
+            bookType = BookType.fromString(type);
+            bookCategory = BookCategory.fromString(category);
+        } catch (IllegalArgumentException e) {
+            return "redirect:/my-books";
+        }
         List<Ranking> currentList = rankingRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(
             userId, bookType, bookCategory
         );
