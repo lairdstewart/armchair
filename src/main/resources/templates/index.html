@@ -428,7 +428,7 @@
         </form>
       </div>
       <div th:case="'REVIEW'">
-        <h3>Review <span th:text="${reviewBook.title}"></span></h3>
+        <h3>Review <span th:text="${reviewBook.book.title}"></span></h3>
         <form th:action="@{/save-review}" method="POST">
           <div style="margin-bottom: 15px;">
             <label><input type="radio" checked disabled /> <span th:text="${reviewBook.type.name() == 'FICTION' ? 'Fiction' : 'Non-Fiction'}"></span></label>

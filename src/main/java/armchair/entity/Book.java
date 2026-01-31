@@ -1,8 +1,6 @@
 package armchair.entity;
 
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -15,32 +13,17 @@ public class Book {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Long userId;
+    private String isbn;
     private String googleBooksId;
     private String title;
     private String author;
 
-    @Enumerated(EnumType.STRING)
-    private BookType type;
-
-    @Enumerated(EnumType.STRING)
-    private BookCategory category;
-
-    private Integer position; // rank within the type+category list
-
-    @jakarta.persistence.Column(length = 5000)
-    private String review; // optional user review, max 5000 chars
-
     public Book() {}
 
-    public Book(Long userId, String googleBooksId, String title, String author, BookType type, BookCategory category, Integer position) {
-        this.userId = userId;
+    public Book(String googleBooksId, String title, String author) {
         this.googleBooksId = googleBooksId;
         this.title = title;
         this.author = author;
-        this.type = type;
-        this.category = category;
-        this.position = position;
     }
 
     public Long getId() {
@@ -51,12 +34,12 @@ public class Book {
         this.id = id;
     }
 
-    public Long getUserId() {
-        return userId;
+    public String getIsbn() {
+        return isbn;
     }
 
-    public void setUserId(Long userId) {
-        this.userId = userId;
+    public void setIsbn(String isbn) {
+        this.isbn = isbn;
     }
 
     public String getGoogleBooksId() {
@@ -81,37 +64,5 @@ public class Book {
 
     public void setAuthor(String author) {
         this.author = author;
-    }
-
-    public BookType getType() {
-        return type;
-    }
-
-    public void setType(BookType type) {
-        this.type = type;
-    }
-
-    public BookCategory getCategory() {
-        return category;
-    }
-
-    public void setCategory(BookCategory category) {
-        this.category = category;
-    }
-
-    public Integer getPosition() {
-        return position;
-    }
-
-    public void setPosition(Integer position) {
-        this.position = position;
-    }
-
-    public String getReview() {
-        return review;
-    }
-
-    public void setReview(String review) {
-        this.review = review;
     }
 }

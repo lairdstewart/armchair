@@ -3,8 +3,10 @@ package armchair.tool;
 import armchair.entity.Book;
 import armchair.entity.BookCategory;
 import armchair.entity.BookType;
+import armchair.entity.Ranking;
 import armchair.entity.User;
 import armchair.repository.BookRepository;
+import armchair.repository.RankingRepository;
 import armchair.repository.UserRepository;
 import armchair.service.GoogleBooksService;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -49,9 +51,10 @@ public class CuratedListImporter {
         try (ConfigurableApplicationContext context = app.run(args)) {
             UserRepository userRepository = context.getBean(UserRepository.class);
             BookRepository bookRepository = context.getBean(BookRepository.class);
+            RankingRepository rankingRepository = context.getBean(RankingRepository.class);
             GoogleBooksService googleBooksService = context.getBean(GoogleBooksService.class);
 
-            importFromJson(filePath, userRepository, bookRepository, googleBooksService);
+            importFromJson(filePath, userRepository, bookRepository, rankingRepository, googleBooksService);
         }
     }
 
@@ -145,7 +148,8 @@ public class CuratedListImporter {
     }
 
     private static void importFromJson(String path, UserRepository userRepository,
-                                        BookRepository bookRepository, GoogleBooksService googleBooksService) {
+                                        BookRepository bookRepository, RankingRepository rankingRepository,
+                                        GoogleBooksService googleBooksService) {
         // Phase 1: parse and validate entire file before touching the database
         ParsedJsonList parsed = parseJsonFile(path);
         String username = parsed.username();
@@ -156,7 +160,7 @@ public class CuratedListImporter {
         var existing = userRepository.findByUsername(username);
         if (existing.isPresent()) {
             user = existing.get();
-            bookRepository.deleteByUserId(user.getId());
+            rankingRepository.deleteByUserId(user.getId());
             System.out.println("Reimporting curated list: " + username + " (cleared existing books)");
         } else {
             user = new User(username);
@@ -186,16 +190,17 @@ public class CuratedListImporter {
         fictionRanked.sort(Comparator.comparingInt(JsonBook::rank));
         nonfictionRanked.sort(Comparator.comparingInt(JsonBook::rank));
 
-        importJsonBooks(user.getId(), fictionRanked, bookRepository, googleBooksService);
-        importJsonBooks(user.getId(), fictionUnranked, bookRepository, googleBooksService);
-        importJsonBooks(user.getId(), nonfictionRanked, bookRepository, googleBooksService);
-        importJsonBooks(user.getId(), nonfictionUnranked, bookRepository, googleBooksService);
+        importJsonBooks(user.getId(), fictionRanked, bookRepository, rankingRepository, googleBooksService);
+        importJsonBooks(user.getId(), fictionUnranked, bookRepository, rankingRepository, googleBooksService);
+        importJsonBooks(user.getId(), nonfictionRanked, bookRepository, rankingRepository, googleBooksService);
+        importJsonBooks(user.getId(), nonfictionUnranked, bookRepository, rankingRepository, googleBooksService);
 
         System.out.println("Finished importing: " + username);
     }
 
     private static void importJsonBooks(Long userId, List<JsonBook> books,
-                                         BookRepository bookRepository, GoogleBooksService googleBooksService) {
+                                         BookRepository bookRepository, RankingRepository rankingRepository,
+                                         GoogleBooksService googleBooksService) {
         int position = 0;
         for (JsonBook jb : books) {
             List<GoogleBooksService.BookResult> results = googleBooksService.searchBooks(jb.title() + ", " + jb.author());
@@ -210,11 +215,19 @@ public class CuratedListImporter {
                 author = firstResult.author();
             }
 
-            Book book = new Book(userId, googleBooksId, title, author, jb.type(), jb.category(), position);
-            if (jb.review() != null && !jb.review().isEmpty()) {
-                book.setReview(jb.review());
+            Book book;
+            if (googleBooksId != null) {
+                book = bookRepository.findByGoogleBooksId(googleBooksId)
+                    .orElseGet(() -> bookRepository.save(new Book(googleBooksId, title, author)));
+            } else {
+                book = bookRepository.save(new Book(null, title, author));
             }
-            bookRepository.save(book);
+
+            Ranking ranking = new Ranking(userId, book, jb.type(), jb.category(), position);
+            if (jb.review() != null && !jb.review().isEmpty()) {
+                ranking.setReview(jb.review());
+            }
+            rankingRepository.save(ranking);
 
             System.out.println("  " + (position + 1) + ". " + jb.title() + " by " + author);
             position++;
