@@ -1480,19 +1480,23 @@ public class BookController {
             int titleIndex = -1;
             int authorIndex = -1;
             int reviewIndex = -1;
+            int bookshelvesIndex = -1;
             for (int i = 0; i < headers.size(); i++) {
                 String h = headers.get(i).trim();
                 if ("Title".equalsIgnoreCase(h)) titleIndex = i;
                 else if ("Author".equalsIgnoreCase(h)) authorIndex = i;
                 else if ("My Review".equalsIgnoreCase(h)) reviewIndex = i;
+                else if ("Bookshelves".equalsIgnoreCase(h)) bookshelvesIndex = i;
             }
             if (titleIndex == -1 || authorIndex == -1) {
                 return "redirect:/import-goodreads?imported=0&skipped=0";
             }
 
-            // Get current max position for unranked books
+            // Get current max positions for unranked and want-to-read books
             List<Book> existingUnranked = bookRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(userId, BookType.UNRANKED, BookCategory.UNRANKED);
-            int nextPosition = existingUnranked.size();
+            int nextUnrankedPosition = existingUnranked.size();
+            List<Book> existingWantToRead = bookRepository.findByUserIdAndCategoryOrderByPositionAsc(userId, BookCategory.WANT_TO_READ);
+            int nextWantToReadPosition = existingWantToRead.size();
 
             String line;
             while ((line = reader.readLine()) != null) {
@@ -1505,6 +1509,8 @@ public class BookController {
                 String title = fields.get(titleIndex).trim();
                 String author = fields.get(authorIndex).trim();
                 String review = reviewIndex >= 0 && reviewIndex < fields.size() ? fields.get(reviewIndex).trim() : "";
+                String bookshelves = bookshelvesIndex >= 0 && bookshelvesIndex < fields.size() ? fields.get(bookshelvesIndex).trim() : "";
+                boolean isToRead = bookshelves.contains("to-read");
 
                 if (title.isEmpty() || author.isEmpty()) continue;
 
@@ -1527,10 +1533,16 @@ public class BookController {
                         trimmedReview = trimmedReview.substring(0, MAX_REVIEW_LENGTH);
                     }
 
-                    Book newBook = new Book(userId, googleBooksId, title, canonicalAuthor, BookType.UNRANKED, BookCategory.UNRANKED, nextPosition);
+                    Book newBook;
+                    if (isToRead) {
+                        newBook = new Book(userId, googleBooksId, title, canonicalAuthor, null, BookCategory.WANT_TO_READ, nextWantToReadPosition);
+                        nextWantToReadPosition++;
+                    } else {
+                        newBook = new Book(userId, googleBooksId, title, canonicalAuthor, BookType.UNRANKED, BookCategory.UNRANKED, nextUnrankedPosition);
+                        nextUnrankedPosition++;
+                    }
                     newBook.setReview(trimmedReview);
                     bookRepository.save(newBook);
-                    nextPosition++;
                     imported++;
                 }
 
