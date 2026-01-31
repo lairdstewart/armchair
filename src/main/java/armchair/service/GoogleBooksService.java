@@ -6,6 +6,8 @@ import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -46,7 +48,7 @@ public class GoogleBooksService {
         try {
             String url = String.format(
                 "https://www.googleapis.com/books/v1/volumes?q=%s&maxResults=3&key=%s",
-                query.replace(" ", "+"),
+                URLEncoder.encode(query, StandardCharsets.UTF_8),
                 apiKey
             );
 
