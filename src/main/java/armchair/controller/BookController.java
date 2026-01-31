@@ -359,7 +359,7 @@ public class BookController {
 
     private String generateCsv(Long userId) {
         StringBuilder csv = new StringBuilder();
-        csv.append("Rank,Title,Author,Category,Type,Review\n");
+        csv.append("Rank,Title,Author,ISBN13,Category,Type,Review\n");
 
         int rank = 1;
 
@@ -373,6 +373,7 @@ public class BookController {
                     csv.append(rank++).append(",");
                     csv.append("\"").append(escapeCsv(ranking.getBook().getTitle())).append("\",");
                     csv.append("\"").append(escapeCsv(ranking.getBook().getAuthor())).append("\",");
+                    csv.append("\"").append(escapeCsv(ranking.getBook().getIsbn13())).append("\",");
                     csv.append("\"").append(category.getValue()).append("\",");
                     csv.append("\"").append(type.getValue()).append("\",");
                     csv.append("\"").append(escapeCsv(ranking.getReview())).append("\"\n");
