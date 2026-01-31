@@ -30,9 +30,9 @@
         </div>
 
         <!-- Empty state message -->
-        <p th:if="${selectedType == 'FICTION' && !hasFiction}">Add books via the search tab or <a href="/import-goodreads" th:onclick="${!isLoggedIn ? 'alert(\'Log in to Armchair to import books from Goodreads\'); return false;' : ''}">import from Goodreads</a>.</p>
-        <p th:if="${selectedType == 'NONFICTION' && !hasNonfiction}">Add books via the search tab or <a href="/import-goodreads" th:onclick="${!isLoggedIn ? 'alert(\'Log in to Armchair to import books from Goodreads\'); return false;' : ''}">import from Goodreads</a>.</p>
-        <p th:if="${selectedType == 'WANT_TO_READ' && !hasWantToRead}">Add books via the search tab or <a href="/import-goodreads" th:onclick="${!isLoggedIn ? 'alert(\'Log in to Armchair to import books from Goodreads\'); return false;' : ''}">import from Goodreads</a>.</p>
+        <p th:if="${selectedType == 'FICTION' && !hasFiction}">Add books via the search tab or <a th:if="${isLoggedIn}" href="/import-goodreads">import from Goodreads</a><a th:if="${!isLoggedIn}" href="#" onclick="alert('Log in to Armchair to import books from Goodreads'); return false;">import from Goodreads</a>.</p>
+        <p th:if="${selectedType == 'NONFICTION' && !hasNonfiction}">Add books via the search tab or <a th:if="${isLoggedIn}" href="/import-goodreads">import from Goodreads</a><a th:if="${!isLoggedIn}" href="#" onclick="alert('Log in to Armchair to import books from Goodreads'); return false;">import from Goodreads</a>.</p>
+        <p th:if="${selectedType == 'WANT_TO_READ' && !hasWantToRead}">Add books via the search tab or <a th:if="${isLoggedIn}" href="/import-goodreads">import from Goodreads</a><a th:if="${!isLoggedIn}" href="#" onclick="alert('Log in to Armchair to import books from Goodreads'); return false;">import from Goodreads</a>.</p>
 
           <!-- Fiction books list -->
           <div th:if="${selectedType == 'FICTION' && hasFiction}">
