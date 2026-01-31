@@ -1485,6 +1485,65 @@ public class BookController {
         return "redirect:/my-profile";
     }
 
+    @GetMapping("/change-username")
+    public String showChangeUsername(Model model, HttpSession session) {
+        String oauthSubject = getOauthSubject();
+        if (oauthSubject == null) {
+            return "redirect:/";
+        }
+        User user = userRepository.findByOauthSubject(oauthSubject).orElse(null);
+        if (user == null || user.isGuest()) {
+            return "redirect:/";
+        }
+        addNavigationAttributes(model, "profile");
+        model.addAttribute("username", user.getUsername());
+        return "change-username";
+    }
+
+    @PostMapping("/change-username")
+    public String changeUsername(@RequestParam String username, Model model, HttpSession session) {
+        String oauthSubject = getOauthSubject();
+        if (oauthSubject == null) {
+            return "redirect:/";
+        }
+        User user = userRepository.findByOauthSubject(oauthSubject).orElse(null);
+        if (user == null || user.isGuest()) {
+            return "redirect:/";
+        }
+
+        addNavigationAttributes(model, "profile");
+
+        if (username == null || username.isBlank()) {
+            model.addAttribute("error", "Username cannot be empty");
+            model.addAttribute("username", user.getUsername());
+            return "change-username";
+        }
+
+        username = username.trim();
+
+        if (username.length() > 50) {
+            model.addAttribute("error", "Username must be fewer than 50 characters");
+            model.addAttribute("username", username);
+            return "change-username";
+        }
+
+        // If same as current, just redirect back
+        if (username.equals(user.getUsername())) {
+            return "redirect:/my-profile";
+        }
+
+        if (userRepository.existsByUsername(username)) {
+            model.addAttribute("error", "Username already taken");
+            model.addAttribute("username", username);
+            return "change-username";
+        }
+
+        user.setUsername(username);
+        userRepository.save(user);
+
+        return "redirect:/my-profile";
+    }
+
     @GetMapping("/import-goodreads")
     public String showImportGoodreads(Model model, HttpSession session,
                                        @RequestParam(required = false) Integer imported,

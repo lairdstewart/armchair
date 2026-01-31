@@ -7,7 +7,9 @@
   <body>
     <div th:replace="~{fragments :: navbar}"></div>
     <div class="page-content">
-    <p><strong>Username:</strong> <span th:text="${username}"></span></p>
+    <p><strong>Username:</strong> <span th:text="${username}"></span>
+      <a th:href="@{/change-username}" class="book-action-link">[change]</a>
+    </p>
     <p th:if="${signupDate != null}"><strong>User since:</strong> <span th:text="${#temporals.format(signupDate, 'MMMM d, yyyy')}"></span></p>
     <p th:if="${signupNumber != null}"><strong>User number:</strong> <span th:text="${signupNumber}"></span></p>
     <p><strong>Fiction books:</strong> <span th:text="${fictionCount}"></span></p>

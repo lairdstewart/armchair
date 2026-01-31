@@ -1,0 +1,30 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <title>Armchair</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}" />
+  </head>
+  <body>
+    <div th:replace="~{fragments :: navbar}"></div>
+    <div class="page-content">
+    <h2>Change Username</h2>
+
+    <form th:action="@{/change-username}" method="POST">
+      <input
+        type="text"
+        name="username"
+        th:value="${username}"
+        placeholder="Enter new username..."
+        required
+        autofocus
+        maxlength="50"
+      />
+      <br>
+      <br>
+      <div th:if="${error}" style="color: red; margin-bottom: 10px;" th:text="${error}"></div>
+      <button type="submit">Save</button>
+      <a href="/my-profile" style="margin-left: 10px;">Cancel</a>
+    </form>
+    </div>
+  </body>
+</html>
