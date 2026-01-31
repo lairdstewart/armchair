@@ -13,3 +13,4 @@
 - [x] Username validation: uniqueness check was already in place, added 50-character length limit with server-side and client-side enforcement.
 - [x] Added change username button in profile — [change] link next to username navigates to a form with the same validation (unique, < 50 chars).
 - [x] Strip subtitles from Goodreads import: if title contains a colon, remove it and everything after it.
+- [x] Search local database before Google Books API: case-insensitive substring match on title/author with multi-word support. Falls back to API (top 3) only if no local results.
