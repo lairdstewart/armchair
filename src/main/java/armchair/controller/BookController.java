@@ -67,6 +67,7 @@ public class BookController {
 
     private static final String SESSION_GUEST_USER_ID = "guestUserId";
     private static final int MAX_REVIEW_LENGTH = 5000;
+    private static final int MAX_IMPORT_ROWS = 10000;
     private static final java.util.regex.Pattern USERNAME_PATTERN = java.util.regex.Pattern.compile("^[a-zA-Z0-9_-]+$");
 
     private static boolean isSafeRedirectUrl(String url) {
@@ -1675,8 +1676,10 @@ public class BookController {
             int nextWantToReadPosition = existingWantToRead.size();
 
             String line;
+            int rowCount = 0;
             while ((line = reader.readLine()) != null) {
                 if (line.isBlank()) continue;
+                if (++rowCount > MAX_IMPORT_ROWS) break;
                 List<String> fields = parseCsvLine(line);
                 if (fields.size() <= Math.max(titleIndex, Math.max(authorIndex, reviewIndex >= 0 ? reviewIndex : 0))) {
                     continue;
