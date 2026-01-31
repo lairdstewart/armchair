@@ -67,6 +67,7 @@ public class BookController {
 
     private static final String SESSION_GUEST_USER_ID = "guestUserId";
     private static final int MAX_REVIEW_LENGTH = 5000;
+    private static final java.util.regex.Pattern USERNAME_PATTERN = java.util.regex.Pattern.compile("^[a-zA-Z0-9_-]+$");
 
     private static boolean isSafeRedirectUrl(String url) {
         return url != null && url.startsWith("/") && !url.contains("://") && !url.contains("//");
@@ -1503,6 +1504,13 @@ public class BookController {
             return "setup-username";
         }
 
+        // Check characters
+        if (!USERNAME_PATTERN.matcher(username).matches()) {
+            model.addAttribute("error", "Username can only contain letters, numbers, hyphens, and underscores");
+            model.addAttribute("username", username);
+            return "setup-username";
+        }
+
         // Check if username already exists
         if (userRepository.existsByUsername(username)) {
             model.addAttribute("error", "Username already taken");
@@ -1570,6 +1578,12 @@ public class BookController {
 
         if (username.length() > 50) {
             model.addAttribute("error", "Username must be fewer than 50 characters");
+            model.addAttribute("username", username);
+            return "change-username";
+        }
+
+        if (!USERNAME_PATTERN.matcher(username).matches()) {
+            model.addAttribute("error", "Username can only contain letters, numbers, hyphens, and underscores");
             model.addAttribute("username", username);
             return "change-username";
         }
