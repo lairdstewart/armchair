@@ -1559,7 +1559,13 @@ public class BookController {
         newUser.setSignupNumber(realUserCount + 1);
         newUser.setSignupDate(LocalDateTime.now());
 
-        userRepository.save(newUser);
+        try {
+            userRepository.save(newUser);
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            model.addAttribute("error", "Username already taken");
+            model.addAttribute("username", username);
+            return "setup-username";
+        }
 
         // Migrate guest user data if they were using the app as a guest
         Long guestUserId = (Long) session.getAttribute(SESSION_GUEST_USER_ID);
@@ -1632,7 +1638,13 @@ public class BookController {
         }
 
         user.setUsername(username);
-        userRepository.save(user);
+        try {
+            userRepository.save(user);
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            model.addAttribute("error", "Username already taken");
+            model.addAttribute("username", username);
+            return "change-username";
+        }
 
         return "redirect:/my-profile";
     }
