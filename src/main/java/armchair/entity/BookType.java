@@ -2,7 +2,8 @@ package armchair.entity;
 
 public enum BookType {
     FICTION("fiction"),
-    NONFICTION("nonfiction");
+    NONFICTION("nonfiction"),
+    UNRANKED("unranked");
 
     private final String value;
 

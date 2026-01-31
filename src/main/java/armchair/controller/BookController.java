@@ -27,6 +27,11 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -198,12 +203,15 @@ public class BookController {
         BookLists nonfictionBooks = getBookLists(BookType.NONFICTION, userId);
         List<BookInfo> wantToReadBooks = bookRepository.findByUserIdAndCategoryOrderByPositionAsc(userId, BookCategory.WANT_TO_READ)
             .stream().map(b -> new BookInfo(b.getId(), b.getGoogleBooksId(), b.getTitle(), b.getAuthor(), b.getReview())).toList();
+        List<BookInfo> unrankedBooks = bookRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(userId, BookType.UNRANKED, BookCategory.UNRANKED)
+            .stream().map(b -> new BookInfo(b.getId(), b.getGoogleBooksId(), b.getTitle(), b.getAuthor(), b.getReview())).toList();
         boolean hasFiction = !fictionBooks.liked().isEmpty() || !fictionBooks.ok().isEmpty() || !fictionBooks.disliked().isEmpty();
         boolean hasNonfiction = !nonfictionBooks.liked().isEmpty() || !nonfictionBooks.ok().isEmpty() || !nonfictionBooks.disliked().isEmpty();
         boolean hasWantToRead = !wantToReadBooks.isEmpty();
-        boolean hasAnyBooks = hasFiction || hasNonfiction || hasWantToRead;
+        boolean hasUnranked = !unrankedBooks.isEmpty();
+        boolean hasAnyBooks = hasFiction || hasNonfiction || hasWantToRead || hasUnranked;
 
-        // Determine selected type (default to fiction if exists, then nonfiction, then want-to-read)
+        // Determine selected type (default to fiction if exists, then nonfiction, then want-to-read, then unranked)
         String effectiveSelectedType = selectedType;
         if (effectiveSelectedType == null || effectiveSelectedType.isEmpty()) {
             if (hasFiction) {
@@ -212,6 +220,8 @@ public class BookController {
                 effectiveSelectedType = "NONFICTION";
             } else if (hasWantToRead) {
                 effectiveSelectedType = "WANT_TO_READ";
+            } else if (hasUnranked) {
+                effectiveSelectedType = "UNRANKED";
             } else {
                 effectiveSelectedType = "FICTION"; // Default for empty state
             }
@@ -220,9 +230,11 @@ public class BookController {
         model.addAttribute("fictionBooks", fictionBooks);
         model.addAttribute("nonfictionBooks", nonfictionBooks);
         model.addAttribute("wantToReadBooks", wantToReadBooks);
+        model.addAttribute("unrankedBooks", unrankedBooks);
         model.addAttribute("hasFiction", hasFiction);
         model.addAttribute("hasNonfiction", hasNonfiction);
         model.addAttribute("hasWantToRead", hasWantToRead);
+        model.addAttribute("hasUnranked", hasUnranked);
         model.addAttribute("hasAnyBooks", hasAnyBooks);
         model.addAttribute("selectedType", effectiveSelectedType);
         model.addAttribute("rankingState", rankingState);
@@ -1147,6 +1159,14 @@ public class BookController {
             }
         }
 
+        // Add unranked books
+        List<Book> unrankedBooks = bookRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(userId, BookType.UNRANKED, BookCategory.UNRANKED);
+        for (Book book : unrankedBooks) {
+            if (book.getGoogleBooksId() != null) {
+                userBooks.put(book.getGoogleBooksId(), new UserBookRank(0, "unranked", "unranked"));
+            }
+        }
+
         return userBooks;
     }
 
@@ -1411,6 +1431,182 @@ public class BookController {
         }
 
         return "redirect:/my-profile";
+    }
+
+    @GetMapping("/import-goodreads")
+    public String showImportGoodreads(Model model, HttpSession session,
+                                       @RequestParam(required = false) Integer imported,
+                                       @RequestParam(required = false) Integer skipped) {
+        Long userId = getCurrentUserId(session);
+        if (userId == null) {
+            return "redirect:/setup-username";
+        }
+        User user = userRepository.findById(userId).orElse(null);
+        if (user == null || user.isGuest()) {
+            return "redirect:/";
+        }
+        addNavigationAttributes(model, "profile");
+        if (imported != null) {
+            String message = "Successfully imported " + imported + " books";
+            if (skipped != null && skipped > 0) {
+                message += ", " + skipped + " were already in library";
+            }
+            model.addAttribute("resultMessage", message);
+        }
+        return "import-goodreads";
+    }
+
+    @PostMapping("/import-goodreads")
+    public String importGoodreads(@RequestParam("file") MultipartFile file, HttpSession session) {
+        Long userId = getCurrentUserId(session);
+        if (userId == null) {
+            return "redirect:/setup-username";
+        }
+        User user = userRepository.findById(userId).orElse(null);
+        if (user == null || user.isGuest()) {
+            return "redirect:/";
+        }
+
+        int imported = 0;
+        int skipped = 0;
+
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))) {
+            // Read header row and find column indices
+            String headerLine = reader.readLine();
+            if (headerLine == null) {
+                return "redirect:/import-goodreads?imported=0&skipped=0";
+            }
+            List<String> headers = parseCsvLine(headerLine);
+            int titleIndex = -1;
+            int authorIndex = -1;
+            int reviewIndex = -1;
+            for (int i = 0; i < headers.size(); i++) {
+                String h = headers.get(i).trim();
+                if ("Title".equalsIgnoreCase(h)) titleIndex = i;
+                else if ("Author".equalsIgnoreCase(h)) authorIndex = i;
+                else if ("My Review".equalsIgnoreCase(h)) reviewIndex = i;
+            }
+            if (titleIndex == -1 || authorIndex == -1) {
+                return "redirect:/import-goodreads?imported=0&skipped=0";
+            }
+
+            // Get current max position for unranked books
+            List<Book> existingUnranked = bookRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(userId, BookType.UNRANKED, BookCategory.UNRANKED);
+            int nextPosition = existingUnranked.size();
+
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.isBlank()) continue;
+                List<String> fields = parseCsvLine(line);
+                if (fields.size() <= Math.max(titleIndex, Math.max(authorIndex, reviewIndex >= 0 ? reviewIndex : 0))) {
+                    continue;
+                }
+
+                String title = fields.get(titleIndex).trim();
+                String author = fields.get(authorIndex).trim();
+                String review = reviewIndex >= 0 && reviewIndex < fields.size() ? fields.get(reviewIndex).trim() : "";
+
+                if (title.isEmpty() || author.isEmpty()) continue;
+
+                // Look up Google Books API
+                List<GoogleBooksService.BookResult> results = googleBooksService.searchBooks(title + ", " + author);
+                String googleBooksId = null;
+                String canonicalAuthor = author;
+                if (!results.isEmpty()) {
+                    googleBooksId = results.get(0).googleBooksId();
+                    canonicalAuthor = results.get(0).author();
+                }
+
+                // Check for duplicate by googleBooksId
+                if (googleBooksId != null && bookRepository.existsByUserIdAndGoogleBooksId(userId, googleBooksId)) {
+                    skipped++;
+                } else {
+                    // Trim review
+                    String trimmedReview = (review != null && !review.isBlank()) ? review.trim() : null;
+                    if (trimmedReview != null && trimmedReview.length() > MAX_REVIEW_LENGTH) {
+                        trimmedReview = trimmedReview.substring(0, MAX_REVIEW_LENGTH);
+                    }
+
+                    Book newBook = new Book(userId, googleBooksId, title, canonicalAuthor, BookType.UNRANKED, BookCategory.UNRANKED, nextPosition);
+                    newBook.setReview(trimmedReview);
+                    bookRepository.save(newBook);
+                    nextPosition++;
+                    imported++;
+                }
+
+                // 100ms delay between API calls
+                try { Thread.sleep(100); } catch (InterruptedException e) { Thread.currentThread().interrupt(); }
+            }
+        } catch (Exception e) {
+            System.err.println("Error importing Goodreads CSV: " + e.getMessage());
+        }
+
+        return "redirect:/import-goodreads?imported=" + imported + "&skipped=" + skipped;
+    }
+
+    private List<String> parseCsvLine(String line) {
+        List<String> fields = new ArrayList<>();
+        StringBuilder current = new StringBuilder();
+        boolean inQuotes = false;
+        for (int i = 0; i < line.length(); i++) {
+            char c = line.charAt(i);
+            if (inQuotes) {
+                if (c == '"') {
+                    if (i + 1 < line.length() && line.charAt(i + 1) == '"') {
+                        current.append('"');
+                        i++; // skip escaped quote
+                    } else {
+                        inQuotes = false;
+                    }
+                } else {
+                    current.append(c);
+                }
+            } else {
+                if (c == '"') {
+                    inQuotes = true;
+                } else if (c == ',') {
+                    fields.add(current.toString());
+                    current = new StringBuilder();
+                } else {
+                    current.append(c);
+                }
+            }
+        }
+        fields.add(current.toString());
+        return fields;
+    }
+
+    @PostMapping("/rank-unranked-book")
+    public String rankUnrankedBook(@RequestParam Long bookId, HttpSession session) {
+        Long userId = getCurrentUserId(session);
+        if (userId == null) {
+            return "redirect:/setup-username";
+        }
+
+        Book book = bookRepository.findById(bookId).orElse(null);
+        if (book == null || !book.getUserId().equals(userId) || book.getType() != BookType.UNRANKED) {
+            return "redirect:/my-books?selectedType=UNRANKED";
+        }
+
+        // Create RankingState for categorization (no type/category set — enters CATEGORIZE mode)
+        RankingState rankingState = new RankingState(userId, book.getGoogleBooksId(), book.getTitle(), book.getAuthor(), null, null, 0, 0, 0);
+        rankingState.setReviewBeingRanked(book.getReview());
+        rankingStateRepository.save(rankingState);
+
+        // Remove the book from unranked list
+        int removedPosition = book.getPosition();
+        bookRepository.delete(book);
+
+        // Shift remaining unranked books to fill the gap
+        List<Book> booksToShift = bookRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(userId, BookType.UNRANKED, BookCategory.UNRANKED);
+        for (Book b : booksToShift) {
+            if (b.getPosition() > removedPosition) {
+                b.setPosition(b.getPosition() - 1);
+                bookRepository.save(b);
+            }
+        }
+
+        return "redirect:/my-books";
     }
 
     @PostMapping("/delete-profile")

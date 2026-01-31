@@ -20,6 +20,7 @@ public interface BookRepository extends JpaRepository<Book, Long> {
     List<Book> findRandom10UniqueBooks();
 
     List<Book> findByUserIdAndCategoryOrderByPositionAsc(Long userId, BookCategory category);
+    boolean existsByUserIdAndGoogleBooksId(Long userId, String googleBooksId);
     @Modifying
     @Transactional
     void deleteByUserId(Long userId);

@@ -23,12 +23,16 @@
             <input type="radio" name="typeSelector" value="WANT_TO_READ" th:checked="${selectedType == 'WANT_TO_READ'}" onchange="window.location.href='/my-books?selectedType=WANT_TO_READ'" />
             Want to Read
           </label>
+          <label th:if="${hasUnranked}" style="margin-left: 15px;">
+            <input type="radio" name="typeSelector" value="UNRANKED" th:checked="${selectedType == 'UNRANKED'}" onchange="window.location.href='/my-books?selectedType=UNRANKED'" />
+            Unranked
+          </label>
         </div>
 
         <!-- Empty state message -->
-        <p th:if="${selectedType == 'FICTION' && !hasFiction}">Add books via the search tab.</p>
-        <p th:if="${selectedType == 'NONFICTION' && !hasNonfiction}">Add books via the search tab.</p>
-        <p th:if="${selectedType == 'WANT_TO_READ' && !hasWantToRead}">Add books via the search tab.</p>
+        <p th:if="${selectedType == 'FICTION' && !hasFiction}">Add books via the search tab or <a href="/import-goodreads">import from Goodreads</a>.</p>
+        <p th:if="${selectedType == 'NONFICTION' && !hasNonfiction}">Add books via the search tab or <a href="/import-goodreads">import from Goodreads</a>.</p>
+        <p th:if="${selectedType == 'WANT_TO_READ' && !hasWantToRead}">Add books via the search tab or <a href="/import-goodreads">import from Goodreads</a>.</p>
 
           <!-- Fiction books list -->
           <div th:if="${selectedType == 'FICTION' && hasFiction}">
@@ -241,6 +245,28 @@
                     <button type="submit" class="book-action-link">[rank]</button>
                   </form>
                   <form th:action="@{/remove-from-reading-list}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to remove this book?');">
+                    <input type="hidden" name="bookId" th:value="${book.id()}" />
+                    <button type="submit" class="book-action-link">[remove]</button>
+                  </form>
+                </span>
+              </li>
+            </ol>
+          </div>
+
+          <!-- Unranked books list -->
+          <div th:if="${selectedType == 'UNRANKED' && hasUnranked}">
+            <ol class="book-list">
+              <li th:each="book : ${unrankedBooks}">
+                <span class="book-number unranked">?</span>
+                <a th:if="${book.googleBooksId() != null}" th:href="${'https://books.google.com/books?id=' + book.googleBooksId()}" th:text="${book.title()}" target="_blank"></a>
+                <span th:if="${book.googleBooksId() == null}" th:text="${book.title()}"></span>
+                <span th:if="${book.author() != null && !book.author().isBlank()}" th:text="${', ' + book.author()}"></span>
+                <span class="book-actions">
+                  <form th:action="@{/rank-unranked-book}" method="POST" style="display: inline;">
+                    <input type="hidden" name="bookId" th:value="${book.id()}" />
+                    <button type="submit" class="book-action-link">[rank]</button>
+                  </form>
+                  <form th:action="@{/direct-remove}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to remove this book?');">
                     <input type="hidden" name="bookId" th:value="${book.id()}" />
                     <button type="submit" class="book-action-link">[remove]</button>
                   </form>

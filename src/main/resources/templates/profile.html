@@ -25,6 +25,9 @@
 
     <div style="margin-top: 20px;">
 
+      <a th:href="@{/import-goodreads}" style="text-decoration: none;">
+        <button type="button">Import from Goodreads</button>
+      </a>
       <a th:if="${hasAnyBooks}" th:href="@{/export-csv}" style="text-decoration: none;">
         <button type="button">Export Book Lists to .csv</button>
       </a>
