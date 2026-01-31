@@ -1,5 +1,6 @@
 package armchair.entity;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -13,9 +14,12 @@ public class RankingState {
     private Long userId;
 
     private String googleBooksIdBeingRanked;
+    @Column(length = 1000)
     private String titleBeingRanked;
+    @Column(length = 1000)
     private String authorBeingRanked;
     private String isbn13BeingRanked;
+    @Column(length = 5000)
     private String reviewBeingRanked;
 
     @Enumerated(EnumType.STRING)

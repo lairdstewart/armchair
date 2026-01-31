@@ -17,9 +17,9 @@ public class Book {
     @Column(name = "isbn_13", nullable = false, unique = true)
     private String isbn13;
     private String googleBooksId;
-    @Column(nullable = false)
+    @Column(nullable = false, length = 1000)
     private String title;
-    @Column(nullable = false)
+    @Column(nullable = false, length = 1000)
     private String author;
 
     public Book() {}
