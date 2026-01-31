@@ -84,6 +84,15 @@ public class BookController {
     @Autowired
     private GoogleBooksService googleBooksService;
 
+    private void cacheBookResults(List<GoogleBooksService.BookResult> results) {
+        for (GoogleBooksService.BookResult result : results) {
+            if (result.isbn13() == null) continue;
+            if (bookRepository.findByIsbn13(result.isbn13()).isEmpty()) {
+                bookRepository.save(new Book(result.googleBooksId(), result.title(), result.author(), result.isbn13()));
+            }
+        }
+    }
+
     private Book findOrCreateBook(String googleBooksId, String title, String author, String isbn13) {
         if (googleBooksId != null) {
             return bookRepository.findByGoogleBooksId(googleBooksId)
@@ -848,6 +857,7 @@ public class BookController {
         }
 
         List<GoogleBooksService.BookResult> results = googleBooksService.searchBooks(query);
+        cacheBookResults(results);
         session.setAttribute("bookSearchResults", results);
         session.setAttribute("bookSearchQuery", query);
 
@@ -1022,6 +1032,7 @@ public class BookController {
             List<GoogleBooksService.BookResult> results;
             if (query != null && !query.isBlank()) {
                 results = googleBooksService.searchBooks(query);
+                cacheBookResults(results);
             } else {
                 // Show 10 random books from database when search is empty, excluding user's books
                 results = bookRepository.findRandom10Books().stream()
