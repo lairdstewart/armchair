@@ -39,95 +39,101 @@
             <ol class="book-list">
               <li th:each="book, iter : ${fictionBooks.liked()}">
                 <span class="book-number liked" th:text="${iter.index + 1}"></span>
-                <span th:if="${book.review() == null}">
-                  <a th:if="${book.googleBooksId() != null}" th:href="${'https://books.google.com/books?id=' + book.googleBooksId()}" th:text="${book.title()}" target="_blank"></a>
-                  <span th:if="${book.googleBooksId() == null}" th:text="${book.title()}"></span>
-                  <span th:if="${book.author() != null && !book.author().isBlank()}" th:text="${', ' + book.author()}"></span>
-                </span>
-                <details th:if="${book.review() != null}" class="book-review">
-                  <summary>
+                <span>
+                  <span th:if="${book.review() == null}">
                     <a th:if="${book.googleBooksId() != null}" th:href="${'https://books.google.com/books?id=' + book.googleBooksId()}" th:text="${book.title()}" target="_blank"></a>
                     <span th:if="${book.googleBooksId() == null}" th:text="${book.title()}"></span>
                     <span th:if="${book.author() != null && !book.author().isBlank()}" th:text="${', ' + book.author()}"></span>
-                    <span class="review-toggle"></span>
-                  </summary>
-                  <div class="review-text" th:text="${book.review()}"></div>
-                </details>
-                <span class="book-actions">
-                  <form th:action="@{/direct-review}" method="POST" style="display: inline;">
-                    <input type="hidden" name="bookId" th:value="${book.id()}" />
-                    <button type="submit" class="book-action-link">[review]</button>
-                  </form>
-                  <form th:action="@{/direct-rerank}" method="POST" style="display: inline;">
-                    <input type="hidden" name="bookId" th:value="${book.id()}" />
-                    <button type="submit" class="book-action-link">[re-rank]</button>
-                  </form>
-                  <form th:action="@{/direct-remove}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to remove this book?');">
-                    <input type="hidden" name="bookId" th:value="${book.id()}" />
-                    <button type="submit" class="book-action-link">[remove]</button>
-                  </form>
+                  </span>
+                  <details th:if="${book.review() != null}" class="book-review">
+                    <summary>
+                      <a th:if="${book.googleBooksId() != null}" th:href="${'https://books.google.com/books?id=' + book.googleBooksId()}" th:text="${book.title()}" target="_blank"></a>
+                      <span th:if="${book.googleBooksId() == null}" th:text="${book.title()}"></span>
+                      <span th:if="${book.author() != null && !book.author().isBlank()}" th:text="${', ' + book.author()}"></span>
+                      <span class="review-toggle"></span>
+                    </summary>
+                    <div class="review-text" th:text="${book.review()}"></div>
+                  </details>
+                  <span class="book-actions">
+                    <form th:action="@{/direct-review}" method="POST" style="display: inline;">
+                      <input type="hidden" name="bookId" th:value="${book.id()}" />
+                      <button type="submit" class="book-action-link">[review]</button>
+                    </form>
+                    <form th:action="@{/direct-rerank}" method="POST" style="display: inline;">
+                      <input type="hidden" name="bookId" th:value="${book.id()}" />
+                      <button type="submit" class="book-action-link">[re-rank]</button>
+                    </form>
+                    <form th:action="@{/direct-remove}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to remove this book?');">
+                      <input type="hidden" name="bookId" th:value="${book.id()}" />
+                      <button type="submit" class="book-action-link">[remove]</button>
+                    </form>
+                  </span>
                 </span>
               </li>
               <li th:each="book, iter : ${fictionBooks.ok()}">
                 <span class="book-number ok" th:text="${fictionBooks.liked().size() + iter.index + 1}"></span>
-                <span th:if="${book.review() == null}">
-                  <a th:if="${book.googleBooksId() != null}" th:href="${'https://books.google.com/books?id=' + book.googleBooksId()}" th:text="${book.title()}" target="_blank"></a>
-                  <span th:if="${book.googleBooksId() == null}" th:text="${book.title()}"></span>
-                  <span th:if="${book.author() != null && !book.author().isBlank()}" th:text="${', ' + book.author()}"></span>
-                </span>
-                <details th:if="${book.review() != null}" class="book-review">
-                  <summary>
+                <span>
+                  <span th:if="${book.review() == null}">
                     <a th:if="${book.googleBooksId() != null}" th:href="${'https://books.google.com/books?id=' + book.googleBooksId()}" th:text="${book.title()}" target="_blank"></a>
                     <span th:if="${book.googleBooksId() == null}" th:text="${book.title()}"></span>
                     <span th:if="${book.author() != null && !book.author().isBlank()}" th:text="${', ' + book.author()}"></span>
-                    <span class="review-toggle"></span>
-                  </summary>
-                  <div class="review-text" th:text="${book.review()}"></div>
-                </details>
-                <span class="book-actions">
-                  <form th:action="@{/direct-review}" method="POST" style="display: inline;">
-                    <input type="hidden" name="bookId" th:value="${book.id()}" />
-                    <button type="submit" class="book-action-link">[review]</button>
-                  </form>
-                  <form th:action="@{/direct-rerank}" method="POST" style="display: inline;">
-                    <input type="hidden" name="bookId" th:value="${book.id()}" />
-                    <button type="submit" class="book-action-link">[re-rank]</button>
-                  </form>
-                  <form th:action="@{/direct-remove}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to remove this book?');">
-                    <input type="hidden" name="bookId" th:value="${book.id()}" />
-                    <button type="submit" class="book-action-link">[remove]</button>
-                  </form>
+                  </span>
+                  <details th:if="${book.review() != null}" class="book-review">
+                    <summary>
+                      <a th:if="${book.googleBooksId() != null}" th:href="${'https://books.google.com/books?id=' + book.googleBooksId()}" th:text="${book.title()}" target="_blank"></a>
+                      <span th:if="${book.googleBooksId() == null}" th:text="${book.title()}"></span>
+                      <span th:if="${book.author() != null && !book.author().isBlank()}" th:text="${', ' + book.author()}"></span>
+                      <span class="review-toggle"></span>
+                    </summary>
+                    <div class="review-text" th:text="${book.review()}"></div>
+                  </details>
+                  <span class="book-actions">
+                    <form th:action="@{/direct-review}" method="POST" style="display: inline;">
+                      <input type="hidden" name="bookId" th:value="${book.id()}" />
+                      <button type="submit" class="book-action-link">[review]</button>
+                    </form>
+                    <form th:action="@{/direct-rerank}" method="POST" style="display: inline;">
+                      <input type="hidden" name="bookId" th:value="${book.id()}" />
+                      <button type="submit" class="book-action-link">[re-rank]</button>
+                    </form>
+                    <form th:action="@{/direct-remove}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to remove this book?');">
+                      <input type="hidden" name="bookId" th:value="${book.id()}" />
+                      <button type="submit" class="book-action-link">[remove]</button>
+                    </form>
+                  </span>
                 </span>
               </li>
               <li th:each="book, iter : ${fictionBooks.disliked()}">
                 <span class="book-number disliked" th:text="${fictionBooks.liked().size() + fictionBooks.ok().size() + iter.index + 1}"></span>
-                <span th:if="${book.review() == null}">
-                  <a th:if="${book.googleBooksId() != null}" th:href="${'https://books.google.com/books?id=' + book.googleBooksId()}" th:text="${book.title()}" target="_blank"></a>
-                  <span th:if="${book.googleBooksId() == null}" th:text="${book.title()}"></span>
-                  <span th:if="${book.author() != null && !book.author().isBlank()}" th:text="${', ' + book.author()}"></span>
-                </span>
-                <details th:if="${book.review() != null}" class="book-review">
-                  <summary>
+                <span>
+                  <span th:if="${book.review() == null}">
                     <a th:if="${book.googleBooksId() != null}" th:href="${'https://books.google.com/books?id=' + book.googleBooksId()}" th:text="${book.title()}" target="_blank"></a>
                     <span th:if="${book.googleBooksId() == null}" th:text="${book.title()}"></span>
                     <span th:if="${book.author() != null && !book.author().isBlank()}" th:text="${', ' + book.author()}"></span>
-                    <span class="review-toggle"></span>
-                  </summary>
-                  <div class="review-text" th:text="${book.review()}"></div>
-                </details>
-                <span class="book-actions">
-                  <form th:action="@{/direct-review}" method="POST" style="display: inline;">
-                    <input type="hidden" name="bookId" th:value="${book.id()}" />
-                    <button type="submit" class="book-action-link">[review]</button>
-                  </form>
-                  <form th:action="@{/direct-rerank}" method="POST" style="display: inline;">
-                    <input type="hidden" name="bookId" th:value="${book.id()}" />
-                    <button type="submit" class="book-action-link">[re-rank]</button>
-                  </form>
-                  <form th:action="@{/direct-remove}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to remove this book?');">
-                    <input type="hidden" name="bookId" th:value="${book.id()}" />
-                    <button type="submit" class="book-action-link">[remove]</button>
-                  </form>
+                  </span>
+                  <details th:if="${book.review() != null}" class="book-review">
+                    <summary>
+                      <a th:if="${book.googleBooksId() != null}" th:href="${'https://books.google.com/books?id=' + book.googleBooksId()}" th:text="${book.title()}" target="_blank"></a>
+                      <span th:if="${book.googleBooksId() == null}" th:text="${book.title()}"></span>
+                      <span th:if="${book.author() != null && !book.author().isBlank()}" th:text="${', ' + book.author()}"></span>
+                      <span class="review-toggle"></span>
+                    </summary>
+                    <div class="review-text" th:text="${book.review()}"></div>
+                  </details>
+                  <span class="book-actions">
+                    <form th:action="@{/direct-review}" method="POST" style="display: inline;">
+                      <input type="hidden" name="bookId" th:value="${book.id()}" />
+                      <button type="submit" class="book-action-link">[review]</button>
+                    </form>
+                    <form th:action="@{/direct-rerank}" method="POST" style="display: inline;">
+                      <input type="hidden" name="bookId" th:value="${book.id()}" />
+                      <button type="submit" class="book-action-link">[re-rank]</button>
+                    </form>
+                    <form th:action="@{/direct-remove}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to remove this book?');">
+                      <input type="hidden" name="bookId" th:value="${book.id()}" />
+                      <button type="submit" class="book-action-link">[remove]</button>
+                    </form>
+                  </span>
                 </span>
               </li>
             </ol>
@@ -138,95 +144,101 @@
             <ol class="book-list">
               <li th:each="book, iter : ${nonfictionBooks.liked()}">
                 <span class="book-number liked" th:text="${iter.index + 1}"></span>
-                <span th:if="${book.review() == null}">
-                  <a th:if="${book.googleBooksId() != null}" th:href="${'https://books.google.com/books?id=' + book.googleBooksId()}" th:text="${book.title()}" target="_blank"></a>
-                  <span th:if="${book.googleBooksId() == null}" th:text="${book.title()}"></span>
-                  <span th:if="${book.author() != null && !book.author().isBlank()}" th:text="${', ' + book.author()}"></span>
-                </span>
-                <details th:if="${book.review() != null}" class="book-review">
-                  <summary>
+                <span>
+                  <span th:if="${book.review() == null}">
                     <a th:if="${book.googleBooksId() != null}" th:href="${'https://books.google.com/books?id=' + book.googleBooksId()}" th:text="${book.title()}" target="_blank"></a>
                     <span th:if="${book.googleBooksId() == null}" th:text="${book.title()}"></span>
                     <span th:if="${book.author() != null && !book.author().isBlank()}" th:text="${', ' + book.author()}"></span>
-                    <span class="review-toggle"></span>
-                  </summary>
-                  <div class="review-text" th:text="${book.review()}"></div>
-                </details>
-                <span class="book-actions">
-                  <form th:action="@{/direct-review}" method="POST" style="display: inline;">
-                    <input type="hidden" name="bookId" th:value="${book.id()}" />
-                    <button type="submit" class="book-action-link">[review]</button>
-                  </form>
-                  <form th:action="@{/direct-rerank}" method="POST" style="display: inline;">
-                    <input type="hidden" name="bookId" th:value="${book.id()}" />
-                    <button type="submit" class="book-action-link">[re-rank]</button>
-                  </form>
-                  <form th:action="@{/direct-remove}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to remove this book?');">
-                    <input type="hidden" name="bookId" th:value="${book.id()}" />
-                    <button type="submit" class="book-action-link">[remove]</button>
-                  </form>
+                  </span>
+                  <details th:if="${book.review() != null}" class="book-review">
+                    <summary>
+                      <a th:if="${book.googleBooksId() != null}" th:href="${'https://books.google.com/books?id=' + book.googleBooksId()}" th:text="${book.title()}" target="_blank"></a>
+                      <span th:if="${book.googleBooksId() == null}" th:text="${book.title()}"></span>
+                      <span th:if="${book.author() != null && !book.author().isBlank()}" th:text="${', ' + book.author()}"></span>
+                      <span class="review-toggle"></span>
+                    </summary>
+                    <div class="review-text" th:text="${book.review()}"></div>
+                  </details>
+                  <span class="book-actions">
+                    <form th:action="@{/direct-review}" method="POST" style="display: inline;">
+                      <input type="hidden" name="bookId" th:value="${book.id()}" />
+                      <button type="submit" class="book-action-link">[review]</button>
+                    </form>
+                    <form th:action="@{/direct-rerank}" method="POST" style="display: inline;">
+                      <input type="hidden" name="bookId" th:value="${book.id()}" />
+                      <button type="submit" class="book-action-link">[re-rank]</button>
+                    </form>
+                    <form th:action="@{/direct-remove}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to remove this book?');">
+                      <input type="hidden" name="bookId" th:value="${book.id()}" />
+                      <button type="submit" class="book-action-link">[remove]</button>
+                    </form>
+                  </span>
                 </span>
               </li>
               <li th:each="book, iter : ${nonfictionBooks.ok()}">
                 <span class="book-number ok" th:text="${nonfictionBooks.liked().size() + iter.index + 1}"></span>
-                <span th:if="${book.review() == null}">
-                  <a th:if="${book.googleBooksId() != null}" th:href="${'https://books.google.com/books?id=' + book.googleBooksId()}" th:text="${book.title()}" target="_blank"></a>
-                  <span th:if="${book.googleBooksId() == null}" th:text="${book.title()}"></span>
-                  <span th:if="${book.author() != null && !book.author().isBlank()}" th:text="${', ' + book.author()}"></span>
-                </span>
-                <details th:if="${book.review() != null}" class="book-review">
-                  <summary>
+                <span>
+                  <span th:if="${book.review() == null}">
                     <a th:if="${book.googleBooksId() != null}" th:href="${'https://books.google.com/books?id=' + book.googleBooksId()}" th:text="${book.title()}" target="_blank"></a>
                     <span th:if="${book.googleBooksId() == null}" th:text="${book.title()}"></span>
                     <span th:if="${book.author() != null && !book.author().isBlank()}" th:text="${', ' + book.author()}"></span>
-                    <span class="review-toggle"></span>
-                  </summary>
-                  <div class="review-text" th:text="${book.review()}"></div>
-                </details>
-                <span class="book-actions">
-                  <form th:action="@{/direct-review}" method="POST" style="display: inline;">
-                    <input type="hidden" name="bookId" th:value="${book.id()}" />
-                    <button type="submit" class="book-action-link">[review]</button>
-                  </form>
-                  <form th:action="@{/direct-rerank}" method="POST" style="display: inline;">
-                    <input type="hidden" name="bookId" th:value="${book.id()}" />
-                    <button type="submit" class="book-action-link">[re-rank]</button>
-                  </form>
-                  <form th:action="@{/direct-remove}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to remove this book?');">
-                    <input type="hidden" name="bookId" th:value="${book.id()}" />
-                    <button type="submit" class="book-action-link">[remove]</button>
-                  </form>
+                  </span>
+                  <details th:if="${book.review() != null}" class="book-review">
+                    <summary>
+                      <a th:if="${book.googleBooksId() != null}" th:href="${'https://books.google.com/books?id=' + book.googleBooksId()}" th:text="${book.title()}" target="_blank"></a>
+                      <span th:if="${book.googleBooksId() == null}" th:text="${book.title()}"></span>
+                      <span th:if="${book.author() != null && !book.author().isBlank()}" th:text="${', ' + book.author()}"></span>
+                      <span class="review-toggle"></span>
+                    </summary>
+                    <div class="review-text" th:text="${book.review()}"></div>
+                  </details>
+                  <span class="book-actions">
+                    <form th:action="@{/direct-review}" method="POST" style="display: inline;">
+                      <input type="hidden" name="bookId" th:value="${book.id()}" />
+                      <button type="submit" class="book-action-link">[review]</button>
+                    </form>
+                    <form th:action="@{/direct-rerank}" method="POST" style="display: inline;">
+                      <input type="hidden" name="bookId" th:value="${book.id()}" />
+                      <button type="submit" class="book-action-link">[re-rank]</button>
+                    </form>
+                    <form th:action="@{/direct-remove}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to remove this book?');">
+                      <input type="hidden" name="bookId" th:value="${book.id()}" />
+                      <button type="submit" class="book-action-link">[remove]</button>
+                    </form>
+                  </span>
                 </span>
               </li>
               <li th:each="book, iter : ${nonfictionBooks.disliked()}">
                 <span class="book-number disliked" th:text="${nonfictionBooks.liked().size() + nonfictionBooks.ok().size() + iter.index + 1}"></span>
-                <span th:if="${book.review() == null}">
-                  <a th:if="${book.googleBooksId() != null}" th:href="${'https://books.google.com/books?id=' + book.googleBooksId()}" th:text="${book.title()}" target="_blank"></a>
-                  <span th:if="${book.googleBooksId() == null}" th:text="${book.title()}"></span>
-                  <span th:if="${book.author() != null && !book.author().isBlank()}" th:text="${', ' + book.author()}"></span>
-                </span>
-                <details th:if="${book.review() != null}" class="book-review">
-                  <summary>
+                <span>
+                  <span th:if="${book.review() == null}">
                     <a th:if="${book.googleBooksId() != null}" th:href="${'https://books.google.com/books?id=' + book.googleBooksId()}" th:text="${book.title()}" target="_blank"></a>
                     <span th:if="${book.googleBooksId() == null}" th:text="${book.title()}"></span>
                     <span th:if="${book.author() != null && !book.author().isBlank()}" th:text="${', ' + book.author()}"></span>
-                    <span class="review-toggle"></span>
-                  </summary>
-                  <div class="review-text" th:text="${book.review()}"></div>
-                </details>
-                <span class="book-actions">
-                  <form th:action="@{/direct-review}" method="POST" style="display: inline;">
-                    <input type="hidden" name="bookId" th:value="${book.id()}" />
-                    <button type="submit" class="book-action-link">[review]</button>
-                  </form>
-                  <form th:action="@{/direct-rerank}" method="POST" style="display: inline;">
-                    <input type="hidden" name="bookId" th:value="${book.id()}" />
-                    <button type="submit" class="book-action-link">[re-rank]</button>
-                  </form>
-                  <form th:action="@{/direct-remove}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to remove this book?');">
-                    <input type="hidden" name="bookId" th:value="${book.id()}" />
-                    <button type="submit" class="book-action-link">[remove]</button>
-                  </form>
+                  </span>
+                  <details th:if="${book.review() != null}" class="book-review">
+                    <summary>
+                      <a th:if="${book.googleBooksId() != null}" th:href="${'https://books.google.com/books?id=' + book.googleBooksId()}" th:text="${book.title()}" target="_blank"></a>
+                      <span th:if="${book.googleBooksId() == null}" th:text="${book.title()}"></span>
+                      <span th:if="${book.author() != null && !book.author().isBlank()}" th:text="${', ' + book.author()}"></span>
+                      <span class="review-toggle"></span>
+                    </summary>
+                    <div class="review-text" th:text="${book.review()}"></div>
+                  </details>
+                  <span class="book-actions">
+                    <form th:action="@{/direct-review}" method="POST" style="display: inline;">
+                      <input type="hidden" name="bookId" th:value="${book.id()}" />
+                      <button type="submit" class="book-action-link">[review]</button>
+                    </form>
+                    <form th:action="@{/direct-rerank}" method="POST" style="display: inline;">
+                      <input type="hidden" name="bookId" th:value="${book.id()}" />
+                      <button type="submit" class="book-action-link">[re-rank]</button>
+                    </form>
+                    <form th:action="@{/direct-remove}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to remove this book?');">
+                      <input type="hidden" name="bookId" th:value="${book.id()}" />
+                      <button type="submit" class="book-action-link">[remove]</button>
+                    </form>
+                  </span>
                 </span>
               </li>
             </ol>
