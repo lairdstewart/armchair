@@ -68,6 +68,10 @@ public class BookController {
     private static final String SESSION_GUEST_USER_ID = "guestUserId";
     private static final int MAX_REVIEW_LENGTH = 5000;
 
+    private static boolean isSafeRedirectUrl(String url) {
+        return url != null && url.startsWith("/") && !url.contains("://") && !url.contains("//");
+    }
+
     @Autowired
     private UserRepository userRepository;
 
@@ -961,7 +965,7 @@ public class BookController {
             return "redirect:/setup-username";
         }
 
-        String redirectTo = returnUrl != null && !returnUrl.isBlank() ? "redirect:" + returnUrl : "redirect:/search?type=books";
+        String redirectTo = isSafeRedirectUrl(returnUrl) ? "redirect:" + returnUrl : "redirect:/search?type=books";
 
         // Check if book is already in user's library (any category)
         if (rankingRepository.existsByUserIdAndBookGoogleBooksId(userId, googleBooksId)) {
@@ -1416,7 +1420,7 @@ public class BookController {
             followRepository.save(follow);
         }
 
-        return "redirect:" + (returnUrl != null ? returnUrl : "/search?type=profiles");
+        return isSafeRedirectUrl(returnUrl) ? "redirect:" + returnUrl : "redirect:/search?type=profiles";
     }
 
     @PostMapping("/unfollow")
@@ -1436,7 +1440,7 @@ public class BookController {
         followRepository.findByFollowerIdAndFollowedId(currentUserId, userId)
             .ifPresent(followRepository::delete);
 
-        return "redirect:" + (returnUrl != null ? returnUrl : "/search?type=profiles");
+        return isSafeRedirectUrl(returnUrl) ? "redirect:" + returnUrl : "redirect:/search?type=profiles";
     }
 
     @PostMapping("/toggle-publish-lists")
