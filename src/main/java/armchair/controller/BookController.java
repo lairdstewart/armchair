@@ -1449,6 +1449,13 @@ public class BookController {
 
         username = username.trim();
 
+        // Check length
+        if (username.length() > 50) {
+            model.addAttribute("error", "Username must be fewer than 50 characters");
+            model.addAttribute("username", username);
+            return "setup-username";
+        }
+
         // Check if username already exists
         if (userRepository.existsByUsername(username)) {
             model.addAttribute("error", "Username already taken");
