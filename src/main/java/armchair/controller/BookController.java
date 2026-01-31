@@ -1217,8 +1217,12 @@ public class BookController {
             for (BookCategory category : List.of(BookCategory.LIKED, BookCategory.OK, BookCategory.DISLIKED)) {
                 List<Ranking> rankings = rankingRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(userId, bookType, category);
                 for (Ranking ranking : rankings) {
+                    UserBookRank ubr = new UserBookRank(rank, category.name().toLowerCase(), bookType.name().toLowerCase());
                     if (ranking.getBook().getGoogleBooksId() != null) {
-                        userBooks.put(ranking.getBook().getGoogleBooksId(), new UserBookRank(rank, category.name().toLowerCase(), bookType.name().toLowerCase()));
+                        userBooks.put(ranking.getBook().getGoogleBooksId(), ubr);
+                    }
+                    if (ranking.getBook().getIsbn13() != null) {
+                        userBooks.put(ranking.getBook().getIsbn13(), ubr);
                     }
                     rank++;
                 }
@@ -1228,16 +1232,24 @@ public class BookController {
         // Add want-to-read books
         List<Ranking> wantToReadRankings = rankingRepository.findByUserIdAndCategoryOrderByPositionAsc(userId, BookCategory.WANT_TO_READ);
         for (Ranking ranking : wantToReadRankings) {
+            UserBookRank ubr = new UserBookRank(0, "want_to_read", "");
             if (ranking.getBook().getGoogleBooksId() != null) {
-                userBooks.put(ranking.getBook().getGoogleBooksId(), new UserBookRank(0, "want_to_read", ""));
+                userBooks.put(ranking.getBook().getGoogleBooksId(), ubr);
+            }
+            if (ranking.getBook().getIsbn13() != null) {
+                userBooks.put(ranking.getBook().getIsbn13(), ubr);
             }
         }
 
         // Add unranked books
         List<Ranking> unrankedRankings = rankingRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(userId, BookType.UNRANKED, BookCategory.UNRANKED);
         for (Ranking ranking : unrankedRankings) {
+            UserBookRank ubr = new UserBookRank(0, "unranked", "unranked");
             if (ranking.getBook().getGoogleBooksId() != null) {
-                userBooks.put(ranking.getBook().getGoogleBooksId(), new UserBookRank(0, "unranked", "unranked"));
+                userBooks.put(ranking.getBook().getGoogleBooksId(), ubr);
+            }
+            if (ranking.getBook().getIsbn13() != null) {
+                userBooks.put(ranking.getBook().getIsbn13(), ubr);
             }
         }
 
@@ -1686,8 +1698,9 @@ public class BookController {
                     Book book;
                     if (isbn13 != null) {
                         String finalIsbn1 = isbn13;
+                        String finalTitle = title;
                         book = bookRepository.findByIsbn13(isbn13)
-                            .orElseGet(() -> bookRepository.save(new Book(null, title, author, finalIsbn1)));
+                            .orElseGet(() -> bookRepository.save(new Book(null, finalTitle, author, finalIsbn1)));
                     } else {
                         book = bookRepository.save(new Book(null, title, author, null));
                     }

@@ -25,21 +25,21 @@
       <!-- Books results -->
       <div th:if="${searchType == 'books'}">
         <ol th:if="${bookResults != null && !bookResults.isEmpty()}" style="list-style: none; padding-left: 0;">
-          <li th:each="book : ${bookResults}">
+          <li th:each="book : ${bookResults}" th:with="ubr=${userBooks != null ? (userBooks.containsKey(book.googleBooksId()) ? userBooks.get(book.googleBooksId()) : (book.isbn13() != null ? userBooks.get(book.isbn13()) : null)) : null}">
             <a th:if="${book.bookUrl() != null}" th:href="${book.bookUrl()}" target="_blank" th:text="${book.title()}"></a>
             <span th:if="${book.bookUrl() == null}" th:text="${book.title()}"></span>
             <span th:if="${book.author() != null && !book.author().isBlank()}" th:text="${', ' + book.author()}"></span>
             <!-- Already ranked -->
-            <span th:if="${userBooks != null && userBooks.containsKey(book.googleBooksId()) && userBooks.get(book.googleBooksId()).category() != 'want_to_read' && userBooks.get(book.googleBooksId()).category() != 'unranked'}"
-                  class="book-action-text" th:text="${'[#' + userBooks.get(book.googleBooksId()).rank() + ']'}"></span>
+            <span th:if="${ubr != null && ubr.category() != 'want_to_read' && ubr.category() != 'unranked'}"
+                  class="book-action-text" th:text="${'[#' + ubr.rank() + ']'}"></span>
             <!-- Already bookmarked -->
-            <span th:if="${userBooks != null && userBooks.containsKey(book.googleBooksId()) && userBooks.get(book.googleBooksId()).category() == 'want_to_read'}"
+            <span th:if="${ubr != null && ubr.category() == 'want_to_read'}"
                   class="book-action-text">[want to read]</span>
             <!-- Already in unranked list -->
-            <span th:if="${userBooks != null && userBooks.containsKey(book.googleBooksId()) && userBooks.get(book.googleBooksId()).category() == 'unranked'}"
+            <span th:if="${ubr != null && ubr.category() == 'unranked'}"
                   class="book-action-text">[unranked]</span>
             <!-- Not in library - show action links -->
-            <span th:if="${userBooks == null || !userBooks.containsKey(book.googleBooksId())}" class="book-actions">
+            <span th:if="${ubr == null}" class="book-actions">
               <form th:action="@{/select-book}" method="POST" style="display: inline;">
                 <input type="hidden" name="googleBooksId" th:value="${book.googleBooksId()}" />
                 <input type="hidden" name="bookName" th:value="${book.title()}" />
