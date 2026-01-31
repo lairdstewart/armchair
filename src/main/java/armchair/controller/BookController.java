@@ -39,6 +39,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Controller
 public class BookController {
@@ -83,6 +85,27 @@ public class BookController {
 
     @Autowired
     private GoogleBooksService googleBooksService;
+
+    private List<GoogleBooksService.BookResult> searchLocalBooks(String query) {
+        String[] words = query.trim().split("\\s+");
+        List<Book> candidates = null;
+        for (String word : words) {
+            if (word.isEmpty()) continue;
+            List<Book> matches = bookRepository.searchByTitleOrAuthor(word);
+            if (candidates == null) {
+                candidates = new ArrayList<>(matches);
+            } else {
+                Set<Long> matchIds = matches.stream().map(Book::getId).collect(Collectors.toSet());
+                candidates.removeIf(b -> !matchIds.contains(b.getId()));
+            }
+        }
+        if (candidates == null || candidates.isEmpty()) {
+            return List.of();
+        }
+        return candidates.stream()
+            .map(b -> new GoogleBooksService.BookResult(b.getGoogleBooksId(), b.getTitle(), b.getAuthor(), b.getIsbn13()))
+            .toList();
+    }
 
     private void cacheBookResults(List<GoogleBooksService.BookResult> results) {
         for (GoogleBooksService.BookResult result : results) {
@@ -871,8 +894,11 @@ public class BookController {
             return "redirect:/setup-username";
         }
 
-        List<GoogleBooksService.BookResult> results = googleBooksService.searchBooks(query);
-        cacheBookResults(results);
+        List<GoogleBooksService.BookResult> results = searchLocalBooks(query);
+        if (results.isEmpty()) {
+            results = googleBooksService.searchBooks(query);
+            cacheBookResults(results);
+        }
         session.setAttribute("bookSearchResults", results);
         session.setAttribute("bookSearchQuery", query);
 
@@ -1052,8 +1078,11 @@ public class BookController {
 
             List<GoogleBooksService.BookResult> results;
             if (query != null && !query.isBlank()) {
-                results = googleBooksService.searchBooks(query);
-                cacheBookResults(results);
+                results = searchLocalBooks(query);
+                if (results.isEmpty()) {
+                    results = googleBooksService.searchBooks(query);
+                    cacheBookResults(results);
+                }
             } else {
                 // Show 10 random books from database when search is empty, excluding user's books
                 results = bookRepository.findRandom10Books().stream()

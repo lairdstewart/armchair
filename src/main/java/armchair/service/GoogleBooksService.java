@@ -45,7 +45,7 @@ public class GoogleBooksService {
 
         try {
             String url = String.format(
-                "https://www.googleapis.com/books/v1/volumes?q=%s&maxResults=5&key=%s",
+                "https://www.googleapis.com/books/v1/volumes?q=%s&maxResults=3&key=%s",
                 query.replace(" ", "+"),
                 apiKey
             );
