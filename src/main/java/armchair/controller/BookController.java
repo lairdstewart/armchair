@@ -437,6 +437,7 @@ public class BookController {
             if (wasRankAll) {
                 return startNextUnrankedBook(userId, rankedType);
             }
+            return "redirect:/my-books?selectedType=" + rankedType.name();
         } else {
             // Continue binary search
             int newCompareToIndex = (newLowIndex + newHighIndex) / 2;
@@ -996,6 +997,7 @@ public class BookController {
             if (wasRankAll) {
                 return startNextUnrankedBook(userId, bookType);
             }
+            return "redirect:/my-books?selectedType=" + bookType.name();
         } else {
             // Start binary search within this category
             int lowIndex = 0;
