@@ -11,6 +11,7 @@ import java.util.Optional;
 @Repository
 public interface BookRepository extends JpaRepository<Book, Long> {
     Optional<Book> findByGoogleBooksId(String googleBooksId);
+    Optional<Book> findByIsbn13(String isbn13);
 
     @Query(value = "SELECT * FROM books WHERE google_books_id IS NOT NULL ORDER BY RANDOM() LIMIT 10", nativeQuery = true)
     List<Book> findRandom10Books();

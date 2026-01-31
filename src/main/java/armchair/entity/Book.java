@@ -1,5 +1,6 @@
 package armchair.entity;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -13,17 +14,19 @@ public class Book {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String isbn;
+    @Column(name = "isbn_13")
+    private String isbn13;
     private String googleBooksId;
     private String title;
     private String author;
 
     public Book() {}
 
-    public Book(String googleBooksId, String title, String author) {
+    public Book(String googleBooksId, String title, String author, String isbn13) {
         this.googleBooksId = googleBooksId;
         this.title = title;
         this.author = author;
+        this.isbn13 = isbn13;
     }
 
     public Long getId() {
@@ -34,12 +37,12 @@ public class Book {
         this.id = id;
     }
 
-    public String getIsbn() {
-        return isbn;
+    public String getIsbn13() {
+        return isbn13;
     }
 
-    public void setIsbn(String isbn) {
-        this.isbn = isbn;
+    public void setIsbn13(String isbn13) {
+        this.isbn13 = isbn13;
     }
 
     public String getGoogleBooksId() {

@@ -15,6 +15,7 @@ public class RankingState {
     private String googleBooksIdBeingRanked;
     private String titleBeingRanked;
     private String authorBeingRanked;
+    private String isbn13BeingRanked;
     private String reviewBeingRanked;
 
     @Enumerated(EnumType.STRING)
@@ -78,6 +79,14 @@ public class RankingState {
 
     public void setAuthorBeingRanked(String authorBeingRanked) {
         this.authorBeingRanked = authorBeingRanked;
+    }
+
+    public String getIsbn13BeingRanked() {
+        return isbn13BeingRanked;
+    }
+
+    public void setIsbn13BeingRanked(String isbn13BeingRanked) {
+        this.isbn13BeingRanked = isbn13BeingRanked;
     }
 
     public String getReviewBeingRanked() {

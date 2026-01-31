@@ -4,7 +4,7 @@
 -- 1. Create new books table (deduplicated metadata)
 CREATE TABLE books_new (
     id BIGSERIAL PRIMARY KEY,
-    isbn VARCHAR(255),
+    isbn_13 VARCHAR(255),
     google_books_id VARCHAR(255),
     title VARCHAR(255),
     author VARCHAR(255)

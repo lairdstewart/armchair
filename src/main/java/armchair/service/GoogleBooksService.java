@@ -18,7 +18,7 @@ public class GoogleBooksService {
     private final RestTemplate restTemplate = new RestTemplate();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public record BookResult(String googleBooksId, String title, String author) {}
+    public record BookResult(String googleBooksId, String title, String author, String isbn13) {}
 
     public List<BookResult> searchBooks(String query) {
         if (query == null || query.isBlank()) {
@@ -53,7 +53,18 @@ public class GoogleBooksService {
                         author = authors.get(0).asText();
                     }
 
-                    results.add(new BookResult(googleBooksId, title, author));
+                    String isbn13 = null;
+                    JsonNode identifiers = volumeInfo.get("industryIdentifiers");
+                    if (identifiers != null && identifiers.isArray()) {
+                        for (JsonNode id : identifiers) {
+                            if ("ISBN_13".equals(id.path("type").asText())) {
+                                isbn13 = id.path("identifier").asText();
+                                break;
+                            }
+                        }
+                    }
+
+                    results.add(new BookResult(googleBooksId, title, author, isbn13));
                 }
             }
 

@@ -205,22 +205,29 @@ public class CuratedListImporter {
         for (JsonBook jb : books) {
             List<GoogleBooksService.BookResult> results = googleBooksService.searchBooks(jb.title() + ", " + jb.author());
 
-            String googleBooksId = null;
-            String title = jb.title();
-            String author = jb.author();
+            String googleBooksId;
+            String title;
+            String author;
+            String isbn13;
             if (!results.isEmpty()) {
                 GoogleBooksService.BookResult firstResult = results.get(0);
                 googleBooksId = firstResult.googleBooksId();
                 title = firstResult.title();
                 author = firstResult.author();
+                isbn13 = firstResult.isbn13();
+            } else {
+                author = jb.author();
+                title = jb.title();
+                googleBooksId = null;
+                isbn13 = null;
             }
 
             Book book;
             if (googleBooksId != null) {
                 book = bookRepository.findByGoogleBooksId(googleBooksId)
-                    .orElseGet(() -> bookRepository.save(new Book(googleBooksId, title, author)));
+                    .orElseGet(() -> bookRepository.save(new Book(googleBooksId, title, author, isbn13)));
             } else {
-                book = bookRepository.save(new Book(null, title, author));
+                book = bookRepository.save(new Book(null, title, author, isbn13));
             }
 
             Ranking ranking = new Ranking(userId, book, jb.type(), jb.category(), position);
