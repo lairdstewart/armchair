@@ -26,6 +26,18 @@ public class GoogleBooksService {
         }
     }
 
+    public static String convertIsbn10To13(String isbn10) {
+        if (isbn10 == null || isbn10.length() != 10) return null;
+        String prefix = "978" + isbn10.substring(0, 9);
+        int sum = 0;
+        for (int i = 0; i < 12; i++) {
+            int digit = prefix.charAt(i) - '0';
+            sum += (i % 2 == 0) ? digit : digit * 3;
+        }
+        int checkDigit = (10 - (sum % 10)) % 10;
+        return prefix + checkDigit;
+    }
+
     public List<BookResult> searchBooks(String query) {
         if (query == null || query.isBlank()) {
             return List.of();
@@ -60,14 +72,20 @@ public class GoogleBooksService {
                     }
 
                     String isbn13 = null;
+                    String isbn10 = null;
                     JsonNode identifiers = volumeInfo.get("industryIdentifiers");
                     if (identifiers != null && identifiers.isArray()) {
                         for (JsonNode id : identifiers) {
-                            if ("ISBN_13".equals(id.path("type").asText())) {
+                            String idType = id.path("type").asText();
+                            if ("ISBN_13".equals(idType)) {
                                 isbn13 = id.path("identifier").asText();
-                                break;
+                            } else if ("ISBN_10".equals(idType)) {
+                                isbn10 = id.path("identifier").asText();
                             }
                         }
+                    }
+                    if (isbn13 == null && isbn10 != null) {
+                        isbn13 = convertIsbn10To13(isbn10);
                     }
 
                     results.add(new BookResult(googleBooksId, title, author, isbn13));

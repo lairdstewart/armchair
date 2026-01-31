@@ -1492,6 +1492,7 @@ public class BookController {
             List<String> headers = parseCsvLine(headerLine);
             int titleIndex = -1;
             int authorIndex = -1;
+            int isbnIndex = -1;
             int isbn13Index = -1;
             int reviewIndex = -1;
             int exclusiveShelfIndex = -1;
@@ -1499,6 +1500,7 @@ public class BookController {
                 String h = headers.get(i).trim();
                 if ("Title".equalsIgnoreCase(h)) titleIndex = i;
                 else if ("Author".equalsIgnoreCase(h)) authorIndex = i;
+                else if ("ISBN".equalsIgnoreCase(h)) isbnIndex = i;
                 else if ("ISBN13".equalsIgnoreCase(h)) isbn13Index = i;
                 else if ("My Review".equalsIgnoreCase(h)) reviewIndex = i;
                 else if ("Exclusive Shelf".equalsIgnoreCase(h)) exclusiveShelfIndex = i;
@@ -1523,15 +1525,19 @@ public class BookController {
 
                 String title = fields.get(titleIndex).trim();
                 String author = fields.get(authorIndex).trim();
+                String rawIsbn = isbnIndex >= 0 && isbnIndex < fields.size() ? fields.get(isbnIndex).trim() : "";
                 String rawIsbn13 = isbn13Index >= 0 && isbn13Index < fields.size() ? fields.get(isbn13Index).trim() : "";
                 String review = reviewIndex >= 0 && reviewIndex < fields.size() ? fields.get(reviewIndex).trim() : "";
                 String exclusiveShelf = exclusiveShelfIndex >= 0 && exclusiveShelfIndex < fields.size() ? fields.get(exclusiveShelfIndex).trim() : "";
                 boolean isToRead = "to-read".equals(exclusiveShelf) || "currently-reading".equals(exclusiveShelf);
                 if (title.isEmpty() || author.isEmpty()) continue;
 
-                // Parse ISBN13 from Goodreads format (e.g. ="9781324074335")
+                // Parse ISBN13 from Goodreads format (e.g. ="9781324074335"), fall back to ISBN-10 conversion
                 String isbn13 = rawIsbn13.replaceAll("[=\"]", "");
-                if (isbn13.isEmpty()) isbn13 = null;
+                if (isbn13.isEmpty()) {
+                    String isbn10 = rawIsbn.replaceAll("[=\"]", "");
+                    isbn13 = isbn10.isEmpty() ? null : GoogleBooksService.convertIsbn10To13(isbn10);
+                }
 
                 // Check for duplicate by ISBN13
                 if (isbn13 != null && rankingRepository.existsByUserIdAndBookIsbn13(userId, isbn13)) {
