@@ -18,7 +18,13 @@ public class GoogleBooksService {
     private final RestTemplate restTemplate = new RestTemplate();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public record BookResult(String googleBooksId, String title, String author, String isbn13) {}
+    public record BookResult(String googleBooksId, String title, String author, String isbn13) {
+        public String bookUrl() {
+            if (googleBooksId != null) return "https://books.google.com/books?id=" + googleBooksId;
+            if (isbn13 != null) return "https://www.google.com/search?tbo=p&tbm=bks&q=isbn:" + isbn13;
+            return null;
+        }
+    }
 
     public List<BookResult> searchBooks(String query) {
         if (query == null || query.isBlank()) {

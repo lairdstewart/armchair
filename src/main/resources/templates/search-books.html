@@ -22,7 +22,8 @@
       <div th:if="${searchResults != null && !searchResults.isEmpty()}">
         <h4>Search Results:</h4>
         <div th:each="book : ${searchResults}" style="margin-bottom: 15px; padding: 10px; border: 1px solid #ccc;">
-          <a th:href="${'https://books.google.com/books?id=' + book.googleBooksId()}" target="_blank"><strong th:text="${book.title()}"></strong></a>
+          <a th:if="${book.bookUrl() != null}" th:href="${book.bookUrl()}" target="_blank"><strong th:text="${book.title()}"></strong></a>
+          <strong th:if="${book.bookUrl() == null}" th:text="${book.title()}"></strong>
           <span th:text="' by ' + ${book.author()}"></span>
           <form th:action="@{/select-book}" method="POST" style="display: inline; margin-left: 10px;">
             <input type="hidden" name="googleBooksId" th:value="${book.googleBooksId()}" />

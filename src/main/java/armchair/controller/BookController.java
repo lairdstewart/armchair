@@ -42,7 +42,13 @@ import java.util.Map;
 
 @Controller
 public class BookController {
-    public record BookInfo(Long id, String googleBooksId, String title, String author, String review) {}
+    public record BookInfo(Long id, String googleBooksId, String isbn13, String title, String author, String review) {
+        public String bookUrl() {
+            if (googleBooksId != null) return "https://books.google.com/books?id=" + googleBooksId;
+            if (isbn13 != null) return "https://www.google.com/search?tbo=p&tbm=bks&q=isbn:" + isbn13;
+            return null;
+        }
+    }
     public record BookLists(List<BookInfo> liked, List<BookInfo> ok, List<BookInfo> disliked, List<BookInfo> unranked) {}
     public record ProfileDisplay(String username, String stats) {}
     public record ProfileDisplayWithFollow(String username, String stats, Long userId, boolean isFollowing) {}
@@ -211,9 +217,9 @@ public class BookController {
         BookLists fictionBooks = getBookLists(BookType.FICTION, userId);
         BookLists nonfictionBooks = getBookLists(BookType.NONFICTION, userId);
         List<BookInfo> wantToReadBooks = rankingRepository.findByUserIdAndCategoryOrderByPositionAsc(userId, BookCategory.WANT_TO_READ)
-            .stream().map(r -> new BookInfo(r.getId(), r.getBook().getGoogleBooksId(), r.getBook().getTitle(), r.getBook().getAuthor(), r.getReview())).toList();
+            .stream().map(r -> new BookInfo(r.getId(), r.getBook().getGoogleBooksId(), r.getBook().getIsbn13(), r.getBook().getTitle(), r.getBook().getAuthor(), r.getReview())).toList();
         List<BookInfo> unrankedBooks = rankingRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(userId, BookType.UNRANKED, BookCategory.UNRANKED)
-            .stream().map(r -> new BookInfo(r.getId(), r.getBook().getGoogleBooksId(), r.getBook().getTitle(), r.getBook().getAuthor(), r.getReview())).toList();
+            .stream().map(r -> new BookInfo(r.getId(), r.getBook().getGoogleBooksId(), r.getBook().getIsbn13(), r.getBook().getTitle(), r.getBook().getAuthor(), r.getReview())).toList();
         boolean hasFiction = !fictionBooks.liked().isEmpty() || !fictionBooks.ok().isEmpty() || !fictionBooks.disliked().isEmpty();
         boolean hasNonfiction = !nonfictionBooks.liked().isEmpty() || !nonfictionBooks.ok().isEmpty() || !nonfictionBooks.disliked().isEmpty();
         boolean hasWantToRead = !wantToReadBooks.isEmpty();
@@ -298,6 +304,7 @@ public class BookController {
             model.addAttribute("comparisonBookTitle", compRanking.getBook().getTitle());
             model.addAttribute("comparisonBookAuthor", compRanking.getBook().getAuthor());
             model.addAttribute("comparisonBookGoogleId", compRanking.getBook().getGoogleBooksId());
+            model.addAttribute("comparisonBookIsbn13", compRanking.getBook().getIsbn13());
         }
 
         return "index";
@@ -331,13 +338,13 @@ public class BookController {
 
     private BookLists getBookLists(BookType type, Long userId) {
         List<BookInfo> liked = rankingRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(userId, type, BookCategory.LIKED)
-            .stream().map(r -> new BookInfo(r.getId(), r.getBook().getGoogleBooksId(), r.getBook().getTitle(), r.getBook().getAuthor(), r.getReview())).toList();
+            .stream().map(r -> new BookInfo(r.getId(), r.getBook().getGoogleBooksId(), r.getBook().getIsbn13(), r.getBook().getTitle(), r.getBook().getAuthor(), r.getReview())).toList();
         List<BookInfo> ok = rankingRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(userId, type, BookCategory.OK)
-            .stream().map(r -> new BookInfo(r.getId(), r.getBook().getGoogleBooksId(), r.getBook().getTitle(), r.getBook().getAuthor(), r.getReview())).toList();
+            .stream().map(r -> new BookInfo(r.getId(), r.getBook().getGoogleBooksId(), r.getBook().getIsbn13(), r.getBook().getTitle(), r.getBook().getAuthor(), r.getReview())).toList();
         List<BookInfo> disliked = rankingRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(userId, type, BookCategory.DISLIKED)
-            .stream().map(r -> new BookInfo(r.getId(), r.getBook().getGoogleBooksId(), r.getBook().getTitle(), r.getBook().getAuthor(), r.getReview())).toList();
+            .stream().map(r -> new BookInfo(r.getId(), r.getBook().getGoogleBooksId(), r.getBook().getIsbn13(), r.getBook().getTitle(), r.getBook().getAuthor(), r.getReview())).toList();
         List<BookInfo> unranked = rankingRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(userId, type, BookCategory.UNRANKED)
-            .stream().map(r -> new BookInfo(r.getId(), r.getBook().getGoogleBooksId(), r.getBook().getTitle(), r.getBook().getAuthor(), r.getReview())).toList();
+            .stream().map(r -> new BookInfo(r.getId(), r.getBook().getGoogleBooksId(), r.getBook().getIsbn13(), r.getBook().getTitle(), r.getBook().getAuthor(), r.getReview())).toList();
         return new BookLists(liked, ok, disliked, unranked);
     }
 

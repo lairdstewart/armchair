@@ -26,7 +26,8 @@
       <div th:if="${searchType == 'books'}">
         <ol th:if="${bookResults != null && !bookResults.isEmpty()}" style="list-style: none; padding-left: 0;">
           <li th:each="book : ${bookResults}">
-            <a th:href="${'https://books.google.com/books?id=' + book.googleBooksId()}" target="_blank" th:text="${book.title()}"></a>
+            <a th:if="${book.bookUrl() != null}" th:href="${book.bookUrl()}" target="_blank" th:text="${book.title()}"></a>
+            <span th:if="${book.bookUrl() == null}" th:text="${book.title()}"></span>
             <span th:if="${book.author() != null && !book.author().isBlank()}" th:text="${', ' + book.author()}"></span>
             <!-- Already ranked -->
             <span th:if="${userBooks != null && userBooks.containsKey(book.googleBooksId()) && userBooks.get(book.googleBooksId()).category() != 'want_to_read'}"
