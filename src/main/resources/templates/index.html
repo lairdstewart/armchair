@@ -234,7 +234,7 @@
 
           <!-- Want to Read books list -->
           <div th:if="${selectedType == 'WANT_TO_READ' && hasWantToRead}">
-            <ol class="book-list">
+            <ul class="plain-list">
               <li th:each="book, iter : ${wantToReadBooks}">
                 <a th:if="${book.googleBooksId() != null}" th:href="${'https://books.google.com/books?id=' + book.googleBooksId()}" th:text="${book.title()}" target="_blank"></a>
                 <span th:if="${book.googleBooksId() == null}" th:text="${book.title()}"></span>
@@ -250,12 +250,12 @@
                   </form>
                 </span>
               </li>
-            </ol>
+            </ul>
           </div>
 
           <!-- Unranked books list -->
           <div th:if="${selectedType == 'UNRANKED' && hasUnranked}">
-            <ol class="book-list">
+            <ul class="plain-list">
               <li th:each="book : ${unrankedBooks}">
                 <a th:if="${book.googleBooksId() != null}" th:href="${'https://books.google.com/books?id=' + book.googleBooksId()}" th:text="${book.title()}" target="_blank"></a>
                 <span th:if="${book.googleBooksId() == null}" th:text="${book.title()}"></span>
@@ -271,7 +271,7 @@
                   </form>
                 </span>
               </li>
-            </ol>
+            </ul>
           </div>
       </div>
       <div th:case="'CATEGORIZE'">
