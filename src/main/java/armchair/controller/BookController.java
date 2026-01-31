@@ -1622,6 +1622,10 @@ public class BookController {
                 }
 
                 String title = fields.get(titleIndex).trim();
+                int colonIndex = title.indexOf(':');
+                if (colonIndex >= 0) {
+                    title = title.substring(0, colonIndex).trim();
+                }
                 String author = fields.get(authorIndex).trim();
                 String rawIsbn = isbnIndex >= 0 && isbnIndex < fields.size() ? fields.get(isbnIndex).trim() : "";
                 String rawIsbn13 = isbn13Index >= 0 && isbn13Index < fields.size() ? fields.get(isbn13Index).trim() : "";
