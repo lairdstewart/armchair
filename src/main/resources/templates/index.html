@@ -269,9 +269,20 @@
           <div th:if="${selectedType == 'UNRANKED' && hasUnranked}">
             <ul class="plain-list">
               <li th:each="book : ${unrankedBooks}">
-                <a th:if="${book.googleBooksId() != null}" th:href="${'https://books.google.com/books?id=' + book.googleBooksId()}" th:text="${book.title()}" target="_blank"></a>
-                <span th:if="${book.googleBooksId() == null}" th:text="${book.title()}"></span>
-                <span th:if="${book.author() != null && !book.author().isBlank()}" th:text="${', ' + book.author()}"></span>
+                <span th:if="${book.review() == null}">
+                  <a th:if="${book.googleBooksId() != null}" th:href="${'https://books.google.com/books?id=' + book.googleBooksId()}" th:text="${book.title()}" target="_blank"></a>
+                  <span th:if="${book.googleBooksId() == null}" th:text="${book.title()}"></span>
+                  <span th:if="${book.author() != null && !book.author().isBlank()}" th:text="${', ' + book.author()}"></span>
+                </span>
+                <details th:if="${book.review() != null}" class="book-review">
+                  <summary>
+                    <a th:if="${book.googleBooksId() != null}" th:href="${'https://books.google.com/books?id=' + book.googleBooksId()}" th:text="${book.title()}" target="_blank"></a>
+                    <span th:if="${book.googleBooksId() == null}" th:text="${book.title()}"></span>
+                    <span th:if="${book.author() != null && !book.author().isBlank()}" th:text="${', ' + book.author()}"></span>
+                    <span class="review-toggle"></span>
+                  </summary>
+                  <div class="review-text" th:text="${book.review()}"></div>
+                </details>
                 <span class="book-actions">
                   <form th:action="@{/rank-unranked-book}" method="POST" style="display: inline;">
                     <input type="hidden" name="bookId" th:value="${book.id()}" />
