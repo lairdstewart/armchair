@@ -9,6 +9,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Deque;
+import java.util.LinkedList;
 import java.util.List;
 
 @Service
@@ -17,8 +19,12 @@ public class GoogleBooksService {
     @Value("${google.books.api.key}")
     private String apiKey;
 
+    private static final int MAX_API_CALLS_PER_HOUR = 100;
+    private static final long ONE_HOUR_MS = 60 * 60 * 1000L;
+
     private final RestTemplate restTemplate = new RestTemplate();
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private final Deque<Long> apiCallTimestamps = new LinkedList<>();
 
     public record BookResult(String googleBooksId, String title, String author, String isbn13) {
         public String bookUrl() {
@@ -40,8 +46,25 @@ public class GoogleBooksService {
         return prefix + checkDigit;
     }
 
+    private synchronized boolean tryAcquireApiCall() {
+        long now = System.currentTimeMillis();
+        while (!apiCallTimestamps.isEmpty() && now - apiCallTimestamps.peekFirst() > ONE_HOUR_MS) {
+            apiCallTimestamps.pollFirst();
+        }
+        if (apiCallTimestamps.size() >= MAX_API_CALLS_PER_HOUR) {
+            return false;
+        }
+        apiCallTimestamps.addLast(now);
+        return true;
+    }
+
     public List<BookResult> searchBooks(String query) {
         if (query == null || query.isBlank()) {
+            return List.of();
+        }
+
+        if (!tryAcquireApiCall()) {
+            System.err.println("Google Books API rate limit reached (" + MAX_API_CALLS_PER_HOUR + " calls/hour)");
             return List.of();
         }
 
