@@ -36,13 +36,20 @@
 
       <!-- Fiction books list -->
       <div id="fiction-list" th:if="${hasFiction}" th:style="${hasNonfiction} ? 'display: block;' : ''">
-        <ol>
+        <ol class="book-list">
           <li th:each="book, iter : ${fictionBooks.liked()}">
             <span class="book-number liked" th:text="${iter.index + 1}"></span>
             <span th:if="${book.review() == null}">
               <a th:if="${book.googleBooksId() != null}" th:href="${'https://books.google.com/books?id=' + book.googleBooksId()}" th:text="${book.title()}" target="_blank"></a>
               <span th:if="${book.googleBooksId() == null}" th:text="${book.title()}"></span>
               <span th:if="${book.author() != null && !book.author().isBlank()}" th:text="${', ' + book.author()}"></span>
+              <form th:if="${book.googleBooksId() != null && !userBooks.containsKey(book.googleBooksId())}" th:action="@{/add-to-reading-list}" method="POST" style="display: inline; margin-left: 0.5em;">
+                <input type="hidden" name="googleBooksId" th:value="${book.googleBooksId()}" />
+                <input type="hidden" name="bookName" th:value="${book.title()}" />
+                <input type="hidden" name="author" th:value="${book.author()}" />
+                <input type="hidden" name="returnUrl" th:value="${'/user/' + viewUsername}" />
+                <button type="submit" class="book-action-link">[want to read]</button>
+              </form>
             </span>
             <details th:if="${book.review() != null}" class="book-review">
               <summary>
@@ -50,6 +57,13 @@
                 <span th:if="${book.googleBooksId() == null}" th:text="${book.title()}"></span>
                 <span th:if="${book.author() != null && !book.author().isBlank()}" th:text="${', ' + book.author()}"></span>
                 <span class="review-toggle"></span>
+                <form th:if="${book.googleBooksId() != null && !userBooks.containsKey(book.googleBooksId())}" th:action="@{/add-to-reading-list}" method="POST" style="display: inline; margin-left: 0.5em;">
+                  <input type="hidden" name="googleBooksId" th:value="${book.googleBooksId()}" />
+                  <input type="hidden" name="bookName" th:value="${book.title()}" />
+                  <input type="hidden" name="author" th:value="${book.author()}" />
+                  <input type="hidden" name="returnUrl" th:value="${'/user/' + viewUsername}" />
+                  <button type="submit" class="book-action-link">[want to read]</button>
+                </form>
               </summary>
               <div class="review-text" th:text="${book.review()}"></div>
             </details>
@@ -60,6 +74,13 @@
               <a th:if="${book.googleBooksId() != null}" th:href="${'https://books.google.com/books?id=' + book.googleBooksId()}" th:text="${book.title()}" target="_blank"></a>
               <span th:if="${book.googleBooksId() == null}" th:text="${book.title()}"></span>
               <span th:if="${book.author() != null && !book.author().isBlank()}" th:text="${', ' + book.author()}"></span>
+              <form th:if="${book.googleBooksId() != null && !userBooks.containsKey(book.googleBooksId())}" th:action="@{/add-to-reading-list}" method="POST" style="display: inline; margin-left: 0.5em;">
+                <input type="hidden" name="googleBooksId" th:value="${book.googleBooksId()}" />
+                <input type="hidden" name="bookName" th:value="${book.title()}" />
+                <input type="hidden" name="author" th:value="${book.author()}" />
+                <input type="hidden" name="returnUrl" th:value="${'/user/' + viewUsername}" />
+                <button type="submit" class="book-action-link">[want to read]</button>
+              </form>
             </span>
             <details th:if="${book.review() != null}" class="book-review">
               <summary>
@@ -67,6 +88,13 @@
                 <span th:if="${book.googleBooksId() == null}" th:text="${book.title()}"></span>
                 <span th:if="${book.author() != null && !book.author().isBlank()}" th:text="${', ' + book.author()}"></span>
                 <span class="review-toggle"></span>
+                <form th:if="${book.googleBooksId() != null && !userBooks.containsKey(book.googleBooksId())}" th:action="@{/add-to-reading-list}" method="POST" style="display: inline; margin-left: 0.5em;">
+                  <input type="hidden" name="googleBooksId" th:value="${book.googleBooksId()}" />
+                  <input type="hidden" name="bookName" th:value="${book.title()}" />
+                  <input type="hidden" name="author" th:value="${book.author()}" />
+                  <input type="hidden" name="returnUrl" th:value="${'/user/' + viewUsername}" />
+                  <button type="submit" class="book-action-link">[want to read]</button>
+                </form>
               </summary>
               <div class="review-text" th:text="${book.review()}"></div>
             </details>
@@ -77,6 +105,13 @@
               <a th:if="${book.googleBooksId() != null}" th:href="${'https://books.google.com/books?id=' + book.googleBooksId()}" th:text="${book.title()}" target="_blank"></a>
               <span th:if="${book.googleBooksId() == null}" th:text="${book.title()}"></span>
               <span th:if="${book.author() != null && !book.author().isBlank()}" th:text="${', ' + book.author()}"></span>
+              <form th:if="${book.googleBooksId() != null && !userBooks.containsKey(book.googleBooksId())}" th:action="@{/add-to-reading-list}" method="POST" style="display: inline; margin-left: 0.5em;">
+                <input type="hidden" name="googleBooksId" th:value="${book.googleBooksId()}" />
+                <input type="hidden" name="bookName" th:value="${book.title()}" />
+                <input type="hidden" name="author" th:value="${book.author()}" />
+                <input type="hidden" name="returnUrl" th:value="${'/user/' + viewUsername}" />
+                <button type="submit" class="book-action-link">[want to read]</button>
+              </form>
             </span>
             <details th:if="${book.review() != null}" class="book-review">
               <summary>
@@ -84,6 +119,13 @@
                 <span th:if="${book.googleBooksId() == null}" th:text="${book.title()}"></span>
                 <span th:if="${book.author() != null && !book.author().isBlank()}" th:text="${', ' + book.author()}"></span>
                 <span class="review-toggle"></span>
+                <form th:if="${book.googleBooksId() != null && !userBooks.containsKey(book.googleBooksId())}" th:action="@{/add-to-reading-list}" method="POST" style="display: inline; margin-left: 0.5em;">
+                  <input type="hidden" name="googleBooksId" th:value="${book.googleBooksId()}" />
+                  <input type="hidden" name="bookName" th:value="${book.title()}" />
+                  <input type="hidden" name="author" th:value="${book.author()}" />
+                  <input type="hidden" name="returnUrl" th:value="${'/user/' + viewUsername}" />
+                  <button type="submit" class="book-action-link">[want to read]</button>
+                </form>
               </summary>
               <div class="review-text" th:text="${book.review()}"></div>
             </details>
@@ -94,6 +136,13 @@
               <a th:if="${book.googleBooksId() != null}" th:href="${'https://books.google.com/books?id=' + book.googleBooksId()}" th:text="${book.title()}" target="_blank"></a>
               <span th:if="${book.googleBooksId() == null}" th:text="${book.title()}"></span>
               <span th:if="${book.author() != null && !book.author().isBlank()}" th:text="${', ' + book.author()}"></span>
+              <form th:if="${book.googleBooksId() != null && !userBooks.containsKey(book.googleBooksId())}" th:action="@{/add-to-reading-list}" method="POST" style="display: inline; margin-left: 0.5em;">
+                <input type="hidden" name="googleBooksId" th:value="${book.googleBooksId()}" />
+                <input type="hidden" name="bookName" th:value="${book.title()}" />
+                <input type="hidden" name="author" th:value="${book.author()}" />
+                <input type="hidden" name="returnUrl" th:value="${'/user/' + viewUsername}" />
+                <button type="submit" class="book-action-link">[want to read]</button>
+              </form>
             </span>
             <details th:if="${book.review() != null}" class="book-review">
               <summary>
@@ -101,6 +150,13 @@
                 <span th:if="${book.googleBooksId() == null}" th:text="${book.title()}"></span>
                 <span th:if="${book.author() != null && !book.author().isBlank()}" th:text="${', ' + book.author()}"></span>
                 <span class="review-toggle"></span>
+                <form th:if="${book.googleBooksId() != null && !userBooks.containsKey(book.googleBooksId())}" th:action="@{/add-to-reading-list}" method="POST" style="display: inline; margin-left: 0.5em;">
+                  <input type="hidden" name="googleBooksId" th:value="${book.googleBooksId()}" />
+                  <input type="hidden" name="bookName" th:value="${book.title()}" />
+                  <input type="hidden" name="author" th:value="${book.author()}" />
+                  <input type="hidden" name="returnUrl" th:value="${'/user/' + viewUsername}" />
+                  <button type="submit" class="book-action-link">[want to read]</button>
+                </form>
               </summary>
               <div class="review-text" th:text="${book.review()}"></div>
             </details>
@@ -110,13 +166,20 @@
 
       <!-- Non-Fiction books list -->
       <div id="nonfiction-list" th:if="${hasNonfiction}" th:style="${hasFiction} ? 'display: none;' : ''">
-        <ol>
+        <ol class="book-list">
           <li th:each="book, iter : ${nonfictionBooks.liked()}">
             <span class="book-number liked" th:text="${iter.index + 1}"></span>
             <span th:if="${book.review() == null}">
               <a th:if="${book.googleBooksId() != null}" th:href="${'https://books.google.com/books?id=' + book.googleBooksId()}" th:text="${book.title()}" target="_blank"></a>
               <span th:if="${book.googleBooksId() == null}" th:text="${book.title()}"></span>
               <span th:if="${book.author() != null && !book.author().isBlank()}" th:text="${', ' + book.author()}"></span>
+              <form th:if="${book.googleBooksId() != null && !userBooks.containsKey(book.googleBooksId())}" th:action="@{/add-to-reading-list}" method="POST" style="display: inline; margin-left: 0.5em;">
+                <input type="hidden" name="googleBooksId" th:value="${book.googleBooksId()}" />
+                <input type="hidden" name="bookName" th:value="${book.title()}" />
+                <input type="hidden" name="author" th:value="${book.author()}" />
+                <input type="hidden" name="returnUrl" th:value="${'/user/' + viewUsername}" />
+                <button type="submit" class="book-action-link">[want to read]</button>
+              </form>
             </span>
             <details th:if="${book.review() != null}" class="book-review">
               <summary>
@@ -124,6 +187,13 @@
                 <span th:if="${book.googleBooksId() == null}" th:text="${book.title()}"></span>
                 <span th:if="${book.author() != null && !book.author().isBlank()}" th:text="${', ' + book.author()}"></span>
                 <span class="review-toggle"></span>
+                <form th:if="${book.googleBooksId() != null && !userBooks.containsKey(book.googleBooksId())}" th:action="@{/add-to-reading-list}" method="POST" style="display: inline; margin-left: 0.5em;">
+                  <input type="hidden" name="googleBooksId" th:value="${book.googleBooksId()}" />
+                  <input type="hidden" name="bookName" th:value="${book.title()}" />
+                  <input type="hidden" name="author" th:value="${book.author()}" />
+                  <input type="hidden" name="returnUrl" th:value="${'/user/' + viewUsername}" />
+                  <button type="submit" class="book-action-link">[want to read]</button>
+                </form>
               </summary>
               <div class="review-text" th:text="${book.review()}"></div>
             </details>
@@ -134,6 +204,13 @@
               <a th:if="${book.googleBooksId() != null}" th:href="${'https://books.google.com/books?id=' + book.googleBooksId()}" th:text="${book.title()}" target="_blank"></a>
               <span th:if="${book.googleBooksId() == null}" th:text="${book.title()}"></span>
               <span th:if="${book.author() != null && !book.author().isBlank()}" th:text="${', ' + book.author()}"></span>
+              <form th:if="${book.googleBooksId() != null && !userBooks.containsKey(book.googleBooksId())}" th:action="@{/add-to-reading-list}" method="POST" style="display: inline; margin-left: 0.5em;">
+                <input type="hidden" name="googleBooksId" th:value="${book.googleBooksId()}" />
+                <input type="hidden" name="bookName" th:value="${book.title()}" />
+                <input type="hidden" name="author" th:value="${book.author()}" />
+                <input type="hidden" name="returnUrl" th:value="${'/user/' + viewUsername}" />
+                <button type="submit" class="book-action-link">[want to read]</button>
+              </form>
             </span>
             <details th:if="${book.review() != null}" class="book-review">
               <summary>
@@ -141,6 +218,13 @@
                 <span th:if="${book.googleBooksId() == null}" th:text="${book.title()}"></span>
                 <span th:if="${book.author() != null && !book.author().isBlank()}" th:text="${', ' + book.author()}"></span>
                 <span class="review-toggle"></span>
+                <form th:if="${book.googleBooksId() != null && !userBooks.containsKey(book.googleBooksId())}" th:action="@{/add-to-reading-list}" method="POST" style="display: inline; margin-left: 0.5em;">
+                  <input type="hidden" name="googleBooksId" th:value="${book.googleBooksId()}" />
+                  <input type="hidden" name="bookName" th:value="${book.title()}" />
+                  <input type="hidden" name="author" th:value="${book.author()}" />
+                  <input type="hidden" name="returnUrl" th:value="${'/user/' + viewUsername}" />
+                  <button type="submit" class="book-action-link">[want to read]</button>
+                </form>
               </summary>
               <div class="review-text" th:text="${book.review()}"></div>
             </details>
@@ -151,6 +235,13 @@
               <a th:if="${book.googleBooksId() != null}" th:href="${'https://books.google.com/books?id=' + book.googleBooksId()}" th:text="${book.title()}" target="_blank"></a>
               <span th:if="${book.googleBooksId() == null}" th:text="${book.title()}"></span>
               <span th:if="${book.author() != null && !book.author().isBlank()}" th:text="${', ' + book.author()}"></span>
+              <form th:if="${book.googleBooksId() != null && !userBooks.containsKey(book.googleBooksId())}" th:action="@{/add-to-reading-list}" method="POST" style="display: inline; margin-left: 0.5em;">
+                <input type="hidden" name="googleBooksId" th:value="${book.googleBooksId()}" />
+                <input type="hidden" name="bookName" th:value="${book.title()}" />
+                <input type="hidden" name="author" th:value="${book.author()}" />
+                <input type="hidden" name="returnUrl" th:value="${'/user/' + viewUsername}" />
+                <button type="submit" class="book-action-link">[want to read]</button>
+              </form>
             </span>
             <details th:if="${book.review() != null}" class="book-review">
               <summary>
@@ -158,6 +249,13 @@
                 <span th:if="${book.googleBooksId() == null}" th:text="${book.title()}"></span>
                 <span th:if="${book.author() != null && !book.author().isBlank()}" th:text="${', ' + book.author()}"></span>
                 <span class="review-toggle"></span>
+                <form th:if="${book.googleBooksId() != null && !userBooks.containsKey(book.googleBooksId())}" th:action="@{/add-to-reading-list}" method="POST" style="display: inline; margin-left: 0.5em;">
+                  <input type="hidden" name="googleBooksId" th:value="${book.googleBooksId()}" />
+                  <input type="hidden" name="bookName" th:value="${book.title()}" />
+                  <input type="hidden" name="author" th:value="${book.author()}" />
+                  <input type="hidden" name="returnUrl" th:value="${'/user/' + viewUsername}" />
+                  <button type="submit" class="book-action-link">[want to read]</button>
+                </form>
               </summary>
               <div class="review-text" th:text="${book.review()}"></div>
             </details>
@@ -168,6 +266,13 @@
               <a th:if="${book.googleBooksId() != null}" th:href="${'https://books.google.com/books?id=' + book.googleBooksId()}" th:text="${book.title()}" target="_blank"></a>
               <span th:if="${book.googleBooksId() == null}" th:text="${book.title()}"></span>
               <span th:if="${book.author() != null && !book.author().isBlank()}" th:text="${', ' + book.author()}"></span>
+              <form th:if="${book.googleBooksId() != null && !userBooks.containsKey(book.googleBooksId())}" th:action="@{/add-to-reading-list}" method="POST" style="display: inline; margin-left: 0.5em;">
+                <input type="hidden" name="googleBooksId" th:value="${book.googleBooksId()}" />
+                <input type="hidden" name="bookName" th:value="${book.title()}" />
+                <input type="hidden" name="author" th:value="${book.author()}" />
+                <input type="hidden" name="returnUrl" th:value="${'/user/' + viewUsername}" />
+                <button type="submit" class="book-action-link">[want to read]</button>
+              </form>
             </span>
             <details th:if="${book.review() != null}" class="book-review">
               <summary>
@@ -175,6 +280,13 @@
                 <span th:if="${book.googleBooksId() == null}" th:text="${book.title()}"></span>
                 <span th:if="${book.author() != null && !book.author().isBlank()}" th:text="${', ' + book.author()}"></span>
                 <span class="review-toggle"></span>
+                <form th:if="${book.googleBooksId() != null && !userBooks.containsKey(book.googleBooksId())}" th:action="@{/add-to-reading-list}" method="POST" style="display: inline; margin-left: 0.5em;">
+                  <input type="hidden" name="googleBooksId" th:value="${book.googleBooksId()}" />
+                  <input type="hidden" name="bookName" th:value="${book.title()}" />
+                  <input type="hidden" name="author" th:value="${book.author()}" />
+                  <input type="hidden" name="returnUrl" th:value="${'/user/' + viewUsername}" />
+                  <button type="submit" class="book-action-link">[want to read]</button>
+                </form>
               </summary>
               <div class="review-text" th:text="${book.review()}"></div>
             </details>

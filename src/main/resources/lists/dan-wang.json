@@ -60,9 +60,9 @@
     {
       "rank": "9",
       "title": "Swann's Way",
-      "author": "Proust, trans. Lydia Davis",
+      "author": "Proust",
       "category": "fiction",
-      "review": ""
+      "review": "Translation by Lydia Davis"
     },
     {
       "rank": "10",
@@ -178,10 +178,10 @@
     },
     {
       "rank": "26",
-      "title": "Effi Briest (trans. Ritchie Robertson)",
+      "title": "Effi Briest",
       "author": "Fontane",
       "category": "fiction",
-      "review": "There's so much nuance; the most exciting plot detail isn't even described, only discussed afterwards."
+      "review": "Translation by Ritchie Robertson. There's so much nuance; the most exciting plot detail isn't even described, only discussed afterwards."
     },
     {
       "rank": "27",
@@ -458,7 +458,7 @@
     },
     {
       "rank": "66",
-      "title": "Liar's Poker (Excerpts)",
+      "title": "Liar's Poker",
       "author": "Lewis",
       "category": "non-fiction",
       "review": ""
@@ -493,7 +493,7 @@
     },
     {
       "rank": "71",
-      "title": "Discworld series",
+      "title": "The Color of Magic",
       "author": "Terry Pratchett",
       "category": "fiction",
       "review": "When I was little I read most of the Discworld series. I really liked them, but haven't picked any of them up again."
@@ -577,10 +577,10 @@
     },
     {
       "rank": "",
-      "title": "Duino Elegies, trans. Stephen Mitchell",
+      "title": "Duino Elegies",
       "author": "Rilke",
       "category": "fiction",
-      "review": ""
+      "review": "Translation by Stephen Mitchell"
     },
     {
       "rank": "",
@@ -605,10 +605,10 @@
     },
     {
       "rank": "",
-      "title": "The Magic Mountain, trans. J.E. Woods",
+      "title": "The Magic Mountain",
       "author": "Mann",
       "category": "fiction",
-      "review": "First 150 pages or so are boring, but it picks up. The ruminations on death/dying make it worth it."
+      "review": "Translation by J.E. Woods. First 150 pages or so are boring, but it picks up. The ruminations on death/dying make it worth it."
     },
     {
       "rank": "",
@@ -1810,7 +1810,7 @@
     {
       "rank": "",
       "title": "Autobiography",
-      "author": "Mill (John Stuart)",
+      "author": "John Stuart Mill ",
       "category": "non-fiction",
       "review": ""
     },
@@ -2580,7 +2580,7 @@
     {
       "rank": "",
       "title": "Eye in the Sky",
-      "author": "PKD",
+      "author": "Philip K. Dick",
       "category": "fiction",
       "review": "Surprised this hasn't been filmed yet"
     },
@@ -2775,10 +2775,10 @@
     },
     {
       "rank": "",
-      "title": "Journey to the West (tr. Anthony Yu)",
-      "author": "",
+      "title": "Journey to the West",
+      "author": "Wu Cheng'en",
       "category": "fiction",
-      "review": ""
+      "review": "Translation by Anthony Yu"
     },
     {
       "rank": "",

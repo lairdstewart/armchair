@@ -22,13 +22,13 @@ ol {
   list-style: none;
 }
 
-ol li {
+ol.book-list li {
   display: flex;
   align-items: flex-start;
   margin-bottom: 4px;
 }
 
-ol li form {
+ol.book-list li form {
   margin-bottom: 0;
   display: flex;
   align-items: baseline;

@@ -32,7 +32,7 @@
 
           <!-- Fiction books list -->
           <div th:if="${selectedType == 'FICTION' && hasFiction}">
-            <ol>
+            <ol class="book-list">
               <li th:each="book, iter : ${fictionBooks.liked()}">
                 <span class="book-number liked" th:text="${iter.index + 1}"></span>
                 <span th:if="${book.review() == null}">
@@ -131,7 +131,7 @@
 
           <!-- Non-Fiction books list -->
           <div th:if="${selectedType == 'NONFICTION' && hasNonfiction}">
-            <ol>
+            <ol class="book-list">
               <li th:each="book, iter : ${nonfictionBooks.liked()}">
                 <span class="book-number liked" th:text="${iter.index + 1}"></span>
                 <span th:if="${book.review() == null}">
@@ -230,7 +230,7 @@
 
           <!-- Want to Read books list -->
           <div th:if="${selectedType == 'WANT_TO_READ' && hasWantToRead}">
-            <ol>
+            <ol class="book-list">
               <li th:each="book, iter : ${wantToReadBooks}">
                 <a th:if="${book.googleBooksId() != null}" th:href="${'https://books.google.com/books?id=' + book.googleBooksId()}" th:text="${book.title()}" target="_blank"></a>
                 <span th:if="${book.googleBooksId() == null}" th:text="${book.title()}"></span>

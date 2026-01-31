@@ -11,11 +11,13 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.WebApplicationType;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.autoconfigure.security.oauth2.client.servlet.OAuth2ClientAutoConfiguration;
 import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
-import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 import java.io.File;
@@ -24,13 +26,14 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
-@SpringBootApplication(
-    scanBasePackages = {"armchair.service", "armchair.tool"},
-    exclude = {SecurityAutoConfiguration.class, OAuth2ClientAutoConfiguration.class}
-)
-@EntityScan("armchair.entity")
-@EnableJpaRepositories("armchair.repository")
 public class CuratedListImporter {
+
+    @Configuration
+    @EnableAutoConfiguration(exclude = {SecurityAutoConfiguration.class, OAuth2ClientAutoConfiguration.class})
+    @ComponentScan(basePackages = "armchair.service")
+    @EntityScan("armchair.entity")
+    @EnableJpaRepositories("armchair.repository")
+    static class Config {}
 
     public static void main(String[] args) {
         if (args.length != 1) {
@@ -40,7 +43,7 @@ public class CuratedListImporter {
 
         String filePath = args[0];
 
-        SpringApplication app = new SpringApplication(CuratedListImporter.class);
+        SpringApplication app = new SpringApplication(Config.class);
         app.setWebApplicationType(WebApplicationType.NONE);
 
         try (ConfigurableApplicationContext context = app.run(args)) {
@@ -198,14 +201,16 @@ public class CuratedListImporter {
             List<GoogleBooksService.BookResult> results = googleBooksService.searchBooks(jb.title() + ", " + jb.author());
 
             String googleBooksId = null;
+            String title = jb.title();
             String author = jb.author();
             if (!results.isEmpty()) {
                 GoogleBooksService.BookResult firstResult = results.get(0);
                 googleBooksId = firstResult.googleBooksId();
+                title = firstResult.title();
                 author = firstResult.author();
             }
 
-            Book book = new Book(userId, googleBooksId, jb.title(), author, jb.type(), jb.category(), position);
+            Book book = new Book(userId, googleBooksId, title, author, jb.type(), jb.category(), position);
             if (jb.review() != null && !jb.review().isEmpty()) {
                 book.setReview(jb.review());
             }

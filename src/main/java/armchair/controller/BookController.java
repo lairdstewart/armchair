@@ -868,11 +868,14 @@ public class BookController {
     public String addToReadingList(@RequestParam String googleBooksId,
                                    @RequestParam String bookName,
                                    @RequestParam String author,
+                                   @RequestParam(required = false) String returnUrl,
                                    HttpSession session) {
         Long userId = getCurrentUserId(session);
         if (userId == null) {
             return "redirect:/setup-username";
         }
+
+        String redirectTo = returnUrl != null && !returnUrl.isBlank() ? "redirect:" + returnUrl : "redirect:/search?type=books";
 
         // Check if book is already in user's library (any category)
         for (BookType type : BookType.values()) {
@@ -881,7 +884,7 @@ public class BookController {
                 for (Book book : books) {
                     if (googleBooksId.equals(book.getGoogleBooksId())) {
                         // Book already exists, just redirect back
-                        return "redirect:/search?type=books";
+                        return redirectTo;
                     }
                 }
             }
@@ -890,7 +893,7 @@ public class BookController {
         List<Book> wantToReadBooks = bookRepository.findByUserIdAndCategoryOrderByPositionAsc(userId, BookCategory.WANT_TO_READ);
         for (Book book : wantToReadBooks) {
             if (googleBooksId.equals(book.getGoogleBooksId())) {
-                return "redirect:/search?type=books";
+                return redirectTo;
             }
         }
 
@@ -899,7 +902,7 @@ public class BookController {
         Book newBook = new Book(userId, googleBooksId, bookName, author, null, BookCategory.WANT_TO_READ, position);
         bookRepository.save(newBook);
 
-        return "redirect:/search?type=books";
+        return redirectTo;
     }
 
     @PostMapping("/categorize")
@@ -1219,12 +1222,16 @@ public class BookController {
         boolean hasFiction = !fictionBooks.liked().isEmpty() || !fictionBooks.ok().isEmpty() || !fictionBooks.disliked().isEmpty() || !fictionBooks.unranked().isEmpty();
         boolean hasNonfiction = !nonfictionBooks.liked().isEmpty() || !nonfictionBooks.ok().isEmpty() || !nonfictionBooks.disliked().isEmpty() || !nonfictionBooks.unranked().isEmpty();
 
+        Long currentUserId = getCurrentUserId(session);
+        Map<String, UserBookRank> userBooks = currentUserId != null ? buildUserBooksMap(currentUserId) : Map.of();
+
         model.addAttribute("viewUsername", user.getUsername());
         model.addAttribute("fictionBooks", fictionBooks);
         model.addAttribute("nonfictionBooks", nonfictionBooks);
         model.addAttribute("hasFiction", hasFiction);
         model.addAttribute("hasNonfiction", hasNonfiction);
         model.addAttribute("isCurated", user.isCurated());
+        model.addAttribute("userBooks", userBooks);
 
         return "view-user";
     }
