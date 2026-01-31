@@ -30,11 +30,14 @@
             <span th:if="${book.bookUrl() == null}" th:text="${book.title()}"></span>
             <span th:if="${book.author() != null && !book.author().isBlank()}" th:text="${', ' + book.author()}"></span>
             <!-- Already ranked -->
-            <span th:if="${userBooks != null && userBooks.containsKey(book.googleBooksId()) && userBooks.get(book.googleBooksId()).category() != 'want_to_read'}"
+            <span th:if="${userBooks != null && userBooks.containsKey(book.googleBooksId()) && userBooks.get(book.googleBooksId()).category() != 'want_to_read' && userBooks.get(book.googleBooksId()).category() != 'unranked'}"
                   class="book-action-text" th:text="${'[#' + userBooks.get(book.googleBooksId()).rank() + ']'}"></span>
             <!-- Already bookmarked -->
             <span th:if="${userBooks != null && userBooks.containsKey(book.googleBooksId()) && userBooks.get(book.googleBooksId()).category() == 'want_to_read'}"
                   class="book-action-text">[want to read]</span>
+            <!-- Already in unranked list -->
+            <span th:if="${userBooks != null && userBooks.containsKey(book.googleBooksId()) && userBooks.get(book.googleBooksId()).category() == 'unranked'}"
+                  class="book-action-text">[unranked]</span>
             <!-- Not in library - show action links -->
             <span th:if="${userBooks == null || !userBooks.containsKey(book.googleBooksId())}" class="book-actions">
               <form th:action="@{/select-book}" method="POST" style="display: inline;">
