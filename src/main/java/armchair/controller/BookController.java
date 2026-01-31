@@ -15,6 +15,7 @@ import armchair.repository.UserRepository;
 import armchair.service.GoogleBooksService;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpSession;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -427,6 +428,7 @@ public class BookController {
         return value.replace("\"", "\"\"");
     }
 
+    @Transactional
     @PostMapping("/choose")
     public String chooseBook(@RequestParam String choice, HttpSession session) {
         Long userId = getCurrentUserId(session);
@@ -515,6 +517,7 @@ public class BookController {
         return "redirect:/my-books";
     }
 
+    @Transactional
     @PostMapping("/select-rerank-book")
     public String selectRerankBook(@RequestParam Long bookId, HttpSession session) {
         Long userId = getCurrentUserId(session);
@@ -590,6 +593,7 @@ public class BookController {
         return "redirect:/my-books?selectedType=WANT_TO_READ";
     }
 
+    @Transactional
     @PostMapping("/select-remove-wtr-book")
     public String selectRemoveWantToReadBook(@RequestParam Long bookId, HttpSession session) {
         Long userId = getCurrentUserId(session);
@@ -649,6 +653,7 @@ public class BookController {
         return "redirect:/my-books";
     }
 
+    @Transactional
     @PostMapping("/direct-rerank")
     public String directRerank(@RequestParam Long bookId, HttpSession session) {
         Long userId = getCurrentUserId(session);
@@ -686,6 +691,7 @@ public class BookController {
         return "redirect:/my-books";
     }
 
+    @Transactional
     @PostMapping("/direct-remove")
     public String directRemove(@RequestParam Long bookId, HttpSession session) {
         Long userId = getCurrentUserId(session);
@@ -716,6 +722,7 @@ public class BookController {
         return "redirect:/my-books?selectedType=" + selectedType;
     }
 
+    @Transactional
     @PostMapping("/mark-as-read")
     public String markAsRead(@RequestParam Long bookId, HttpSession session) {
         Long userId = getCurrentUserId(session);
@@ -750,6 +757,7 @@ public class BookController {
         return "redirect:/my-books";
     }
 
+    @Transactional
     @PostMapping("/remove-from-reading-list")
     public String removeFromReadingList(@RequestParam Long bookId, HttpSession session) {
         Long userId = getCurrentUserId(session);
@@ -779,6 +787,7 @@ public class BookController {
         return "redirect:/my-books?selectedType=WANT_TO_READ";
     }
 
+    @Transactional
     @PostMapping("/select-remove-book")
     public String selectRemoveBook(@RequestParam Long bookId, HttpSession session) {
         Long userId = getCurrentUserId(session);
@@ -999,6 +1008,7 @@ public class BookController {
         return redirectTo;
     }
 
+    @Transactional
     @PostMapping("/categorize")
     public String categorizeBook(@RequestParam String type,
                                   @RequestParam String category,
@@ -1650,6 +1660,7 @@ public class BookController {
         return "import-goodreads";
     }
 
+    @Transactional
     @PostMapping("/import-goodreads")
     public String importGoodreads(@RequestParam("file") MultipartFile file, HttpSession session) {
         Long userId = getCurrentUserId(session);
@@ -1799,6 +1810,7 @@ public class BookController {
         return fields;
     }
 
+    @Transactional
     @PostMapping("/rank-unranked-book")
     public String rankUnrankedBook(@RequestParam Long bookId, HttpSession session) {
         Long userId = getCurrentUserId(session);
@@ -1833,6 +1845,7 @@ public class BookController {
         return "redirect:/my-books";
     }
 
+    @Transactional
     @PostMapping("/rank-all")
     public String rankAll(HttpSession session) {
         Long userId = getCurrentUserId(session);
@@ -1876,6 +1889,7 @@ public class BookController {
         return "redirect:/my-books";
     }
 
+    @Transactional
     @PostMapping("/delete-profile")
     public String deleteProfile(HttpSession session) {
         String oauthSubject = getOauthSubject();
