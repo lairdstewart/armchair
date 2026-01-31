@@ -1441,6 +1441,8 @@ public class BookController {
             return "redirect:/";
         }
 
+        addNavigationAttributes(model, "setup");
+
         // Validate username
         if (username == null || username.isBlank()) {
             model.addAttribute("error", "Username cannot be empty");
