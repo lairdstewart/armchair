@@ -351,6 +351,9 @@
 
           <!-- Unranked books list -->
           <div th:if="${selectedType == 'UNRANKED' && hasUnranked}">
+            <form th:action="@{/rank-all}" method="POST" style="margin-bottom: 15px;">
+              <button type="submit">[rank all]</button>
+            </form>
             <ul class="plain-list">
               <li th:each="book : ${unrankedBooks}">
                 <span th:if="${book.review() == null}">
@@ -393,6 +396,7 @@
       </div>
       <div th:case="'CATEGORIZE'">
         <h3>Add <span th:text="${rankingState.titleBeingRanked}"></span></h3>
+        <p th:if="${isRankAll}" style="margin-bottom: 15px;"><span th:text="${rankAllRemaining}"></span> unranked book<span th:if="${rankAllRemaining != 1}">s</span> remaining</p>
         <form th:action="@{/categorize}" method="POST">
           <div style="margin-bottom: 15px;">
             <label><input type="radio" name="type" value="fiction" required /> Fiction</label>

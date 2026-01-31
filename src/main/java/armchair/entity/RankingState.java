@@ -35,6 +35,7 @@ public class RankingState {
     private boolean reRank;
     private boolean remove;
     private boolean review;
+    private boolean rankAll;
     private Long bookIdBeingReviewed;
 
     public RankingState() {}
@@ -163,6 +164,14 @@ public class RankingState {
 
     public void setReview(boolean review) {
         this.review = review;
+    }
+
+    public boolean isRankAll() {
+        return rankAll;
+    }
+
+    public void setRankAll(boolean rankAll) {
+        this.rankAll = rankAll;
     }
 
     public Long getBookIdBeingReviewed() {

@@ -305,6 +305,13 @@ public class BookController {
             model.addAttribute("reviewType", null);
         }
 
+        boolean isRankAll = rankingState != null && rankingState.isRankAll();
+        model.addAttribute("isRankAll", isRankAll);
+        if (isRankAll) {
+            int remainingUnranked = unrankedBooks.size();
+            model.addAttribute("rankAllRemaining", remainingUnranked);
+        }
+
         if (rankingState != null && mode == Mode.RANK && rankingState.getTitleBeingRanked() != null) {
             List<Ranking> currentList = rankingRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(
                 userId, rankingState.getType(), rankingState.getCategory()
@@ -419,11 +426,17 @@ public class BookController {
 
         if (newLowIndex > newHighIndex) {
             // Found the insertion position - insert the book
+            BookType rankedType = rankingState.getType();
+            boolean wasRankAll = rankingState.isRankAll();
             insertBookAtPosition(rankingState.getGoogleBooksIdBeingRanked(), rankingState.getTitleBeingRanked(), rankingState.getAuthorBeingRanked(),
-                rankingState.getIsbn13BeingRanked(), rankingState.getReviewBeingRanked(), rankingState.getType(), rankingState.getCategory(), newLowIndex, userId);
+                rankingState.getIsbn13BeingRanked(), rankingState.getReviewBeingRanked(), rankedType, rankingState.getCategory(), newLowIndex, userId);
             rankingStateRepository.deleteById(userId);
             // Clear search results
             session.removeAttribute("bookSearchResults");
+
+            if (wasRankAll) {
+                return startNextUnrankedBook(userId, rankedType);
+            }
         } else {
             // Continue binary search
             int newCompareToIndex = (newLowIndex + newHighIndex) / 2;
@@ -971,6 +984,7 @@ public class BookController {
 
         if (currentList.isEmpty()) {
             // Category is empty, insert at the start
+            boolean wasRankAll = rankingState.isRankAll();
             Book book = findOrCreateBook(googleBooksId, bookName, author, isbn13);
             Ranking newRanking = new Ranking(userId, book, bookType, bookCategory, 0);
             newRanking.setReview(trimmedReview);
@@ -978,6 +992,10 @@ public class BookController {
             rankingStateRepository.deleteById(userId);
             // Clear search results
             session.removeAttribute("bookSearchResults");
+
+            if (wasRankAll) {
+                return startNextUnrankedBook(userId, bookType);
+            }
         } else {
             // Start binary search within this category
             int lowIndex = 0;
@@ -1644,6 +1662,49 @@ public class BookController {
         // Remove the ranking from unranked list
         int removedPosition = ranking.getPosition();
         rankingRepository.delete(ranking);
+
+        // Shift remaining unranked rankings to fill the gap
+        List<Ranking> rankingsToShift = rankingRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(userId, BookType.UNRANKED, BookCategory.UNRANKED);
+        for (Ranking r : rankingsToShift) {
+            if (r.getPosition() > removedPosition) {
+                r.setPosition(r.getPosition() - 1);
+                rankingRepository.save(r);
+            }
+        }
+
+        return "redirect:/my-books";
+    }
+
+    @PostMapping("/rank-all")
+    public String rankAll(HttpSession session) {
+        Long userId = getCurrentUserId(session);
+        if (userId == null) {
+            return "redirect:/setup-username";
+        }
+
+        return startNextUnrankedBook(userId, null);
+    }
+
+    private String startNextUnrankedBook(Long userId, BookType lastRankedType) {
+        List<Ranking> unrankedBooks = rankingRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(userId, BookType.UNRANKED, BookCategory.UNRANKED);
+        if (unrankedBooks.isEmpty()) {
+            // All done — redirect to the type of the last ranked book
+            String selectedType = lastRankedType != null ? lastRankedType.name() : "FICTION";
+            return "redirect:/my-books?selectedType=" + selectedType;
+        }
+
+        Ranking nextBook = unrankedBooks.get(0);
+
+        // Create RankingState for categorization
+        RankingState rankingState = new RankingState(userId, nextBook.getBook().getGoogleBooksId(), nextBook.getBook().getTitle(), nextBook.getBook().getAuthor(), null, null, 0, 0, 0);
+        rankingState.setIsbn13BeingRanked(nextBook.getBook().getIsbn13());
+        rankingState.setReviewBeingRanked(nextBook.getReview());
+        rankingState.setRankAll(true);
+        rankingStateRepository.save(rankingState);
+
+        // Remove from unranked list
+        int removedPosition = nextBook.getPosition();
+        rankingRepository.delete(nextBook);
 
         // Shift remaining unranked rankings to fill the gap
         List<Ranking> rankingsToShift = rankingRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(userId, BookType.UNRANKED, BookCategory.UNRANKED);
