@@ -5,3 +5,6 @@
 - [x] Ensure author, title, isbn_13 always set: added ISBN-10 to ISBN-13 conversion, Goodreads import falls back to ISBN column, nullable=false constraints on Book entity.
 - [x] Cache Google Books API results in books table (checked by isbn13, saved after each search).
 - [x] Fixed unranked books showing "[#0]" in search results — now shows "[unranked]" instead.
+- [x] Added unique constraint on isbn_13 in books table.
+- [x] Added ISBN-13 column to CSV export.
+- [x] Fixed varchar(255) overflow bug on ranking_state and books — increased review column to 5000, title/author to 1000. The 429 API error was already handled correctly (logged and returns empty list).
