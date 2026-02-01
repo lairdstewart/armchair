@@ -130,7 +130,7 @@ public class BookController {
         if (isbn13 != null) {
             List<BookIsbn> isbnMatches = bookIsbnRepository.findByIsbn13(isbn13);
             if (!isbnMatches.isEmpty()) {
-                Book book = bookRepository.findById(isbnMatches.get(0).getBookId()).orElse(null);
+                Book book = isbnMatches.get(0).getBook();
                 if (book != null) {
                     // Enrich with googleBooksId if missing
                     if (book.getGoogleBooksId() == null && googleBooksId != null) {
@@ -149,7 +149,7 @@ public class BookController {
                 Book book = titleAuthorMatches.get(0);
                 // Record the new ISBN for this book
                 if (isbn13 != null && !bookIsbnRepository.existsByBookIdAndIsbn13(book.getId(), isbn13)) {
-                    bookIsbnRepository.save(new BookIsbn(book.getId(), isbn13));
+                    bookIsbnRepository.save(new BookIsbn(book, isbn13));
                 }
                 // Enrich with googleBooksId if missing
                 if (book.getGoogleBooksId() == null && googleBooksId != null) {
@@ -163,7 +163,7 @@ public class BookController {
         // 3. No match — create new Book
         Book book = bookRepository.save(new Book(googleBooksId, title, author));
         if (isbn13 != null) {
-            bookIsbnRepository.save(new BookIsbn(book.getId(), isbn13));
+            bookIsbnRepository.save(new BookIsbn(book, isbn13));
         }
         return book;
     }
@@ -1140,7 +1140,7 @@ public class BookController {
                 existingBook.setTitle(result.title());
                 existingBook.setAuthor(result.author());
                 if (result.isbn13() != null && !bookIsbnRepository.existsByBookIdAndIsbn13(existingBook.getId(), result.isbn13())) {
-                    bookIsbnRepository.save(new BookIsbn(existingBook.getId(), result.isbn13()));
+                    bookIsbnRepository.save(new BookIsbn(existingBook, result.isbn13()));
                 }
                 bookRepository.save(existingBook);
                 // Update local variables and RankingState for correct display during ranking

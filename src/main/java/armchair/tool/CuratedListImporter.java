@@ -207,7 +207,7 @@ public class CuratedListImporter {
         if (isbn13 != null) {
             List<BookIsbn> isbnMatches = bookIsbnRepository.findByIsbn13(isbn13);
             if (!isbnMatches.isEmpty()) {
-                Book book = bookRepository.findById(isbnMatches.get(0).getBookId()).orElse(null);
+                Book book = isbnMatches.get(0).getBook();
                 if (book != null) {
                     if (book.getGoogleBooksId() == null && googleBooksId != null) {
                         book.setGoogleBooksId(googleBooksId);
@@ -224,7 +224,7 @@ public class CuratedListImporter {
             if (!titleAuthorMatches.isEmpty()) {
                 Book book = titleAuthorMatches.get(0);
                 if (isbn13 != null && !bookIsbnRepository.existsByBookIdAndIsbn13(book.getId(), isbn13)) {
-                    bookIsbnRepository.save(new BookIsbn(book.getId(), isbn13));
+                    bookIsbnRepository.save(new BookIsbn(book, isbn13));
                 }
                 if (book.getGoogleBooksId() == null && googleBooksId != null) {
                     book.setGoogleBooksId(googleBooksId);
@@ -237,7 +237,7 @@ public class CuratedListImporter {
         // 3. No match — create new Book
         Book book = bookRepository.save(new Book(googleBooksId, title, author));
         if (isbn13 != null) {
-            bookIsbnRepository.save(new BookIsbn(book.getId(), isbn13));
+            bookIsbnRepository.save(new BookIsbn(book, isbn13));
         }
         return book;
     }

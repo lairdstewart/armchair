@@ -5,6 +5,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
@@ -15,16 +17,17 @@ public class BookIsbn {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "book_id", nullable = false)
-    private Long bookId;
+    @ManyToOne
+    @JoinColumn(name = "book_id", nullable = false)
+    private Book book;
 
     @Column(name = "isbn_13", nullable = false)
     private String isbn13;
 
     public BookIsbn() {}
 
-    public BookIsbn(Long bookId, String isbn13) {
-        this.bookId = bookId;
+    public BookIsbn(Book book, String isbn13) {
+        this.book = book;
         this.isbn13 = isbn13;
     }
 
@@ -36,12 +39,12 @@ public class BookIsbn {
         this.id = id;
     }
 
-    public Long getBookId() {
-        return bookId;
+    public Book getBook() {
+        return book;
     }
 
-    public void setBookId(Long bookId) {
-        this.bookId = bookId;
+    public void setBook(Book book) {
+        this.book = book;
     }
 
     public String getIsbn13() {
