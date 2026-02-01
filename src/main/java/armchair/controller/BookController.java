@@ -1218,6 +1218,11 @@ public class BookController {
             if (bookResults.isEmpty()) {
                 bookResults = googleBooksService.searchBooks(query);
                 cacheBookResults(bookResults);
+                // Deduplicate by title+author (API can return multiple editions)
+                Set<String> seen = new java.util.LinkedHashSet<>();
+                bookResults = bookResults.stream()
+                    .filter(b -> seen.add(b.title().toLowerCase().trim() + "\t" + b.author().toLowerCase().trim()))
+                    .toList();
             }
         } else {
             bookResults = bookRepository.findRandom10Books().stream()
