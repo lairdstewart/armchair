@@ -1232,6 +1232,10 @@ public class BookController {
             if (bookResults.isEmpty()) {
                 bookResults = googleBooksService.searchBooks(query);
                 cacheBookResults(bookResults);
+                // Rebuild userBooks map since caching may have enriched books with googleBooksId
+                if (currentUserId != null) {
+                    userBooks = buildUserBooksMap(currentUserId);
+                }
                 // Deduplicate by title+author (API can return multiple editions)
                 Set<String> seen = new java.util.LinkedHashSet<>();
                 bookResults = bookResults.stream()
