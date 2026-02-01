@@ -9,6 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Todo Workflow
 
 This is the default interaction pattern:
+- **If a todo is a question, answer it first and wait** — do not write code until the user has responded
 - Read tasks from `/claude-todo.md` and work through them top to bottom
 - Continue working unless there's a question or the user stops you
 - When finished with a task, add it to `/claude-done.md`
