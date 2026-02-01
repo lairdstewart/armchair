@@ -36,6 +36,7 @@ Armchair is a Spring Boot web application for managing ranked book lists. Users 
 - Prefer server-side processing in Java over client-side JavaScript
 - Keep JavaScript minimal - only for browser APIs (like clipboard access, form auto-submit on radio change)
 - Generate all data transformations, formatting, and business logic in the controller and pass to Thymeleaf templates
+- **Effectively final variables:** When reassigning a local variable that is later used in a lambda or stream, introduce a new variable (e.g. `final var finalX = x;`) so the lambda captures the effectively-final reference. Java requires this — double-check before committing.
 
 **Development Workflow:**
 - Do not compile or run the code - the developer will handle building and testing
