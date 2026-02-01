@@ -1792,6 +1792,12 @@ public class BookController {
                 // Resolve the book (deduplicating by title+author)
                 Book book = findOrCreateBook(null, title, author, isbn13);
 
+                // Update title to stripped version if book was found with a subtitle
+                if (!title.equals(book.getTitle())) {
+                    book.setTitle(title);
+                    bookRepository.save(book);
+                }
+
                 // Check for duplicate by book ID
                 if (rankingRepository.existsByUserIdAndBookId(userId, book.getId())) {
                     skipped++;
