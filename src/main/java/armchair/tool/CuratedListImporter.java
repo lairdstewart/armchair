@@ -235,7 +235,7 @@ public class CuratedListImporter {
         }
 
         // 3. No match — create new Book
-        Book book = bookRepository.save(new Book(googleBooksId, title, author, isbn13));
+        Book book = bookRepository.save(new Book(googleBooksId, title, author));
         if (isbn13 != null) {
             bookIsbnRepository.save(new BookIsbn(book.getId(), isbn13));
         }

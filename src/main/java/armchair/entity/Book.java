@@ -14,8 +14,6 @@ public class Book {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "isbn_13")
-    private String isbn13;
     private String googleBooksId;
     @Column(nullable = false, length = 1000)
     private String title;
@@ -27,11 +25,10 @@ public class Book {
 
     public Book() {}
 
-    public Book(String googleBooksId, String title, String author, String isbn13) {
+    public Book(String googleBooksId, String title, String author) {
         this.googleBooksId = googleBooksId;
         this.title = title;
         this.author = author;
-        this.isbn13 = isbn13;
     }
 
     public Long getId() {
@@ -40,14 +37,6 @@ public class Book {
 
     public void setId(Long id) {
         this.id = id;
-    }
-
-    public String getIsbn13() {
-        return isbn13;
-    }
-
-    public void setIsbn13(String isbn13) {
-        this.isbn13 = isbn13;
     }
 
     public String getGoogleBooksId() {

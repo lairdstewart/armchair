@@ -88,3 +88,12 @@ BEGIN
         EXECUTE format('ALTER TABLE books DROP CONSTRAINT %I', cname);
     END IF;
 END $$;
+
+-- ============================================================================
+-- Migration: Drop isbn_13 column from books table
+-- ISBNs are now stored exclusively in the book_isbns table.
+-- Run this manually against the database before deploying the new code.
+-- ============================================================================
+
+-- 13. Drop isbn_13 column from books
+ALTER TABLE books DROP COLUMN IF EXISTS isbn_13;
