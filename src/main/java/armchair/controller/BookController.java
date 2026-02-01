@@ -1118,18 +1118,19 @@ public class BookController {
         // Resolve unverified books (no googleBooksId) via Google Books API
         Book existingBook = findOrCreateBook(googleBooksId, bookName, author, isbn13);
         if (existingBook.getGoogleBooksId() == null) {
+            String titleAuthorQuery = "intitle:\"" + bookName + "\" inauthor:\"" + author + "\"";
             List<GoogleBooksService.BookResult> apiResults;
             if (isbn13 != null) {
                 System.err.println("Resolving unverified book: query=\"isbn:" + isbn13 + "\"");
                 apiResults = googleBooksService.searchBooks("isbn:" + isbn13);
                 if (apiResults.isEmpty()) {
-                    // ISBN search can miss books the web interface finds; fall back to title+author
-                    System.err.println("ISBN search failed, falling back to title+author");
-                    apiResults = googleBooksService.searchBooks(bookName + " " + author);
+                    // ISBN search can miss books the web interface finds; fall back to intitle+inauthor
+                    System.err.println("ISBN search failed, falling back to: " + titleAuthorQuery);
+                    apiResults = googleBooksService.searchBooks(titleAuthorQuery);
                 }
             } else {
-                System.err.println("Resolving unverified book: query=\"" + bookName + " " + author + "\"");
-                apiResults = googleBooksService.searchBooks(bookName + " " + author);
+                System.err.println("Resolving unverified book: query=\"" + titleAuthorQuery + "\"");
+                apiResults = googleBooksService.searchBooks(titleAuthorQuery);
             }
             if (apiResults.isEmpty()) {
                 System.err.println("No API results for unverified book: " + bookName + " by " + author);
