@@ -1447,7 +1447,7 @@ public class BookController {
                 user.getId(), Bookshelf.NONFICTION, category).size();
         }
 
-        String stats = String.format("| %d fiction | %d non-fiction",
+        String stats = String.format(" | %d fiction | %d non-fiction",
             fictionCount, nonfictionCount);
 
         boolean isFollowing = currentUserId != null && followRepository.existsByFollowerIdAndFollowedId(currentUserId, user.getId());
@@ -2103,6 +2103,12 @@ public class BookController {
                 guestRankingState.getHighIndex()
             );
             newRankingState.setIsbn13BeingRanked(guestRankingState.getIsbn13BeingRanked());
+            newRankingState.setReviewBeingRanked(guestRankingState.getReviewBeingRanked());
+            newRankingState.setReRank(guestRankingState.isReRank());
+            newRankingState.setRemove(guestRankingState.isRemove());
+            newRankingState.setReview(guestRankingState.isReview());
+            newRankingState.setRankAll(guestRankingState.isRankAll());
+            newRankingState.setBookIdBeingReviewed(guestRankingState.getBookIdBeingReviewed());
             rankingStateRepository.save(newRankingState);
         }
 
