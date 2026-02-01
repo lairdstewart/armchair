@@ -60,7 +60,7 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/", "/my-books", "/css/**", "/search-books", "/categorize", "/choose", "/cancel-add", "/setup-username", "/export-csv", "/my-profile", "/search-profiles", "/curated-lists", "/user/**", "/search", "/select-book", "/recs", "/start-review", "/select-review-book", "/save-review", "/start-remove", "/select-remove-book", "/follow", "/unfollow", "/import-goodreads", "/rank-unranked-book", "/rank-all", "/change-username", "/add-to-reading-list", "/direct-review", "/direct-rerank", "/direct-remove", "/mark-as-read", "/remove-from-reading-list", "/start-rerank", "/select-rerank-book", "/start-remove-wtr", "/select-remove-wtr-book").permitAll()
+                .requestMatchers("/", "/my-books", "/css/**", "/search-books", "/categorize", "/choose", "/cancel-add", "/setup-username", "/export-csv", "/my-profile", "/search-profiles", "/curated-lists", "/user/**", "/search", "/select-book", "/recs", "/start-review", "/select-review-book", "/save-review", "/start-remove", "/select-remove-book", "/follow", "/unfollow", "/import-goodreads", "/rank-unranked-book", "/rank-all", "/change-username", "/add-to-reading-list", "/direct-review", "/direct-rerank", "/direct-remove", "/mark-as-read", "/remove-from-reading-list", "/start-rerank", "/select-rerank-book", "/start-remove-wtr", "/select-remove-wtr-book", "/resolve-book", "/skip-resolve").permitAll()
                 .anyRequest().authenticated()
             )
             .oauth2Login(oauth2 -> oauth2

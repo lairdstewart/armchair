@@ -69,7 +69,8 @@ public class BookController {
         RANK,
         RE_RANK,
         REMOVE,
-        REVIEW;
+        REVIEW,
+        RESOLVE;
     }
 
     private static final String SESSION_GUEST_USER_ID = "guestUserId";
@@ -273,6 +274,7 @@ public class BookController {
             restoreAbandonedBook(userId);
             rankingStateRepository.deleteById(userId);
             session.removeAttribute("bookSearchResults");
+            session.removeAttribute("skipResolve");
         }
         return "redirect:/my-books";
     }
@@ -308,6 +310,17 @@ public class BookController {
 
         RankingState rankingState = rankingStateRepository.findById(userId).orElse(null);
         Mode mode = determineMode(rankingState);
+
+        // Intercept CATEGORIZE for unverified books — show RESOLVE screen
+        if (mode == Mode.CATEGORIZE && rankingState.getGoogleBooksIdBeingRanked() == null
+                && session.getAttribute("skipResolve") == null) {
+            List<GoogleBooksService.BookResult> resolveResults =
+                googleBooksService.searchBooks(rankingState.getTitleBeingRanked());
+            if (!resolveResults.isEmpty()) {
+                mode = Mode.RESOLVE;
+                model.addAttribute("resolveResults", resolveResults);
+            }
+        }
 
         // Add username for display if logged in
         String userName = null;
@@ -521,6 +534,7 @@ public class BookController {
             rankingStateRepository.deleteById(userId);
             // Clear search results
             session.removeAttribute("bookSearchResults");
+            session.removeAttribute("skipResolve");
 
             if (wasRankAll) {
                 return startNextUnrankedBook(userId, rankedBookshelf);
@@ -688,6 +702,7 @@ public class BookController {
 
         // Clear the ranking state
         rankingStateRepository.deleteById(userId);
+        session.removeAttribute("skipResolve");
 
         return "redirect:/my-books?selectedBookshelf=WANT_TO_READ";
     }
@@ -888,6 +903,7 @@ public class BookController {
 
         // Clear the ranking state
         rankingStateRepository.deleteById(userId);
+        session.removeAttribute("skipResolve");
 
         return "redirect:/my-books";
     }
@@ -962,6 +978,7 @@ public class BookController {
 
         // Clear the ranking state
         rankingStateRepository.deleteById(userId);
+        session.removeAttribute("skipResolve");
 
         return "redirect:/my-books";
     }
@@ -1013,6 +1030,52 @@ public class BookController {
         rankingStateRepository.deleteById(userId);
         // Clear search results
         session.removeAttribute("bookSearchResults");
+        session.removeAttribute("skipResolve");
+        return "redirect:/my-books";
+    }
+
+    @Transactional
+    @PostMapping("/resolve-book")
+    public String resolveBook(@RequestParam String googleBooksId,
+                              @RequestParam String title,
+                              @RequestParam String author,
+                              @RequestParam(required = false) String isbn13,
+                              HttpSession session) {
+        Long userId = getCurrentUserId(session);
+        if (userId == null) {
+            return "redirect:/setup-username";
+        }
+        RankingState rankingState = rankingStateRepository.findById(userId).orElse(null);
+        if (rankingState == null || rankingState.getTitleBeingRanked() == null) {
+            return "redirect:/my-books";
+        }
+
+        // Find the existing book and update it with the selected result's metadata
+        Book existingBook = findOrCreateBook(rankingState.getGoogleBooksIdBeingRanked(),
+            rankingState.getTitleBeingRanked(), rankingState.getAuthorBeingRanked(),
+            rankingState.getIsbn13BeingRanked());
+        existingBook.setGoogleBooksId(googleBooksId);
+        existingBook.setTitle(title);
+        existingBook.setAuthor(author);
+        if (isbn13 != null && !bookIsbnRepository.existsByBookIdAndIsbn13(existingBook.getId(), isbn13)) {
+            bookIsbnRepository.save(new BookIsbn(existingBook, isbn13));
+        }
+        bookRepository.save(existingBook);
+
+        // Update RankingState to match
+        rankingState.setGoogleBooksIdBeingRanked(googleBooksId);
+        rankingState.setTitleBeingRanked(title);
+        rankingState.setAuthorBeingRanked(author);
+        rankingState.setIsbn13BeingRanked(isbn13 != null ? isbn13 : rankingState.getIsbn13BeingRanked());
+        rankingStateRepository.save(rankingState);
+
+        session.removeAttribute("skipResolve");
+        return "redirect:/my-books";
+    }
+
+    @PostMapping("/skip-resolve")
+    public String skipResolve(HttpSession session) {
+        session.setAttribute("skipResolve", true);
         return "redirect:/my-books";
     }
 
@@ -1112,62 +1175,6 @@ public class BookController {
 
         String isbn13 = rankingState.getIsbn13BeingRanked();
 
-        // Resolve unverified books (no googleBooksId) via Google Books API
-        Book existingBook = findOrCreateBook(googleBooksId, bookName, author, isbn13);
-        if (existingBook.getGoogleBooksId() == null) {
-            log.info("Resolving unverified book: title=\"{}\" author=\"{}\" isbn13={} bookId={}",
-                bookName, author, isbn13, existingBook.getId());
-            String titleAuthorQuery = "intitle:\"" + bookName + "\" inauthor:\"" + author + "\"";
-            List<GoogleBooksService.BookResult> apiResults;
-            if (isbn13 != null) {
-                String isbnQuery = "isbn:" + isbn13;
-                log.info("Querying Google Books API: \"{}\"", isbnQuery);
-                apiResults = googleBooksService.searchBooks(isbnQuery);
-                log.info("ISBN query returned {} results", apiResults.size());
-                if (apiResults.isEmpty()) {
-                    // ISBN search can miss books the web interface finds; fall back to intitle+inauthor
-                    log.info("Falling back to title+author query: \"{}\"", titleAuthorQuery);
-                    apiResults = googleBooksService.searchBooks(titleAuthorQuery);
-                    log.info("Title+author query returned {} results", apiResults.size());
-                }
-            } else {
-                log.info("No ISBN available, querying Google Books API: \"{}\"", titleAuthorQuery);
-                apiResults = googleBooksService.searchBooks(titleAuthorQuery);
-                log.info("Title+author query returned {} results", apiResults.size());
-            }
-            if (apiResults.isEmpty()) {
-                log.warn("No API results for unverified book: title=\"{}\" author=\"{}\" isbn13={}",
-                    bookName, author, isbn13);
-            } else {
-                for (int i = 0; i < apiResults.size(); i++) {
-                    GoogleBooksService.BookResult r = apiResults.get(i);
-                    log.info("API result [{}]: title=\"{}\" author=\"{}\" isbn13={} googleBooksId={}",
-                        i, r.title(), r.author(), r.isbn13(), r.googleBooksId());
-                }
-                GoogleBooksService.BookResult result = apiResults.get(0);
-                log.info("Updating book {}: \"{}\" by \"{}\" -> \"{}\" by \"{}\" (googleBooksId={})",
-                    existingBook.getId(), existingBook.getTitle(), existingBook.getAuthor(),
-                    result.title(), result.author(), result.googleBooksId());
-                existingBook.setGoogleBooksId(result.googleBooksId());
-                existingBook.setTitle(result.title());
-                existingBook.setAuthor(result.author());
-                if (result.isbn13() != null && !bookIsbnRepository.existsByBookIdAndIsbn13(existingBook.getId(), result.isbn13())) {
-                    bookIsbnRepository.save(new BookIsbn(existingBook, result.isbn13()));
-                }
-                bookRepository.save(existingBook);
-                // Update local variables and RankingState for correct display during ranking
-                googleBooksId = result.googleBooksId();
-                bookName = result.title();
-                author = result.author();
-                isbn13 = result.isbn13() != null ? result.isbn13() : isbn13;
-                rankingState.setGoogleBooksIdBeingRanked(googleBooksId);
-                rankingState.setTitleBeingRanked(bookName);
-                rankingState.setAuthorBeingRanked(author);
-                rankingState.setIsbn13BeingRanked(isbn13);
-                rankingStateRepository.save(rankingState);
-            }
-        }
-
         if (currentList.isEmpty()) {
             // Category is empty, insert at the start
             boolean wasRankAll = rankingState.isRankAll();
@@ -1178,6 +1185,7 @@ public class BookController {
             rankingStateRepository.deleteById(userId);
             // Clear search results
             session.removeAttribute("bookSearchResults");
+            session.removeAttribute("skipResolve");
 
             if (wasRankAll) {
                 return startNextUnrankedBook(userId, bookshelfEnum);

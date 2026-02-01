@@ -418,6 +418,24 @@
           <button type="submit">Continue</button>
         </form>
       </div>
+      <div th:case="'RESOLVE'">
+        <h3>Which version of <span th:text="${rankingState.titleBeingRanked}"></span> did you read?</h3>
+        <div th:each="result : ${resolveResults}" style="margin-bottom: 10px;">
+          <form th:action="@{/resolve-book}" method="POST" style="display: inline;">
+            <input type="hidden" name="googleBooksId" th:value="${result.googleBooksId()}" />
+            <input type="hidden" name="title" th:value="${result.title()}" />
+            <input type="hidden" name="author" th:value="${result.author()}" />
+            <input type="hidden" name="isbn13" th:value="${result.isbn13()}" />
+            <button type="submit" class="book-number rerank">-&gt;</button>
+          </form>
+          <a th:href="${result.bookUrl()}" target="_blank" th:text="${result.title()}"></a>
+          <span th:if="${result.author() != null && !result.author().isBlank()}"
+                th:text="${', ' + result.author()}"></span>
+        </div>
+        <form th:action="@{/skip-resolve}" method="POST" style="margin-top: 15px;">
+          <button type="submit" class="book-action-link">None of these</button>
+        </form>
+      </div>
       <div th:case="'RANK'">
         <h3>Which is better?</h3>
         <form th:action="@{/choose}" method="POST">
