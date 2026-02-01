@@ -17,6 +17,8 @@ import armchair.repository.UserRepository;
 import armchair.service.GoogleBooksService;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpSession;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
@@ -47,6 +49,8 @@ import java.util.stream.Collectors;
 
 @Controller
 public class BookController {
+    private static final Logger log = LoggerFactory.getLogger(BookController.class);
+
     public record BookInfo(Long id, String googleBooksId, String isbn13, String title, String author, String review) {
         public String bookUrl() {
             if (googleBooksId != null) return "https://books.google.com/books?id=" + googleBooksId;
@@ -205,7 +209,7 @@ public class BookController {
         }
 
         if (!guests.isEmpty()) {
-            System.out.println("Cleaned up " + guests.size() + " guest users on startup");
+            log.info("Cleaned up {} guest users on startup", guests.size());
         }
     }
 
@@ -1111,24 +1115,39 @@ public class BookController {
         // Resolve unverified books (no googleBooksId) via Google Books API
         Book existingBook = findOrCreateBook(googleBooksId, bookName, author, isbn13);
         if (existingBook.getGoogleBooksId() == null) {
+            log.info("Resolving unverified book: title=\"{}\" author=\"{}\" isbn13={} bookId={}",
+                bookName, author, isbn13, existingBook.getId());
             String titleAuthorQuery = "intitle:\"" + bookName + "\" inauthor:\"" + author + "\"";
             List<GoogleBooksService.BookResult> apiResults;
             if (isbn13 != null) {
-                System.err.println("Resolving unverified book: query=\"isbn:" + isbn13 + "\"");
-                apiResults = googleBooksService.searchBooks("isbn:" + isbn13);
+                String isbnQuery = "isbn:" + isbn13;
+                log.info("Querying Google Books API: \"{}\"", isbnQuery);
+                apiResults = googleBooksService.searchBooks(isbnQuery);
+                log.info("ISBN query returned {} results", apiResults.size());
                 if (apiResults.isEmpty()) {
                     // ISBN search can miss books the web interface finds; fall back to intitle+inauthor
-                    System.err.println("ISBN search failed, falling back to: " + titleAuthorQuery);
+                    log.info("Falling back to title+author query: \"{}\"", titleAuthorQuery);
                     apiResults = googleBooksService.searchBooks(titleAuthorQuery);
+                    log.info("Title+author query returned {} results", apiResults.size());
                 }
             } else {
-                System.err.println("Resolving unverified book: query=\"" + titleAuthorQuery + "\"");
+                log.info("No ISBN available, querying Google Books API: \"{}\"", titleAuthorQuery);
                 apiResults = googleBooksService.searchBooks(titleAuthorQuery);
+                log.info("Title+author query returned {} results", apiResults.size());
             }
             if (apiResults.isEmpty()) {
-                System.err.println("No API results for unverified book: " + bookName + " by " + author);
+                log.warn("No API results for unverified book: title=\"{}\" author=\"{}\" isbn13={}",
+                    bookName, author, isbn13);
             } else {
+                for (int i = 0; i < apiResults.size(); i++) {
+                    GoogleBooksService.BookResult r = apiResults.get(i);
+                    log.info("API result [{}]: title=\"{}\" author=\"{}\" isbn13={} googleBooksId={}",
+                        i, r.title(), r.author(), r.isbn13(), r.googleBooksId());
+                }
                 GoogleBooksService.BookResult result = apiResults.get(0);
+                log.info("Updating book {}: \"{}\" by \"{}\" -> \"{}\" by \"{}\" (googleBooksId={})",
+                    existingBook.getId(), existingBook.getTitle(), existingBook.getAuthor(),
+                    result.title(), result.author(), result.googleBooksId());
                 existingBook.setGoogleBooksId(result.googleBooksId());
                 existingBook.setTitle(result.title());
                 existingBook.setAuthor(result.author());
@@ -1872,12 +1891,12 @@ public class BookController {
                         imported++;
                     }
                 } catch (Exception e) {
-                    System.err.println("Error importing row " + rowCount + ": " + e.getMessage());
+                    log.error("Error importing Goodreads row {}: {}", rowCount, e.getMessage());
                     failed++;
                 }
             }
         } catch (Exception e) {
-            System.err.println("Error reading Goodreads CSV: " + e.getMessage());
+            log.error("Error reading Goodreads CSV: {}", e.getMessage());
         }
 
         return "redirect:/import-goodreads?imported=" + imported + "&skipped=" + skipped + "&failed=" + failed;
