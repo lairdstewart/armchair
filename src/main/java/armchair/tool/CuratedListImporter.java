@@ -13,6 +13,8 @@ import armchair.repository.UserRepository;
 import armchair.service.GoogleBooksService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
@@ -31,6 +33,7 @@ import java.util.List;
 import java.util.Map;
 
 public class CuratedListImporter {
+    private static final Logger log = LoggerFactory.getLogger(CuratedListImporter.class);
 
     @Configuration
     @EnableAutoConfiguration(exclude = {SecurityAutoConfiguration.class, OAuth2ClientAutoConfiguration.class})
@@ -41,7 +44,7 @@ public class CuratedListImporter {
 
     public static void main(String[] args) {
         if (args.length != 1) {
-            System.err.println("Usage: CuratedListImporter <absolute-path-to-file.json>");
+            log.error("Usage: CuratedListImporter <absolute-path-to-file.json>");
             System.exit(1);
         }
 
@@ -71,20 +74,20 @@ public class CuratedListImporter {
             ObjectMapper mapper = new ObjectMapper();
             data = mapper.readValue(new File(path), new TypeReference<Map<String, Object>>() {});
         } catch (Exception e) {
-            System.err.println("Error reading " + path + ": " + e.getMessage());
+            log.error("Error reading {}: {}", path, e.getMessage());
             System.exit(1);
             return null; // unreachable
         }
 
         String username = (String) data.get("username");
         if (username == null || username.isBlank()) {
-            System.err.println("Error: no 'username' found in " + path);
+            log.error("No 'username' found in {}", path);
             System.exit(1);
         }
 
         List<Map<String, String>> books = (List<Map<String, String>>) data.get("books");
         if (books == null) {
-            System.err.println("Error: no 'books' array found in " + path);
+            log.error("No 'books' array found in {}", path);
             System.exit(1);
         }
 
@@ -94,27 +97,27 @@ public class CuratedListImporter {
             String bookLabel = "book #" + (i + 1);
 
             if (!entry.containsKey("title")) {
-                System.err.println("Error: missing 'title' field on " + bookLabel);
+                log.error("Missing 'title' field on {}", bookLabel);
                 System.exit(1);
             }
             String title = entry.get("title");
             if (title == null || title.isBlank()) {
-                System.err.println("Error: empty 'title' on " + bookLabel);
+                log.error("Empty 'title' on {}", bookLabel);
                 System.exit(1);
             }
 
             if (!entry.containsKey("author")) {
-                System.err.println("Error: missing 'author' field on " + bookLabel + " (" + title + ")");
+                log.error("Missing 'author' field on {} ({})", bookLabel, title);
                 System.exit(1);
             }
             String author = entry.get("author");
             if (author == null || author.isBlank()) {
-                System.err.println("Error: empty 'author' on " + bookLabel + " (" + title + ")");
+                log.error("Empty 'author' on {} ({})", bookLabel, title);
                 System.exit(1);
             }
 
             if (!entry.containsKey("rank")) {
-                System.err.println("Error: missing 'rank' field on " + bookLabel + " (" + title + ")");
+                log.error("Missing 'rank' field on {} ({})", bookLabel, title);
                 System.exit(1);
             }
             String rank = entry.get("rank");
@@ -123,20 +126,20 @@ public class CuratedListImporter {
                 try {
                     Integer.parseInt(rank);
                 } catch (NumberFormatException e) {
-                    System.err.println("Error: non-numeric 'rank' \"" + rank + "\" on " + bookLabel + " (" + title + ")");
+                    log.error("Non-numeric 'rank' \"{}\" on {} ({})", rank, bookLabel, title);
                     System.exit(1);
                 }
             }
 
             if (!entry.containsKey("review")) {
-                System.err.println("Error: missing 'review' field on " + bookLabel + " (" + title + ")");
+                log.error("Missing 'review' field on {} ({})", bookLabel, title);
                 System.exit(1);
             }
             String review = entry.get("review");
 
             String categoryStr = entry.getOrDefault("category", "fiction");
             if (!"fiction".equals(categoryStr) && !"non-fiction".equals(categoryStr)) {
-                System.err.println("Error: invalid 'category' \"" + categoryStr + "\" on " + bookLabel + " (" + title + "); expected 'fiction' or 'non-fiction'");
+                log.error("Invalid 'category' \"{}\" on {} ({}); expected 'fiction' or 'non-fiction'", categoryStr, bookLabel, title);
                 System.exit(1);
             }
 
@@ -164,13 +167,13 @@ public class CuratedListImporter {
         if (existing.isPresent()) {
             user = existing.get();
             rankingRepository.deleteByUserId(user.getId());
-            System.out.println("Reimporting curated list: " + username + " (cleared existing books)");
+            log.info("Reimporting curated list: {} (cleared existing books)", username);
         } else {
             user = new User(username);
             user.setCurated(true);
             user.setGuest(false);
             userRepository.save(user);
-            System.out.println("Importing curated list: " + username);
+            log.info("Importing curated list: {}", username);
         }
 
         // Group into four sorted lists
@@ -198,7 +201,7 @@ public class CuratedListImporter {
         importJsonBooks(user.getId(), nonfictionRanked, bookRepository, bookIsbnRepository, rankingRepository, googleBooksService);
         importJsonBooks(user.getId(), nonfictionUnranked, bookRepository, bookIsbnRepository, rankingRepository, googleBooksService);
 
-        System.out.println("Finished importing: " + username);
+        log.info("Finished importing: {}", username);
     }
 
     private static Book findOrCreateBook(String googleBooksId, String title, String author, String isbn13,
@@ -274,7 +277,7 @@ public class CuratedListImporter {
             }
             rankingRepository.save(ranking);
 
-            System.out.println("  " + (position + 1) + ". " + jb.title() + " by " + author);
+            log.info("  {}. {} by {}", position + 1, jb.title(), author);
             position++;
 
             try {

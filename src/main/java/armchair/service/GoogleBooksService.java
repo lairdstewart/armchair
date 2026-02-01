@@ -1,5 +1,7 @@
 package armchair.service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -15,6 +17,7 @@ import java.util.List;
 
 @Service
 public class GoogleBooksService {
+    private static final Logger log = LoggerFactory.getLogger(GoogleBooksService.class);
 
     @Value("${google.books.api.key}")
     private String apiKey;
@@ -64,7 +67,7 @@ public class GoogleBooksService {
         }
 
         if (!tryAcquireApiCall()) {
-            System.err.println("Google Books API rate limit reached (" + MAX_API_CALLS_PER_HOUR + " calls/hour)");
+            log.warn("Google Books API rate limit reached ({} calls/hour)", MAX_API_CALLS_PER_HOUR);
             return List.of();
         }
 
@@ -119,7 +122,7 @@ public class GoogleBooksService {
 
             return results;
         } catch (Exception e) {
-            System.err.println("Error searching Google Books: " + e.getMessage());
+            log.error("Error searching Google Books: {}", e.getMessage());
             return List.of();
         }
     }
