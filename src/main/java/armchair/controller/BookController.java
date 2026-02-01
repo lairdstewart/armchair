@@ -1739,7 +1739,8 @@ public class BookController {
     @GetMapping("/import-goodreads")
     public String showImportGoodreads(Model model, HttpSession session,
                                        @RequestParam(required = false) Integer imported,
-                                       @RequestParam(required = false) Integer skipped) {
+                                       @RequestParam(required = false) Integer skipped,
+                                       @RequestParam(required = false) Integer failed) {
         Long userId = getCurrentUserId(session);
         if (userId == null) {
             return "redirect:/setup-username";
@@ -1753,6 +1754,9 @@ public class BookController {
             String message = "Successfully imported " + imported + " books";
             if (skipped != null && skipped > 0) {
                 message += ", " + skipped + " were already in library";
+            }
+            if (failed != null && failed > 0) {
+                message += ", failed to import " + failed;
             }
             model.addAttribute("resultMessage", message);
         }
@@ -1773,12 +1777,13 @@ public class BookController {
 
         int imported = 0;
         int skipped = 0;
+        int failed = 0;
 
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))) {
             // Read header row and find column indices
             String headerLine = reader.readLine();
             if (headerLine == null) {
-                return "redirect:/import-goodreads?imported=0&skipped=0";
+                return "redirect:/import-goodreads?imported=0&skipped=0&failed=0";
             }
             List<String> headers = parseCsvLine(headerLine);
             int titleIndex = -1;
@@ -1797,7 +1802,7 @@ public class BookController {
                 else if ("Exclusive Shelf".equalsIgnoreCase(h)) exclusiveShelfIndex = i;
             }
             if (titleIndex == -1 || authorIndex == -1) {
-                return "redirect:/import-goodreads?imported=0&skipped=0";
+                return "redirect:/import-goodreads?imported=0&skipped=0&failed=0";
             }
 
             // Get current max positions for unranked and want-to-read rankings
@@ -1816,63 +1821,68 @@ public class BookController {
                     continue;
                 }
 
-                String title = fields.get(titleIndex).trim();
-                int colonIndex = title.indexOf(':');
-                if (colonIndex >= 0) {
-                    title = title.substring(0, colonIndex).trim();
-                }
-                String author = fields.get(authorIndex).trim();
-                String rawIsbn = isbnIndex >= 0 && isbnIndex < fields.size() ? fields.get(isbnIndex).trim() : "";
-                String rawIsbn13 = isbn13Index >= 0 && isbn13Index < fields.size() ? fields.get(isbn13Index).trim() : "";
-                String review = reviewIndex >= 0 && reviewIndex < fields.size() ? fields.get(reviewIndex).trim() : "";
-                String exclusiveShelf = exclusiveShelfIndex >= 0 && exclusiveShelfIndex < fields.size() ? fields.get(exclusiveShelfIndex).trim() : "";
-                boolean isToRead = "to-read".equals(exclusiveShelf) || "currently-reading".equals(exclusiveShelf);
-                if (title.isEmpty() || author.isEmpty()) continue;
+                try {
+                    String title = fields.get(titleIndex).trim();
+                    int colonIndex = title.indexOf(':');
+                    if (colonIndex >= 0) {
+                        title = title.substring(0, colonIndex).trim();
+                    }
+                    String author = fields.get(authorIndex).trim();
+                    String rawIsbn = isbnIndex >= 0 && isbnIndex < fields.size() ? fields.get(isbnIndex).trim() : "";
+                    String rawIsbn13 = isbn13Index >= 0 && isbn13Index < fields.size() ? fields.get(isbn13Index).trim() : "";
+                    String review = reviewIndex >= 0 && reviewIndex < fields.size() ? fields.get(reviewIndex).trim() : "";
+                    String exclusiveShelf = exclusiveShelfIndex >= 0 && exclusiveShelfIndex < fields.size() ? fields.get(exclusiveShelfIndex).trim() : "";
+                    boolean isToRead = "to-read".equals(exclusiveShelf) || "currently-reading".equals(exclusiveShelf);
+                    if (title.isEmpty() || author.isEmpty()) continue;
 
-                // Parse ISBN13 from Goodreads format (e.g. ="9781324074335"), fall back to ISBN-10 conversion
-                String isbn13 = rawIsbn13.replaceAll("[=\"]", "");
-                if (isbn13.isEmpty()) {
-                    String isbn10 = rawIsbn.replaceAll("[=\"]", "");
-                    isbn13 = isbn10.isEmpty() ? null : GoogleBooksService.convertIsbn10To13(isbn10);
-                }
-
-                // Resolve the book (deduplicating by title+author)
-                Book book = findOrCreateBook(null, title, author, isbn13);
-
-                // Update title to stripped version if book was found with a subtitle
-                if (!title.equals(book.getTitle())) {
-                    book.setTitle(title);
-                    bookRepository.save(book);
-                }
-
-                // Check for duplicate by book ID
-                if (rankingRepository.existsByUserIdAndBookId(userId, book.getId())) {
-                    skipped++;
-                } else {
-                    // Trim review
-                    String trimmedReview = (review != null && !review.isBlank()) ? review.trim() : null;
-                    if (trimmedReview != null && trimmedReview.length() > MAX_REVIEW_LENGTH) {
-                        trimmedReview = trimmedReview.substring(0, MAX_REVIEW_LENGTH);
+                    // Parse ISBN13 from Goodreads format (e.g. ="9781324074335"), fall back to ISBN-10 conversion
+                    String isbn13 = rawIsbn13.replaceAll("[=\"]", "");
+                    if (isbn13.isEmpty()) {
+                        String isbn10 = rawIsbn.replaceAll("[=\"]", "");
+                        isbn13 = isbn10.isEmpty() ? null : GoogleBooksService.convertIsbn10To13(isbn10);
                     }
 
-                    Ranking newRanking;
-                    if (isToRead) {
-                        newRanking = new Ranking(userId, book, null, BookCategory.WANT_TO_READ, nextWantToReadPosition);
-                        nextWantToReadPosition++;
+                    // Resolve the book (deduplicating by title+author)
+                    Book book = findOrCreateBook(null, title, author, isbn13);
+
+                    // Update title to stripped version if book was found with a subtitle
+                    if (!title.equals(book.getTitle())) {
+                        book.setTitle(title);
+                        bookRepository.save(book);
+                    }
+
+                    // Check for duplicate by book ID
+                    if (rankingRepository.existsByUserIdAndBookId(userId, book.getId())) {
+                        skipped++;
                     } else {
-                        newRanking = new Ranking(userId, book, BookType.UNRANKED, BookCategory.UNRANKED, nextUnrankedPosition);
-                        nextUnrankedPosition++;
+                        // Trim review
+                        String trimmedReview = (review != null && !review.isBlank()) ? review.trim() : null;
+                        if (trimmedReview != null && trimmedReview.length() > MAX_REVIEW_LENGTH) {
+                            trimmedReview = trimmedReview.substring(0, MAX_REVIEW_LENGTH);
+                        }
+
+                        Ranking newRanking;
+                        if (isToRead) {
+                            newRanking = new Ranking(userId, book, null, BookCategory.WANT_TO_READ, nextWantToReadPosition);
+                            nextWantToReadPosition++;
+                        } else {
+                            newRanking = new Ranking(userId, book, BookType.UNRANKED, BookCategory.UNRANKED, nextUnrankedPosition);
+                            nextUnrankedPosition++;
+                        }
+                        newRanking.setReview(trimmedReview);
+                        rankingRepository.save(newRanking);
+                        imported++;
                     }
-                    newRanking.setReview(trimmedReview);
-                    rankingRepository.save(newRanking);
-                    imported++;
+                } catch (Exception e) {
+                    System.err.println("Error importing row " + rowCount + ": " + e.getMessage());
+                    failed++;
                 }
             }
         } catch (Exception e) {
-            System.err.println("Error importing Goodreads CSV: " + e.getMessage());
+            System.err.println("Error reading Goodreads CSV: " + e.getMessage());
         }
 
-        return "redirect:/import-goodreads?imported=" + imported + "&skipped=" + skipped;
+        return "redirect:/import-goodreads?imported=" + imported + "&skipped=" + skipped + "&failed=" + failed;
     }
 
     private List<String> parseCsvLine(String line) {
