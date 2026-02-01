@@ -30,7 +30,7 @@ public class GoogleBooksService {
         public String bookUrl() {
             if (googleBooksId != null) return "https://books.google.com/books?id=" + googleBooksId;
             if (isbn13 != null) return "https://www.google.com/search?tbo=p&tbm=bks&q=isbn:" + isbn13;
-            return null;
+            return "https://www.google.com/search?udm=36&q=" + URLEncoder.encode(title + " " + author, StandardCharsets.UTF_8);
         }
     }
 

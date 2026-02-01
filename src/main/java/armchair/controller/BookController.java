@@ -51,7 +51,7 @@ public class BookController {
         public String bookUrl() {
             if (googleBooksId != null) return "https://books.google.com/books?id=" + googleBooksId;
             if (isbn13 != null) return "https://www.google.com/search?tbo=p&tbm=bks&q=isbn:" + isbn13;
-            return null;
+            return "https://www.google.com/search?udm=36&q=" + java.net.URLEncoder.encode(title + " " + author, java.nio.charset.StandardCharsets.UTF_8);
         }
     }
     public record BookLists(List<BookInfo> liked, List<BookInfo> ok, List<BookInfo> disliked, List<BookInfo> unranked) {}
