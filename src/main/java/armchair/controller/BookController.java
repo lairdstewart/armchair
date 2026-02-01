@@ -306,18 +306,22 @@ public class BookController {
         Mode mode = determineMode(rankingState);
 
         // Intercept CATEGORIZE for unverified books — show RESOLVE screen
-        if (mode == Mode.CATEGORIZE && rankingState.getGoogleBooksIdBeingRanked() == null
-                && session.getAttribute("skipResolve") == null) {
-            List<GoogleBooksService.BookResult> resolveResults =
-                googleBooksService.searchBooks(rankingState.getTitleBeingRanked());
-            // Deduplicate results with the same title+author (different editions)
-            var seen = new java.util.LinkedHashSet<String>();
-            resolveResults = resolveResults.stream()
-                .filter(r -> seen.add((r.title() + "\0" + r.author()).toLowerCase()))
-                .toList();
-            if (!resolveResults.isEmpty()) {
-                mode = Mode.RESOLVE;
-                model.addAttribute("resolveResults", resolveResults);
+        if (mode == Mode.CATEGORIZE && rankingState.getGoogleBooksIdBeingRanked() == null) {
+            Object skipResolve = session.getAttribute("skipResolve");
+            if (skipResolve == null || "expanded".equals(skipResolve)) {
+                int maxResults = "expanded".equals(skipResolve) ? 10 : 3;
+                String resolveQuery = rankingState.getTitleBeingRanked() + " " + rankingState.getAuthorBeingRanked();
+                List<GoogleBooksService.BookResult> resolveResults =
+                    googleBooksService.searchBooks(resolveQuery, maxResults);
+                // Deduplicate results with the same title+author (different editions)
+                var seen = new java.util.LinkedHashSet<String>();
+                resolveResults = resolveResults.stream()
+                    .filter(r -> seen.add((r.title() + "\0" + r.author()).toLowerCase()))
+                    .toList();
+                if (!resolveResults.isEmpty()) {
+                    mode = Mode.RESOLVE;
+                    model.addAttribute("resolveResults", resolveResults);
+                }
             }
         }
 
@@ -1073,7 +1077,17 @@ public class BookController {
 
     @PostMapping("/skip-resolve")
     public String skipResolve(HttpSession session) {
-        session.setAttribute("skipResolve", true);
+        Object current = session.getAttribute("skipResolve");
+        if ("expanded".equals(current)) {
+            session.setAttribute("skipResolve", "skip");
+            Long userId = getCurrentUserId(session);
+            RankingState rs = rankingStateRepository.findById(userId).orElse(null);
+            if (rs != null) {
+                log.warn("Book resolution skipped for: {} by {}", rs.getTitleBeingRanked(), rs.getAuthorBeingRanked());
+            }
+        } else {
+            session.setAttribute("skipResolve", "expanded");
+        }
         return "redirect:/my-books";
     }
 

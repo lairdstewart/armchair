@@ -62,6 +62,10 @@ public class GoogleBooksService {
     }
 
     public List<BookResult> searchBooks(String query) {
+        return searchBooks(query, 3);
+    }
+
+    public List<BookResult> searchBooks(String query, int maxResults) {
         if (query == null || query.isBlank()) {
             return List.of();
         }
@@ -73,8 +77,9 @@ public class GoogleBooksService {
 
         try {
             String url = String.format(
-                "https://www.googleapis.com/books/v1/volumes?q=%s&maxResults=3&key=%s",
+                "https://www.googleapis.com/books/v1/volumes?q=%s&maxResults=%d&key=%s",
                 URLEncoder.encode(query, StandardCharsets.UTF_8),
+                maxResults,
                 apiKey
             );
 
