@@ -1119,8 +1119,11 @@ public class BookController {
         Book existingBook = findOrCreateBook(googleBooksId, bookName, author, isbn13);
         if (existingBook.getGoogleBooksId() == null) {
             String query = (isbn13 != null) ? "isbn:" + isbn13 : bookName + " " + author;
+            System.err.println("Resolving unverified book: query=\"" + query + "\"");
             List<GoogleBooksService.BookResult> apiResults = googleBooksService.searchBooks(query);
-            if (!apiResults.isEmpty()) {
+            if (apiResults.isEmpty()) {
+                System.err.println("No API results for unverified book: " + bookName + " by " + author);
+            } else {
                 GoogleBooksService.BookResult result = apiResults.get(0);
                 existingBook.setGoogleBooksId(result.googleBooksId());
                 existingBook.setTitle(result.title());
