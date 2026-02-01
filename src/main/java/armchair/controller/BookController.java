@@ -316,6 +316,11 @@ public class BookController {
                 && session.getAttribute("skipResolve") == null) {
             List<GoogleBooksService.BookResult> resolveResults =
                 googleBooksService.searchBooks(rankingState.getTitleBeingRanked());
+            // Deduplicate results with the same title+author (different editions)
+            var seen = new java.util.LinkedHashSet<String>();
+            resolveResults = resolveResults.stream()
+                .filter(r -> seen.add((r.title() + "\0" + r.author()).toLowerCase()))
+                .toList();
             if (!resolveResults.isEmpty()) {
                 mode = Mode.RESOLVE;
                 model.addAttribute("resolveResults", resolveResults);
