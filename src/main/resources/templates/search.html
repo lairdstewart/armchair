@@ -62,7 +62,8 @@
             </span>
           </li>
         </ol>
-        <p>... 40 million more books</p>
+        <p th:if="${localResults && !moreResults}"><a th:href="@{/search(type='books', query=${query}, more=true)}">More results ...</a></p>
+        <p th:if="${!localResults || moreResults}">... 40 million more books</p>
       </div>
 
       <!-- Profiles results -->

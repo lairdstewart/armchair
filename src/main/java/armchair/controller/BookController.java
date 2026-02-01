@@ -1231,6 +1231,7 @@ public class BookController {
     @GetMapping("/search")
     public String showUnifiedSearch(@RequestParam(required = false, defaultValue = "books") String type,
                                      @RequestParam(required = false) String query,
+                                     @RequestParam(required = false) Boolean more,
                                      Model model, HttpSession session) {
         getCurrentUserId(session);
         addNavigationAttributes(model, "search");
@@ -1245,6 +1246,8 @@ public class BookController {
         // --- Books tab ---
         Map<String, UserBookRank> userBooks = currentUserId != null ? buildUserBooksMap(currentUserId) : Map.of();
         List<GoogleBooksService.BookResult> bookResults;
+        boolean localResults = false;
+        boolean moreResults = false;
         if ("books".equals(type) && query != null && !query.isBlank()) {
             bookResults = searchLocalBooks(query);
             if (bookResults.isEmpty()) {
@@ -1254,6 +1257,24 @@ public class BookController {
                 bookResults = bookResults.stream()
                     .filter(b -> seen.add(b.title().toLowerCase().trim() + "\t" + b.author().toLowerCase().trim()))
                     .toList();
+            } else {
+                localResults = true;
+                if (Boolean.TRUE.equals(more)) {
+                    moreResults = true;
+                    // Build set of local result keys for deduplication
+                    Set<String> localKeys = bookResults.stream()
+                        .map(b -> b.title().toLowerCase().trim() + "\t" + b.author().toLowerCase().trim())
+                        .collect(Collectors.toSet());
+                    List<GoogleBooksService.BookResult> apiResults = googleBooksService.searchBooks(query);
+                    // Deduplicate API results against local results and against themselves
+                    Set<String> seen = new java.util.LinkedHashSet<>(localKeys);
+                    List<GoogleBooksService.BookResult> extraResults = apiResults.stream()
+                        .filter(b -> seen.add(b.title().toLowerCase().trim() + "\t" + b.author().toLowerCase().trim()))
+                        .limit(3)
+                        .toList();
+                    bookResults = new ArrayList<>(bookResults);
+                    bookResults.addAll(extraResults);
+                }
             }
         } else {
             Map<String, UserBookRank> finalUserBooks = userBooks;
@@ -1263,6 +1284,8 @@ public class BookController {
                 .toList();
         }
         model.addAttribute("bookResults", bookResults);
+        model.addAttribute("localResults", localResults);
+        model.addAttribute("moreResults", moreResults);
         if (currentUserId != null) {
             model.addAttribute("userBooks", userBooks);
         }
