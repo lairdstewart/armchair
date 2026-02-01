@@ -3,7 +3,7 @@ package armchair.tool;
 import armchair.entity.Book;
 import armchair.entity.BookCategory;
 import armchair.entity.BookIsbn;
-import armchair.entity.BookType;
+import armchair.entity.Bookshelf;
 import armchair.entity.Ranking;
 import armchair.entity.User;
 import armchair.repository.BookIsbnRepository;
@@ -61,7 +61,7 @@ public class CuratedListImporter {
         }
     }
 
-    private record JsonBook(String title, String author, String review, BookType type, BookCategory category, Integer rank) {}
+    private record JsonBook(String title, String author, String review, Bookshelf bookshelf, BookCategory category, Integer rank) {}
     private record ParsedJsonList(String username, List<JsonBook> books) {}
 
     @SuppressWarnings("unchecked")
@@ -140,11 +140,11 @@ public class CuratedListImporter {
                 System.exit(1);
             }
 
-            BookType type = "fiction".equals(categoryStr) ? BookType.FICTION : BookType.NONFICTION;
+            Bookshelf bookshelf = "fiction".equals(categoryStr) ? Bookshelf.FICTION : Bookshelf.NONFICTION;
             BookCategory category = isRanked ? BookCategory.LIKED : BookCategory.UNRANKED;
 
             Integer rankNum = isRanked ? Integer.parseInt(rank) : null;
-            result.add(new JsonBook(title, author, review, type, category, rankNum));
+            result.add(new JsonBook(title, author, review, bookshelf, category, rankNum));
         }
 
         return new ParsedJsonList(username, result);
@@ -180,7 +180,7 @@ public class CuratedListImporter {
         List<JsonBook> nonfictionUnranked = new ArrayList<>();
 
         for (JsonBook book : allBooks) {
-            if (book.type() == BookType.FICTION) {
+            if (book.bookshelf() == Bookshelf.FICTION) {
                 if (book.category() == BookCategory.LIKED) fictionRanked.add(book);
                 else fictionUnranked.add(book);
             } else {
@@ -268,7 +268,7 @@ public class CuratedListImporter {
 
             Book book = findOrCreateBook(googleBooksId, title, author, isbn13, bookRepository, bookIsbnRepository);
 
-            Ranking ranking = new Ranking(userId, book, jb.type(), jb.category(), position);
+            Ranking ranking = new Ranking(userId, book, jb.bookshelf(), jb.category(), position);
             if (jb.review() != null && !jb.review().isEmpty()) {
                 ranking.setReview(jb.review());
             }

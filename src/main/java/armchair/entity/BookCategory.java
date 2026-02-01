@@ -4,7 +4,6 @@ public enum BookCategory {
     LIKED("liked"),
     OK("ok"),
     DISLIKED("disliked"),
-    WANT_TO_READ("want_to_read"),
     UNRANKED("unranked");
 
     private final String value;

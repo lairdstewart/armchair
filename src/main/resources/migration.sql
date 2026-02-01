@@ -100,3 +100,20 @@ ALTER TABLE books DROP COLUMN IF EXISTS isbn_13;
 
 -- 14. Drop user_uploaded column from books (replaced by google_books_id IS NULL check)
 ALTER TABLE books DROP COLUMN IF EXISTS user_uploaded;
+
+-- ============================================================================
+-- Migration: Rename type → bookshelf, move WANT_TO_READ to Bookshelf enum
+-- Run this manually against the database BEFORE deploying the new code.
+-- ============================================================================
+
+-- 15. Rename type → bookshelf in rankings
+ALTER TABLE rankings RENAME COLUMN type TO bookshelf;
+
+-- 16. Rename type → bookshelf in ranking_state
+ALTER TABLE ranking_state RENAME COLUMN type TO bookshelf;
+
+-- 17. Migrate want-to-read data in rankings
+UPDATE rankings SET bookshelf = 'WANT_TO_READ', category = 'UNRANKED' WHERE category = 'WANT_TO_READ';
+
+-- 18. Migrate want-to-read data in ranking_state
+UPDATE ranking_state SET bookshelf = 'WANT_TO_READ', category = 'UNRANKED' WHERE category = 'WANT_TO_READ';

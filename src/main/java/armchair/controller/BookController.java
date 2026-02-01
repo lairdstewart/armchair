@@ -2,7 +2,7 @@ package armchair.controller;
 
 import armchair.entity.Book;
 import armchair.entity.BookCategory;
-import armchair.entity.BookType;
+import armchair.entity.Bookshelf;
 import armchair.entity.Follow;
 import armchair.entity.Ranking;
 import armchair.entity.RankingState;
@@ -57,7 +57,7 @@ public class BookController {
     public record BookLists(List<BookInfo> liked, List<BookInfo> ok, List<BookInfo> disliked, List<BookInfo> unranked) {}
     public record ProfileDisplay(String username, String stats) {}
     public record ProfileDisplayWithFollow(String username, String stats, Long userId, boolean isFollowing) {}
-    public record UserBookRank(Long rankingId, int rank, String category, String type) {}
+    public record UserBookRank(Long rankingId, int rank, String category, String bookshelf) {}
 
     private enum Mode {
         LIST,
@@ -182,9 +182,9 @@ public class BookController {
             state.getIsbn13BeingRanked());
 
         if (!rankingRepository.existsByUserIdAndBookId(userId, book.getId())) {
-            List<Ranking> unranked = rankingRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(
-                userId, BookType.UNRANKED, BookCategory.UNRANKED);
-            Ranking restored = new Ranking(userId, book, BookType.UNRANKED, BookCategory.UNRANKED, unranked.size());
+            List<Ranking> unranked = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(
+                userId, Bookshelf.UNRANKED, BookCategory.UNRANKED);
+            Ranking restored = new Ranking(userId, book, Bookshelf.UNRANKED, BookCategory.UNRANKED, unranked.size());
             restored.setReview(state.getReviewBeingRanked());
             rankingRepository.save(restored);
         }
@@ -274,7 +274,7 @@ public class BookController {
     }
 
     @GetMapping("/my-books")
-    public String showPage(Model model, HttpSession session, @RequestParam(required = false) String selectedType) {
+    public String showPage(Model model, HttpSession session, @RequestParam(required = false) String selectedBookshelf) {
         Long userId = getCurrentUserId(session);
 
         // If user is authenticated via OAuth but hasn't set up username, use guest mode for now
@@ -313,11 +313,11 @@ public class BookController {
         }
         model.addAttribute("userName", userName);
 
-        BookLists fictionBooks = getBookLists(BookType.FICTION, userId);
-        BookLists nonfictionBooks = getBookLists(BookType.NONFICTION, userId);
-        List<BookInfo> wantToReadBooks = rankingRepository.findByUserIdAndCategoryOrderByPositionAsc(userId, BookCategory.WANT_TO_READ)
+        BookLists fictionBooks = getBookLists(Bookshelf.FICTION, userId);
+        BookLists nonfictionBooks = getBookLists(Bookshelf.NONFICTION, userId);
+        List<BookInfo> wantToReadBooks = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(userId, Bookshelf.WANT_TO_READ, BookCategory.UNRANKED)
             .stream().map(r -> new BookInfo(r.getId(), r.getBook().getGoogleBooksId(), getBookIsbn13(r.getBook().getId()), r.getBook().getTitle(), r.getBook().getAuthor(), r.getReview())).toList();
-        List<BookInfo> unrankedBooks = rankingRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(userId, BookType.UNRANKED, BookCategory.UNRANKED)
+        List<BookInfo> unrankedBooks = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(userId, Bookshelf.UNRANKED, BookCategory.UNRANKED)
             .stream().map(r -> new BookInfo(r.getId(), r.getBook().getGoogleBooksId(), getBookIsbn13(r.getBook().getId()), r.getBook().getTitle(), r.getBook().getAuthor(), r.getReview())).toList();
         boolean hasFiction = !fictionBooks.liked().isEmpty() || !fictionBooks.ok().isEmpty() || !fictionBooks.disliked().isEmpty();
         boolean hasNonfiction = !nonfictionBooks.liked().isEmpty() || !nonfictionBooks.ok().isEmpty() || !nonfictionBooks.disliked().isEmpty();
@@ -325,19 +325,19 @@ public class BookController {
         boolean hasUnranked = !unrankedBooks.isEmpty();
         boolean hasAnyBooks = hasFiction || hasNonfiction || hasWantToRead || hasUnranked;
 
-        // Determine selected type (default to fiction if exists, then nonfiction, then want-to-read, then unranked)
-        String effectiveSelectedType = selectedType;
-        if (effectiveSelectedType == null || effectiveSelectedType.isEmpty()) {
+        // Determine selected bookshelf (default to fiction if exists, then nonfiction, then want-to-read, then unranked)
+        String effectiveSelectedBookshelf = selectedBookshelf;
+        if (effectiveSelectedBookshelf == null || effectiveSelectedBookshelf.isEmpty()) {
             if (hasFiction) {
-                effectiveSelectedType = "FICTION";
+                effectiveSelectedBookshelf = "FICTION";
             } else if (hasNonfiction) {
-                effectiveSelectedType = "NONFICTION";
+                effectiveSelectedBookshelf = "NONFICTION";
             } else if (hasWantToRead) {
-                effectiveSelectedType = "WANT_TO_READ";
+                effectiveSelectedBookshelf = "WANT_TO_READ";
             } else if (hasUnranked) {
-                effectiveSelectedType = "UNRANKED";
+                effectiveSelectedBookshelf = "UNRANKED";
             } else {
-                effectiveSelectedType = "FICTION"; // Default for empty state
+                effectiveSelectedBookshelf = "FICTION"; // Default for empty state
             }
         }
 
@@ -350,33 +350,26 @@ public class BookController {
         model.addAttribute("hasWantToRead", hasWantToRead);
         model.addAttribute("hasUnranked", hasUnranked);
         model.addAttribute("hasAnyBooks", hasAnyBooks);
-        model.addAttribute("selectedType", effectiveSelectedType);
+        model.addAttribute("selectedBookshelf", effectiveSelectedBookshelf);
         model.addAttribute("rankingState", rankingState);
 
-        // For RE_RANK mode, show LIST view but with rerank type set
+        // For RE_RANK mode, show LIST view but with rerank bookshelf set
         if (mode == Mode.RE_RANK) {
             model.addAttribute("mode", Mode.LIST);
-            model.addAttribute("rerankType", rankingState.getType().name());
+            model.addAttribute("rerankType", rankingState.getBookshelf().name());
             model.addAttribute("removeType", null);
             model.addAttribute("reviewType", null);
         } else if (mode == Mode.REMOVE) {
             model.addAttribute("mode", Mode.LIST);
             model.addAttribute("rerankType", null);
-            // For want-to-read, type is null but category is WANT_TO_READ
-            if (rankingState.getType() != null) {
-                model.addAttribute("removeType", rankingState.getType().name());
-            } else if (rankingState.getCategory() == BookCategory.WANT_TO_READ) {
-                model.addAttribute("removeType", "WANT_TO_READ");
-            } else {
-                model.addAttribute("removeType", null);
-            }
+            model.addAttribute("removeType", rankingState.getBookshelf().name());
             model.addAttribute("reviewType", null);
         } else if (mode == Mode.REVIEW && rankingState.getBookIdBeingReviewed() == null) {
             // Review mode but no book selected yet - show LIST with review type
             model.addAttribute("mode", Mode.LIST);
             model.addAttribute("rerankType", null);
             model.addAttribute("removeType", null);
-            model.addAttribute("reviewType", rankingState.getType().name());
+            model.addAttribute("reviewType", rankingState.getBookshelf().name());
         } else if (mode == Mode.REVIEW) {
             // Review mode with book selected - show REVIEW screen
             model.addAttribute("mode", mode);
@@ -403,8 +396,8 @@ public class BookController {
         }
 
         if (rankingState != null && mode == Mode.RANK && rankingState.getTitleBeingRanked() != null) {
-            List<Ranking> currentList = rankingRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(
-                userId, rankingState.getType(), rankingState.getCategory()
+            List<Ranking> currentList = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(
+                userId, rankingState.getBookshelf(), rankingState.getCategory()
             );
             Ranking compRanking = currentList.get(rankingState.getCompareToIndex());
             model.addAttribute("comparisonBookTitle", compRanking.getBook().getTitle());
@@ -442,29 +435,29 @@ public class BookController {
         return Mode.RANK;
     }
 
-    private BookLists getBookLists(BookType type, Long userId) {
-        List<BookInfo> liked = rankingRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(userId, type, BookCategory.LIKED)
+    private BookLists getBookLists(Bookshelf bookshelf, Long userId) {
+        List<BookInfo> liked = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(userId, bookshelf, BookCategory.LIKED)
             .stream().map(r -> new BookInfo(r.getId(), r.getBook().getGoogleBooksId(), getBookIsbn13(r.getBook().getId()), r.getBook().getTitle(), r.getBook().getAuthor(), r.getReview())).toList();
-        List<BookInfo> ok = rankingRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(userId, type, BookCategory.OK)
+        List<BookInfo> ok = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(userId, bookshelf, BookCategory.OK)
             .stream().map(r -> new BookInfo(r.getId(), r.getBook().getGoogleBooksId(), getBookIsbn13(r.getBook().getId()), r.getBook().getTitle(), r.getBook().getAuthor(), r.getReview())).toList();
-        List<BookInfo> disliked = rankingRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(userId, type, BookCategory.DISLIKED)
+        List<BookInfo> disliked = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(userId, bookshelf, BookCategory.DISLIKED)
             .stream().map(r -> new BookInfo(r.getId(), r.getBook().getGoogleBooksId(), getBookIsbn13(r.getBook().getId()), r.getBook().getTitle(), r.getBook().getAuthor(), r.getReview())).toList();
-        List<BookInfo> unranked = rankingRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(userId, type, BookCategory.UNRANKED)
+        List<BookInfo> unranked = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(userId, bookshelf, BookCategory.UNRANKED)
             .stream().map(r -> new BookInfo(r.getId(), r.getBook().getGoogleBooksId(), getBookIsbn13(r.getBook().getId()), r.getBook().getTitle(), r.getBook().getAuthor(), r.getReview())).toList();
         return new BookLists(liked, ok, disliked, unranked);
     }
 
     private String generateCsv(Long userId) {
         StringBuilder csv = new StringBuilder();
-        csv.append("Rank,Title,Author,ISBN13,Category,Type,Review\n");
+        csv.append("Rank,Title,Author,ISBN13,Category,Bookshelf,Review\n");
 
         int rank = 1;
 
-        // Iterate through all types and categories
-        for (BookType type : BookType.values()) {
+        // Iterate through all bookshelves and categories
+        for (Bookshelf bookshelf : Bookshelf.values()) {
             for (BookCategory category : BookCategory.values()) {
-                List<Ranking> rankings = rankingRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(
-                    userId, type, category
+                List<Ranking> rankings = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(
+                    userId, bookshelf, category
                 );
                 for (Ranking ranking : rankings) {
                     csv.append(rank++).append(",");
@@ -472,7 +465,7 @@ public class BookController {
                     csv.append("\"").append(escapeCsv(ranking.getBook().getAuthor())).append("\",");
                     csv.append("\"").append(escapeCsv(getBookIsbn13(ranking.getBook().getId()))).append("\",");
                     csv.append("\"").append(category.getValue()).append("\",");
-                    csv.append("\"").append(type.getValue()).append("\",");
+                    csv.append("\"").append(bookshelf.getValue()).append("\",");
                     csv.append("\"").append(escapeCsv(ranking.getReview())).append("\"\n");
                 }
             }
@@ -500,8 +493,8 @@ public class BookController {
             return "redirect:/my-books";
         }
 
-        List<Ranking> currentList = rankingRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(
-            userId, rankingState.getType(), rankingState.getCategory()
+        List<Ranking> currentList = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(
+            userId, rankingState.getBookshelf(), rankingState.getCategory()
         );
 
         int newLowIndex = rankingState.getLowIndex();
@@ -517,18 +510,18 @@ public class BookController {
 
         if (newLowIndex > newHighIndex) {
             // Found the insertion position - insert the book
-            BookType rankedType = rankingState.getType();
+            Bookshelf rankedBookshelf = rankingState.getBookshelf();
             boolean wasRankAll = rankingState.isRankAll();
             insertBookAtPosition(rankingState.getGoogleBooksIdBeingRanked(), rankingState.getTitleBeingRanked(), rankingState.getAuthorBeingRanked(),
-                rankingState.getIsbn13BeingRanked(), rankingState.getReviewBeingRanked(), rankedType, rankingState.getCategory(), newLowIndex, userId);
+                rankingState.getIsbn13BeingRanked(), rankingState.getReviewBeingRanked(), rankedBookshelf, rankingState.getCategory(), newLowIndex, userId);
             rankingStateRepository.deleteById(userId);
             // Clear search results
             session.removeAttribute("bookSearchResults");
 
             if (wasRankAll) {
-                return startNextUnrankedBook(userId, rankedType);
+                return startNextUnrankedBook(userId, rankedBookshelf);
             }
-            return "redirect:/my-books?selectedType=" + rankedType.name();
+            return "redirect:/my-books?selectedBookshelf=" + rankedBookshelf.name();
         } else {
             // Continue binary search
             int newCompareToIndex = (newLowIndex + newHighIndex) / 2;
@@ -541,10 +534,10 @@ public class BookController {
         return "redirect:/my-books";
     }
 
-    private void insertBookAtPosition(String googleBooksId, String title, String author, String isbn13, String review, BookType type, BookCategory category, int position, Long userId) {
+    private void insertBookAtPosition(String googleBooksId, String title, String author, String isbn13, String review, Bookshelf bookshelf, BookCategory category, int position, Long userId) {
         // Shift all rankings at or after the insertion position
-        List<Ranking> rankingsToShift = rankingRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(
-            userId, type, category
+        List<Ranking> rankingsToShift = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(
+            userId, bookshelf, category
         );
         for (int i = rankingsToShift.size() - 1; i >= position; i--) {
             Ranking ranking = rankingsToShift.get(i);
@@ -554,25 +547,25 @@ public class BookController {
 
         // Insert the new ranking
         Book book = findOrCreateBook(googleBooksId, title, author, isbn13);
-        Ranking newRanking = new Ranking(userId, book, type, category, position);
+        Ranking newRanking = new Ranking(userId, book, bookshelf, category, position);
         newRanking.setReview(review);
         rankingRepository.save(newRanking);
     }
 
     @PostMapping("/start-rerank")
-    public String startRerank(@RequestParam String type, HttpSession session) {
+    public String startRerank(@RequestParam String bookshelf, HttpSession session) {
         Long userId = getCurrentUserId(session);
         if (userId == null) {
             return "redirect:/setup-username";
         }
-        BookType bookType;
+        Bookshelf bookshlf;
         try {
-            bookType = BookType.fromString(type);
+            bookshlf = Bookshelf.fromString(bookshelf);
         } catch (IllegalArgumentException e) {
             return "redirect:/my-books";
         }
         restoreAbandonedBook(userId);
-        RankingState rankingState = new RankingState(userId, null, null, null, bookType, null, 0, 0, 0);
+        RankingState rankingState = new RankingState(userId, null, null, null, bookshlf, null, 0, 0, 0);
         rankingState.setReRank(true);
         rankingStateRepository.save(rankingState);
         return "redirect:/my-books";
@@ -605,14 +598,14 @@ public class BookController {
         rankingStateRepository.save(rankingState);
 
         // Remove the ranking from its current position
-        BookType type = ranking.getType();
+        Bookshelf bookshelf = ranking.getBookshelf();
         BookCategory category = ranking.getCategory();
         int removedPosition = ranking.getPosition();
         rankingRepository.delete(ranking);
 
         // Shift remaining rankings in that category to fill the gap
-        List<Ranking> rankingsToShift = rankingRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(
-            userId, type, category
+        List<Ranking> rankingsToShift = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(
+            userId, bookshelf, category
         );
         for (Ranking r : rankingsToShift) {
             if (r.getPosition() > removedPosition) {
@@ -625,19 +618,19 @@ public class BookController {
     }
 
     @PostMapping("/start-remove")
-    public String startRemove(@RequestParam String type, HttpSession session) {
+    public String startRemove(@RequestParam String bookshelf, HttpSession session) {
         Long userId = getCurrentUserId(session);
         if (userId == null) {
             return "redirect:/setup-username";
         }
-        BookType bookType;
+        Bookshelf bookshlf;
         try {
-            bookType = BookType.fromString(type);
+            bookshlf = Bookshelf.fromString(bookshelf);
         } catch (IllegalArgumentException e) {
             return "redirect:/my-books";
         }
         restoreAbandonedBook(userId);
-        RankingState rankingState = new RankingState(userId, null, null, null, bookType, null, 0, 0, 0);
+        RankingState rankingState = new RankingState(userId, null, null, null, bookshlf, null, 0, 0, 0);
         rankingState.setRemove(true);
         rankingStateRepository.save(rankingState);
         return "redirect:/my-books";
@@ -650,10 +643,10 @@ public class BookController {
             return "redirect:/setup-username";
         }
         restoreAbandonedBook(userId);
-        RankingState rankingState = new RankingState(userId, null, null, null, null, BookCategory.WANT_TO_READ, 0, 0, 0);
+        RankingState rankingState = new RankingState(userId, null, null, null, Bookshelf.WANT_TO_READ, BookCategory.UNRANKED, 0, 0, 0);
         rankingState.setRemove(true);
         rankingStateRepository.save(rankingState);
-        return "redirect:/my-books?selectedType=WANT_TO_READ";
+        return "redirect:/my-books?selectedBookshelf=WANT_TO_READ";
     }
 
     @Transactional
@@ -666,14 +659,14 @@ public class BookController {
 
         // Find the ranking and verify it belongs to this user
         Ranking ranking = rankingRepository.findById(bookId).orElse(null);
-        if (ranking == null || !ranking.getUserId().equals(userId) || ranking.getCategory() != BookCategory.WANT_TO_READ) {
-            return "redirect:/my-books?selectedType=WANT_TO_READ";
+        if (ranking == null || !ranking.getUserId().equals(userId) || ranking.getBookshelf() != Bookshelf.WANT_TO_READ) {
+            return "redirect:/my-books?selectedBookshelf=WANT_TO_READ";
         }
 
         // Verify we're in remove mode for want-to-read
         RankingState rankingState = rankingStateRepository.findById(userId).orElse(null);
-        if (rankingState == null || !rankingState.isRemove() || rankingState.getCategory() != BookCategory.WANT_TO_READ) {
-            return "redirect:/my-books?selectedType=WANT_TO_READ";
+        if (rankingState == null || !rankingState.isRemove() || rankingState.getBookshelf() != Bookshelf.WANT_TO_READ) {
+            return "redirect:/my-books?selectedBookshelf=WANT_TO_READ";
         }
 
         // Remove the ranking
@@ -681,7 +674,7 @@ public class BookController {
         rankingRepository.delete(ranking);
 
         // Shift remaining rankings to fill the gap
-        List<Ranking> rankingsToShift = rankingRepository.findByUserIdAndCategoryOrderByPositionAsc(userId, BookCategory.WANT_TO_READ);
+        List<Ranking> rankingsToShift = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(userId, Bookshelf.WANT_TO_READ, BookCategory.UNRANKED);
         for (Ranking r : rankingsToShift) {
             if (r.getPosition() > removedPosition) {
                 r.setPosition(r.getPosition() - 1);
@@ -692,7 +685,7 @@ public class BookController {
         // Clear the ranking state
         rankingStateRepository.deleteById(userId);
 
-        return "redirect:/my-books?selectedType=WANT_TO_READ";
+        return "redirect:/my-books?selectedBookshelf=WANT_TO_READ";
     }
 
     @PostMapping("/direct-review")
@@ -709,7 +702,7 @@ public class BookController {
 
         // Set up review mode directly
         restoreAbandonedBook(userId);
-        RankingState rankingState = new RankingState(userId, null, null, null, ranking.getType(), null, 0, 0, 0);
+        RankingState rankingState = new RankingState(userId, null, null, null, ranking.getBookshelf(), null, 0, 0, 0);
         rankingState.setReview(true);
         rankingState.setBookIdBeingReviewed(bookId);
         rankingStateRepository.save(rankingState);
@@ -732,20 +725,20 @@ public class BookController {
 
         // Store book info in ranking state (including existing review)
         restoreAbandonedBook(userId);
-        RankingState rankingState = new RankingState(userId, ranking.getBook().getGoogleBooksId(), ranking.getBook().getTitle(), ranking.getBook().getAuthor(), ranking.getType(), null, 0, 0, 0);
+        RankingState rankingState = new RankingState(userId, ranking.getBook().getGoogleBooksId(), ranking.getBook().getTitle(), ranking.getBook().getAuthor(), ranking.getBookshelf(), null, 0, 0, 0);
         rankingState.setReRank(true);
         rankingState.setIsbn13BeingRanked(getBookIsbn13(ranking.getBook().getId()));
         rankingState.setReviewBeingRanked(ranking.getReview());
         rankingStateRepository.save(rankingState);
 
         // Remove the ranking from its current position
-        BookType type = ranking.getType();
+        Bookshelf bookshelf = ranking.getBookshelf();
         BookCategory category = ranking.getCategory();
         int removedPosition = ranking.getPosition();
         rankingRepository.delete(ranking);
 
         // Shift remaining rankings in that category to fill the gap
-        List<Ranking> rankingsToShift = rankingRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(userId, type, category);
+        List<Ranking> rankingsToShift = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(userId, bookshelf, category);
         for (Ranking r : rankingsToShift) {
             if (r.getPosition() > removedPosition) {
                 r.setPosition(r.getPosition() - 1);
@@ -769,14 +762,14 @@ public class BookController {
             return "redirect:/my-books";
         }
 
-        BookType type = ranking.getType();
+        Bookshelf bookshelf = ranking.getBookshelf();
         BookCategory category = ranking.getCategory();
         int removedPosition = ranking.getPosition();
-        String selectedType = type != null ? type.name() : "FICTION";
+        String selectedBookshelf = bookshelf.name();
         rankingRepository.delete(ranking);
 
         // Shift remaining rankings in that category to fill the gap
-        List<Ranking> rankingsToShift = rankingRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(userId, type, category);
+        List<Ranking> rankingsToShift = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(userId, bookshelf, category);
         for (Ranking r : rankingsToShift) {
             if (r.getPosition() > removedPosition) {
                 r.setPosition(r.getPosition() - 1);
@@ -784,7 +777,7 @@ public class BookController {
             }
         }
 
-        return "redirect:/my-books?selectedType=" + selectedType;
+        return "redirect:/my-books?selectedBookshelf=" + selectedBookshelf;
     }
 
     @Transactional
@@ -797,8 +790,8 @@ public class BookController {
 
         // Find the ranking and verify it belongs to this user and is in want-to-read
         Ranking ranking = rankingRepository.findById(bookId).orElse(null);
-        if (ranking == null || !ranking.getUserId().equals(userId) || ranking.getCategory() != BookCategory.WANT_TO_READ) {
-            return "redirect:/my-books?selectedType=WANT_TO_READ";
+        if (ranking == null || !ranking.getUserId().equals(userId) || ranking.getBookshelf() != Bookshelf.WANT_TO_READ) {
+            return "redirect:/my-books?selectedBookshelf=WANT_TO_READ";
         }
 
         // Store book info in ranking state for categorization
@@ -811,7 +804,7 @@ public class BookController {
         rankingRepository.delete(ranking);
 
         // Shift remaining rankings to fill the gap
-        List<Ranking> rankingsToShift = rankingRepository.findByUserIdAndCategoryOrderByPositionAsc(userId, BookCategory.WANT_TO_READ);
+        List<Ranking> rankingsToShift = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(userId, Bookshelf.WANT_TO_READ, BookCategory.UNRANKED);
         for (Ranking r : rankingsToShift) {
             if (r.getPosition() > removedPosition) {
                 r.setPosition(r.getPosition() - 1);
@@ -832,8 +825,8 @@ public class BookController {
 
         // Find the ranking and verify it belongs to this user and is in want-to-read
         Ranking ranking = rankingRepository.findById(bookId).orElse(null);
-        if (ranking == null || !ranking.getUserId().equals(userId) || ranking.getCategory() != BookCategory.WANT_TO_READ) {
-            return "redirect:/my-books?selectedType=WANT_TO_READ";
+        if (ranking == null || !ranking.getUserId().equals(userId) || ranking.getBookshelf() != Bookshelf.WANT_TO_READ) {
+            return "redirect:/my-books?selectedBookshelf=WANT_TO_READ";
         }
 
         // Remove the ranking
@@ -841,7 +834,7 @@ public class BookController {
         rankingRepository.delete(ranking);
 
         // Shift remaining rankings to fill the gap
-        List<Ranking> rankingsToShift = rankingRepository.findByUserIdAndCategoryOrderByPositionAsc(userId, BookCategory.WANT_TO_READ);
+        List<Ranking> rankingsToShift = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(userId, Bookshelf.WANT_TO_READ, BookCategory.UNRANKED);
         for (Ranking r : rankingsToShift) {
             if (r.getPosition() > removedPosition) {
                 r.setPosition(r.getPosition() - 1);
@@ -849,7 +842,7 @@ public class BookController {
             }
         }
 
-        return "redirect:/my-books?selectedType=WANT_TO_READ";
+        return "redirect:/my-books?selectedBookshelf=WANT_TO_READ";
     }
 
     @Transactional
@@ -873,14 +866,14 @@ public class BookController {
         }
 
         // Remove the ranking
-        BookType type = ranking.getType();
+        Bookshelf bookshelf = ranking.getBookshelf();
         BookCategory category = ranking.getCategory();
         int removedPosition = ranking.getPosition();
         rankingRepository.delete(ranking);
 
         // Shift remaining rankings in that category to fill the gap
-        List<Ranking> rankingsToShift = rankingRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(
-            userId, type, category
+        List<Ranking> rankingsToShift = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(
+            userId, bookshelf, category
         );
         for (Ranking r : rankingsToShift) {
             if (r.getPosition() > removedPosition) {
@@ -896,18 +889,18 @@ public class BookController {
     }
 
     @PostMapping("/start-review")
-    public String startReview(@RequestParam String type, HttpSession session) {
+    public String startReview(@RequestParam String bookshelf, HttpSession session) {
         Long userId = getCurrentUserId(session);
         if (userId == null) {
             return "redirect:/setup-username";
         }
-        BookType bookType;
+        Bookshelf bookshlf;
         try {
-            bookType = BookType.fromString(type);
+            bookshlf = Bookshelf.fromString(bookshelf);
         } catch (IllegalArgumentException e) {
             return "redirect:/my-books";
         }
-        RankingState rankingState = new RankingState(userId, null, null, null, bookType, null, 0, 0, 0);
+        RankingState rankingState = new RankingState(userId, null, null, null, bookshlf, null, 0, 0, 0);
         rankingState.setReview(true);
         rankingStateRepository.save(rankingState);
         return "redirect:/my-books";
@@ -1069,9 +1062,9 @@ public class BookController {
         }
 
         // Add ranking directly to want-to-read list at the end
-        List<Ranking> wantToReadRankings = rankingRepository.findByUserIdAndCategoryOrderByPositionAsc(userId, BookCategory.WANT_TO_READ);
+        List<Ranking> wantToReadRankings = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(userId, Bookshelf.WANT_TO_READ, BookCategory.UNRANKED);
         int position = wantToReadRankings.size();
-        Ranking newRanking = new Ranking(userId, book, null, BookCategory.WANT_TO_READ, position);
+        Ranking newRanking = new Ranking(userId, book, Bookshelf.WANT_TO_READ, BookCategory.UNRANKED, position);
         rankingRepository.save(newRanking);
 
         return redirectTo;
@@ -1079,7 +1072,7 @@ public class BookController {
 
     @Transactional
     @PostMapping("/categorize")
-    public String categorizeBook(@RequestParam String type,
+    public String categorizeBook(@RequestParam String bookshelf,
                                   @RequestParam String category,
                                   @RequestParam(required = false) String review,
                                   HttpSession session) {
@@ -1101,16 +1094,16 @@ public class BookController {
             trimmedReview = trimmedReview.substring(0, MAX_REVIEW_LENGTH);
         }
 
-        BookType bookType;
+        Bookshelf bookshelfEnum;
         BookCategory bookCategory;
         try {
-            bookType = BookType.fromString(type);
+            bookshelfEnum = Bookshelf.fromString(bookshelf);
             bookCategory = BookCategory.fromString(category);
         } catch (IllegalArgumentException e) {
             return "redirect:/my-books";
         }
-        List<Ranking> currentList = rankingRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(
-            userId, bookType, bookCategory
+        List<Ranking> currentList = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(
+            userId, bookshelfEnum, bookCategory
         );
 
         String isbn13 = rankingState.getIsbn13BeingRanked();
@@ -1160,7 +1153,7 @@ public class BookController {
             // Category is empty, insert at the start
             boolean wasRankAll = rankingState.isRankAll();
             Book book = findOrCreateBook(googleBooksId, bookName, author, isbn13);
-            Ranking newRanking = new Ranking(userId, book, bookType, bookCategory, 0);
+            Ranking newRanking = new Ranking(userId, book, bookshelfEnum, bookCategory, 0);
             newRanking.setReview(trimmedReview);
             rankingRepository.save(newRanking);
             rankingStateRepository.deleteById(userId);
@@ -1168,9 +1161,9 @@ public class BookController {
             session.removeAttribute("bookSearchResults");
 
             if (wasRankAll) {
-                return startNextUnrankedBook(userId, bookType);
+                return startNextUnrankedBook(userId, bookshelfEnum);
             }
-            return "redirect:/my-books?selectedType=" + bookType.name();
+            return "redirect:/my-books?selectedBookshelf=" + bookshelfEnum.name();
         } else {
             // Start binary search within this category
             int lowIndex = 0;
@@ -1180,7 +1173,7 @@ public class BookController {
             rankingState.setTitleBeingRanked(bookName);
             rankingState.setAuthorBeingRanked(author);
             rankingState.setReviewBeingRanked(trimmedReview);
-            rankingState.setType(bookType);
+            rankingState.setBookshelf(bookshelfEnum);
             rankingState.setCategory(bookCategory);
             rankingState.setCompareToIndex(compareToIndex);
             rankingState.setLowIndex(lowIndex);
@@ -1356,12 +1349,12 @@ public class BookController {
     private Map<String, UserBookRank> buildUserBooksMap(Long userId) {
         Map<String, UserBookRank> userBooks = new HashMap<>();
 
-        for (BookType bookType : BookType.values()) {
+        for (Bookshelf bookshelf : List.of(Bookshelf.FICTION, Bookshelf.NONFICTION)) {
             int rank = 1;
             for (BookCategory category : List.of(BookCategory.LIKED, BookCategory.OK, BookCategory.DISLIKED)) {
-                List<Ranking> rankings = rankingRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(userId, bookType, category);
+                List<Ranking> rankings = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(userId, bookshelf, category);
                 for (Ranking ranking : rankings) {
-                    UserBookRank ubr = new UserBookRank(ranking.getId(), rank, category.name().toLowerCase(), bookType.name().toLowerCase());
+                    UserBookRank ubr = new UserBookRank(ranking.getId(), rank, category.name().toLowerCase(), bookshelf.name().toLowerCase());
                     putBookKeys(userBooks, ranking.getBook(), ubr);
                     rank++;
                 }
@@ -1369,14 +1362,14 @@ public class BookController {
         }
 
         // Add want-to-read books
-        List<Ranking> wantToReadRankings = rankingRepository.findByUserIdAndCategoryOrderByPositionAsc(userId, BookCategory.WANT_TO_READ);
+        List<Ranking> wantToReadRankings = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(userId, Bookshelf.WANT_TO_READ, BookCategory.UNRANKED);
         for (Ranking ranking : wantToReadRankings) {
-            UserBookRank ubr = new UserBookRank(ranking.getId(), 0, "want_to_read", "");
+            UserBookRank ubr = new UserBookRank(ranking.getId(), 0, "want_to_read", "want_to_read");
             putBookKeys(userBooks, ranking.getBook(), ubr);
         }
 
         // Add unranked books
-        List<Ranking> unrankedRankings = rankingRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(userId, BookType.UNRANKED, BookCategory.UNRANKED);
+        List<Ranking> unrankedRankings = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(userId, Bookshelf.UNRANKED, BookCategory.UNRANKED);
         for (Ranking ranking : unrankedRankings) {
             UserBookRank ubr = new UserBookRank(ranking.getId(), 0, "unranked", "unranked");
             putBookKeys(userBooks, ranking.getBook(), ubr);
@@ -1389,10 +1382,10 @@ public class BookController {
         long fictionCount = 0;
         long nonfictionCount = 0;
         for (BookCategory category : BookCategory.values()) {
-            fictionCount += rankingRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(
-                user.getId(), BookType.FICTION, category).size();
-            nonfictionCount += rankingRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(
-                user.getId(), BookType.NONFICTION, category).size();
+            fictionCount += rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(
+                user.getId(), Bookshelf.FICTION, category).size();
+            nonfictionCount += rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(
+                user.getId(), Bookshelf.NONFICTION, category).size();
         }
 
         String stats = String.format(" | %d fiction | %d non-fiction",
@@ -1405,10 +1398,10 @@ public class BookController {
         long fictionCount = 0;
         long nonfictionCount = 0;
         for (BookCategory category : BookCategory.values()) {
-            fictionCount += rankingRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(
-                user.getId(), BookType.FICTION, category).size();
-            nonfictionCount += rankingRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(
-                user.getId(), BookType.NONFICTION, category).size();
+            fictionCount += rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(
+                user.getId(), Bookshelf.FICTION, category).size();
+            nonfictionCount += rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(
+                user.getId(), Bookshelf.NONFICTION, category).size();
         }
 
         String stats = String.format("| %d fiction | %d non-fiction",
@@ -1452,8 +1445,8 @@ public class BookController {
         // Keep the appropriate nav button selected based on user type
         addNavigationAttributes(model, user.isCurated() ? "curated" : "explore");
 
-        BookLists fictionBooks = getBookLists(BookType.FICTION, user.getId());
-        BookLists nonfictionBooks = getBookLists(BookType.NONFICTION, user.getId());
+        BookLists fictionBooks = getBookLists(Bookshelf.FICTION, user.getId());
+        BookLists nonfictionBooks = getBookLists(Bookshelf.NONFICTION, user.getId());
         boolean hasFiction = !fictionBooks.liked().isEmpty() || !fictionBooks.ok().isEmpty() || !fictionBooks.disliked().isEmpty() || !fictionBooks.unranked().isEmpty();
         boolean hasNonfiction = !nonfictionBooks.liked().isEmpty() || !nonfictionBooks.ok().isEmpty() || !nonfictionBooks.disliked().isEmpty() || !nonfictionBooks.unranked().isEmpty();
 
@@ -1500,8 +1493,8 @@ public class BookController {
         long fictionCount = 0;
         long nonfictionCount = 0;
         for (BookCategory category : BookCategory.values()) {
-            fictionCount += rankingRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(userId, BookType.FICTION, category).size();
-            nonfictionCount += rankingRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(userId, BookType.NONFICTION, category).size();
+            fictionCount += rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(userId, Bookshelf.FICTION, category).size();
+            nonfictionCount += rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(userId, Bookshelf.NONFICTION, category).size();
         }
 
         model.addAttribute("username", user.getUsername());
@@ -1811,9 +1804,9 @@ public class BookController {
             }
 
             // Get current max positions for unranked and want-to-read rankings
-            List<Ranking> existingUnranked = rankingRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(userId, BookType.UNRANKED, BookCategory.UNRANKED);
+            List<Ranking> existingUnranked = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(userId, Bookshelf.UNRANKED, BookCategory.UNRANKED);
             int nextUnrankedPosition = existingUnranked.size();
-            List<Ranking> existingWantToRead = rankingRepository.findByUserIdAndCategoryOrderByPositionAsc(userId, BookCategory.WANT_TO_READ);
+            List<Ranking> existingWantToRead = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(userId, Bookshelf.WANT_TO_READ, BookCategory.UNRANKED);
             int nextWantToReadPosition = existingWantToRead.size();
 
             String line;
@@ -1868,10 +1861,10 @@ public class BookController {
 
                         Ranking newRanking;
                         if (isToRead) {
-                            newRanking = new Ranking(userId, book, null, BookCategory.WANT_TO_READ, nextWantToReadPosition);
+                            newRanking = new Ranking(userId, book, Bookshelf.WANT_TO_READ, BookCategory.UNRANKED, nextWantToReadPosition);
                             nextWantToReadPosition++;
                         } else {
-                            newRanking = new Ranking(userId, book, BookType.UNRANKED, BookCategory.UNRANKED, nextUnrankedPosition);
+                            newRanking = new Ranking(userId, book, Bookshelf.UNRANKED, BookCategory.UNRANKED, nextUnrankedPosition);
                             nextUnrankedPosition++;
                         }
                         newRanking.setReview(trimmedReview);
@@ -1931,11 +1924,11 @@ public class BookController {
         }
 
         Ranking ranking = rankingRepository.findById(bookId).orElse(null);
-        if (ranking == null || !ranking.getUserId().equals(userId) || ranking.getType() != BookType.UNRANKED) {
-            return "redirect:/my-books?selectedType=UNRANKED";
+        if (ranking == null || !ranking.getUserId().equals(userId) || ranking.getBookshelf() != Bookshelf.UNRANKED) {
+            return "redirect:/my-books?selectedBookshelf=UNRANKED";
         }
 
-        // Create RankingState for categorization (no type/category set — enters CATEGORIZE mode)
+        // Create RankingState for categorization (no bookshelf/category set — enters CATEGORIZE mode)
         RankingState rankingState = new RankingState(userId, ranking.getBook().getGoogleBooksId(), ranking.getBook().getTitle(), ranking.getBook().getAuthor(), null, null, 0, 0, 0);
         rankingState.setIsbn13BeingRanked(getBookIsbn13(ranking.getBook().getId()));
         rankingState.setReviewBeingRanked(ranking.getReview());
@@ -1946,7 +1939,7 @@ public class BookController {
         rankingRepository.delete(ranking);
 
         // Shift remaining unranked rankings to fill the gap
-        List<Ranking> rankingsToShift = rankingRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(userId, BookType.UNRANKED, BookCategory.UNRANKED);
+        List<Ranking> rankingsToShift = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(userId, Bookshelf.UNRANKED, BookCategory.UNRANKED);
         for (Ranking r : rankingsToShift) {
             if (r.getPosition() > removedPosition) {
                 r.setPosition(r.getPosition() - 1);
@@ -1968,12 +1961,12 @@ public class BookController {
         return startNextUnrankedBook(userId, null);
     }
 
-    private String startNextUnrankedBook(Long userId, BookType lastRankedType) {
-        List<Ranking> unrankedBooks = rankingRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(userId, BookType.UNRANKED, BookCategory.UNRANKED);
+    private String startNextUnrankedBook(Long userId, Bookshelf lastRankedBookshelf) {
+        List<Ranking> unrankedBooks = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(userId, Bookshelf.UNRANKED, BookCategory.UNRANKED);
         if (unrankedBooks.isEmpty()) {
-            // All done — redirect to the type of the last ranked book
-            String selectedType = lastRankedType != null ? lastRankedType.name() : "FICTION";
-            return "redirect:/my-books?selectedType=" + selectedType;
+            // All done — redirect to the bookshelf of the last ranked book
+            String selectedBookshelf = lastRankedBookshelf != null ? lastRankedBookshelf.name() : "FICTION";
+            return "redirect:/my-books?selectedBookshelf=" + selectedBookshelf;
         }
 
         Ranking nextBook = unrankedBooks.get(0);
@@ -1990,7 +1983,7 @@ public class BookController {
         rankingRepository.delete(nextBook);
 
         // Shift remaining unranked rankings to fill the gap
-        List<Ranking> rankingsToShift = rankingRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(userId, BookType.UNRANKED, BookCategory.UNRANKED);
+        List<Ranking> rankingsToShift = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(userId, Bookshelf.UNRANKED, BookCategory.UNRANKED);
         for (Ranking r : rankingsToShift) {
             if (r.getPosition() > removedPosition) {
                 r.setPosition(r.getPosition() - 1);
@@ -2038,10 +2031,10 @@ public class BookController {
 
     private void migrateGuestDataToUser(Long guestUserId, Long newUserId) {
         // Migrate all rankings from guest to new user
-        for (BookType type : BookType.values()) {
+        for (Bookshelf bookshelf : Bookshelf.values()) {
             for (BookCategory category : BookCategory.values()) {
-                List<Ranking> guestRankings = rankingRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(
-                    guestUserId, type, category
+                List<Ranking> guestRankings = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(
+                    guestUserId, bookshelf, category
                 );
                 for (Ranking ranking : guestRankings) {
                     ranking.setUserId(newUserId);
@@ -2060,7 +2053,7 @@ public class BookController {
                 guestRankingState.getGoogleBooksIdBeingRanked(),
                 guestRankingState.getTitleBeingRanked(),
                 guestRankingState.getAuthorBeingRanked(),
-                guestRankingState.getType(),
+                guestRankingState.getBookshelf(),
                 guestRankingState.getCategory(),
                 guestRankingState.getCompareToIndex(),
                 guestRankingState.getLowIndex(),

@@ -26,7 +26,8 @@ public class Ranking {
     private Book book;
 
     @Enumerated(EnumType.STRING)
-    private BookType type;
+    @Column(name = "bookshelf")
+    private Bookshelf bookshelf;
 
     @Enumerated(EnumType.STRING)
     private BookCategory category;
@@ -38,10 +39,10 @@ public class Ranking {
 
     public Ranking() {}
 
-    public Ranking(Long userId, Book book, BookType type, BookCategory category, Integer position) {
+    public Ranking(Long userId, Book book, Bookshelf bookshelf, BookCategory category, Integer position) {
         this.userId = userId;
         this.book = book;
-        this.type = type;
+        this.bookshelf = bookshelf;
         this.category = category;
         this.position = position;
     }
@@ -70,12 +71,12 @@ public class Ranking {
         this.book = book;
     }
 
-    public BookType getType() {
-        return type;
+    public Bookshelf getBookshelf() {
+        return bookshelf;
     }
 
-    public void setType(BookType type) {
-        this.type = type;
+    public void setBookshelf(Bookshelf bookshelf) {
+        this.bookshelf = bookshelf;
     }
 
     public BookCategory getCategory() {

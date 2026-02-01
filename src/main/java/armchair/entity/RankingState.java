@@ -23,7 +23,8 @@ public class RankingState {
     private String reviewBeingRanked;
 
     @Enumerated(EnumType.STRING)
-    private BookType type;
+    @Column(name = "bookshelf")
+    private Bookshelf bookshelf;
 
     @Enumerated(EnumType.STRING)
     private BookCategory category;
@@ -41,13 +42,13 @@ public class RankingState {
     public RankingState() {}
 
     public RankingState(Long userId, String googleBooksIdBeingRanked, String titleBeingRanked, String authorBeingRanked,
-                        BookType type, BookCategory category, Integer compareToIndex, Integer lowIndex,
+                        Bookshelf bookshelf, BookCategory category, Integer compareToIndex, Integer lowIndex,
                         Integer highIndex) {
         this.userId = userId;
         this.googleBooksIdBeingRanked = googleBooksIdBeingRanked;
         this.titleBeingRanked = titleBeingRanked;
         this.authorBeingRanked = authorBeingRanked;
-        this.type = type;
+        this.bookshelf = bookshelf;
         this.category = category;
         this.compareToIndex = compareToIndex;
         this.lowIndex = lowIndex;
@@ -102,12 +103,12 @@ public class RankingState {
         this.reviewBeingRanked = reviewBeingRanked;
     }
 
-    public BookType getType() {
-        return type;
+    public Bookshelf getBookshelf() {
+        return bookshelf;
     }
 
-    public void setType(BookType type) {
-        this.type = type;
+    public void setBookshelf(Bookshelf bookshelf) {
+        this.bookshelf = bookshelf;
     }
 
     public BookCategory getCategory() {
