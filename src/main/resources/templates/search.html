@@ -62,7 +62,7 @@
             </span>
           </li>
         </ol>
-        <p th:if="${localResults && !moreResults}"><a th:href="@{/search(type='books', query=${query}, more=true)}">More results ...</a></p>
+        <p th:if="${localResults && !moreResults}"><a th:href="@{/search(type='books', query=${query}, more=true)}" style="color: #888; text-decoration: none;">[more results]</a></p>
         <p th:if="${!localResults || moreResults}">... 40 million more books</p>
       </div>
 
