@@ -168,6 +168,23 @@ public class BookController {
         return book;
     }
 
+    private void restoreAbandonedBook(Long userId) {
+        RankingState state = rankingStateRepository.findById(userId).orElse(null);
+        if (state == null || state.getTitleBeingRanked() == null) return;
+
+        Book book = findOrCreateBook(state.getGoogleBooksIdBeingRanked(),
+            state.getTitleBeingRanked(), state.getAuthorBeingRanked(),
+            state.getIsbn13BeingRanked());
+
+        if (!rankingRepository.existsByUserIdAndBookId(userId, book.getId())) {
+            List<Ranking> unranked = rankingRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(
+                userId, BookType.UNRANKED, BookCategory.UNRANKED);
+            Ranking restored = new Ranking(userId, book, BookType.UNRANKED, BookCategory.UNRANKED, unranked.size());
+            restored.setReview(state.getReviewBeingRanked());
+            rankingRepository.save(restored);
+        }
+    }
+
     @PostConstruct
     public void init() {
         // Clean up ALL guest users on startup
@@ -244,6 +261,7 @@ public class BookController {
     public String goToMyBooks(HttpSession session) {
         Long userId = getCurrentUserId(session);
         if (userId != null) {
+            restoreAbandonedBook(userId);
             rankingStateRepository.deleteById(userId);
             session.removeAttribute("bookSearchResults");
         }
@@ -548,6 +566,7 @@ public class BookController {
         } catch (IllegalArgumentException e) {
             return "redirect:/my-books";
         }
+        restoreAbandonedBook(userId);
         RankingState rankingState = new RankingState(userId, null, null, null, bookType, null, 0, 0, 0);
         rankingState.setReRank(true);
         rankingStateRepository.save(rankingState);
@@ -612,6 +631,7 @@ public class BookController {
         } catch (IllegalArgumentException e) {
             return "redirect:/my-books";
         }
+        restoreAbandonedBook(userId);
         RankingState rankingState = new RankingState(userId, null, null, null, bookType, null, 0, 0, 0);
         rankingState.setRemove(true);
         rankingStateRepository.save(rankingState);
@@ -624,6 +644,7 @@ public class BookController {
         if (userId == null) {
             return "redirect:/setup-username";
         }
+        restoreAbandonedBook(userId);
         RankingState rankingState = new RankingState(userId, null, null, null, null, BookCategory.WANT_TO_READ, 0, 0, 0);
         rankingState.setRemove(true);
         rankingStateRepository.save(rankingState);
@@ -682,6 +703,7 @@ public class BookController {
         }
 
         // Set up review mode directly
+        restoreAbandonedBook(userId);
         RankingState rankingState = new RankingState(userId, null, null, null, ranking.getType(), null, 0, 0, 0);
         rankingState.setReview(true);
         rankingState.setBookIdBeingReviewed(bookId);
@@ -704,6 +726,7 @@ public class BookController {
         }
 
         // Store book info in ranking state (including existing review)
+        restoreAbandonedBook(userId);
         RankingState rankingState = new RankingState(userId, ranking.getBook().getGoogleBooksId(), ranking.getBook().getTitle(), ranking.getBook().getAuthor(), ranking.getType(), null, 0, 0, 0);
         rankingState.setReRank(true);
         rankingState.setIsbn13BeingRanked(ranking.getBook().getIsbn13());
@@ -984,6 +1007,7 @@ public class BookController {
         if (userId == null) {
             return "redirect:/setup-username";
         }
+        restoreAbandonedBook(userId);
         rankingStateRepository.deleteById(userId);
         // Clear search results
         session.removeAttribute("bookSearchResults");
@@ -1000,6 +1024,7 @@ public class BookController {
         if (userId == null) {
             return "redirect:/setup-username";
         }
+        restoreAbandonedBook(userId);
         RankingState rankingState = rankingStateRepository.findById(userId).orElse(null);
         if (rankingState == null) {
             // Create new RankingState for user coming from Search Books tab
