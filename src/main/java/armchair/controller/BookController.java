@@ -124,12 +124,6 @@ public class BookController {
             .toList();
     }
 
-    private void cacheBookResults(List<GoogleBooksService.BookResult> results) {
-        for (GoogleBooksService.BookResult result : results) {
-            findOrCreateBook(result.googleBooksId(), result.title(), result.author(), result.isbn13());
-        }
-    }
-
     private Book findOrCreateBook(String googleBooksId, String title, String author, String isbn13) {
         // 1. Try ISBN lookup via book_isbns table
         if (isbn13 != null) {
@@ -1011,7 +1005,6 @@ public class BookController {
         List<GoogleBooksService.BookResult> results = searchLocalBooks(query);
         if (results.isEmpty()) {
             results = googleBooksService.searchBooks(query);
-            cacheBookResults(results);
         }
         session.setAttribute("bookSearchResults", results);
         session.setAttribute("bookSearchQuery", query);
@@ -1256,11 +1249,6 @@ public class BookController {
             bookResults = searchLocalBooks(query);
             if (bookResults.isEmpty()) {
                 bookResults = googleBooksService.searchBooks(query);
-                cacheBookResults(bookResults);
-                // Rebuild userBooks map since caching may have enriched books with googleBooksId
-                if (currentUserId != null) {
-                    userBooks = buildUserBooksMap(currentUserId);
-                }
                 // Deduplicate by title+author (API can return multiple editions)
                 Set<String> seen = new java.util.LinkedHashSet<>();
                 bookResults = bookResults.stream()
