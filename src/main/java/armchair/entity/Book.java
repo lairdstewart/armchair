@@ -22,6 +22,9 @@ public class Book {
     @Column(nullable = false, length = 1000)
     private String author;
 
+    @org.hibernate.annotations.ColumnDefault("false")
+    private boolean userUploaded;
+
     public Book() {}
 
     public Book(String googleBooksId, String title, String author, String isbn13) {
@@ -69,5 +72,13 @@ public class Book {
 
     public void setAuthor(String author) {
         this.author = author;
+    }
+
+    public boolean isUserUploaded() {
+        return userUploaded;
+    }
+
+    public void setUserUploaded(boolean userUploaded) {
+        this.userUploaded = userUploaded;
     }
 }

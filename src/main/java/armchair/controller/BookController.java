@@ -1110,6 +1110,37 @@ public class BookController {
 
         String isbn13 = rankingState.getIsbn13BeingRanked();
 
+        // Resolve user-uploaded books via Google Books API
+        Book existingBook = findOrCreateBook(googleBooksId, bookName, author, isbn13);
+        if (existingBook.isUserUploaded()) {
+            String query = (isbn13 != null) ? "isbn:" + isbn13 : bookName + " " + author;
+            List<GoogleBooksService.BookResult> apiResults = googleBooksService.searchBooks(query);
+            if (!apiResults.isEmpty()) {
+                GoogleBooksService.BookResult result = apiResults.get(0);
+                existingBook.setGoogleBooksId(result.googleBooksId());
+                existingBook.setTitle(result.title());
+                existingBook.setAuthor(result.author());
+                if (result.isbn13() != null) {
+                    existingBook.setIsbn13(result.isbn13());
+                    if (!bookIsbnRepository.existsByBookIdAndIsbn13(existingBook.getId(), result.isbn13())) {
+                        bookIsbnRepository.save(new BookIsbn(existingBook.getId(), result.isbn13()));
+                    }
+                }
+                existingBook.setUserUploaded(false);
+                bookRepository.save(existingBook);
+                // Update local variables and RankingState for correct display during ranking
+                googleBooksId = result.googleBooksId();
+                bookName = result.title();
+                author = result.author();
+                isbn13 = result.isbn13() != null ? result.isbn13() : isbn13;
+                rankingState.setGoogleBooksIdBeingRanked(googleBooksId);
+                rankingState.setTitleBeingRanked(bookName);
+                rankingState.setAuthorBeingRanked(author);
+                rankingState.setIsbn13BeingRanked(isbn13);
+                rankingStateRepository.save(rankingState);
+            }
+        }
+
         if (currentList.isEmpty()) {
             // Category is empty, insert at the start
             boolean wasRankAll = rankingState.isRankAll();
@@ -1795,6 +1826,12 @@ public class BookController {
                 // Update title to stripped version if book was found with a subtitle
                 if (!title.equals(book.getTitle())) {
                     book.setTitle(title);
+                    bookRepository.save(book);
+                }
+
+                // Flag books without a Google Books ID as user-uploaded
+                if (book.getGoogleBooksId() == null && !book.isUserUploaded()) {
+                    book.setUserUploaded(true);
                     bookRepository.save(book);
                 }
 
