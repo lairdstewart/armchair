@@ -1109,112 +1109,90 @@ public class BookController {
         model.addAttribute("searchType", type);
         model.addAttribute("query", query);
 
-        if ("books".equals(type)) {
-            Long userId = getCurrentUserId(session);
-            Map<String, UserBookRank> userBooks = userId != null ? buildUserBooksMap(userId) : Map.of();
+        Long currentUserId = getCurrentUserId(session);
+        boolean isLoggedIn = getOauthSubject() != null && currentUserId != null;
+        User currentUser = isLoggedIn ? userRepository.findById(currentUserId).orElse(null) : null;
+        boolean isRealUser = currentUser != null && !currentUser.isGuest();
 
-            List<GoogleBooksService.BookResult> results;
-            if (query != null && !query.isBlank()) {
-                results = searchLocalBooks(query);
-                if (results.isEmpty()) {
-                    results = googleBooksService.searchBooks(query);
-                    cacheBookResults(results);
-                }
-            } else {
-                // Show 10 random books from database when search is empty, excluding user's books
-                results = bookRepository.findRandom10Books().stream()
-                    .filter(b -> !userBooks.containsKey(b.getGoogleBooksId()))
-                    .map(b -> new GoogleBooksService.BookResult(b.getGoogleBooksId(), b.getTitle(), b.getAuthor(), b.getIsbn13()))
-                    .toList();
+        // --- Books tab ---
+        Map<String, UserBookRank> userBooks = currentUserId != null ? buildUserBooksMap(currentUserId) : Map.of();
+        List<GoogleBooksService.BookResult> bookResults;
+        if ("books".equals(type) && query != null && !query.isBlank()) {
+            bookResults = searchLocalBooks(query);
+            if (bookResults.isEmpty()) {
+                bookResults = googleBooksService.searchBooks(query);
+                cacheBookResults(bookResults);
             }
-            model.addAttribute("bookResults", results);
-
-            if (userId != null) {
-                model.addAttribute("userBooks", userBooks);
-            }
-        } else if ("profiles".equals(type)) {
-            Long currentUserId = getCurrentUserId(session);
-            boolean isLoggedIn = getOauthSubject() != null && currentUserId != null;
-            User currentUser = isLoggedIn ? userRepository.findById(currentUserId).orElse(null) : null;
-            boolean isRealUser = currentUser != null && !currentUser.isGuest();
-
-            if (query != null && !query.isBlank()) {
-                List<User> results;
-                if (isRealUser) {
-                    results = userRepository.findByIsGuestFalseAndIsCuratedFalseAndPublishListsTrueAndUsernameContainingIgnoreCaseAndIdNot(query.trim(), currentUserId);
-                } else {
-                    results = userRepository.findByIsGuestFalseAndIsCuratedFalseAndPublishListsTrueAndUsernameContainingIgnoreCase(query.trim());
-                }
-                List<ProfileDisplayWithFollow> profileDisplays = results.stream()
-                    .map(u -> createProfileDisplayWithFollow(u, isRealUser ? currentUserId : null))
-                    .toList();
-                model.addAttribute("profileResults", profileDisplays);
-            } else {
-                List<User> recentProfiles;
-                long totalProfiles;
-                if (isRealUser) {
-                    recentProfiles = userRepository.findTop10ByIsGuestFalseAndIsCuratedFalseAndPublishListsTrueAndIdNotOrderBySignupDateDesc(currentUserId);
-                    totalProfiles = userRepository.countByIsGuestFalseAndIsCuratedFalseAndPublishListsTrueAndIdNot(currentUserId);
-                } else {
-                    recentProfiles = userRepository.findTop10ByIsGuestFalseAndIsCuratedFalseAndPublishListsTrueOrderBySignupDateDesc();
-                    totalProfiles = userRepository.countByIsGuestFalseAndIsCuratedFalseAndPublishListsTrue();
-                }
-                List<ProfileDisplayWithFollow> profileDisplays = recentProfiles.stream()
-                    .map(u -> createProfileDisplayWithFollow(u, isRealUser ? currentUserId : null))
-                    .toList();
-                long moreCount = Math.max(0, totalProfiles - recentProfiles.size());
-                model.addAttribute("profileResults", profileDisplays);
-                model.addAttribute("moreProfilesCount", moreCount);
-            }
-            model.addAttribute("canFollow", isRealUser);
-            model.addAttribute("userHasPublished", currentUser != null && currentUser.isPublishLists());
-        } else if ("following".equals(type)) {
-            Long currentUserId = getCurrentUserId(session);
-            boolean isLoggedIn = getOauthSubject() != null && currentUserId != null;
-            User currentUser = isLoggedIn ? userRepository.findById(currentUserId).orElse(null) : null;
-            boolean isRealUser = currentUser != null && !currentUser.isGuest();
-
-            if (isRealUser) {
-                List<Follow> follows = followRepository.findByFollowerId(currentUserId);
-                List<ProfileDisplayWithFollow> profileDisplays = follows.stream()
-                    .map(f -> userRepository.findById(f.getFollowedId()).orElse(null))
-                    .filter(u -> u != null)
-                    .map(u -> createProfileDisplayWithFollow(u, currentUserId))
-                    .toList();
-                model.addAttribute("profileResults", profileDisplays);
-            } else {
-                model.addAttribute("profileResults", List.of());
-            }
-            model.addAttribute("canFollow", isRealUser);
-            model.addAttribute("userHasPublished", currentUser != null && currentUser.isPublishLists());
-        } else if ("followers".equals(type)) {
-            Long currentUserId = getCurrentUserId(session);
-            boolean isLoggedIn = getOauthSubject() != null && currentUserId != null;
-            User currentUser = isLoggedIn ? userRepository.findById(currentUserId).orElse(null) : null;
-            boolean isRealUser = currentUser != null && !currentUser.isGuest();
-
-            if (isRealUser) {
-                List<Follow> followers = followRepository.findByFollowedId(currentUserId);
-                List<ProfileDisplayWithFollow> profileDisplays = followers.stream()
-                    .map(f -> userRepository.findById(f.getFollowerId()).orElse(null))
-                    .filter(u -> u != null)
-                    .map(u -> createProfileDisplayWithFollow(u, currentUserId))
-                    .toList();
-                model.addAttribute("profileResults", profileDisplays);
-            } else {
-                model.addAttribute("profileResults", List.of());
-            }
-            model.addAttribute("canFollow", isRealUser);
-            model.addAttribute("userHasPublished", currentUser != null && currentUser.isPublishLists());
-        } else if ("curated".equals(type)) {
-            if (query != null && !query.isBlank()) {
-                List<User> results = userRepository.findByIsCuratedTrueAndUsernameContainingIgnoreCase(query.trim());
-                model.addAttribute("curatedResults", results);
-            } else {
-                List<User> curatedUsers = userRepository.findByIsCurated(true);
-                model.addAttribute("curatedResults", curatedUsers);
-            }
+        } else {
+            bookResults = bookRepository.findRandom10Books().stream()
+                .filter(b -> !userBooks.containsKey(b.getGoogleBooksId()))
+                .map(b -> new GoogleBooksService.BookResult(b.getGoogleBooksId(), b.getTitle(), b.getAuthor(), b.getIsbn13()))
+                .toList();
         }
+        model.addAttribute("bookResults", bookResults);
+        if (currentUserId != null) {
+            model.addAttribute("userBooks", userBooks);
+        }
+
+        // --- Profiles tab ---
+        if ("profiles".equals(type) && query != null && !query.isBlank()) {
+            List<User> results;
+            if (isRealUser) {
+                results = userRepository.findByIsGuestFalseAndIsCuratedFalseAndPublishListsTrueAndUsernameContainingIgnoreCaseAndIdNot(query.trim(), currentUserId);
+            } else {
+                results = userRepository.findByIsGuestFalseAndIsCuratedFalseAndPublishListsTrueAndUsernameContainingIgnoreCase(query.trim());
+            }
+            model.addAttribute("profileSearchResults", results.stream()
+                .map(u -> createProfileDisplayWithFollow(u, isRealUser ? currentUserId : null)).toList());
+        } else {
+            List<User> recentProfiles;
+            long totalProfiles;
+            if (isRealUser) {
+                recentProfiles = userRepository.findTop10ByIsGuestFalseAndIsCuratedFalseAndPublishListsTrueAndIdNotOrderBySignupDateDesc(currentUserId);
+                totalProfiles = userRepository.countByIsGuestFalseAndIsCuratedFalseAndPublishListsTrueAndIdNot(currentUserId);
+            } else {
+                recentProfiles = userRepository.findTop10ByIsGuestFalseAndIsCuratedFalseAndPublishListsTrueOrderBySignupDateDesc();
+                totalProfiles = userRepository.countByIsGuestFalseAndIsCuratedFalseAndPublishListsTrue();
+            }
+            model.addAttribute("profileSearchResults", recentProfiles.stream()
+                .map(u -> createProfileDisplayWithFollow(u, isRealUser ? currentUserId : null)).toList());
+            model.addAttribute("moreProfilesCount", Math.max(0, totalProfiles - recentProfiles.size()));
+        }
+
+        // --- Following tab ---
+        if (isRealUser) {
+            List<Follow> follows = followRepository.findByFollowerId(currentUserId);
+            model.addAttribute("followingResults", follows.stream()
+                .map(f -> userRepository.findById(f.getFollowedId()).orElse(null))
+                .filter(u -> u != null)
+                .map(u -> createProfileDisplayWithFollow(u, currentUserId))
+                .toList());
+        } else {
+            model.addAttribute("followingResults", List.of());
+        }
+
+        // --- Followers tab ---
+        if (isRealUser) {
+            List<Follow> followers = followRepository.findByFollowedId(currentUserId);
+            model.addAttribute("followerResults", followers.stream()
+                .map(f -> userRepository.findById(f.getFollowerId()).orElse(null))
+                .filter(u -> u != null)
+                .map(u -> createProfileDisplayWithFollow(u, currentUserId))
+                .toList());
+        } else {
+            model.addAttribute("followerResults", List.of());
+        }
+
+        // --- Curated tab ---
+        if ("curated".equals(type) && query != null && !query.isBlank()) {
+            model.addAttribute("curatedResults", userRepository.findByIsCuratedTrueAndUsernameContainingIgnoreCase(query.trim()));
+        } else {
+            model.addAttribute("curatedResults", userRepository.findByIsCurated(true));
+        }
+
+        // Shared attributes
+        model.addAttribute("canFollow", isRealUser);
+        model.addAttribute("userHasPublished", currentUser != null && currentUser.isPublishLists());
 
         return "search";
     }

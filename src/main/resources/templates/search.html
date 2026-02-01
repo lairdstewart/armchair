@@ -9,21 +9,21 @@
     <div class="page-content">
       <form th:action="@{/search}" method="GET" style="margin-bottom: 20px;">
         <div style="margin-bottom: 15px;">
-          <label><input type="radio" name="type" value="books" th:checked="${searchType == 'books'}" onchange="this.form.submit()" /> Books</label>
-          <label style="margin-left: 15px;"><input type="radio" name="type" value="curated" th:checked="${searchType == 'curated'}" onchange="this.form.submit()" /> Curated Lists</label>
-          <label style="margin-left: 15px;"><input type="radio" name="type" value="profiles" th:checked="${searchType == 'profiles'}" onchange="this.form.submit()" /> Profiles</label>
-          <label style="margin-left: 15px;"><input type="radio" name="type" value="following" th:checked="${searchType == 'following'}" onchange="this.form.submit()" /> Following</label>
-          <label style="margin-left: 15px;"><input type="radio" name="type" value="followers" th:checked="${searchType == 'followers'}" onchange="this.form.submit()" /> Followers</label>
+          <label><input type="radio" name="type" value="books" th:checked="${searchType == 'books'}" onchange="showSearchTab('books')" /> Books</label>
+          <label style="margin-left: 15px;"><input type="radio" name="type" value="curated" th:checked="${searchType == 'curated'}" onchange="showSearchTab('curated')" /> Curated Lists</label>
+          <label style="margin-left: 15px;"><input type="radio" name="type" value="profiles" th:checked="${searchType == 'profiles'}" onchange="showSearchTab('profiles')" /> Profiles</label>
+          <label style="margin-left: 15px;"><input type="radio" name="type" value="following" th:checked="${searchType == 'following'}" onchange="showSearchTab('following')" /> Following</label>
+          <label style="margin-left: 15px;"><input type="radio" name="type" value="followers" th:checked="${searchType == 'followers'}" onchange="showSearchTab('followers')" /> Followers</label>
         </div>
-        <span th:if="${searchType != 'following' && searchType != 'followers'}">
-          <input type="text" name="query" th:placeholder="${searchType == 'books' ? 'Search books...' : (searchType == 'profiles' ? 'Search profiles...' : 'Search curated lists...')}"
+        <span id="search-bar" th:style="${searchType == 'following' || searchType == 'followers' ? 'display:none' : ''}">
+          <input type="text" name="query" id="searchQuery" th:placeholder="${searchType == 'books' ? 'Search books...' : (searchType == 'profiles' ? 'Search profiles...' : 'Search curated lists...')}"
                  th:value="${query}" autofocus style="width: 200px;" />
           <button type="submit">Search</button>
         </span>
       </form>
 
       <!-- Books results -->
-      <div th:if="${searchType == 'books'}">
+      <div id="stab-books" th:style="${searchType == 'books' ? '' : 'display:none'}">
         <ol th:if="${bookResults != null && !bookResults.isEmpty()}" style="list-style: none; padding-left: 0;">
           <li th:each="book : ${bookResults}" th:with="ubr=${userBooks != null ? (userBooks.containsKey(book.googleBooksId()) ? userBooks.get(book.googleBooksId()) : (book.isbn13() != null ? userBooks.get(book.isbn13()) : null)) : null}">
             <a th:if="${book.bookUrl() != null}" th:href="${book.bookUrl()}" target="_blank" th:text="${book.title()}"></a>
@@ -61,9 +61,9 @@
       </div>
 
       <!-- Profiles results -->
-      <div th:if="${searchType == 'profiles'}">
-        <div th:if="${profileResults != null && !profileResults.isEmpty()}">
-          <div th:each="profile : ${profileResults}" style="margin-bottom: 4px;">
+      <div id="stab-profiles" th:style="${searchType == 'profiles' ? '' : 'display:none'}">
+        <div th:if="${profileSearchResults != null && !profileSearchResults.isEmpty()}">
+          <div th:each="profile : ${profileSearchResults}" style="margin-bottom: 4px;">
             <a th:href="@{/user/{username}(username=${profile.username()})}" th:text="${profile.username()}"></a>
             <span th:text="${' ' + profile.stats()}"></span>
             <form th:if="${canFollow && !profile.isFollowing() && userHasPublished}" th:action="@{/follow}" method="POST" style="display: inline;" class="book-actions">
@@ -82,14 +82,14 @@
             </form>
           </div>
         </div>
-        <p th:if="${profileResults == null || profileResults.isEmpty()}">No profiles found.</p>
+        <p th:if="${profileSearchResults == null || profileSearchResults.isEmpty()}">No profiles found.</p>
         <p th:if="${moreProfilesCount != null}" th:text="${'... ' + moreProfilesCount + ' more profiles'}"></p>
       </div>
 
       <!-- Following results -->
-      <div th:if="${searchType == 'following'}">
-        <div th:if="${profileResults != null && !profileResults.isEmpty()}">
-          <div th:each="profile : ${profileResults}" style="margin-bottom: 4px;">
+      <div id="stab-following" th:style="${searchType == 'following' ? '' : 'display:none'}">
+        <div th:if="${followingResults != null && !followingResults.isEmpty()}">
+          <div th:each="profile : ${followingResults}" style="margin-bottom: 4px;">
             <a th:href="@{/user/{username}(username=${profile.username()})}" th:text="${profile.username()}"></a>
             <span th:text="${' ' + profile.stats()}"></span>
             <form th:if="${canFollow}" th:action="@{/unfollow}" method="POST" style="display: inline;" class="book-actions"
@@ -100,13 +100,13 @@
             </form>
           </div>
         </div>
-        <p th:if="${profileResults == null || profileResults.isEmpty()}">You're not following anyone yet.</p>
+        <p th:if="${followingResults == null || followingResults.isEmpty()}">You're not following anyone yet.</p>
       </div>
 
       <!-- Followers results -->
-      <div th:if="${searchType == 'followers'}">
-        <div th:if="${profileResults != null && !profileResults.isEmpty()}">
-          <div th:each="profile : ${profileResults}" style="margin-bottom: 4px;">
+      <div id="stab-followers" th:style="${searchType == 'followers' ? '' : 'display:none'}">
+        <div th:if="${followerResults != null && !followerResults.isEmpty()}">
+          <div th:each="profile : ${followerResults}" style="margin-bottom: 4px;">
             <a th:href="@{/user/{username}(username=${profile.username()})}" th:text="${profile.username()}"></a>
             <span th:text="${' ' + profile.stats()}"></span>
             <form th:if="${canFollow && !profile.isFollowing() && userHasPublished}" th:action="@{/follow}" method="POST" style="display: inline;" class="book-actions">
@@ -125,11 +125,11 @@
             </form>
           </div>
         </div>
-        <p th:if="${profileResults == null || profileResults.isEmpty()}">You don't have any followers yet.</p>
+        <p th:if="${followerResults == null || followerResults.isEmpty()}">You don't have any followers yet.</p>
       </div>
 
       <!-- Curated lists results -->
-      <div th:if="${searchType == 'curated'}">
+      <div id="stab-curated" th:style="${searchType == 'curated' ? '' : 'display:none'}">
         <div th:if="${curatedResults != null && !curatedResults.isEmpty()}">
           <div th:each="user : ${curatedResults}" style="margin-bottom: 4px;">
             <a th:href="@{/user/{username}(username=${user.username})}" th:text="${user.username}"></a>
@@ -138,5 +138,21 @@
         <p th:if="${curatedResults == null || curatedResults.isEmpty()}">No curated lists available.</p>
       </div>
     </div>
+    <script>
+    function showSearchTab(type) {
+      document.querySelectorAll('[id^="stab-"]').forEach(function(el) { el.style.display = 'none'; });
+      var tab = document.getElementById('stab-' + type);
+      if (tab) tab.style.display = '';
+      var searchBar = document.getElementById('search-bar');
+      var queryInput = document.getElementById('searchQuery');
+      if (type === 'following' || type === 'followers') {
+        searchBar.style.display = 'none';
+      } else {
+        searchBar.style.display = '';
+        queryInput.placeholder = type === 'books' ? 'Search books...' : (type === 'profiles' ? 'Search profiles...' : 'Search curated lists...');
+      }
+      queryInput.value = '';
+    }
+    </script>
   </body>
 </html>
