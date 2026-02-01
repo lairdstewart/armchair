@@ -1115,9 +1115,9 @@ public class BookController {
 
         String isbn13 = rankingState.getIsbn13BeingRanked();
 
-        // Resolve user-uploaded books via Google Books API
+        // Resolve unverified books (no googleBooksId) via Google Books API
         Book existingBook = findOrCreateBook(googleBooksId, bookName, author, isbn13);
-        if (existingBook.isUserUploaded()) {
+        if (existingBook.getGoogleBooksId() == null) {
             String query = (isbn13 != null) ? "isbn:" + isbn13 : bookName + " " + author;
             List<GoogleBooksService.BookResult> apiResults = googleBooksService.searchBooks(query);
             if (!apiResults.isEmpty()) {
@@ -1128,7 +1128,6 @@ public class BookController {
                 if (result.isbn13() != null && !bookIsbnRepository.existsByBookIdAndIsbn13(existingBook.getId(), result.isbn13())) {
                     bookIsbnRepository.save(new BookIsbn(existingBook.getId(), result.isbn13()));
                 }
-                existingBook.setUserUploaded(false);
                 bookRepository.save(existingBook);
                 // Update local variables and RankingState for correct display during ranking
                 googleBooksId = result.googleBooksId();
@@ -1824,12 +1823,6 @@ public class BookController {
                 // Update title to stripped version if book was found with a subtitle
                 if (!title.equals(book.getTitle())) {
                     book.setTitle(title);
-                    bookRepository.save(book);
-                }
-
-                // Flag books without a Google Books ID as user-uploaded
-                if (book.getGoogleBooksId() == null && !book.isUserUploaded()) {
-                    book.setUserUploaded(true);
                     bookRepository.save(book);
                 }
 

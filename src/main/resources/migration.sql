@@ -97,3 +97,6 @@ END $$;
 
 -- 13. Drop isbn_13 column from books
 ALTER TABLE books DROP COLUMN IF EXISTS isbn_13;
+
+-- 14. Drop user_uploaded column from books (replaced by google_books_id IS NULL check)
+ALTER TABLE books DROP COLUMN IF EXISTS user_uploaded;

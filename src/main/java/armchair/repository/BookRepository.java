@@ -14,10 +14,10 @@ import java.util.Optional;
 public interface BookRepository extends JpaRepository<Book, Long> {
     Optional<Book> findByGoogleBooksId(String googleBooksId);
 
-    @Query(value = "SELECT * FROM books WHERE google_books_id IS NOT NULL AND user_uploaded = false ORDER BY RANDOM() LIMIT 10", nativeQuery = true)
+    @Query(value = "SELECT * FROM books WHERE google_books_id IS NOT NULL ORDER BY RANDOM() LIMIT 10", nativeQuery = true)
     List<Book> findRandom10Books();
 
-    @Query("SELECT b FROM Book b WHERE b.userUploaded = false AND (LOWER(b.title) LIKE LOWER(CONCAT('%', :term, '%')) OR LOWER(b.author) LIKE LOWER(CONCAT('%', :term, '%')))")
+    @Query("SELECT b FROM Book b WHERE b.googleBooksId IS NOT NULL AND (LOWER(b.title) LIKE LOWER(CONCAT('%', :term, '%')) OR LOWER(b.author) LIKE LOWER(CONCAT('%', :term, '%')))")
     List<Book> searchByTitleOrAuthor(@Param("term") String term);
 
     @Query("SELECT b FROM Book b WHERE LOWER(TRIM(b.title)) = LOWER(TRIM(:title)) AND LOWER(TRIM(b.author)) = LOWER(TRIM(:author))")
