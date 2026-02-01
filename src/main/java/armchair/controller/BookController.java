@@ -1243,8 +1243,9 @@ public class BookController {
                     .toList();
             }
         } else {
+            Map<String, UserBookRank> finalUserBooks = userBooks;
             bookResults = bookRepository.findRandom10Books().stream()
-                .filter(b -> !userBooks.containsKey(b.getGoogleBooksId()))
+                .filter(b -> !finalUserBooks.containsKey(b.getGoogleBooksId()))
                 .map(b -> new GoogleBooksService.BookResult(b.getGoogleBooksId(), b.getTitle(), b.getAuthor(), getBookIsbn13(b.getId())))
                 .toList();
         }
