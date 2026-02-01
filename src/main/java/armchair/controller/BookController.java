@@ -7,6 +7,8 @@ import armchair.entity.Follow;
 import armchair.entity.Ranking;
 import armchair.entity.RankingState;
 import armchair.entity.User;
+import armchair.entity.BookIsbn;
+import armchair.repository.BookIsbnRepository;
 import armchair.repository.BookRepository;
 import armchair.repository.FollowRepository;
 import armchair.repository.RankingRepository;
@@ -82,6 +84,9 @@ public class BookController {
     private BookRepository bookRepository;
 
     @Autowired
+    private BookIsbnRepository bookIsbnRepository;
+
+    @Autowired
     private RankingRepository rankingRepository;
 
     @Autowired
@@ -116,19 +121,51 @@ public class BookController {
 
     private void cacheBookResults(List<GoogleBooksService.BookResult> results) {
         for (GoogleBooksService.BookResult result : results) {
-            if (result.isbn13() == null) continue;
-            if (bookRepository.findByIsbn13(result.isbn13()).isEmpty()) {
-                bookRepository.save(new Book(result.googleBooksId(), result.title(), result.author(), result.isbn13()));
-            }
+            findOrCreateBook(result.googleBooksId(), result.title(), result.author(), result.isbn13());
         }
     }
 
     private Book findOrCreateBook(String googleBooksId, String title, String author, String isbn13) {
-        if (googleBooksId != null) {
-            return bookRepository.findByGoogleBooksId(googleBooksId)
-                .orElseGet(() -> bookRepository.save(new Book(googleBooksId, title, author, isbn13)));
+        // 1. Try ISBN lookup via book_isbns table
+        if (isbn13 != null) {
+            List<BookIsbn> isbnMatches = bookIsbnRepository.findByIsbn13(isbn13);
+            if (!isbnMatches.isEmpty()) {
+                Book book = bookRepository.findById(isbnMatches.get(0).getBookId()).orElse(null);
+                if (book != null) {
+                    // Enrich with googleBooksId if missing
+                    if (book.getGoogleBooksId() == null && googleBooksId != null) {
+                        book.setGoogleBooksId(googleBooksId);
+                        bookRepository.save(book);
+                    }
+                    return book;
+                }
+            }
         }
-        return bookRepository.save(new Book(null, title, author, isbn13));
+
+        // 2. Try normalized title+author match
+        if (title != null && author != null) {
+            List<Book> titleAuthorMatches = bookRepository.findByNormalizedTitleAndAuthor(title, author);
+            if (!titleAuthorMatches.isEmpty()) {
+                Book book = titleAuthorMatches.get(0);
+                // Record the new ISBN for this book
+                if (isbn13 != null && !bookIsbnRepository.existsByBookIdAndIsbn13(book.getId(), isbn13)) {
+                    bookIsbnRepository.save(new BookIsbn(book.getId(), isbn13));
+                }
+                // Enrich with googleBooksId if missing
+                if (book.getGoogleBooksId() == null && googleBooksId != null) {
+                    book.setGoogleBooksId(googleBooksId);
+                    bookRepository.save(book);
+                }
+                return book;
+            }
+        }
+
+        // 3. No match — create new Book
+        Book book = bookRepository.save(new Book(googleBooksId, title, author, isbn13));
+        if (isbn13 != null) {
+            bookIsbnRepository.save(new BookIsbn(book.getId(), isbn13));
+        }
+        return book;
     }
 
     @PostConstruct
@@ -993,15 +1030,17 @@ public class BookController {
 
         String redirectTo = isSafeRedirectUrl(returnUrl) ? "redirect:" + returnUrl : "redirect:/search?type=books";
 
+        // Resolve the book (deduplicating by title+author)
+        Book book = findOrCreateBook(googleBooksId, bookName, author, isbn13);
+
         // Check if book is already in user's library (any category)
-        if (rankingRepository.existsByUserIdAndBookGoogleBooksId(userId, googleBooksId)) {
+        if (rankingRepository.existsByUserIdAndBookId(userId, book.getId())) {
             return redirectTo;
         }
 
         // Add ranking directly to want-to-read list at the end
         List<Ranking> wantToReadRankings = rankingRepository.findByUserIdAndCategoryOrderByPositionAsc(userId, BookCategory.WANT_TO_READ);
         int position = wantToReadRankings.size();
-        Book book = findOrCreateBook(googleBooksId, bookName, author, isbn13);
         Ranking newRanking = new Ranking(userId, book, null, BookCategory.WANT_TO_READ, position);
         rankingRepository.save(newRanking);
 
@@ -1224,6 +1263,19 @@ public class BookController {
         return "explore";
     }
 
+    private void putBookKeys(Map<String, UserBookRank> userBooks, Book book, UserBookRank ubr) {
+        if (book.getGoogleBooksId() != null) {
+            userBooks.put(book.getGoogleBooksId(), ubr);
+        }
+        if (book.getIsbn13() != null) {
+            userBooks.put(book.getIsbn13(), ubr);
+        }
+        // Also key by all ISBNs from book_isbns table
+        for (BookIsbn bookIsbn : bookIsbnRepository.findByBookId(book.getId())) {
+            userBooks.put(bookIsbn.getIsbn13(), ubr);
+        }
+    }
+
     private Map<String, UserBookRank> buildUserBooksMap(Long userId) {
         Map<String, UserBookRank> userBooks = new HashMap<>();
 
@@ -1233,12 +1285,7 @@ public class BookController {
                 List<Ranking> rankings = rankingRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(userId, bookType, category);
                 for (Ranking ranking : rankings) {
                     UserBookRank ubr = new UserBookRank(rank, category.name().toLowerCase(), bookType.name().toLowerCase());
-                    if (ranking.getBook().getGoogleBooksId() != null) {
-                        userBooks.put(ranking.getBook().getGoogleBooksId(), ubr);
-                    }
-                    if (ranking.getBook().getIsbn13() != null) {
-                        userBooks.put(ranking.getBook().getIsbn13(), ubr);
-                    }
+                    putBookKeys(userBooks, ranking.getBook(), ubr);
                     rank++;
                 }
             }
@@ -1248,24 +1295,14 @@ public class BookController {
         List<Ranking> wantToReadRankings = rankingRepository.findByUserIdAndCategoryOrderByPositionAsc(userId, BookCategory.WANT_TO_READ);
         for (Ranking ranking : wantToReadRankings) {
             UserBookRank ubr = new UserBookRank(0, "want_to_read", "");
-            if (ranking.getBook().getGoogleBooksId() != null) {
-                userBooks.put(ranking.getBook().getGoogleBooksId(), ubr);
-            }
-            if (ranking.getBook().getIsbn13() != null) {
-                userBooks.put(ranking.getBook().getIsbn13(), ubr);
-            }
+            putBookKeys(userBooks, ranking.getBook(), ubr);
         }
 
         // Add unranked books
         List<Ranking> unrankedRankings = rankingRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(userId, BookType.UNRANKED, BookCategory.UNRANKED);
         for (Ranking ranking : unrankedRankings) {
             UserBookRank ubr = new UserBookRank(0, "unranked", "unranked");
-            if (ranking.getBook().getGoogleBooksId() != null) {
-                userBooks.put(ranking.getBook().getGoogleBooksId(), ubr);
-            }
-            if (ranking.getBook().getIsbn13() != null) {
-                userBooks.put(ranking.getBook().getIsbn13(), ubr);
-            }
+            putBookKeys(userBooks, ranking.getBook(), ubr);
         }
 
         return userBooks;
@@ -1727,25 +1764,17 @@ public class BookController {
                     isbn13 = isbn10.isEmpty() ? null : GoogleBooksService.convertIsbn10To13(isbn10);
                 }
 
-                // Check for duplicate by ISBN13
-                if (isbn13 != null && rankingRepository.existsByUserIdAndBookIsbn13(userId, isbn13)) {
+                // Resolve the book (deduplicating by title+author)
+                Book book = findOrCreateBook(null, title, author, isbn13);
+
+                // Check for duplicate by book ID
+                if (rankingRepository.existsByUserIdAndBookId(userId, book.getId())) {
                     skipped++;
                 } else {
                     // Trim review
                     String trimmedReview = (review != null && !review.isBlank()) ? review.trim() : null;
                     if (trimmedReview != null && trimmedReview.length() > MAX_REVIEW_LENGTH) {
                         trimmedReview = trimmedReview.substring(0, MAX_REVIEW_LENGTH);
-                    }
-
-                    // Reuse existing Book if one exists with this ISBN13
-                    Book book;
-                    if (isbn13 != null) {
-                        String finalIsbn1 = isbn13;
-                        String finalTitle = title;
-                        book = bookRepository.findByIsbn13(isbn13)
-                            .orElseGet(() -> bookRepository.save(new Book(null, finalTitle, author, finalIsbn1)));
-                    } else {
-                        book = bookRepository.save(new Book(null, title, author, null));
                     }
 
                     Ranking newRanking;

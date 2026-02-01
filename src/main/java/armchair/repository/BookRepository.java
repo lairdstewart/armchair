@@ -20,4 +20,7 @@ public interface BookRepository extends JpaRepository<Book, Long> {
 
     @Query("SELECT b FROM Book b WHERE LOWER(b.title) LIKE LOWER(CONCAT('%', :term, '%')) OR LOWER(b.author) LIKE LOWER(CONCAT('%', :term, '%'))")
     List<Book> searchByTitleOrAuthor(@Param("term") String term);
+
+    @Query("SELECT b FROM Book b WHERE LOWER(TRIM(b.title)) = LOWER(TRIM(:title)) AND LOWER(TRIM(b.author)) = LOWER(TRIM(:author))")
+    List<Book> findByNormalizedTitleAndAuthor(@Param("title") String title, @Param("author") String author);
 }

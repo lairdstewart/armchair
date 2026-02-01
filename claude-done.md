@@ -15,3 +15,15 @@
 - [x] Strip subtitles from Goodreads import: if title contains a colon, remove it and everything after it.
 - [x] Search local database before Google Books API: case-insensitive substring match on title/author with multi-word support. Falls back to API (top 3) only if no local results.
 - [x] Fixed unranked books showing [want to read] in search: books without googleBooksId (e.g. Goodreads imports) weren't recognized. Now keys userBooks map by both googleBooksId and isbn13.
+- [x] Open redirect fix: added `isSafeRedirectUrl()` helper that validates returnUrl starts with `/` and contains no `://` or `//`. Applied to `addToReadingList`, `followUser`, and `unfollowUser`.
+- [x] Username character validation: restricted to `^[a-zA-Z0-9_-]+$` with server-side regex and HTML `pattern` attribute on both setup-username and change-username forms.
+- [x] CSV import limits: added 10,000 row limit to Goodreads import loop and configured `spring.servlet.multipart.max-file-size=5MB` in application.properties.
+- [x] URL-encode Google Books API query: replaced manual space-to-plus with `URLEncoder.encode()` for proper special character handling.
+- [x] SecurityConfig permitAll cleanup: added 10 missing endpoints that were falling under `authenticated()`. Left `delete-profile` and `toggle-publish-lists` under `authenticated()` intentionally since they require OAuth.
+- [x] Unhandled IllegalArgumentException: wrapped `BookType.fromString()` and `BookCategory.fromString()` in try-catch in `/categorize`, `/start-rerank`, `/start-remove`, `/start-review`. Invalid input now redirects to `/my-books`.
+- [x] Google Books API rate limiting: added in-memory sliding window limiter (100 calls/hour) to GoogleBooksService. Returns empty results when limit is reached.
+- [x] Multi-user concurrency: added `@Transactional` to 13 controller methods that perform position-shifting or bulk writes to prevent race conditions.
+- [x] Username unique constraint: added `@Column(unique = true)` to `User.username` and wrapped save calls in try-catch for `DataIntegrityViolationException` in both setup and change username flows.
+- [x] Client-side library tab switching: all four tab contents rendered on page load, radio buttons toggle visibility via JS instead of triggering a full page reload and database queries.
+- [x] Client-side search tab switching: all five search tab contents (Books, Curated, Profiles, Following, Followers) loaded upfront. Radio buttons toggle visibility and clear the search bar. Searches still do a server round-trip.
+- [x] Book deduplication by title+author with multi-ISBN support: created `book_isbns` join table and `BookIsbn` entity to store multiple ISBNs per book. `findOrCreateBook()` now resolves books by ISBN lookup in `book_isbns`, then by case-insensitive title+author match, before creating new rows. New ISBNs are recorded on match. Updated Goodreads import and CuratedListImporter to use the same deduplication logic. Relaxed `isbn_13` unique/not-null constraints on `books` table. Added `existsByUserIdAndBookId` to RankingRepository for duplicate checking. Migration SQL appended to `migration.sql`.

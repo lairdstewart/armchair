@@ -51,3 +51,40 @@ ALTER TABLE books_new RENAME TO books;
 
 -- 9. Add FK constraint
 ALTER TABLE rankings ADD CONSTRAINT fk_rankings_book FOREIGN KEY (book_id) REFERENCES books(id);
+
+-- ============================================================================
+-- Migration: Book deduplication — create book_isbns join table
+-- Run this manually against the database before deploying the new code.
+-- ============================================================================
+
+-- 10. Create book_isbns table
+CREATE TABLE book_isbns (
+    id BIGSERIAL PRIMARY KEY,
+    book_id BIGINT NOT NULL REFERENCES books(id),
+    isbn_13 VARCHAR(255) NOT NULL,
+    UNIQUE (book_id, isbn_13)
+);
+
+-- 11. Populate book_isbns from existing books.isbn_13
+INSERT INTO book_isbns (book_id, isbn_13)
+SELECT id, isbn_13 FROM books WHERE isbn_13 IS NOT NULL AND isbn_13 != '';
+
+-- 12. Drop unique constraint and not-null constraint on books.isbn_13
+ALTER TABLE books ALTER COLUMN isbn_13 DROP NOT NULL;
+ALTER TABLE books DROP CONSTRAINT IF EXISTS books_isbn_13_key;
+ALTER TABLE books DROP CONSTRAINT IF EXISTS uk_isbn_13;
+-- Hibernate-generated constraint names vary; drop by scanning pg_constraint if needed:
+DO $$
+DECLARE
+    cname TEXT;
+BEGIN
+    SELECT conname INTO cname
+    FROM pg_constraint
+    WHERE conrelid = 'books'::regclass
+      AND contype = 'u'
+      AND array_length(conkey, 1) = 1
+      AND conkey[1] = (SELECT attnum FROM pg_attribute WHERE attrelid = 'books'::regclass AND attname = 'isbn_13');
+    IF cname IS NOT NULL THEN
+        EXECUTE format('ALTER TABLE books DROP CONSTRAINT %I', cname);
+    END IF;
+END $$;

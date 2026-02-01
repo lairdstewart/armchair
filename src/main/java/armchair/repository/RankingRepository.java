@@ -17,6 +17,7 @@ public interface RankingRepository extends JpaRepository<Ranking, Long> {
     List<Ranking> findByUserIdAndCategoryOrderByPositionAsc(Long userId, BookCategory category);
     boolean existsByUserIdAndBookGoogleBooksId(Long userId, String googleBooksId);
     boolean existsByUserIdAndBookIsbn13(Long userId, String isbn13);
+    boolean existsByUserIdAndBookId(Long userId, Long bookId);
     @Modifying
     @Transactional
     void deleteByUserId(Long userId);
