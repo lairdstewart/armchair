@@ -57,7 +57,7 @@ public class BookController {
     public record BookLists(List<BookInfo> liked, List<BookInfo> ok, List<BookInfo> disliked, List<BookInfo> unranked) {}
     public record ProfileDisplay(String username, String stats) {}
     public record ProfileDisplayWithFollow(String username, String stats, Long userId, boolean isFollowing) {}
-    public record UserBookRank(int rank, String category, String type) {}
+    public record UserBookRank(Long rankingId, int rank, String category, String type) {}
 
     private enum Mode {
         LIST,
@@ -1361,7 +1361,7 @@ public class BookController {
             for (BookCategory category : List.of(BookCategory.LIKED, BookCategory.OK, BookCategory.DISLIKED)) {
                 List<Ranking> rankings = rankingRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(userId, bookType, category);
                 for (Ranking ranking : rankings) {
-                    UserBookRank ubr = new UserBookRank(rank, category.name().toLowerCase(), bookType.name().toLowerCase());
+                    UserBookRank ubr = new UserBookRank(ranking.getId(), rank, category.name().toLowerCase(), bookType.name().toLowerCase());
                     putBookKeys(userBooks, ranking.getBook(), ubr);
                     rank++;
                 }
@@ -1371,14 +1371,14 @@ public class BookController {
         // Add want-to-read books
         List<Ranking> wantToReadRankings = rankingRepository.findByUserIdAndCategoryOrderByPositionAsc(userId, BookCategory.WANT_TO_READ);
         for (Ranking ranking : wantToReadRankings) {
-            UserBookRank ubr = new UserBookRank(0, "want_to_read", "");
+            UserBookRank ubr = new UserBookRank(ranking.getId(), 0, "want_to_read", "");
             putBookKeys(userBooks, ranking.getBook(), ubr);
         }
 
         // Add unranked books
         List<Ranking> unrankedRankings = rankingRepository.findByUserIdAndTypeAndCategoryOrderByPositionAsc(userId, BookType.UNRANKED, BookCategory.UNRANKED);
         for (Ranking ranking : unrankedRankings) {
-            UserBookRank ubr = new UserBookRank(0, "unranked", "unranked");
+            UserBookRank ubr = new UserBookRank(ranking.getId(), 0, "unranked", "unranked");
             putBookKeys(userBooks, ranking.getBook(), ubr);
         }
 
