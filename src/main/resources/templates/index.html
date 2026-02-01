@@ -9,33 +9,30 @@
     <div class="page-content">
     <div th:switch="${mode.name()}">
       <div th:case="'LIST'">
-        <!-- Type selector radio buttons - always show all 3 -->
+        <!-- Type selector radio buttons -->
         <div style="margin-bottom: 15px;">
           <label>
-            <input type="radio" name="typeSelector" value="FICTION" th:checked="${selectedType == 'FICTION'}" onchange="window.location.href='/my-books?selectedType=FICTION'" />
+            <input type="radio" name="typeSelector" value="FICTION" th:checked="${selectedType == 'FICTION'}" onchange="showTab('FICTION')" />
             Fiction
           </label>
           <label style="margin-left: 15px;">
-            <input type="radio" name="typeSelector" value="NONFICTION" th:checked="${selectedType == 'NONFICTION'}" onchange="window.location.href='/my-books?selectedType=NONFICTION'" />
+            <input type="radio" name="typeSelector" value="NONFICTION" th:checked="${selectedType == 'NONFICTION'}" onchange="showTab('NONFICTION')" />
             Non-Fiction
           </label>
           <label style="margin-left: 15px;">
-            <input type="radio" name="typeSelector" value="WANT_TO_READ" th:checked="${selectedType == 'WANT_TO_READ'}" onchange="window.location.href='/my-books?selectedType=WANT_TO_READ'" />
+            <input type="radio" name="typeSelector" value="WANT_TO_READ" th:checked="${selectedType == 'WANT_TO_READ'}" onchange="showTab('WANT_TO_READ')" />
             Want to Read
           </label>
           <label th:if="${hasUnranked}" style="margin-left: 15px;">
-            <input type="radio" name="typeSelector" value="UNRANKED" th:checked="${selectedType == 'UNRANKED'}" onchange="window.location.href='/my-books?selectedType=UNRANKED'" />
+            <input type="radio" name="typeSelector" value="UNRANKED" th:checked="${selectedType == 'UNRANKED'}" onchange="showTab('UNRANKED')" />
             Unranked
           </label>
         </div>
 
-        <!-- Empty state message -->
-        <p th:if="${selectedType == 'FICTION' && !hasFiction}">Add books via the search tab or <a th:if="${isLoggedIn}" href="/import-goodreads">import from Goodreads</a><a th:if="${!isLoggedIn}" href="#" onclick="alert('Log in to Armchair to import books from Goodreads'); return false;">import from Goodreads</a>.</p>
-        <p th:if="${selectedType == 'NONFICTION' && !hasNonfiction}">Add books via the search tab or <a th:if="${isLoggedIn}" href="/import-goodreads">import from Goodreads</a><a th:if="${!isLoggedIn}" href="#" onclick="alert('Log in to Armchair to import books from Goodreads'); return false;">import from Goodreads</a>.</p>
-        <p th:if="${selectedType == 'WANT_TO_READ' && !hasWantToRead}">Add books via the search tab or <a th:if="${isLoggedIn}" href="/import-goodreads">import from Goodreads</a><a th:if="${!isLoggedIn}" href="#" onclick="alert('Log in to Armchair to import books from Goodreads'); return false;">import from Goodreads</a>.</p>
-
-          <!-- Fiction books list -->
-          <div th:if="${selectedType == 'FICTION' && hasFiction}">
+          <!-- Fiction tab -->
+          <div id="tab-FICTION" th:style="${selectedType == 'FICTION' ? '' : 'display:none'}">
+            <p th:if="${!hasFiction}">Add books via the search tab or <a th:if="${isLoggedIn}" href="/import-goodreads">import from Goodreads</a><a th:unless="${isLoggedIn}" href="#" onclick="alert('Log in to Armchair to import books from Goodreads'); return false;">import from Goodreads</a>.</p>
+            <div th:if="${hasFiction}">
             <ol class="book-list">
               <li th:each="book, iter : ${fictionBooks.liked()}">
                 <span class="book-number liked" th:text="${iter.index + 1}"></span>
@@ -179,10 +176,13 @@
                 </span>
               </li>
             </ol>
+            </div>
           </div>
 
-          <!-- Non-Fiction books list -->
-          <div th:if="${selectedType == 'NONFICTION' && hasNonfiction}">
+          <!-- Non-Fiction tab -->
+          <div id="tab-NONFICTION" th:style="${selectedType == 'NONFICTION' ? '' : 'display:none'}">
+            <p th:if="${!hasNonfiction}">Add books via the search tab or <a th:if="${isLoggedIn}" href="/import-goodreads">import from Goodreads</a><a th:unless="${isLoggedIn}" href="#" onclick="alert('Log in to Armchair to import books from Goodreads'); return false;">import from Goodreads</a>.</p>
+            <div th:if="${hasNonfiction}">
             <ol class="book-list">
               <li th:each="book, iter : ${nonfictionBooks.liked()}">
                 <span class="book-number liked" th:text="${iter.index + 1}"></span>
@@ -326,10 +326,13 @@
                 </span>
               </li>
             </ol>
+            </div>
           </div>
 
-          <!-- Want to Read books list -->
-          <div th:if="${selectedType == 'WANT_TO_READ' && hasWantToRead}">
+          <!-- Want to Read tab -->
+          <div id="tab-WANT_TO_READ" th:style="${selectedType == 'WANT_TO_READ' ? '' : 'display:none'}">
+            <p th:if="${!hasWantToRead}">Add books via the search tab or <a th:if="${isLoggedIn}" href="/import-goodreads">import from Goodreads</a><a th:unless="${isLoggedIn}" href="#" onclick="alert('Log in to Armchair to import books from Goodreads'); return false;">import from Goodreads</a>.</p>
+            <div th:if="${hasWantToRead}">
             <ul class="plain-list">
               <li th:each="book, iter : ${wantToReadBooks}">
                 <a th:if="${book.bookUrl() != null}" th:href="${book.bookUrl()}" th:text="${book.title()}" target="_blank"></a>
@@ -347,12 +350,13 @@
                 </span>
               </li>
             </ul>
+            </div>
           </div>
 
-          <!-- Unranked books list -->
-          <div th:if="${selectedType == 'UNRANKED' && hasUnranked}">
+          <!-- Unranked tab -->
+          <div id="tab-UNRANKED" th:if="${hasUnranked}" th:style="${selectedType == 'UNRANKED' ? '' : 'display:none'}">
             <form th:action="@{/rank-all}" method="POST" style="margin-bottom: 15px;">
-              <button type="submit">[rank all]</button>
+              <button type="submit">rank all</button>
             </form>
             <ul class="plain-list">
               <li th:each="book : ${unrankedBooks}">
@@ -455,5 +459,12 @@
       </div>
     </div>
     </div>
+    <script>
+    function showTab(type) {
+      document.querySelectorAll('[id^="tab-"]').forEach(function(el) { el.style.display = 'none'; });
+      var tab = document.getElementById('tab-' + type);
+      if (tab) tab.style.display = '';
+    }
+    </script>
   </body>
 </html>
