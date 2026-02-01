@@ -106,14 +106,21 @@ ALTER TABLE books DROP COLUMN IF EXISTS user_uploaded;
 -- Run this manually against the database BEFORE deploying the new code.
 -- ============================================================================
 
--- 15. Rename type → bookshelf in rankings
+-- 15. Drop Hibernate-generated check constraints on type/category columns
+--     These restrict values to the old enum sets and block new values like WANT_TO_READ in bookshelf.
+ALTER TABLE rankings DROP CONSTRAINT IF EXISTS rankings_type_check;
+ALTER TABLE rankings DROP CONSTRAINT IF EXISTS rankings_category_check;
+ALTER TABLE ranking_state DROP CONSTRAINT IF EXISTS ranking_state_type_check;
+ALTER TABLE ranking_state DROP CONSTRAINT IF EXISTS ranking_state_category_check;
+
+-- 16. Rename type → bookshelf in rankings
 ALTER TABLE rankings RENAME COLUMN type TO bookshelf;
 
--- 16. Rename type → bookshelf in ranking_state
+-- 17. Rename type → bookshelf in ranking_state
 ALTER TABLE ranking_state RENAME COLUMN type TO bookshelf;
 
--- 17. Migrate want-to-read data in rankings
+-- 18. Migrate want-to-read data in rankings
 UPDATE rankings SET bookshelf = 'WANT_TO_READ', category = 'UNRANKED' WHERE category = 'WANT_TO_READ';
 
--- 18. Migrate want-to-read data in ranking_state
+-- 19. Migrate want-to-read data in ranking_state
 UPDATE ranking_state SET bookshelf = 'WANT_TO_READ', category = 'UNRANKED' WHERE category = 'WANT_TO_READ';
