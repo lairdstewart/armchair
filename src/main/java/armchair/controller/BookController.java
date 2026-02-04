@@ -76,6 +76,15 @@ public class BookController {
     private static final String SESSION_GUEST_USER_ID = "guestUserId";
     private static final int MAX_REVIEW_LENGTH = 5000;
     private static final int MAX_IMPORT_ROWS = 10000;
+    private static String bookResultKey(OpenLibraryService.BookResult b) {
+        return b.title().toLowerCase().trim() + "\0" + b.author().toLowerCase().trim();
+    }
+
+    private static List<OpenLibraryService.BookResult> deduplicateResults(List<OpenLibraryService.BookResult> results) {
+        var seen = new java.util.LinkedHashSet<String>();
+        return results.stream().filter(r -> seen.add(bookResultKey(r))).toList();
+    }
+
     private static String trimReview(String review) {
         if (review == null || review.isBlank()) return null;
         String trimmed = review.trim();
@@ -280,11 +289,7 @@ public class BookController {
                 mode = Mode.MANUAL_RESOLVE;
                 if (resolveQuery != null && !resolveQuery.isBlank()) {
                     List<OpenLibraryService.BookResult> resolveResults =
-                        openLibraryService.searchBooks(resolveQuery, 10);
-                    var seen = new java.util.LinkedHashSet<String>();
-                    resolveResults = resolveResults.stream()
-                        .filter(r -> seen.add((r.title() + "\0" + r.author()).toLowerCase()))
-                        .toList();
+                        deduplicateResults(openLibraryService.searchBooks(resolveQuery, 10));
                     model.addAttribute("resolveResults", resolveResults);
                     model.addAttribute("resolveQuery", resolveQuery);
                     if (resolveResults.isEmpty()) {
@@ -293,16 +298,11 @@ public class BookController {
                 }
             } else if (skipResolve == null || "expanded".equals(skipResolve)) {
                 int maxResults = "expanded".equals(skipResolve) ? 10 : 3;
-                List<OpenLibraryService.BookResult> resolveResults =
+                List<OpenLibraryService.BookResult> resolveResults = deduplicateResults(
                     openLibraryService.searchByTitleAndAuthor(
                         rankingState.getTitleBeingRanked(),
                         rankingState.getAuthorBeingRanked(),
-                        maxResults);
-                // Deduplicate results with the same title+author (different editions)
-                var seen = new java.util.LinkedHashSet<String>();
-                resolveResults = resolveResults.stream()
-                    .filter(r -> seen.add((r.title() + "\0" + r.author()).toLowerCase()))
-                    .toList();
+                        maxResults));
                 if (!resolveResults.isEmpty()) {
                     mode = Mode.RESOLVE;
                     model.addAttribute("resolveResults", resolveResults);
@@ -313,14 +313,10 @@ public class BookController {
                     }
                 } else if (skipResolve == null) {
                     // First attempt returned nothing — try expanded (10 results) immediately
-                    resolveResults = openLibraryService.searchByTitleAndAuthor(
+                    resolveResults = deduplicateResults(openLibraryService.searchByTitleAndAuthor(
                         rankingState.getTitleBeingRanked(),
                         rankingState.getAuthorBeingRanked(),
-                        10);
-                    seen.clear();
-                    resolveResults = resolveResults.stream()
-                        .filter(r -> seen.add((r.title() + "\0" + r.author()).toLowerCase()))
-                        .toList();
+                        10));
                     if (!resolveResults.isEmpty()) {
                         mode = Mode.RESOLVE;
                         model.addAttribute("resolveResults", resolveResults);
@@ -1319,25 +1315,18 @@ public class BookController {
         if ("books".equals(type) && query != null && !query.isBlank()) {
             bookResults = bookService.searchLocalBooks(query);
             if (bookResults.isEmpty()) {
-                bookResults = openLibraryService.searchBooks(query);
-                // Deduplicate by title+author (API can return multiple editions)
-                Set<String> seen = new java.util.LinkedHashSet<>();
-                bookResults = bookResults.stream()
-                    .filter(b -> seen.add(b.title().toLowerCase().trim() + "\t" + b.author().toLowerCase().trim()))
-                    .toList();
+                bookResults = deduplicateResults(openLibraryService.searchBooks(query));
             } else {
                 localResults = true;
                 if (Boolean.TRUE.equals(more)) {
                     moreResults = true;
-                    // Build set of local result keys for deduplication
-                    Set<String> localKeys = bookResults.stream()
-                        .map(b -> b.title().toLowerCase().trim() + "\t" + b.author().toLowerCase().trim())
-                        .collect(Collectors.toSet());
-                    List<OpenLibraryService.BookResult> apiResults = openLibraryService.searchBooks(query);
                     // Deduplicate API results against local results and against themselves
-                    Set<String> seen = new java.util.LinkedHashSet<>(localKeys);
+                    Set<String> seen = bookResults.stream()
+                        .map(BookController::bookResultKey)
+                        .collect(Collectors.toCollection(java.util.LinkedHashSet::new));
+                    List<OpenLibraryService.BookResult> apiResults = openLibraryService.searchBooks(query);
                     List<OpenLibraryService.BookResult> extraResults = apiResults.stream()
-                        .filter(b -> seen.add(b.title().toLowerCase().trim() + "\t" + b.author().toLowerCase().trim()))
+                        .filter(b -> seen.add(bookResultKey(b)))
                         .limit(3)
                         .toList();
                     bookResults = new ArrayList<>(bookResults);
