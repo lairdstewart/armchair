@@ -7,14 +7,12 @@ import armchair.entity.Follow;
 import armchair.entity.Ranking;
 import armchair.entity.RankingState;
 import armchair.entity.User;
-import armchair.entity.BookIsbn;
-import armchair.repository.BookIsbnRepository;
 import armchair.repository.BookRepository;
 import armchair.repository.FollowRepository;
 import armchair.repository.RankingRepository;
 import armchair.repository.RankingStateRepository;
 import armchair.repository.UserRepository;
-import armchair.service.GoogleBooksService;
+import armchair.service.OpenLibraryService;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpSession;
 import org.slf4j.Logger;
@@ -51,10 +49,9 @@ import java.util.stream.Collectors;
 public class BookController {
     private static final Logger log = LoggerFactory.getLogger(BookController.class);
 
-    public record BookInfo(Long id, String googleBooksId, String isbn13, String title, String author, String review) {
+    public record BookInfo(Long id, String workOlid, String title, String author, String review) {
         public String bookUrl() {
-            if (googleBooksId != null) return "https://books.google.com/books?id=" + googleBooksId;
-            if (isbn13 != null) return "https://www.google.com/search?tbo=p&tbm=bks&q=isbn:" + isbn13;
+            if (workOlid != null) return "https://openlibrary.org/works/" + workOlid;
             return "https://www.google.com/search?udm=36&q=" + java.net.URLEncoder.encode(title + " " + author, java.nio.charset.StandardCharsets.UTF_8);
         }
     }
@@ -89,9 +86,6 @@ public class BookController {
     private BookRepository bookRepository;
 
     @Autowired
-    private BookIsbnRepository bookIsbnRepository;
-
-    @Autowired
     private RankingRepository rankingRepository;
 
     @Autowired
@@ -101,9 +95,9 @@ public class BookController {
     private FollowRepository followRepository;
 
     @Autowired
-    private GoogleBooksService googleBooksService;
+    private OpenLibraryService openLibraryService;
 
-    private List<GoogleBooksService.BookResult> searchLocalBooks(String query) {
+    private List<OpenLibraryService.BookResult> searchLocalBooks(String query) {
         String[] words = query.trim().split("\\s+");
         List<Book> candidates = null;
         for (String word : words) {
@@ -120,65 +114,35 @@ public class BookController {
             return List.of();
         }
         return candidates.stream()
-            .map(b -> new GoogleBooksService.BookResult(b.getGoogleBooksId(), b.getTitle(), b.getAuthor(), getBookIsbn13(b.getId())))
+            .map(b -> new OpenLibraryService.BookResult(b.getWorkOlid(), b.getCoverEditionOlid(), b.getTitle(), b.getAuthor(), b.getFirstPublishYear()))
             .toList();
     }
 
-    private Book findOrCreateBook(String googleBooksId, String title, String author, String isbn13) {
-        // 1. Try ISBN lookup via book_isbns table
-        if (isbn13 != null) {
-            List<BookIsbn> isbnMatches = bookIsbnRepository.findByIsbn13(isbn13);
-            if (!isbnMatches.isEmpty()) {
-                Book book = isbnMatches.get(0).getBook();
-                if (book != null) {
-                    // Enrich with googleBooksId if missing
-                    if (book.getGoogleBooksId() == null && googleBooksId != null) {
-                        book.setGoogleBooksId(googleBooksId);
-                        bookRepository.save(book);
-                    }
-                    return book;
-                }
-            }
-        }
-
-        // 2. Try normalized title+author match
-        if (title != null && author != null) {
-            List<Book> titleAuthorMatches = bookRepository.findByNormalizedTitleAndAuthor(title, author);
-            if (!titleAuthorMatches.isEmpty()) {
-                Book book = titleAuthorMatches.get(0);
-                // Record the new ISBN for this book
-                if (isbn13 != null && !bookIsbnRepository.existsByBookIdAndIsbn13(book.getId(), isbn13)) {
-                    bookIsbnRepository.save(new BookIsbn(book, isbn13));
-                }
-                // Enrich with googleBooksId if missing
-                if (book.getGoogleBooksId() == null && googleBooksId != null) {
-                    book.setGoogleBooksId(googleBooksId);
+    private Book findOrCreateBook(String workOlid, String coverEditionOlid, String title, String author, Integer firstPublishYear) {
+        // Look up by workOlid
+        if (workOlid != null) {
+            var existing = bookRepository.findByWorkOlid(workOlid);
+            if (existing.isPresent()) {
+                Book book = existing.get();
+                // Enrich with coverEditionOlid if missing
+                if (book.getCoverEditionOlid() == null && coverEditionOlid != null) {
+                    book.setCoverEditionOlid(coverEditionOlid);
                     bookRepository.save(book);
                 }
                 return book;
             }
         }
 
-        // 3. No match — create new Book
-        Book book = bookRepository.save(new Book(googleBooksId, title, author));
-        if (isbn13 != null) {
-            bookIsbnRepository.save(new BookIsbn(book, isbn13));
-        }
-        return book;
-    }
-
-    private String getBookIsbn13(Long bookId) {
-        List<BookIsbn> isbns = bookIsbnRepository.findByBookId(bookId);
-        return isbns.isEmpty() ? null : isbns.get(0).getIsbn13();
+        // No match — create new Book
+        return bookRepository.save(new Book(workOlid, coverEditionOlid, title, author, firstPublishYear));
     }
 
     private void restoreAbandonedBook(Long userId) {
         RankingState state = rankingStateRepository.findById(userId).orElse(null);
         if (state == null || state.getTitleBeingRanked() == null) return;
 
-        Book book = findOrCreateBook(state.getGoogleBooksIdBeingRanked(),
-            state.getTitleBeingRanked(), state.getAuthorBeingRanked(),
-            state.getIsbn13BeingRanked());
+        Book book = findOrCreateBook(state.getWorkOlidBeingRanked(),
+            null, state.getTitleBeingRanked(), state.getAuthorBeingRanked(), null);
 
         if (!rankingRepository.existsByUserIdAndBookId(userId, book.getId())) {
             List<Ranking> unranked = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(
@@ -306,13 +270,13 @@ public class BookController {
         Mode mode = determineMode(rankingState);
 
         // Intercept CATEGORIZE for unverified books — show RESOLVE screen
-        if (mode == Mode.CATEGORIZE && rankingState.getGoogleBooksIdBeingRanked() == null) {
+        if (mode == Mode.CATEGORIZE && rankingState.getWorkOlidBeingRanked() == null) {
             Object skipResolve = session.getAttribute("skipResolve");
             if (skipResolve == null || "expanded".equals(skipResolve)) {
                 int maxResults = "expanded".equals(skipResolve) ? 10 : 3;
                 String resolveQuery = rankingState.getTitleBeingRanked() + " " + rankingState.getAuthorBeingRanked();
-                List<GoogleBooksService.BookResult> resolveResults =
-                    googleBooksService.searchBooks(resolveQuery, maxResults);
+                List<OpenLibraryService.BookResult> resolveResults =
+                    openLibraryService.searchBooks(resolveQuery, maxResults);
                 // Deduplicate results with the same title+author (different editions)
                 var seen = new java.util.LinkedHashSet<String>();
                 resolveResults = resolveResults.stream()
@@ -336,9 +300,9 @@ public class BookController {
         BookLists fictionBooks = getBookLists(Bookshelf.FICTION, userId);
         BookLists nonfictionBooks = getBookLists(Bookshelf.NONFICTION, userId);
         List<BookInfo> wantToReadBooks = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(userId, Bookshelf.WANT_TO_READ, BookCategory.UNRANKED)
-            .stream().map(r -> new BookInfo(r.getId(), r.getBook().getGoogleBooksId(), getBookIsbn13(r.getBook().getId()), r.getBook().getTitle(), r.getBook().getAuthor(), r.getReview())).toList();
+            .stream().map(r -> new BookInfo(r.getId(), r.getBook().getWorkOlid(), r.getBook().getTitle(), r.getBook().getAuthor(), r.getReview())).toList();
         List<BookInfo> unrankedBooks = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(userId, Bookshelf.UNRANKED, BookCategory.UNRANKED)
-            .stream().map(r -> new BookInfo(r.getId(), r.getBook().getGoogleBooksId(), getBookIsbn13(r.getBook().getId()), r.getBook().getTitle(), r.getBook().getAuthor(), r.getReview())).toList();
+            .stream().map(r -> new BookInfo(r.getId(), r.getBook().getWorkOlid(), r.getBook().getTitle(), r.getBook().getAuthor(), r.getReview())).toList();
         boolean hasFiction = !fictionBooks.liked().isEmpty() || !fictionBooks.ok().isEmpty() || !fictionBooks.disliked().isEmpty();
         boolean hasNonfiction = !nonfictionBooks.liked().isEmpty() || !nonfictionBooks.ok().isEmpty() || !nonfictionBooks.disliked().isEmpty();
         boolean hasWantToRead = !wantToReadBooks.isEmpty();
@@ -422,8 +386,7 @@ public class BookController {
             Ranking compRanking = currentList.get(rankingState.getCompareToIndex());
             model.addAttribute("comparisonBookTitle", compRanking.getBook().getTitle());
             model.addAttribute("comparisonBookAuthor", compRanking.getBook().getAuthor());
-            model.addAttribute("comparisonBookGoogleId", compRanking.getBook().getGoogleBooksId());
-            model.addAttribute("comparisonBookIsbn13", getBookIsbn13(compRanking.getBook().getId()));
+            model.addAttribute("comparisonBookWorkOlid", compRanking.getBook().getWorkOlid());
         }
 
         return "index";
@@ -457,19 +420,19 @@ public class BookController {
 
     private BookLists getBookLists(Bookshelf bookshelf, Long userId) {
         List<BookInfo> liked = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(userId, bookshelf, BookCategory.LIKED)
-            .stream().map(r -> new BookInfo(r.getId(), r.getBook().getGoogleBooksId(), getBookIsbn13(r.getBook().getId()), r.getBook().getTitle(), r.getBook().getAuthor(), r.getReview())).toList();
+            .stream().map(r -> new BookInfo(r.getId(), r.getBook().getWorkOlid(), r.getBook().getTitle(), r.getBook().getAuthor(), r.getReview())).toList();
         List<BookInfo> ok = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(userId, bookshelf, BookCategory.OK)
-            .stream().map(r -> new BookInfo(r.getId(), r.getBook().getGoogleBooksId(), getBookIsbn13(r.getBook().getId()), r.getBook().getTitle(), r.getBook().getAuthor(), r.getReview())).toList();
+            .stream().map(r -> new BookInfo(r.getId(), r.getBook().getWorkOlid(), r.getBook().getTitle(), r.getBook().getAuthor(), r.getReview())).toList();
         List<BookInfo> disliked = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(userId, bookshelf, BookCategory.DISLIKED)
-            .stream().map(r -> new BookInfo(r.getId(), r.getBook().getGoogleBooksId(), getBookIsbn13(r.getBook().getId()), r.getBook().getTitle(), r.getBook().getAuthor(), r.getReview())).toList();
+            .stream().map(r -> new BookInfo(r.getId(), r.getBook().getWorkOlid(), r.getBook().getTitle(), r.getBook().getAuthor(), r.getReview())).toList();
         List<BookInfo> unranked = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(userId, bookshelf, BookCategory.UNRANKED)
-            .stream().map(r -> new BookInfo(r.getId(), r.getBook().getGoogleBooksId(), getBookIsbn13(r.getBook().getId()), r.getBook().getTitle(), r.getBook().getAuthor(), r.getReview())).toList();
+            .stream().map(r -> new BookInfo(r.getId(), r.getBook().getWorkOlid(), r.getBook().getTitle(), r.getBook().getAuthor(), r.getReview())).toList();
         return new BookLists(liked, ok, disliked, unranked);
     }
 
     private String generateCsv(Long userId) {
         StringBuilder csv = new StringBuilder();
-        csv.append("Rank,Title,Author,ISBN13,Category,Bookshelf,Review\n");
+        csv.append("Rank,Title,Author,Category,Bookshelf,Review\n");
 
         int rank = 1;
 
@@ -483,7 +446,6 @@ public class BookController {
                     csv.append(rank++).append(",");
                     csv.append("\"").append(escapeCsv(ranking.getBook().getTitle())).append("\",");
                     csv.append("\"").append(escapeCsv(ranking.getBook().getAuthor())).append("\",");
-                    csv.append("\"").append(escapeCsv(getBookIsbn13(ranking.getBook().getId()))).append("\",");
                     csv.append("\"").append(category.getValue()).append("\",");
                     csv.append("\"").append(bookshelf.getValue()).append("\",");
                     csv.append("\"").append(escapeCsv(ranking.getReview())).append("\"\n");
@@ -532,8 +494,8 @@ public class BookController {
             // Found the insertion position - insert the book
             Bookshelf rankedBookshelf = rankingState.getBookshelf();
             boolean wasRankAll = rankingState.isRankAll();
-            insertBookAtPosition(rankingState.getGoogleBooksIdBeingRanked(), rankingState.getTitleBeingRanked(), rankingState.getAuthorBeingRanked(),
-                rankingState.getIsbn13BeingRanked(), rankingState.getReviewBeingRanked(), rankedBookshelf, rankingState.getCategory(), newLowIndex, userId);
+            insertBookAtPosition(rankingState.getWorkOlidBeingRanked(), rankingState.getTitleBeingRanked(), rankingState.getAuthorBeingRanked(),
+                rankingState.getReviewBeingRanked(), rankedBookshelf, rankingState.getCategory(), newLowIndex, userId);
             rankingStateRepository.deleteById(userId);
             // Clear search results
             session.removeAttribute("bookSearchResults");
@@ -555,7 +517,7 @@ public class BookController {
         return "redirect:/my-books";
     }
 
-    private void insertBookAtPosition(String googleBooksId, String title, String author, String isbn13, String review, Bookshelf bookshelf, BookCategory category, int position, Long userId) {
+    private void insertBookAtPosition(String workOlid, String title, String author, String review, Bookshelf bookshelf, BookCategory category, int position, Long userId) {
         // Shift all rankings at or after the insertion position
         List<Ranking> rankingsToShift = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(
             userId, bookshelf, category
@@ -567,7 +529,7 @@ public class BookController {
         }
 
         // Insert the new ranking
-        Book book = findOrCreateBook(googleBooksId, title, author, isbn13);
+        Book book = findOrCreateBook(workOlid, null, title, author, null);
         Ranking newRanking = new Ranking(userId, book, bookshelf, category, position);
         newRanking.setReview(review);
         rankingRepository.save(newRanking);
@@ -612,10 +574,9 @@ public class BookController {
             return "redirect:/my-books";
         }
 
-        rankingState.setGoogleBooksIdBeingRanked(ranking.getBook().getGoogleBooksId());
+        rankingState.setWorkOlidBeingRanked(ranking.getBook().getWorkOlid());
         rankingState.setTitleBeingRanked(ranking.getBook().getTitle());
         rankingState.setAuthorBeingRanked(ranking.getBook().getAuthor());
-        rankingState.setIsbn13BeingRanked(getBookIsbn13(ranking.getBook().getId()));
         rankingStateRepository.save(rankingState);
 
         // Remove the ranking from its current position
@@ -747,9 +708,8 @@ public class BookController {
 
         // Store book info in ranking state (including existing review)
         restoreAbandonedBook(userId);
-        RankingState rankingState = new RankingState(userId, ranking.getBook().getGoogleBooksId(), ranking.getBook().getTitle(), ranking.getBook().getAuthor(), ranking.getBookshelf(), null, 0, 0, 0);
+        RankingState rankingState = new RankingState(userId, ranking.getBook().getWorkOlid(), ranking.getBook().getTitle(), ranking.getBook().getAuthor(), ranking.getBookshelf(), null, 0, 0, 0);
         rankingState.setReRank(true);
-        rankingState.setIsbn13BeingRanked(getBookIsbn13(ranking.getBook().getId()));
         rankingState.setReviewBeingRanked(ranking.getReview());
         rankingStateRepository.save(rankingState);
 
@@ -817,8 +777,7 @@ public class BookController {
         }
 
         // Store book info in ranking state for categorization
-        RankingState rankingState = new RankingState(userId, ranking.getBook().getGoogleBooksId(), ranking.getBook().getTitle(), ranking.getBook().getAuthor(), null, null, 0, 0, 0);
-        rankingState.setIsbn13BeingRanked(getBookIsbn13(ranking.getBook().getId()));
+        RankingState rankingState = new RankingState(userId, ranking.getBook().getWorkOlid(), ranking.getBook().getTitle(), ranking.getBook().getAuthor(), null, null, 0, 0, 0);
         rankingStateRepository.save(rankingState);
 
         // Remove the ranking from want-to-read list
@@ -991,8 +950,8 @@ public class BookController {
         getCurrentUserId(session);
         addNavigationAttributes(model, "search-books");
 
-        List<GoogleBooksService.BookResult> searchResults =
-            (List<GoogleBooksService.BookResult>) session.getAttribute("bookSearchResults");
+        List<OpenLibraryService.BookResult> searchResults =
+            (List<OpenLibraryService.BookResult>) session.getAttribute("bookSearchResults");
         model.addAttribute("searchResults", searchResults != null ? searchResults : List.of());
         model.addAttribute("query", session.getAttribute("bookSearchQuery"));
 
@@ -1006,9 +965,9 @@ public class BookController {
             return "redirect:/setup-username";
         }
 
-        List<GoogleBooksService.BookResult> results = searchLocalBooks(query);
+        List<OpenLibraryService.BookResult> results = searchLocalBooks(query);
         if (results.isEmpty()) {
-            results = googleBooksService.searchBooks(query);
+            results = openLibraryService.searchBooks(query);
         }
         session.setAttribute("bookSearchResults", results);
         session.setAttribute("bookSearchQuery", query);
@@ -1038,10 +997,10 @@ public class BookController {
 
     @Transactional
     @PostMapping("/resolve-book")
-    public String resolveBook(@RequestParam String googleBooksId,
+    public String resolveBook(@RequestParam String workOlid,
                               @RequestParam String title,
                               @RequestParam String author,
-                              @RequestParam(required = false) String isbn13,
+                              @RequestParam(required = false) String coverEditionOlid,
                               HttpSession session) {
         Long userId = getCurrentUserId(session);
         if (userId == null) {
@@ -1053,22 +1012,18 @@ public class BookController {
         }
 
         // Find the existing book and update it with the selected result's metadata
-        Book existingBook = findOrCreateBook(rankingState.getGoogleBooksIdBeingRanked(),
-            rankingState.getTitleBeingRanked(), rankingState.getAuthorBeingRanked(),
-            rankingState.getIsbn13BeingRanked());
-        existingBook.setGoogleBooksId(googleBooksId);
+        Book existingBook = findOrCreateBook(rankingState.getWorkOlidBeingRanked(),
+            null, rankingState.getTitleBeingRanked(), rankingState.getAuthorBeingRanked(), null);
+        existingBook.setWorkOlid(workOlid);
+        existingBook.setCoverEditionOlid(coverEditionOlid);
         existingBook.setTitle(title);
         existingBook.setAuthor(author);
-        if (isbn13 != null && !bookIsbnRepository.existsByBookIdAndIsbn13(existingBook.getId(), isbn13)) {
-            bookIsbnRepository.save(new BookIsbn(existingBook, isbn13));
-        }
         bookRepository.save(existingBook);
 
         // Update RankingState to match
-        rankingState.setGoogleBooksIdBeingRanked(googleBooksId);
+        rankingState.setWorkOlidBeingRanked(workOlid);
         rankingState.setTitleBeingRanked(title);
         rankingState.setAuthorBeingRanked(author);
-        rankingState.setIsbn13BeingRanked(isbn13 != null ? isbn13 : rankingState.getIsbn13BeingRanked());
         rankingStateRepository.save(rankingState);
 
         session.removeAttribute("skipResolve");
@@ -1092,10 +1047,10 @@ public class BookController {
     }
 
     @PostMapping("/select-book")
-    public String selectBook(@RequestParam String googleBooksId,
+    public String selectBook(@RequestParam String workOlid,
                              @RequestParam String bookName,
                              @RequestParam String author,
-                             @RequestParam(required = false) String isbn13,
+                             @RequestParam(required = false) String coverEditionOlid,
                              HttpSession session) {
         Long userId = getCurrentUserId(session);
         if (userId == null) {
@@ -1109,20 +1064,19 @@ public class BookController {
         }
 
         // Set the book info, leave category null to enter CATEGORIZE mode
-        rankingState.setGoogleBooksIdBeingRanked(googleBooksId);
+        rankingState.setWorkOlidBeingRanked(workOlid);
         rankingState.setTitleBeingRanked(bookName);
         rankingState.setAuthorBeingRanked(author);
-        rankingState.setIsbn13BeingRanked(isbn13);
         rankingStateRepository.save(rankingState);
 
         return "redirect:/my-books";
     }
 
     @PostMapping("/add-to-reading-list")
-    public String addToReadingList(@RequestParam String googleBooksId,
+    public String addToReadingList(@RequestParam String workOlid,
                                    @RequestParam String bookName,
                                    @RequestParam String author,
-                                   @RequestParam(required = false) String isbn13,
+                                   @RequestParam(required = false) String coverEditionOlid,
                                    @RequestParam(required = false) String returnUrl,
                                    HttpSession session) {
         Long userId = getCurrentUserId(session);
@@ -1132,8 +1086,8 @@ public class BookController {
 
         String redirectTo = isSafeRedirectUrl(returnUrl) ? "redirect:" + returnUrl : "redirect:/search?type=books";
 
-        // Resolve the book (deduplicating by title+author)
-        Book book = findOrCreateBook(googleBooksId, bookName, author, isbn13);
+        // Resolve the book
+        Book book = findOrCreateBook(workOlid, coverEditionOlid, bookName, author, null);
 
         // Check if book is already in user's library (any category)
         if (rankingRepository.existsByUserIdAndBookId(userId, book.getId())) {
@@ -1164,7 +1118,7 @@ public class BookController {
             return "redirect:/my-books";
         }
 
-        String googleBooksId = rankingState.getGoogleBooksIdBeingRanked();
+        String workOlid = rankingState.getWorkOlidBeingRanked();
         String bookName = rankingState.getTitleBeingRanked();
         String author = rankingState.getAuthorBeingRanked();
         // Trim review, treat empty as null, and limit length
@@ -1185,12 +1139,10 @@ public class BookController {
             userId, bookshelfEnum, bookCategory
         );
 
-        String isbn13 = rankingState.getIsbn13BeingRanked();
-
         if (currentList.isEmpty()) {
             // Category is empty, insert at the start
             boolean wasRankAll = rankingState.isRankAll();
-            Book book = findOrCreateBook(googleBooksId, bookName, author, isbn13);
+            Book book = findOrCreateBook(workOlid, null, bookName, author, null);
             Ranking newRanking = new Ranking(userId, book, bookshelfEnum, bookCategory, 0);
             newRanking.setReview(trimmedReview);
             rankingRepository.save(newRanking);
@@ -1208,7 +1160,7 @@ public class BookController {
             int lowIndex = 0;
             int highIndex = currentList.size() - 1;
             int compareToIndex = (lowIndex + highIndex) / 2;
-            rankingState.setGoogleBooksIdBeingRanked(googleBooksId);
+            rankingState.setWorkOlidBeingRanked(workOlid);
             rankingState.setTitleBeingRanked(bookName);
             rankingState.setAuthorBeingRanked(author);
             rankingState.setReviewBeingRanked(trimmedReview);
@@ -1259,13 +1211,13 @@ public class BookController {
 
         // --- Books tab ---
         Map<String, UserBookRank> userBooks = currentUserId != null ? buildUserBooksMap(currentUserId) : Map.of();
-        List<GoogleBooksService.BookResult> bookResults;
+        List<OpenLibraryService.BookResult> bookResults;
         boolean localResults = false;
         boolean moreResults = false;
         if ("books".equals(type) && query != null && !query.isBlank()) {
             bookResults = searchLocalBooks(query);
             if (bookResults.isEmpty()) {
-                bookResults = googleBooksService.searchBooks(query);
+                bookResults = openLibraryService.searchBooks(query);
                 // Deduplicate by title+author (API can return multiple editions)
                 Set<String> seen = new java.util.LinkedHashSet<>();
                 bookResults = bookResults.stream()
@@ -1279,10 +1231,10 @@ public class BookController {
                     Set<String> localKeys = bookResults.stream()
                         .map(b -> b.title().toLowerCase().trim() + "\t" + b.author().toLowerCase().trim())
                         .collect(Collectors.toSet());
-                    List<GoogleBooksService.BookResult> apiResults = googleBooksService.searchBooks(query);
+                    List<OpenLibraryService.BookResult> apiResults = openLibraryService.searchBooks(query);
                     // Deduplicate API results against local results and against themselves
                     Set<String> seen = new java.util.LinkedHashSet<>(localKeys);
-                    List<GoogleBooksService.BookResult> extraResults = apiResults.stream()
+                    List<OpenLibraryService.BookResult> extraResults = apiResults.stream()
                         .filter(b -> seen.add(b.title().toLowerCase().trim() + "\t" + b.author().toLowerCase().trim()))
                         .limit(3)
                         .toList();
@@ -1293,8 +1245,8 @@ public class BookController {
         } else {
             Map<String, UserBookRank> finalUserBooks = userBooks;
             bookResults = bookRepository.findRandom10Books().stream()
-                .filter(b -> !finalUserBooks.containsKey(b.getGoogleBooksId()))
-                .map(b -> new GoogleBooksService.BookResult(b.getGoogleBooksId(), b.getTitle(), b.getAuthor(), getBookIsbn13(b.getId())))
+                .filter(b -> !finalUserBooks.containsKey(b.getWorkOlid()))
+                .map(b -> new OpenLibraryService.BookResult(b.getWorkOlid(), b.getCoverEditionOlid(), b.getTitle(), b.getAuthor(), b.getFirstPublishYear()))
                 .toList();
         }
         model.addAttribute("bookResults", bookResults);
@@ -1395,11 +1347,8 @@ public class BookController {
     }
 
     private void putBookKeys(Map<String, UserBookRank> userBooks, Book book, UserBookRank ubr) {
-        if (book.getGoogleBooksId() != null) {
-            userBooks.put(book.getGoogleBooksId(), ubr);
-        }
-        for (BookIsbn bookIsbn : bookIsbnRepository.findByBookId(book.getId())) {
-            userBooks.put(bookIsbn.getIsbn13(), ubr);
+        if (book.getWorkOlid() != null) {
+            userBooks.put(book.getWorkOlid(), ubr);
         }
     }
 
@@ -1843,16 +1792,12 @@ public class BookController {
             List<String> headers = parseCsvLine(headerLine);
             int titleIndex = -1;
             int authorIndex = -1;
-            int isbnIndex = -1;
-            int isbn13Index = -1;
             int reviewIndex = -1;
             int exclusiveShelfIndex = -1;
             for (int i = 0; i < headers.size(); i++) {
                 String h = headers.get(i).trim();
                 if ("Title".equalsIgnoreCase(h)) titleIndex = i;
                 else if ("Author".equalsIgnoreCase(h)) authorIndex = i;
-                else if ("ISBN".equalsIgnoreCase(h)) isbnIndex = i;
-                else if ("ISBN13".equalsIgnoreCase(h)) isbn13Index = i;
                 else if ("My Review".equalsIgnoreCase(h)) reviewIndex = i;
                 else if ("Exclusive Shelf".equalsIgnoreCase(h)) exclusiveShelfIndex = i;
             }
@@ -1883,22 +1828,13 @@ public class BookController {
                         title = title.substring(0, colonIndex).trim();
                     }
                     String author = fields.get(authorIndex).trim();
-                    String rawIsbn = isbnIndex >= 0 && isbnIndex < fields.size() ? fields.get(isbnIndex).trim() : "";
-                    String rawIsbn13 = isbn13Index >= 0 && isbn13Index < fields.size() ? fields.get(isbn13Index).trim() : "";
                     String review = reviewIndex >= 0 && reviewIndex < fields.size() ? fields.get(reviewIndex).trim() : "";
                     String exclusiveShelf = exclusiveShelfIndex >= 0 && exclusiveShelfIndex < fields.size() ? fields.get(exclusiveShelfIndex).trim() : "";
                     boolean isToRead = "to-read".equals(exclusiveShelf) || "currently-reading".equals(exclusiveShelf);
                     if (title.isEmpty() || author.isEmpty()) continue;
 
-                    // Parse ISBN13 from Goodreads format (e.g. ="9781324074335"), fall back to ISBN-10 conversion
-                    String isbn13 = rawIsbn13.replaceAll("[=\"]", "");
-                    if (isbn13.isEmpty()) {
-                        String isbn10 = rawIsbn.replaceAll("[=\"]", "");
-                        isbn13 = isbn10.isEmpty() ? null : GoogleBooksService.convertIsbn10To13(isbn10);
-                    }
-
-                    // Resolve the book (deduplicating by title+author)
-                    Book book = findOrCreateBook(null, title, author, isbn13);
+                    // Create unverified book (null workOlid)
+                    Book book = findOrCreateBook(null, null, title, author, null);
 
                     // Update title to stripped version if book was found with a subtitle
                     if (!title.equals(book.getTitle())) {
@@ -1986,8 +1922,7 @@ public class BookController {
         }
 
         // Create RankingState for categorization (no bookshelf/category set — enters CATEGORIZE mode)
-        RankingState rankingState = new RankingState(userId, ranking.getBook().getGoogleBooksId(), ranking.getBook().getTitle(), ranking.getBook().getAuthor(), null, null, 0, 0, 0);
-        rankingState.setIsbn13BeingRanked(getBookIsbn13(ranking.getBook().getId()));
+        RankingState rankingState = new RankingState(userId, ranking.getBook().getWorkOlid(), ranking.getBook().getTitle(), ranking.getBook().getAuthor(), null, null, 0, 0, 0);
         rankingState.setReviewBeingRanked(ranking.getReview());
         rankingStateRepository.save(rankingState);
 
@@ -2029,8 +1964,7 @@ public class BookController {
         Ranking nextBook = unrankedBooks.get(0);
 
         // Create RankingState for categorization
-        RankingState rankingState = new RankingState(userId, nextBook.getBook().getGoogleBooksId(), nextBook.getBook().getTitle(), nextBook.getBook().getAuthor(), null, null, 0, 0, 0);
-        rankingState.setIsbn13BeingRanked(getBookIsbn13(nextBook.getBook().getId()));
+        RankingState rankingState = new RankingState(userId, nextBook.getBook().getWorkOlid(), nextBook.getBook().getTitle(), nextBook.getBook().getAuthor(), null, null, 0, 0, 0);
         rankingState.setReviewBeingRanked(nextBook.getReview());
         rankingState.setRankAll(true);
         rankingStateRepository.save(rankingState);
@@ -2107,7 +2041,7 @@ public class BookController {
             rankingStateRepository.deleteById(guestUserId);
             RankingState newRankingState = new RankingState(
                 newUserId,
-                guestRankingState.getGoogleBooksIdBeingRanked(),
+                guestRankingState.getWorkOlidBeingRanked(),
                 guestRankingState.getTitleBeingRanked(),
                 guestRankingState.getAuthorBeingRanked(),
                 guestRankingState.getBookshelf(),
@@ -2116,7 +2050,6 @@ public class BookController {
                 guestRankingState.getLowIndex(),
                 guestRankingState.getHighIndex()
             );
-            newRankingState.setIsbn13BeingRanked(guestRankingState.getIsbn13BeingRanked());
             newRankingState.setReviewBeingRanked(guestRankingState.getReviewBeingRanked());
             newRankingState.setReRank(guestRankingState.isReRank());
             newRankingState.setRemove(guestRankingState.isRemove());

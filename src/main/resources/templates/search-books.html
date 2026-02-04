@@ -26,7 +26,7 @@
           <strong th:if="${book.bookUrl() == null}" th:text="${book.title()}"></strong>
           <span th:text="' by ' + ${book.author()}"></span>
           <form th:action="@{/select-book}" method="POST" style="display: inline; margin-left: 10px;">
-            <input type="hidden" name="googleBooksId" th:value="${book.googleBooksId()}" />
+            <input type="hidden" name="workOlid" th:value="${book.workOlid()}" />
             <input type="hidden" name="bookName" th:value="${book.title()}" />
             <input type="hidden" name="author" th:value="${book.author()}" />
             <button type="submit" class="add-book-btn">+</button>

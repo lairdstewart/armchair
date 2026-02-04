@@ -14,18 +14,22 @@ public class Book {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String googleBooksId;
+    private String workOlid;
+    private String coverEditionOlid;
     @Column(nullable = false, length = 1000)
     private String title;
     @Column(nullable = false, length = 1000)
     private String author;
+    private Integer firstPublishYear;
 
     public Book() {}
 
-    public Book(String googleBooksId, String title, String author) {
-        this.googleBooksId = googleBooksId;
+    public Book(String workOlid, String coverEditionOlid, String title, String author, Integer firstPublishYear) {
+        this.workOlid = workOlid;
+        this.coverEditionOlid = coverEditionOlid;
         this.title = title;
         this.author = author;
+        this.firstPublishYear = firstPublishYear;
     }
 
     public Long getId() {
@@ -36,12 +40,20 @@ public class Book {
         this.id = id;
     }
 
-    public String getGoogleBooksId() {
-        return googleBooksId;
+    public String getWorkOlid() {
+        return workOlid;
     }
 
-    public void setGoogleBooksId(String googleBooksId) {
-        this.googleBooksId = googleBooksId;
+    public void setWorkOlid(String workOlid) {
+        this.workOlid = workOlid;
+    }
+
+    public String getCoverEditionOlid() {
+        return coverEditionOlid;
+    }
+
+    public void setCoverEditionOlid(String coverEditionOlid) {
+        this.coverEditionOlid = coverEditionOlid;
     }
 
     public String getTitle() {
@@ -58,6 +70,14 @@ public class Book {
 
     public void setAuthor(String author) {
         this.author = author;
+    }
+
+    public Integer getFirstPublishYear() {
+        return firstPublishYear;
+    }
+
+    public void setFirstPublishYear(Integer firstPublishYear) {
+        this.firstPublishYear = firstPublishYear;
     }
 
 }

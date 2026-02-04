@@ -13,12 +13,11 @@ public class RankingState {
     @Id
     private Long userId;
 
-    private String googleBooksIdBeingRanked;
+    private String workOlidBeingRanked;
     @Column(length = 1000)
     private String titleBeingRanked;
     @Column(length = 1000)
     private String authorBeingRanked;
-    private String isbn13BeingRanked;
     @Column(length = 5000)
     private String reviewBeingRanked;
 
@@ -41,11 +40,11 @@ public class RankingState {
 
     public RankingState() {}
 
-    public RankingState(Long userId, String googleBooksIdBeingRanked, String titleBeingRanked, String authorBeingRanked,
+    public RankingState(Long userId, String workOlidBeingRanked, String titleBeingRanked, String authorBeingRanked,
                         Bookshelf bookshelf, BookCategory category, Integer compareToIndex, Integer lowIndex,
                         Integer highIndex) {
         this.userId = userId;
-        this.googleBooksIdBeingRanked = googleBooksIdBeingRanked;
+        this.workOlidBeingRanked = workOlidBeingRanked;
         this.titleBeingRanked = titleBeingRanked;
         this.authorBeingRanked = authorBeingRanked;
         this.bookshelf = bookshelf;
@@ -63,12 +62,12 @@ public class RankingState {
         this.userId = userId;
     }
 
-    public String getGoogleBooksIdBeingRanked() {
-        return googleBooksIdBeingRanked;
+    public String getWorkOlidBeingRanked() {
+        return workOlidBeingRanked;
     }
 
-    public void setGoogleBooksIdBeingRanked(String googleBooksIdBeingRanked) {
-        this.googleBooksIdBeingRanked = googleBooksIdBeingRanked;
+    public void setWorkOlidBeingRanked(String workOlidBeingRanked) {
+        this.workOlidBeingRanked = workOlidBeingRanked;
     }
 
     public String getTitleBeingRanked() {
@@ -85,14 +84,6 @@ public class RankingState {
 
     public void setAuthorBeingRanked(String authorBeingRanked) {
         this.authorBeingRanked = authorBeingRanked;
-    }
-
-    public String getIsbn13BeingRanked() {
-        return isbn13BeingRanked;
-    }
-
-    public void setIsbn13BeingRanked(String isbn13BeingRanked) {
-        this.isbn13BeingRanked = isbn13BeingRanked;
     }
 
     public String getReviewBeingRanked() {

@@ -422,10 +422,10 @@
         <h3>Which version of <span th:text="${rankingState.titleBeingRanked}"></span> did you read?</h3>
         <div th:each="result : ${resolveResults}" style="margin-bottom: 10px;">
           <form th:action="@{/resolve-book}" method="POST" style="display: inline;">
-            <input type="hidden" name="googleBooksId" th:value="${result.googleBooksId()}" />
+            <input type="hidden" name="workOlid" th:value="${result.workOlid()}" />
             <input type="hidden" name="title" th:value="${result.title()}" />
             <input type="hidden" name="author" th:value="${result.author()}" />
-            <input type="hidden" name="isbn13" th:value="${result.isbn13()}" />
+            <input type="hidden" name="coverEditionOlid" th:value="${result.coverEditionOlid()}" />
             <button type="submit" class="book-number rerank">-&gt;</button>
           </form>
           <a th:href="${result.bookUrl()}" target="_blank" th:text="${result.title()}"></a>
@@ -441,16 +441,14 @@
         <form th:action="@{/choose}" method="POST">
           <div style="margin-bottom: 10px;">
             <button type="submit" name="choice" value="new" class="book-number rerank">-&gt;</button>
-            <a th:if="${rankingState.googleBooksIdBeingRanked != null}" th:href="${'https://books.google.com/books?id=' + rankingState.googleBooksIdBeingRanked}" target="_blank" th:text="${rankingState.titleBeingRanked}"></a>
-            <a th:if="${rankingState.googleBooksIdBeingRanked == null && rankingState.isbn13BeingRanked != null}" th:href="${'https://www.google.com/search?tbo=p&tbm=bks&q=isbn:' + rankingState.isbn13BeingRanked}" target="_blank" th:text="${rankingState.titleBeingRanked}"></a>
-            <a th:if="${rankingState.googleBooksIdBeingRanked == null && rankingState.isbn13BeingRanked == null}" th:href="${'https://www.google.com/search?udm=36&q=' + #uris.escapeQueryParam(rankingState.titleBeingRanked + ' ' + rankingState.authorBeingRanked)}" target="_blank" th:text="${rankingState.titleBeingRanked}"></a>
+            <a th:if="${rankingState.workOlidBeingRanked != null}" th:href="${'https://openlibrary.org/works/' + rankingState.workOlidBeingRanked}" target="_blank" th:text="${rankingState.titleBeingRanked}"></a>
+            <a th:if="${rankingState.workOlidBeingRanked == null}" th:href="${'https://www.google.com/search?udm=36&q=' + #uris.escapeQueryParam(rankingState.titleBeingRanked + ' ' + rankingState.authorBeingRanked)}" target="_blank" th:text="${rankingState.titleBeingRanked}"></a>
             <span th:if="${rankingState.authorBeingRanked != null && !rankingState.authorBeingRanked.isBlank()}" th:text="${', ' + rankingState.authorBeingRanked}"></span>
           </div>
           <div>
             <button type="submit" name="choice" value="existing" class="book-number rerank">-&gt;</button>
-            <a th:if="${comparisonBookGoogleId != null}" th:href="${'https://books.google.com/books?id=' + comparisonBookGoogleId}" target="_blank" th:text="${comparisonBookTitle}"></a>
-            <a th:if="${comparisonBookGoogleId == null && comparisonBookIsbn13 != null}" th:href="${'https://www.google.com/search?tbo=p&tbm=bks&q=isbn:' + comparisonBookIsbn13}" target="_blank" th:text="${comparisonBookTitle}"></a>
-            <a th:if="${comparisonBookGoogleId == null && comparisonBookIsbn13 == null}" th:href="${'https://www.google.com/search?udm=36&q=' + #uris.escapeQueryParam(comparisonBookTitle + ' ' + comparisonBookAuthor)}" target="_blank" th:text="${comparisonBookTitle}"></a>
+            <a th:if="${comparisonBookWorkOlid != null}" th:href="${'https://openlibrary.org/works/' + comparisonBookWorkOlid}" target="_blank" th:text="${comparisonBookTitle}"></a>
+            <a th:if="${comparisonBookWorkOlid == null}" th:href="${'https://www.google.com/search?udm=36&q=' + #uris.escapeQueryParam(comparisonBookTitle + ' ' + comparisonBookAuthor)}" target="_blank" th:text="${comparisonBookTitle}"></a>
             <span th:if="${comparisonBookAuthor != null && !comparisonBookAuthor.isBlank()}" th:text="${', ' + comparisonBookAuthor}"></span>
           </div>
         </form>

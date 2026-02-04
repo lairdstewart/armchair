@@ -12,14 +12,11 @@ import java.util.Optional;
 
 @Repository
 public interface BookRepository extends JpaRepository<Book, Long> {
-    Optional<Book> findByGoogleBooksId(String googleBooksId);
+    Optional<Book> findByWorkOlid(String workOlid);
 
-    @Query(value = "SELECT * FROM books WHERE google_books_id IS NOT NULL ORDER BY RANDOM() LIMIT 10", nativeQuery = true)
+    @Query(value = "SELECT * FROM books WHERE work_olid IS NOT NULL ORDER BY RANDOM() LIMIT 10", nativeQuery = true)
     List<Book> findRandom10Books();
 
-    @Query("SELECT b FROM Book b WHERE b.googleBooksId IS NOT NULL AND (LOWER(b.title) LIKE LOWER(CONCAT('%', :term, '%')) OR LOWER(b.author) LIKE LOWER(CONCAT('%', :term, '%')))")
+    @Query("SELECT b FROM Book b WHERE b.workOlid IS NOT NULL AND (LOWER(b.title) LIKE LOWER(CONCAT('%', :term, '%')) OR LOWER(b.author) LIKE LOWER(CONCAT('%', :term, '%')))")
     List<Book> searchByTitleOrAuthor(@Param("term") String term);
-
-    @Query("SELECT b FROM Book b WHERE LOWER(TRIM(b.title)) = LOWER(TRIM(:title)) AND LOWER(TRIM(b.author)) = LOWER(TRIM(:author))")
-    List<Book> findByNormalizedTitleAndAuthor(@Param("title") String title, @Param("author") String author);
 }

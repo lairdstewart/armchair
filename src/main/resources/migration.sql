@@ -124,3 +124,26 @@ UPDATE rankings SET bookshelf = 'WANT_TO_READ', category = 'UNRANKED' WHERE cate
 
 -- 19. Migrate want-to-read data in ranking_state
 UPDATE ranking_state SET bookshelf = 'WANT_TO_READ', category = 'UNRANKED' WHERE category = 'WANT_TO_READ';
+
+-- ============================================================================
+-- Migration: Replace Google Books API with Open Library API
+-- Rename google_books_id → work_olid, add cover_edition_olid + first_publish_year,
+-- drop book_isbns table, drop isbn13_being_ranked from ranking_state.
+-- Run this manually against the database BEFORE deploying the new code.
+-- ============================================================================
+
+-- 20. Rename google_books_id → work_olid in books
+ALTER TABLE books RENAME COLUMN google_books_id TO work_olid;
+
+-- 21. Add new columns to books
+ALTER TABLE books ADD COLUMN IF NOT EXISTS cover_edition_olid VARCHAR(255);
+ALTER TABLE books ADD COLUMN IF NOT EXISTS first_publish_year INTEGER;
+
+-- 22. Rename google_books_id_being_ranked → work_olid_being_ranked in ranking_state
+ALTER TABLE ranking_state RENAME COLUMN google_books_id_being_ranked TO work_olid_being_ranked;
+
+-- 23. Drop isbn13_being_ranked from ranking_state
+ALTER TABLE ranking_state DROP COLUMN IF EXISTS isbn13_being_ranked;
+
+-- 24. Drop book_isbns table
+DROP TABLE IF EXISTS book_isbns;

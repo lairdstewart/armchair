@@ -2,15 +2,13 @@ package armchair.tool;
 
 import armchair.entity.Book;
 import armchair.entity.BookCategory;
-import armchair.entity.BookIsbn;
 import armchair.entity.Bookshelf;
 import armchair.entity.Ranking;
 import armchair.entity.User;
-import armchair.repository.BookIsbnRepository;
 import armchair.repository.BookRepository;
 import armchair.repository.RankingRepository;
 import armchair.repository.UserRepository;
-import armchair.service.GoogleBooksService;
+import armchair.service.OpenLibraryService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
@@ -56,11 +54,10 @@ public class CuratedListImporter {
         try (ConfigurableApplicationContext context = app.run(args)) {
             UserRepository userRepository = context.getBean(UserRepository.class);
             BookRepository bookRepository = context.getBean(BookRepository.class);
-            BookIsbnRepository bookIsbnRepository = context.getBean(BookIsbnRepository.class);
             RankingRepository rankingRepository = context.getBean(RankingRepository.class);
-            GoogleBooksService googleBooksService = context.getBean(GoogleBooksService.class);
+            OpenLibraryService openLibraryService = context.getBean(OpenLibraryService.class);
 
-            importFromJson(filePath, userRepository, bookRepository, bookIsbnRepository, rankingRepository, googleBooksService);
+            importFromJson(filePath, userRepository, bookRepository, rankingRepository, openLibraryService);
         }
     }
 
@@ -154,8 +151,8 @@ public class CuratedListImporter {
     }
 
     private static void importFromJson(String path, UserRepository userRepository,
-                                        BookRepository bookRepository, BookIsbnRepository bookIsbnRepository,
-                                        RankingRepository rankingRepository, GoogleBooksService googleBooksService) {
+                                        BookRepository bookRepository,
+                                        RankingRepository rankingRepository, OpenLibraryService openLibraryService) {
         // Phase 1: parse and validate entire file before touching the database
         ParsedJsonList parsed = parseJsonFile(path);
         String username = parsed.username();
@@ -196,80 +193,61 @@ public class CuratedListImporter {
         fictionRanked.sort(Comparator.comparingInt(JsonBook::rank));
         nonfictionRanked.sort(Comparator.comparingInt(JsonBook::rank));
 
-        importJsonBooks(user.getId(), fictionRanked, bookRepository, bookIsbnRepository, rankingRepository, googleBooksService);
-        importJsonBooks(user.getId(), fictionUnranked, bookRepository, bookIsbnRepository, rankingRepository, googleBooksService);
-        importJsonBooks(user.getId(), nonfictionRanked, bookRepository, bookIsbnRepository, rankingRepository, googleBooksService);
-        importJsonBooks(user.getId(), nonfictionUnranked, bookRepository, bookIsbnRepository, rankingRepository, googleBooksService);
+        importJsonBooks(user.getId(), fictionRanked, bookRepository, rankingRepository, openLibraryService);
+        importJsonBooks(user.getId(), fictionUnranked, bookRepository, rankingRepository, openLibraryService);
+        importJsonBooks(user.getId(), nonfictionRanked, bookRepository, rankingRepository, openLibraryService);
+        importJsonBooks(user.getId(), nonfictionUnranked, bookRepository, rankingRepository, openLibraryService);
 
         log.info("Finished importing: {}", username);
     }
 
-    private static Book findOrCreateBook(String googleBooksId, String title, String author, String isbn13,
-                                          BookRepository bookRepository, BookIsbnRepository bookIsbnRepository) {
-        // 1. Try ISBN lookup via book_isbns table
-        if (isbn13 != null) {
-            List<BookIsbn> isbnMatches = bookIsbnRepository.findByIsbn13(isbn13);
-            if (!isbnMatches.isEmpty()) {
-                Book book = isbnMatches.get(0).getBook();
-                if (book != null) {
-                    if (book.getGoogleBooksId() == null && googleBooksId != null) {
-                        book.setGoogleBooksId(googleBooksId);
-                        bookRepository.save(book);
-                    }
-                    return book;
-                }
-            }
-        }
-
-        // 2. Try normalized title+author match
-        if (title != null && author != null) {
-            List<Book> titleAuthorMatches = bookRepository.findByNormalizedTitleAndAuthor(title, author);
-            if (!titleAuthorMatches.isEmpty()) {
-                Book book = titleAuthorMatches.get(0);
-                if (isbn13 != null && !bookIsbnRepository.existsByBookIdAndIsbn13(book.getId(), isbn13)) {
-                    bookIsbnRepository.save(new BookIsbn(book, isbn13));
-                }
-                if (book.getGoogleBooksId() == null && googleBooksId != null) {
-                    book.setGoogleBooksId(googleBooksId);
+    private static Book findOrCreateBook(String workOlid, String coverEditionOlid, String title, String author, Integer firstPublishYear,
+                                          BookRepository bookRepository) {
+        // Look up by workOlid
+        if (workOlid != null) {
+            var existing = bookRepository.findByWorkOlid(workOlid);
+            if (existing.isPresent()) {
+                Book book = existing.get();
+                if (book.getCoverEditionOlid() == null && coverEditionOlid != null) {
+                    book.setCoverEditionOlid(coverEditionOlid);
                     bookRepository.save(book);
                 }
                 return book;
             }
         }
 
-        // 3. No match — create new Book
-        Book book = bookRepository.save(new Book(googleBooksId, title, author));
-        if (isbn13 != null) {
-            bookIsbnRepository.save(new BookIsbn(book, isbn13));
-        }
-        return book;
+        // No match — create new Book
+        return bookRepository.save(new Book(workOlid, coverEditionOlid, title, author, firstPublishYear));
     }
 
     private static void importJsonBooks(Long userId, List<JsonBook> books,
-                                         BookRepository bookRepository, BookIsbnRepository bookIsbnRepository,
-                                         RankingRepository rankingRepository, GoogleBooksService googleBooksService) {
+                                         BookRepository bookRepository,
+                                         RankingRepository rankingRepository, OpenLibraryService openLibraryService) {
         int position = 0;
         for (JsonBook jb : books) {
-            List<GoogleBooksService.BookResult> results = googleBooksService.searchBooks(jb.title() + ", " + jb.author());
+            List<OpenLibraryService.BookResult> results = openLibraryService.searchBooks(jb.title() + ", " + jb.author());
 
-            String googleBooksId;
+            String workOlid;
+            String coverEditionOlid;
             String title;
             String author;
-            String isbn13;
+            Integer firstPublishYear;
             if (!results.isEmpty()) {
-                GoogleBooksService.BookResult firstResult = results.get(0);
-                googleBooksId = firstResult.googleBooksId();
+                OpenLibraryService.BookResult firstResult = results.get(0);
+                workOlid = firstResult.workOlid();
+                coverEditionOlid = firstResult.coverEditionOlid();
                 title = firstResult.title();
                 author = firstResult.author();
-                isbn13 = firstResult.isbn13();
+                firstPublishYear = firstResult.firstPublishYear();
             } else {
                 author = jb.author();
                 title = jb.title();
-                googleBooksId = null;
-                isbn13 = null;
+                workOlid = null;
+                coverEditionOlid = null;
+                firstPublishYear = null;
             }
 
-            Book book = findOrCreateBook(googleBooksId, title, author, isbn13, bookRepository, bookIsbnRepository);
+            Book book = findOrCreateBook(workOlid, coverEditionOlid, title, author, firstPublishYear, bookRepository);
 
             Ranking ranking = new Ranking(userId, book, jb.bookshelf(), jb.category(), position);
             if (jb.review() != null && !jb.review().isEmpty()) {

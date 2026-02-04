@@ -14,7 +14,7 @@ import java.util.List;
 public interface RankingRepository extends JpaRepository<Ranking, Long> {
     List<Ranking> findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(Long userId, Bookshelf bookshelf, BookCategory category);
     List<Ranking> findByUserIdAndBookshelfOrderByPositionAsc(Long userId, Bookshelf bookshelf);
-    boolean existsByUserIdAndBookGoogleBooksId(Long userId, String googleBooksId);
+    boolean existsByUserIdAndBookWorkOlid(Long userId, String workOlid);
     boolean existsByUserIdAndBookId(Long userId, Long bookId);
     @Modifying
     @Transactional
