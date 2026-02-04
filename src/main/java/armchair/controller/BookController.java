@@ -52,7 +52,7 @@ public class BookController {
     public record BookInfo(Long id, String workOlid, String title, String author, String review) {
         public String bookUrl() {
             if (workOlid != null) return "https://openlibrary.org/works/" + workOlid;
-            return "https://www.google.com/search?udm=36&q=" + java.net.URLEncoder.encode(title + " " + author, java.nio.charset.StandardCharsets.UTF_8);
+            return "https://openlibrary.org/search?q=" + java.net.URLEncoder.encode(title + " " + author, java.nio.charset.StandardCharsets.UTF_8);
         }
     }
     public record BookLists(List<BookInfo> liked, List<BookInfo> ok, List<BookInfo> disliked, List<BookInfo> unranked) {}
