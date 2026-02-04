@@ -1854,6 +1854,8 @@ public class BookController {
                     if (colonIndex >= 0) {
                         title = title.substring(0, colonIndex).trim();
                     }
+                    // Strip Goodreads series info like "(Dune #2)" or "(Harry Potter, #3)"
+                    title = title.replaceAll("\\s*\\([^)]*#\\d+\\)\\s*$", "").trim();
                     String author = fields.get(authorIndex).trim();
                     String review = reviewIndex >= 0 && reviewIndex < fields.size() ? fields.get(reviewIndex).trim() : "";
                     String exclusiveShelf = exclusiveShelfIndex >= 0 && exclusiveShelfIndex < fields.size() ? fields.get(exclusiveShelfIndex).trim() : "";
