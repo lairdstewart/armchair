@@ -2,6 +2,7 @@ package armchair.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -16,7 +17,9 @@ import java.util.List;
 public class OpenLibraryService {
     private static final Logger log = LoggerFactory.getLogger(OpenLibraryService.class);
 
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate = new RestTemplateBuilder()
+        .defaultHeader("User-Agent", "Armchair (armchair@lairdstewart.com)")
+        .build();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     public record BookResult(String workOlid, String coverEditionOlid, String title, String author, Integer firstPublishYear) {
