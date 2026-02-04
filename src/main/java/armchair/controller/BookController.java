@@ -1866,6 +1866,11 @@ public class BookController {
                 return "redirect:/import-goodreads?imported=0&skipped=0&failed=0";
             }
 
+            // Build lookup set of user's existing books by title+author for dedup
+            Set<String> existingBookKeys = rankingRepository.findByUserId(userId).stream()
+                .map(r -> r.getBook().getTitle().toLowerCase().trim() + "\0" + r.getBook().getAuthor().toLowerCase().trim())
+                .collect(Collectors.toSet());
+
             // Get current max positions for unranked and want-to-read rankings
             List<Ranking> existingUnranked = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(userId, Bookshelf.UNRANKED, BookCategory.UNRANKED);
             int nextUnrankedPosition = existingUnranked.size();
@@ -1895,6 +1900,13 @@ public class BookController {
                     String exclusiveShelf = exclusiveShelfIndex >= 0 && exclusiveShelfIndex < fields.size() ? fields.get(exclusiveShelfIndex).trim() : "";
                     boolean isToRead = "to-read".equals(exclusiveShelf) || "currently-reading".equals(exclusiveShelf);
                     if (title.isEmpty() || author.isEmpty()) continue;
+
+                    // Skip if user already has this book (by title+author, catches resolved books with changed titles)
+                    String importKey = title.toLowerCase().trim() + "\0" + author.toLowerCase().trim();
+                    if (existingBookKeys.contains(importKey)) {
+                        skipped++;
+                        continue;
+                    }
 
                     // Create unverified book (null workOlid)
                     Book book = findOrCreateBook(null, null, title, author, null);
