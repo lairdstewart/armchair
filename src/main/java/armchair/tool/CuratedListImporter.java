@@ -216,6 +216,14 @@ public class CuratedListImporter {
             }
         }
 
+        // For unverified books (null workOlid), check by title+author to avoid duplicates
+        if (workOlid == null) {
+            var existing = bookRepository.findByTitleAndAuthorIgnoreCase(title, author);
+            if (existing.isPresent()) {
+                return existing.get();
+            }
+        }
+
         // No match — create new Book
         return bookRepository.save(new Book(workOlid, coverEditionOlid, title, author, firstPublishYear));
     }
