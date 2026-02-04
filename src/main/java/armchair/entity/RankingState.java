@@ -41,6 +41,11 @@ public class RankingState {
     public RankingState() {}
 
     public RankingState(Long userId, String workOlidBeingRanked, String titleBeingRanked, String authorBeingRanked,
+                        Bookshelf bookshelf, BookCategory category) {
+        this(userId, workOlidBeingRanked, titleBeingRanked, authorBeingRanked, bookshelf, category, 0, 0, 0);
+    }
+
+    public RankingState(Long userId, String workOlidBeingRanked, String titleBeingRanked, String authorBeingRanked,
                         Bookshelf bookshelf, BookCategory category, Integer compareToIndex, Integer lowIndex,
                         Integer highIndex) {
         this.userId = userId;

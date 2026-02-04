@@ -604,7 +604,7 @@ public class BookController {
             return "redirect:/my-books";
         }
         restoreAbandonedBook(userId);
-        RankingState rankingState = new RankingState(userId, null, null, null, bookshlf, null, 0, 0, 0);
+        RankingState rankingState = new RankingState(userId, null, null, null, bookshlf, null);
         rankingState.setReRank(true);
         rankingStateRepository.save(rankingState);
         return "redirect:/my-books";
@@ -654,7 +654,7 @@ public class BookController {
             return "redirect:/my-books";
         }
         restoreAbandonedBook(userId);
-        RankingState rankingState = new RankingState(userId, null, null, null, bookshlf, null, 0, 0, 0);
+        RankingState rankingState = new RankingState(userId, null, null, null, bookshlf, null);
         rankingState.setRemove(true);
         rankingStateRepository.save(rankingState);
         return "redirect:/my-books";
@@ -667,7 +667,7 @@ public class BookController {
             return "redirect:/setup-username";
         }
         restoreAbandonedBook(userId);
-        RankingState rankingState = new RankingState(userId, null, null, null, Bookshelf.WANT_TO_READ, BookCategory.UNRANKED, 0, 0, 0);
+        RankingState rankingState = new RankingState(userId, null, null, null, Bookshelf.WANT_TO_READ, BookCategory.UNRANKED);
         rankingState.setRemove(true);
         rankingStateRepository.save(rankingState);
         return "redirect:/my-books?selectedBookshelf=WANT_TO_READ";
@@ -717,7 +717,7 @@ public class BookController {
 
         // Set up review mode directly
         restoreAbandonedBook(userId);
-        RankingState rankingState = new RankingState(userId, null, null, null, ranking.getBookshelf(), null, 0, 0, 0);
+        RankingState rankingState = new RankingState(userId, null, null, null, ranking.getBookshelf(), null);
         rankingState.setReview(true);
         rankingState.setBookIdBeingReviewed(bookId);
         rankingStateRepository.save(rankingState);
@@ -740,7 +740,7 @@ public class BookController {
 
         // Store book info in ranking state (including existing review)
         restoreAbandonedBook(userId);
-        RankingState rankingState = new RankingState(userId, ranking.getBook().getWorkOlid(), ranking.getBook().getTitle(), ranking.getBook().getAuthor(), ranking.getBookshelf(), null, 0, 0, 0);
+        RankingState rankingState = new RankingState(userId, ranking.getBook().getWorkOlid(), ranking.getBook().getTitle(), ranking.getBook().getAuthor(), ranking.getBookshelf(), null);
         rankingState.setReRank(true);
         rankingState.setReviewBeingRanked(ranking.getReview());
         rankingStateRepository.save(rankingState);
@@ -785,7 +785,7 @@ public class BookController {
         }
 
         // Store book info in ranking state for categorization
-        RankingState rankingState = new RankingState(userId, ranking.getBook().getWorkOlid(), ranking.getBook().getTitle(), ranking.getBook().getAuthor(), null, null, 0, 0, 0);
+        RankingState rankingState = new RankingState(userId, ranking.getBook().getWorkOlid(), ranking.getBook().getTitle(), ranking.getBook().getAuthor(), null, null);
         rankingStateRepository.save(rankingState);
 
         // Remove the ranking from want-to-read list and close the gap
@@ -856,7 +856,7 @@ public class BookController {
         } catch (IllegalArgumentException e) {
             return "redirect:/my-books";
         }
-        RankingState rankingState = new RankingState(userId, null, null, null, bookshlf, null, 0, 0, 0);
+        RankingState rankingState = new RankingState(userId, null, null, null, bookshlf, null);
         rankingState.setReview(true);
         rankingStateRepository.save(rankingState);
         return "redirect:/my-books";
@@ -1096,7 +1096,7 @@ public class BookController {
 
         // Set up RankingState for re-ranking the existing book through CATEGORIZE
         Book existingBook = existingRanking.getBook();
-        RankingState newState = new RankingState(userId, existingBook.getWorkOlid(), existingBook.getTitle(), existingBook.getAuthor(), null, null, 0, 0, 0);
+        RankingState newState = new RankingState(userId, existingBook.getWorkOlid(), existingBook.getTitle(), existingBook.getAuthor(), null, null);
         newState.setReRank(true);
         newState.setReviewBeingRanked(existingRanking.getReview());
         rankingStateRepository.save(newState);
@@ -1136,7 +1136,7 @@ public class BookController {
         RankingState rankingState = rankingStateRepository.findById(userId).orElse(null);
         if (rankingState == null) {
             // Create new RankingState for user coming from Search Books tab
-            rankingState = new RankingState(userId, null, null, null, null, null, 0, 0, 0);
+            rankingState = new RankingState(userId, null, null, null, null, null);
         }
 
         // Set the book info, leave category null to enter CATEGORIZE mode
@@ -1944,7 +1944,7 @@ public class BookController {
         }
 
         // Create RankingState for categorization (no bookshelf/category set — enters CATEGORIZE mode)
-        RankingState rankingState = new RankingState(userId, ranking.getBook().getWorkOlid(), ranking.getBook().getTitle(), ranking.getBook().getAuthor(), null, null, 0, 0, 0);
+        RankingState rankingState = new RankingState(userId, ranking.getBook().getWorkOlid(), ranking.getBook().getTitle(), ranking.getBook().getAuthor(), null, null);
         rankingState.setReviewBeingRanked(ranking.getReview());
         rankingStateRepository.save(rankingState);
 
@@ -1976,7 +1976,7 @@ public class BookController {
         Ranking nextBook = unrankedBooks.get(0);
 
         // Create RankingState for categorization
-        RankingState rankingState = new RankingState(userId, nextBook.getBook().getWorkOlid(), nextBook.getBook().getTitle(), nextBook.getBook().getAuthor(), null, null, 0, 0, 0);
+        RankingState rankingState = new RankingState(userId, nextBook.getBook().getWorkOlid(), nextBook.getBook().getTitle(), nextBook.getBook().getAuthor(), null, null);
         rankingState.setReviewBeingRanked(nextBook.getReview());
         rankingState.setRankAll(true);
         rankingStateRepository.save(rankingState);
