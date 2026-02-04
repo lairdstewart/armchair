@@ -12,6 +12,7 @@ import armchair.repository.FollowRepository;
 import armchair.repository.RankingRepository;
 import armchair.repository.RankingStateRepository;
 import armchair.repository.UserRepository;
+import armchair.service.BookService;
 import armchair.service.OpenLibraryService;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpSession;
@@ -99,60 +100,14 @@ public class BookController {
     @Autowired
     private OpenLibraryService openLibraryService;
 
-    private List<OpenLibraryService.BookResult> searchLocalBooks(String query) {
-        String[] words = query.trim().split("\\s+");
-        List<Book> candidates = null;
-        for (String word : words) {
-            if (word.isEmpty()) continue;
-            List<Book> matches = bookRepository.searchByTitleOrAuthor(word);
-            if (candidates == null) {
-                candidates = new ArrayList<>(matches);
-            } else {
-                Set<Long> matchIds = matches.stream().map(Book::getId).collect(Collectors.toSet());
-                candidates.removeIf(b -> !matchIds.contains(b.getId()));
-            }
-        }
-        if (candidates == null || candidates.isEmpty()) {
-            return List.of();
-        }
-        return candidates.stream()
-            .map(b -> new OpenLibraryService.BookResult(b.getWorkOlid(), b.getCoverEditionOlid(), b.getTitle(), b.getAuthor(), b.getFirstPublishYear()))
-            .toList();
-    }
-
-    private Book findOrCreateBook(String workOlid, String coverEditionOlid, String title, String author, Integer firstPublishYear) {
-        // Look up by workOlid
-        if (workOlid != null) {
-            var existing = bookRepository.findByWorkOlid(workOlid);
-            if (existing.isPresent()) {
-                Book book = existing.get();
-                // Enrich with coverEditionOlid if missing
-                if (book.getCoverEditionOlid() == null && coverEditionOlid != null) {
-                    book.setCoverEditionOlid(coverEditionOlid);
-                    bookRepository.save(book);
-                }
-                return book;
-            }
-        }
-
-        // For unverified books (null workOlid), check by title+author to avoid duplicates
-        if (workOlid == null) {
-            var matches = bookRepository.findByTitleAndAuthorIgnoreCase(title, author);
-            if (!matches.isEmpty()) {
-                // Prefer the verified book (has workOlid), fall back to first
-                return matches.stream().filter(b -> b.getWorkOlid() != null).findFirst().orElse(matches.get(0));
-            }
-        }
-
-        // No match — create new Book
-        return bookRepository.save(new Book(workOlid, coverEditionOlid, title, author, firstPublishYear));
-    }
+    @Autowired
+    private BookService bookService;
 
     private void restoreAbandonedBook(Long userId) {
         RankingState state = rankingStateRepository.findById(userId).orElse(null);
         if (state == null || state.getTitleBeingRanked() == null) return;
 
-        Book book = findOrCreateBook(state.getWorkOlidBeingRanked(),
+        Book book = bookService.findOrCreateBook(state.getWorkOlidBeingRanked(),
             null, state.getTitleBeingRanked(), state.getAuthorBeingRanked(), null);
 
         if (!rankingRepository.existsByUserIdAndBookId(userId, book.getId())) {
@@ -587,7 +542,7 @@ public class BookController {
         }
 
         // Insert the new ranking
-        Book book = findOrCreateBook(workOlid, null, title, author, null);
+        Book book = bookService.findOrCreateBook(workOlid, null, title, author, null);
         Ranking newRanking = new Ranking(userId, book, bookshelf, category, position);
         newRanking.setReview(review);
         rankingRepository.save(newRanking);
@@ -1023,7 +978,7 @@ public class BookController {
             return "redirect:/setup-username";
         }
 
-        List<OpenLibraryService.BookResult> results = searchLocalBooks(query);
+        List<OpenLibraryService.BookResult> results = bookService.searchLocalBooks(query);
         if (results.isEmpty()) {
             results = openLibraryService.searchBooks(query);
         }
@@ -1072,7 +1027,7 @@ public class BookController {
         // Check if user already has a ranking for a book with this workOlid
         if (rankingRepository.existsByUserIdAndBookWorkOlid(userId, workOlid)) {
             // Find the unverified book being ranked
-            Book unverifiedBook = findOrCreateBook(rankingState.getWorkOlidBeingRanked(),
+            Book unverifiedBook = bookService.findOrCreateBook(rankingState.getWorkOlidBeingRanked(),
                 null, rankingState.getTitleBeingRanked(), rankingState.getAuthorBeingRanked(), null);
             session.setAttribute("duplicateResolveTitle", title);
             session.setAttribute("duplicateResolveWorkOlid", workOlid);
@@ -1082,7 +1037,7 @@ public class BookController {
         }
 
         // Find the existing book and update it with the selected result's metadata
-        Book existingBook = findOrCreateBook(rankingState.getWorkOlidBeingRanked(),
+        Book existingBook = bookService.findOrCreateBook(rankingState.getWorkOlidBeingRanked(),
             null, rankingState.getTitleBeingRanked(), rankingState.getAuthorBeingRanked(), null);
         existingBook.setWorkOlid(workOlid);
         existingBook.setCoverEditionOlid(coverEditionOlid);
@@ -1275,7 +1230,7 @@ public class BookController {
         String redirectTo = isSafeRedirectUrl(returnUrl) ? "redirect:" + returnUrl : "redirect:/search?type=books";
 
         // Resolve the book
-        Book book = findOrCreateBook(workOlid, coverEditionOlid, bookName, author, null);
+        Book book = bookService.findOrCreateBook(workOlid, coverEditionOlid, bookName, author, null);
 
         // Check if book is already in user's library (any category)
         if (rankingRepository.existsByUserIdAndBookId(userId, book.getId())) {
@@ -1330,7 +1285,7 @@ public class BookController {
         if (currentList.isEmpty()) {
             // Category is empty, insert at the start
             boolean wasRankAll = rankingState.isRankAll();
-            Book book = findOrCreateBook(workOlid, null, bookName, author, null);
+            Book book = bookService.findOrCreateBook(workOlid, null, bookName, author, null);
             Ranking newRanking = new Ranking(userId, book, bookshelfEnum, bookCategory, 0);
             newRanking.setReview(trimmedReview);
             rankingRepository.save(newRanking);
@@ -1417,7 +1372,7 @@ public class BookController {
         boolean localResults = false;
         boolean moreResults = false;
         if ("books".equals(type) && query != null && !query.isBlank()) {
-            bookResults = searchLocalBooks(query);
+            bookResults = bookService.searchLocalBooks(query);
             if (bookResults.isEmpty()) {
                 bookResults = openLibraryService.searchBooks(query);
                 // Deduplicate by title+author (API can return multiple editions)
@@ -2036,7 +1991,7 @@ public class BookController {
                     }
 
                     // Create unverified book (null workOlid)
-                    Book book = findOrCreateBook(null, null, title, author, null);
+                    Book book = bookService.findOrCreateBook(null, null, title, author, null);
 
                     // Update title to stripped version if book was found with a subtitle
                     if (!title.equals(book.getTitle())) {

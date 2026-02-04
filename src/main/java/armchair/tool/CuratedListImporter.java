@@ -5,9 +5,9 @@ import armchair.entity.BookCategory;
 import armchair.entity.Bookshelf;
 import armchair.entity.Ranking;
 import armchair.entity.User;
-import armchair.repository.BookRepository;
 import armchair.repository.RankingRepository;
 import armchair.repository.UserRepository;
+import armchair.service.BookService;
 import armchair.service.OpenLibraryService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -53,11 +53,11 @@ public class CuratedListImporter {
 
         try (ConfigurableApplicationContext context = app.run(args)) {
             UserRepository userRepository = context.getBean(UserRepository.class);
-            BookRepository bookRepository = context.getBean(BookRepository.class);
+            BookService bookService = context.getBean(BookService.class);
             RankingRepository rankingRepository = context.getBean(RankingRepository.class);
             OpenLibraryService openLibraryService = context.getBean(OpenLibraryService.class);
 
-            importFromJson(filePath, userRepository, bookRepository, rankingRepository, openLibraryService);
+            importFromJson(filePath, userRepository, bookService, rankingRepository, openLibraryService);
         }
     }
 
@@ -151,7 +151,7 @@ public class CuratedListImporter {
     }
 
     private static void importFromJson(String path, UserRepository userRepository,
-                                        BookRepository bookRepository,
+                                        BookService bookService,
                                         RankingRepository rankingRepository, OpenLibraryService openLibraryService) {
         // Phase 1: parse and validate entire file before touching the database
         ParsedJsonList parsed = parseJsonFile(path);
@@ -193,44 +193,16 @@ public class CuratedListImporter {
         fictionRanked.sort(Comparator.comparingInt(JsonBook::rank));
         nonfictionRanked.sort(Comparator.comparingInt(JsonBook::rank));
 
-        importJsonBooks(user.getId(), fictionRanked, bookRepository, rankingRepository, openLibraryService);
-        importJsonBooks(user.getId(), fictionUnranked, bookRepository, rankingRepository, openLibraryService);
-        importJsonBooks(user.getId(), nonfictionRanked, bookRepository, rankingRepository, openLibraryService);
-        importJsonBooks(user.getId(), nonfictionUnranked, bookRepository, rankingRepository, openLibraryService);
+        importJsonBooks(user.getId(), fictionRanked, bookService, rankingRepository, openLibraryService);
+        importJsonBooks(user.getId(), fictionUnranked, bookService, rankingRepository, openLibraryService);
+        importJsonBooks(user.getId(), nonfictionRanked, bookService, rankingRepository, openLibraryService);
+        importJsonBooks(user.getId(), nonfictionUnranked, bookService, rankingRepository, openLibraryService);
 
         log.info("Finished importing: {}", username);
     }
 
-    private static Book findOrCreateBook(String workOlid, String coverEditionOlid, String title, String author, Integer firstPublishYear,
-                                          BookRepository bookRepository) {
-        // Look up by workOlid
-        if (workOlid != null) {
-            var existing = bookRepository.findByWorkOlid(workOlid);
-            if (existing.isPresent()) {
-                Book book = existing.get();
-                if (book.getCoverEditionOlid() == null && coverEditionOlid != null) {
-                    book.setCoverEditionOlid(coverEditionOlid);
-                    bookRepository.save(book);
-                }
-                return book;
-            }
-        }
-
-        // For unverified books (null workOlid), check by title+author to avoid duplicates
-        if (workOlid == null) {
-            var matches = bookRepository.findByTitleAndAuthorIgnoreCase(title, author);
-            if (!matches.isEmpty()) {
-                // Prefer the verified book (has workOlid), fall back to first
-                return matches.stream().filter(b -> b.getWorkOlid() != null).findFirst().orElse(matches.get(0));
-            }
-        }
-
-        // No match — create new Book
-        return bookRepository.save(new Book(workOlid, coverEditionOlid, title, author, firstPublishYear));
-    }
-
     private static void importJsonBooks(Long userId, List<JsonBook> books,
-                                         BookRepository bookRepository,
+                                         BookService bookService,
                                          RankingRepository rankingRepository, OpenLibraryService openLibraryService) {
         int position = 0;
         for (JsonBook jb : books) {
@@ -256,7 +228,7 @@ public class CuratedListImporter {
                 firstPublishYear = null;
             }
 
-            Book book = findOrCreateBook(workOlid, coverEditionOlid, title, author, firstPublishYear, bookRepository);
+            Book book = bookService.findOrCreateBook(workOlid, coverEditionOlid, title, author, firstPublishYear);
 
             Ranking ranking = new Ranking(userId, book, jb.bookshelf(), jb.category(), position);
             if (jb.review() != null && !jb.review().isEmpty()) {
