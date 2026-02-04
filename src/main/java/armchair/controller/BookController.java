@@ -197,8 +197,8 @@ public class BookController {
             if (user != null) {
                 return user.getId();
             }
-            // User is authenticated but hasn't set up username yet - return null to signal setup needed
-            return null;
+            // User is authenticated but hasn't set up username yet — fall through to guest mode
+            // They'll be prompted to set up username when they visit Profile
         }
 
         // Guest user - get or create from session
@@ -240,29 +240,6 @@ public class BookController {
     @GetMapping("/my-books")
     public String showPage(Model model, HttpSession session, @RequestParam(required = false) String selectedBookshelf) {
         Long userId = getCurrentUserId(session);
-
-        // If user is authenticated via OAuth but hasn't set up username, use guest mode for now
-        // They'll be prompted to set up username when they click Profile
-        if (userId == null && getOauthSubject() != null) {
-            // Check if they already have a guest session (from before OAuth login)
-            Long existingGuestId = (Long) session.getAttribute(SESSION_GUEST_USER_ID);
-            if (existingGuestId != null) {
-                User existingGuest = userRepository.findById(existingGuestId).orElse(null);
-                if (existingGuest != null && existingGuest.isGuest()) {
-                    // Reuse existing guest session
-                    userId = existingGuestId;
-                }
-            }
-
-            // If no existing guest session, create a new one
-            if (userId == null) {
-                User tempGuest = new User("guest");
-                tempGuest.setGuest(true);
-                userRepository.save(tempGuest);
-                session.setAttribute(SESSION_GUEST_USER_ID, tempGuest.getId());
-                userId = tempGuest.getId();
-            }
-        }
 
         addNavigationAttributes(model, "list");
 
