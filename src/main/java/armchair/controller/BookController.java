@@ -1463,38 +1463,27 @@ public class BookController {
         return userBooks;
     }
 
-    private ProfileDisplay createProfileDisplay(User user) {
-        long fictionCount = 0;
-        long nonfictionCount = 0;
+    private long countBooksByBookshelf(Long userId, Bookshelf bookshelf) {
+        long count = 0;
         for (BookCategory category : BookCategory.values()) {
-            fictionCount += rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(
-                user.getId(), Bookshelf.FICTION, category).size();
-            nonfictionCount += rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(
-                user.getId(), Bookshelf.NONFICTION, category).size();
+            count += rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(userId, bookshelf, category).size();
         }
+        return count;
+    }
 
-        String stats = String.format(" | %d fiction | %d non-fiction",
-            fictionCount, nonfictionCount);
+    private String formatBookStats(Long userId) {
+        return String.format(" | %d fiction | %d non-fiction",
+            countBooksByBookshelf(userId, Bookshelf.FICTION),
+            countBooksByBookshelf(userId, Bookshelf.NONFICTION));
+    }
 
-        return new ProfileDisplay(user.getUsername(), stats);
+    private ProfileDisplay createProfileDisplay(User user) {
+        return new ProfileDisplay(user.getUsername(), formatBookStats(user.getId()));
     }
 
     private ProfileDisplayWithFollow createProfileDisplayWithFollow(User user, Long currentUserId) {
-        long fictionCount = 0;
-        long nonfictionCount = 0;
-        for (BookCategory category : BookCategory.values()) {
-            fictionCount += rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(
-                user.getId(), Bookshelf.FICTION, category).size();
-            nonfictionCount += rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(
-                user.getId(), Bookshelf.NONFICTION, category).size();
-        }
-
-        String stats = String.format(" | %d fiction | %d non-fiction",
-            fictionCount, nonfictionCount);
-
         boolean isFollowing = currentUserId != null && followRepository.existsByFollowerIdAndFollowedId(currentUserId, user.getId());
-
-        return new ProfileDisplayWithFollow(user.getUsername(), stats, user.getId(), isFollowing);
+        return new ProfileDisplayWithFollow(user.getUsername(), formatBookStats(user.getId()), user.getId(), isFollowing);
     }
 
     @GetMapping("/curated-lists")
@@ -1574,13 +1563,8 @@ public class BookController {
 
         addNavigationAttributes(model, "profile");
 
-        // Count fiction and non-fiction books
-        long fictionCount = 0;
-        long nonfictionCount = 0;
-        for (BookCategory category : BookCategory.values()) {
-            fictionCount += rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(userId, Bookshelf.FICTION, category).size();
-            nonfictionCount += rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(userId, Bookshelf.NONFICTION, category).size();
-        }
+        long fictionCount = countBooksByBookshelf(userId, Bookshelf.FICTION);
+        long nonfictionCount = countBooksByBookshelf(userId, Bookshelf.NONFICTION);
 
         model.addAttribute("username", user.getUsername());
         model.addAttribute("signupDate", user.getSignupDate());
