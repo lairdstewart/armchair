@@ -155,6 +155,12 @@ public class BookController {
         closePositionGap(userId, ranking.getBookshelf(), ranking.getCategory(), removedPosition);
     }
 
+    private static void clearDuplicateResolveSession(HttpSession session) {
+        session.removeAttribute("duplicateResolveTitle");
+        session.removeAttribute("duplicateResolveWorkOlid");
+        session.removeAttribute("duplicateResolveBookId");
+    }
+
     private Ranking findRankingForUser(Long bookId, Long userId) {
         Ranking ranking = rankingRepository.findById(bookId).orElse(null);
         if (ranking == null || !ranking.getUserId().equals(userId)) {
@@ -265,9 +271,7 @@ public class BookController {
             rankingStateRepository.deleteById(userId);
             session.removeAttribute("bookSearchResults");
             session.removeAttribute("skipResolve");
-            session.removeAttribute("duplicateResolveTitle");
-            session.removeAttribute("duplicateResolveWorkOlid");
-            session.removeAttribute("duplicateResolveBookId");
+            clearDuplicateResolveSession(session);
         }
         return "redirect:/my-books";
     }
@@ -1056,9 +1060,7 @@ public class BookController {
         }
 
         Long unverifiedBookId = (Long) session.getAttribute("duplicateResolveBookId");
-        session.removeAttribute("duplicateResolveTitle");
-        session.removeAttribute("duplicateResolveWorkOlid");
-        session.removeAttribute("duplicateResolveBookId");
+        clearDuplicateResolveSession(session);
 
         // Delete ranking state
         rankingStateRepository.deleteById(userId);
@@ -1082,9 +1084,7 @@ public class BookController {
 
         Long unverifiedBookId = (Long) session.getAttribute("duplicateResolveBookId");
         String duplicateWorkOlid = (String) session.getAttribute("duplicateResolveWorkOlid");
-        session.removeAttribute("duplicateResolveTitle");
-        session.removeAttribute("duplicateResolveWorkOlid");
-        session.removeAttribute("duplicateResolveBookId");
+        clearDuplicateResolveSession(session);
         session.removeAttribute("skipResolve");
 
         // Clean up the unverified book
