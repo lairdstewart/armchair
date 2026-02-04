@@ -21,5 +21,5 @@ public interface BookRepository extends JpaRepository<Book, Long> {
     List<Book> searchByTitleOrAuthor(@Param("term") String term);
 
     @Query("SELECT b FROM Book b WHERE LOWER(TRIM(b.title)) = LOWER(TRIM(:title)) AND LOWER(TRIM(b.author)) = LOWER(TRIM(:author))")
-    Optional<Book> findByTitleAndAuthorIgnoreCase(@Param("title") String title, @Param("author") String author);
+    List<Book> findByTitleAndAuthorIgnoreCase(@Param("title") String title, @Param("author") String author);
 }

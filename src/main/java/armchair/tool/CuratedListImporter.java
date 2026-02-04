@@ -218,9 +218,13 @@ public class CuratedListImporter {
 
         // For unverified books (null workOlid), check by title+author to avoid duplicates
         if (workOlid == null) {
-            var existing = bookRepository.findByTitleAndAuthorIgnoreCase(title, author);
-            if (existing.isPresent()) {
-                return existing.get();
+            var matches = bookRepository.findByTitleAndAuthorIgnoreCase(title, author);
+            if (!matches.isEmpty()) {
+                if (matches.size() > 1) {
+                    log.error("Multiple books found for title=\"{}\" author=\"{}\": {} rows", title, author, matches.size());
+                }
+                // Prefer the verified book (has workOlid), fall back to first
+                return matches.stream().filter(b -> b.getWorkOlid() != null).findFirst().orElse(matches.get(0));
             }
         }
 
