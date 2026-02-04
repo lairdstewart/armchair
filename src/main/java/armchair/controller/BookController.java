@@ -155,6 +155,14 @@ public class BookController {
         closePositionGap(userId, ranking.getBookshelf(), ranking.getCategory(), removedPosition);
     }
 
+    private Ranking findRankingForUser(Long bookId, Long userId) {
+        Ranking ranking = rankingRepository.findById(bookId).orElse(null);
+        if (ranking == null || !ranking.getUserId().equals(userId)) {
+            return null;
+        }
+        return ranking;
+    }
+
     private void restoreAbandonedBook(Long userId) {
         RankingState state = rankingStateRepository.findById(userId).orElse(null);
         if (state == null || state.getTitleBeingRanked() == null) return;
@@ -619,8 +627,8 @@ public class BookController {
         }
 
         // Find the ranking and verify it belongs to this user
-        Ranking ranking = rankingRepository.findById(bookId).orElse(null);
-        if (ranking == null || !ranking.getUserId().equals(userId)) {
+        Ranking ranking = findRankingForUser(bookId, userId);
+        if (ranking == null) {
             return "redirect:/my-books";
         }
 
@@ -682,8 +690,8 @@ public class BookController {
         }
 
         // Find the ranking and verify it belongs to this user
-        Ranking ranking = rankingRepository.findById(bookId).orElse(null);
-        if (ranking == null || !ranking.getUserId().equals(userId) || ranking.getBookshelf() != Bookshelf.WANT_TO_READ) {
+        Ranking ranking = findRankingForUser(bookId, userId);
+        if (ranking == null || ranking.getBookshelf() != Bookshelf.WANT_TO_READ) {
             return "redirect:/my-books?selectedBookshelf=WANT_TO_READ";
         }
 
@@ -710,8 +718,8 @@ public class BookController {
             return "redirect:/setup-username";
         }
 
-        Ranking ranking = rankingRepository.findById(bookId).orElse(null);
-        if (ranking == null || !ranking.getUserId().equals(userId)) {
+        Ranking ranking = findRankingForUser(bookId, userId);
+        if (ranking == null) {
             return "redirect:/my-books";
         }
 
@@ -733,8 +741,8 @@ public class BookController {
             return "redirect:/setup-username";
         }
 
-        Ranking ranking = rankingRepository.findById(bookId).orElse(null);
-        if (ranking == null || !ranking.getUserId().equals(userId)) {
+        Ranking ranking = findRankingForUser(bookId, userId);
+        if (ranking == null) {
             return "redirect:/my-books";
         }
 
@@ -759,8 +767,8 @@ public class BookController {
             return "redirect:/setup-username";
         }
 
-        Ranking ranking = rankingRepository.findById(bookId).orElse(null);
-        if (ranking == null || !ranking.getUserId().equals(userId)) {
+        Ranking ranking = findRankingForUser(bookId, userId);
+        if (ranking == null) {
             return "redirect:/my-books";
         }
 
@@ -779,8 +787,8 @@ public class BookController {
         }
 
         // Find the ranking and verify it belongs to this user and is in want-to-read
-        Ranking ranking = rankingRepository.findById(bookId).orElse(null);
-        if (ranking == null || !ranking.getUserId().equals(userId) || ranking.getBookshelf() != Bookshelf.WANT_TO_READ) {
+        Ranking ranking = findRankingForUser(bookId, userId);
+        if (ranking == null || ranking.getBookshelf() != Bookshelf.WANT_TO_READ) {
             return "redirect:/my-books?selectedBookshelf=WANT_TO_READ";
         }
 
@@ -803,8 +811,8 @@ public class BookController {
         }
 
         // Find the ranking and verify it belongs to this user and is in want-to-read
-        Ranking ranking = rankingRepository.findById(bookId).orElse(null);
-        if (ranking == null || !ranking.getUserId().equals(userId) || ranking.getBookshelf() != Bookshelf.WANT_TO_READ) {
+        Ranking ranking = findRankingForUser(bookId, userId);
+        if (ranking == null || ranking.getBookshelf() != Bookshelf.WANT_TO_READ) {
             return "redirect:/my-books?selectedBookshelf=WANT_TO_READ";
         }
 
@@ -823,8 +831,8 @@ public class BookController {
         }
 
         // Find the ranking and verify it belongs to this user
-        Ranking ranking = rankingRepository.findById(bookId).orElse(null);
-        if (ranking == null || !ranking.getUserId().equals(userId)) {
+        Ranking ranking = findRankingForUser(bookId, userId);
+        if (ranking == null) {
             return "redirect:/my-books";
         }
 
@@ -870,8 +878,8 @@ public class BookController {
         }
 
         // Find the ranking and verify it belongs to this user
-        Ranking ranking = rankingRepository.findById(bookId).orElse(null);
-        if (ranking == null || !ranking.getUserId().equals(userId)) {
+        Ranking ranking = findRankingForUser(bookId, userId);
+        if (ranking == null) {
             return "redirect:/my-books";
         }
 
@@ -1938,8 +1946,8 @@ public class BookController {
             return "redirect:/setup-username";
         }
 
-        Ranking ranking = rankingRepository.findById(bookId).orElse(null);
-        if (ranking == null || !ranking.getUserId().equals(userId) || ranking.getBookshelf() != Bookshelf.UNRANKED) {
+        Ranking ranking = findRankingForUser(bookId, userId);
+        if (ranking == null || ranking.getBookshelf() != Bookshelf.UNRANKED) {
             return "redirect:/my-books?selectedBookshelf=UNRANKED";
         }
 
