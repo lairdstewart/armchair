@@ -243,6 +243,13 @@ public class BookController {
 
         addNavigationAttributes(model, "list");
 
+        // Show resolve warning if any (one-time, cleared after display)
+        String resolveWarning = (String) session.getAttribute("resolveWarning");
+        if (resolveWarning != null) {
+            model.addAttribute("resolveWarning", resolveWarning);
+            session.removeAttribute("resolveWarning");
+        }
+
         RankingState rankingState = rankingStateRepository.findById(userId).orElse(null);
         Mode mode = determineMode(rankingState);
 
@@ -264,6 +271,36 @@ public class BookController {
                 if (!resolveResults.isEmpty()) {
                     mode = Mode.RESOLVE;
                     model.addAttribute("resolveResults", resolveResults);
+                } else if (skipResolve == null) {
+                    // First attempt returned nothing — try expanded (10 results) immediately
+                    resolveResults = openLibraryService.searchByTitleAndAuthor(
+                        rankingState.getTitleBeingRanked(),
+                        rankingState.getAuthorBeingRanked(),
+                        10);
+                    seen.clear();
+                    resolveResults = resolveResults.stream()
+                        .filter(r -> seen.add((r.title() + "\0" + r.author()).toLowerCase()))
+                        .toList();
+                    if (!resolveResults.isEmpty()) {
+                        mode = Mode.RESOLVE;
+                        model.addAttribute("resolveResults", resolveResults);
+                    } else {
+                        // No results at all — warn the user and abandon ranking
+                        String title = rankingState.getTitleBeingRanked();
+                        log.warn("RESOLVE failed: no Open Library results for \"{}\" by {}", title, rankingState.getAuthorBeingRanked());
+                        rankingStateRepository.delete(rankingState);
+                        session.removeAttribute("skipResolve");
+                        session.setAttribute("resolveWarning", title);
+                        return "redirect:/my-books?selectedBookshelf=UNRANKED";
+                    }
+                } else {
+                    // Expanded attempt also returned nothing — warn and abandon
+                    String title = rankingState.getTitleBeingRanked();
+                    log.warn("RESOLVE failed: no Open Library results for \"{}\" by {}", title, rankingState.getAuthorBeingRanked());
+                    rankingStateRepository.delete(rankingState);
+                    session.removeAttribute("skipResolve");
+                    session.setAttribute("resolveWarning", title);
+                    return "redirect:/my-books?selectedBookshelf=UNRANKED";
                 }
             }
         }

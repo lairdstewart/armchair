@@ -7,6 +7,9 @@
   <body>
     <div th:replace="~{fragments :: navbar}"></div>
     <div class="page-content">
+    <div th:if="${resolveWarning != null}" style="margin-bottom: 15px; padding: 10px; border: 1px solid #cc8800; background: #fff8e0;">
+      We were unable to add <strong th:text="${resolveWarning}"></strong> automatically, you'll have to search for it and add it yourself.
+    </div>
     <div th:switch="${mode.name()}">
       <div th:case="'LIST'">
         <!-- Type selector radio buttons -->
