@@ -76,6 +76,12 @@ public class BookController {
     private static final String SESSION_GUEST_USER_ID = "guestUserId";
     private static final int MAX_REVIEW_LENGTH = 5000;
     private static final int MAX_IMPORT_ROWS = 10000;
+    private static String trimReview(String review) {
+        if (review == null || review.isBlank()) return null;
+        String trimmed = review.trim();
+        return trimmed.length() > MAX_REVIEW_LENGTH ? trimmed.substring(0, MAX_REVIEW_LENGTH) : trimmed;
+    }
+
     private static final java.util.regex.Pattern USERNAME_PATTERN = java.util.regex.Pattern.compile("^[a-zA-Z0-9_-]+$");
 
     /**
@@ -909,11 +915,7 @@ public class BookController {
         // Find the ranking and update its review
         Ranking ranking = rankingRepository.findById(rankingState.getBookIdBeingReviewed()).orElse(null);
         if (ranking != null && ranking.getUserId().equals(userId)) {
-            // Trim review, treat empty as null, and limit length
-            String trimmedReview = (review != null && !review.isBlank()) ? review.trim() : null;
-            if (trimmedReview != null && trimmedReview.length() > MAX_REVIEW_LENGTH) {
-                trimmedReview = trimmedReview.substring(0, MAX_REVIEW_LENGTH);
-            }
+            String trimmedReview = trimReview(review);
             ranking.setReview(trimmedReview);
             rankingRepository.save(ranking);
         }
@@ -1211,11 +1213,7 @@ public class BookController {
         String workOlid = rankingState.getWorkOlidBeingRanked();
         String bookName = rankingState.getTitleBeingRanked();
         String author = rankingState.getAuthorBeingRanked();
-        // Trim review, treat empty as null, and limit length
-        String trimmedReview = (review != null && !review.isBlank()) ? review.trim() : null;
-        if (trimmedReview != null && trimmedReview.length() > MAX_REVIEW_LENGTH) {
-            trimmedReview = trimmedReview.substring(0, MAX_REVIEW_LENGTH);
-        }
+        String trimmedReview = trimReview(review);
 
         Bookshelf bookshelfEnum;
         BookCategory bookCategory;
@@ -1897,11 +1895,7 @@ public class BookController {
                     if (rankingRepository.existsByUserIdAndBookId(userId, book.getId())) {
                         skipped++;
                     } else {
-                        // Trim review
-                        String trimmedReview = (review != null && !review.isBlank()) ? review.trim() : null;
-                        if (trimmedReview != null && trimmedReview.length() > MAX_REVIEW_LENGTH) {
-                            trimmedReview = trimmedReview.substring(0, MAX_REVIEW_LENGTH);
-                        }
+                        String trimmedReview = trimReview(review);
 
                         Ranking newRanking;
                         if (isToRead) {
