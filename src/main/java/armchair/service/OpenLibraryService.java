@@ -8,6 +8,7 @@ import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -59,7 +60,8 @@ public class OpenLibraryService {
                 maxResults
             );
 
-            String response = restTemplate.getForObject(url, String.class);
+            // Use URI.create to prevent RestTemplate from re-encoding already-encoded params
+            String response = restTemplate.getForObject(URI.create(url), String.class);
             JsonNode root = objectMapper.readTree(response);
             JsonNode docs = root.get("docs");
 
@@ -137,7 +139,7 @@ public class OpenLibraryService {
     private String fetchEnglishAuthorName(String authorKey) {
         try {
             String url = "https://openlibrary.org/authors/" + authorKey + ".json";
-            String response = restTemplate.getForObject(url, String.class);
+            String response = restTemplate.getForObject(URI.create(url), String.class);
             JsonNode author = objectMapper.readTree(response);
 
             // Try personal_name (often "Last, First" format)
