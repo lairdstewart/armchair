@@ -139,9 +139,6 @@ public class BookController {
         if (workOlid == null) {
             var matches = bookRepository.findByTitleAndAuthorIgnoreCase(title, author);
             if (!matches.isEmpty()) {
-                if (matches.size() > 1) {
-                    log.error("Multiple books found for title=\"{}\" author=\"{}\": {} rows", title, author, matches.size());
-                }
                 // Prefer the verified book (has workOlid), fall back to first
                 return matches.stream().filter(b -> b.getWorkOlid() != null).findFirst().orElse(matches.get(0));
             }
