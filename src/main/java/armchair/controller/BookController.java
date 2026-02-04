@@ -1739,13 +1739,6 @@ public class BookController {
                                        @RequestParam(required = false) Integer skipped,
                                        @RequestParam(required = false) Integer failed) {
         Long userId = getCurrentUserId(session);
-        if (userId == null) {
-            return "redirect:/setup-username";
-        }
-        User user = userRepository.findById(userId).orElse(null);
-        if (user == null || user.isGuest()) {
-            return "redirect:/";
-        }
         addNavigationAttributes(model, "profile");
         if (imported != null) {
             String message = "Successfully imported " + imported + " books";
@@ -1764,13 +1757,6 @@ public class BookController {
     @PostMapping("/import-goodreads")
     public String importGoodreads(@RequestParam("file") MultipartFile file, HttpSession session) {
         Long userId = getCurrentUserId(session);
-        if (userId == null) {
-            return "redirect:/setup-username";
-        }
-        User user = userRepository.findById(userId).orElse(null);
-        if (user == null || user.isGuest()) {
-            return "redirect:/";
-        }
 
         int imported = 0;
         int skipped = 0;
