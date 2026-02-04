@@ -2024,16 +2024,9 @@ public class BookController {
 
     private void migrateGuestDataToUser(Long guestUserId, Long newUserId) {
         // Migrate all rankings from guest to new user
-        for (Bookshelf bookshelf : Bookshelf.values()) {
-            for (BookCategory category : BookCategory.values()) {
-                List<Ranking> guestRankings = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(
-                    guestUserId, bookshelf, category
-                );
-                for (Ranking ranking : guestRankings) {
-                    ranking.setUserId(newUserId);
-                    rankingRepository.save(ranking);
-                }
-            }
+        for (Ranking ranking : rankingRepository.findByUserId(guestUserId)) {
+            ranking.setUserId(newUserId);
+            rankingRepository.save(ranking);
         }
 
         // Migrate ranking state if exists
