@@ -78,6 +78,27 @@ public class BookController {
     private static final int MAX_IMPORT_ROWS = 10000;
     private static final java.util.regex.Pattern USERNAME_PATTERN = java.util.regex.Pattern.compile("^[a-zA-Z0-9_-]+$");
 
+    /**
+     * Validates a username. Returns an error message if invalid, or null if valid.
+     * The username must be non-blank, at most 50 characters, alphanumeric with hyphens/underscores,
+     * and not already taken.
+     */
+    private String validateUsername(String username) {
+        if (username == null || username.isBlank()) {
+            return "Username cannot be empty";
+        }
+        if (username.trim().length() > 50) {
+            return "Username must be fewer than 50 characters";
+        }
+        if (!USERNAME_PATTERN.matcher(username.trim()).matches()) {
+            return "Username can only contain letters, numbers, hyphens, and underscores";
+        }
+        if (userRepository.existsByUsername(username.trim())) {
+            return "Username already taken";
+        }
+        return null;
+    }
+
     private static boolean isSafeRedirectUrl(String url) {
         return url != null && url.startsWith("/") && !url.contains("://") && !url.contains("//");
     }
@@ -1679,34 +1700,15 @@ public class BookController {
 
         addNavigationAttributes(model, "setup");
 
-        // Validate username
-        if (username == null || username.isBlank()) {
-            model.addAttribute("error", "Username cannot be empty");
+        String validationError = validateUsername(username);
+        if (validationError != null) {
+            model.addAttribute("error", validationError);
+            if (username != null && !username.isBlank()) {
+                model.addAttribute("username", username.trim());
+            }
             return "setup-username";
         }
-
         username = username.trim();
-
-        // Check length
-        if (username.length() > 50) {
-            model.addAttribute("error", "Username must be fewer than 50 characters");
-            model.addAttribute("username", username);
-            return "setup-username";
-        }
-
-        // Check characters
-        if (!USERNAME_PATTERN.matcher(username).matches()) {
-            model.addAttribute("error", "Username can only contain letters, numbers, hyphens, and underscores");
-            model.addAttribute("username", username);
-            return "setup-username";
-        }
-
-        // Check if username already exists
-        if (userRepository.existsByUsername(username)) {
-            model.addAttribute("error", "Username already taken");
-            model.addAttribute("username", username);
-            return "setup-username";
-        }
 
         // Create user with chosen username and OAuth subject
         User newUser = new User(username, oauthSubject);
@@ -1764,36 +1766,18 @@ public class BookController {
 
         addNavigationAttributes(model, "profile");
 
-        if (username == null || username.isBlank()) {
-            model.addAttribute("error", "Username cannot be empty");
-            model.addAttribute("username", user.getUsername());
-            return "change-username";
-        }
-
-        username = username.trim();
-
-        if (username.length() > 50) {
-            model.addAttribute("error", "Username must be fewer than 50 characters");
-            model.addAttribute("username", username);
-            return "change-username";
-        }
-
-        if (!USERNAME_PATTERN.matcher(username).matches()) {
-            model.addAttribute("error", "Username can only contain letters, numbers, hyphens, and underscores");
-            model.addAttribute("username", username);
-            return "change-username";
-        }
-
         // If same as current, just redirect back
-        if (username.equals(user.getUsername())) {
+        if (username != null && username.trim().equals(user.getUsername())) {
             return "redirect:/my-profile";
         }
 
-        if (userRepository.existsByUsername(username)) {
-            model.addAttribute("error", "Username already taken");
-            model.addAttribute("username", username);
+        String validationError = validateUsername(username);
+        if (validationError != null) {
+            model.addAttribute("error", validationError);
+            model.addAttribute("username", username != null && !username.isBlank() ? username.trim() : user.getUsername());
             return "change-username";
         }
+        username = username.trim();
 
         user.setUsername(username);
         try {
