@@ -271,6 +271,11 @@ public class BookController {
                 if (!resolveResults.isEmpty()) {
                     mode = Mode.RESOLVE;
                     model.addAttribute("resolveResults", resolveResults);
+                    // If API returned fewer results than requested, expanding won't help —
+                    // next "None of these" click should abandon immediately
+                    if (skipResolve == null && resolveResults.size() < maxResults) {
+                        session.setAttribute("skipResolve", "expanded");
+                    }
                 } else if (skipResolve == null) {
                     // First attempt returned nothing — try expanded (10 results) immediately
                     resolveResults = openLibraryService.searchByTitleAndAuthor(
@@ -1050,12 +1055,18 @@ public class BookController {
     public String skipResolve(HttpSession session) {
         Object current = session.getAttribute("skipResolve");
         if ("expanded".equals(current)) {
-            session.setAttribute("skipResolve", "skip");
+            // User rejected all results — abandon ranking and warn
             Long userId = getCurrentUserId(session);
             RankingState rs = rankingStateRepository.findById(userId).orElse(null);
+            String title = "unknown book";
             if (rs != null) {
-                log.warn("Book resolution skipped for: {} by {}", rs.getTitleBeingRanked(), rs.getAuthorBeingRanked());
+                title = rs.getTitleBeingRanked();
+                log.warn("RESOLVE failed: user rejected all results for \"{}\" by {}", title, rs.getAuthorBeingRanked());
+                rankingStateRepository.delete(rs);
             }
+            session.removeAttribute("skipResolve");
+            session.setAttribute("resolveWarning", title);
+            return "redirect:/my-books?selectedBookshelf=UNRANKED";
         } else {
             session.setAttribute("skipResolve", "expanded");
         }
