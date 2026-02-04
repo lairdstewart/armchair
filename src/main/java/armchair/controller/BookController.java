@@ -323,9 +323,9 @@ public class BookController {
         BookLists fictionBooks = getBookLists(Bookshelf.FICTION, userId);
         BookLists nonfictionBooks = getBookLists(Bookshelf.NONFICTION, userId);
         List<BookInfo> wantToReadBooks = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(userId, Bookshelf.WANT_TO_READ, BookCategory.UNRANKED)
-            .stream().map(r -> new BookInfo(r.getId(), r.getBook().getWorkOlid(), r.getBook().getTitle(), r.getBook().getAuthor(), r.getReview())).toList();
+            .stream().map(BookController::toBookInfo).toList();
         List<BookInfo> unrankedBooks = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(userId, Bookshelf.UNRANKED, BookCategory.UNRANKED)
-            .stream().map(r -> new BookInfo(r.getId(), r.getBook().getWorkOlid(), r.getBook().getTitle(), r.getBook().getAuthor(), r.getReview())).toList();
+            .stream().map(BookController::toBookInfo).toList();
         boolean hasFiction = !fictionBooks.liked().isEmpty() || !fictionBooks.ok().isEmpty() || !fictionBooks.disliked().isEmpty();
         boolean hasNonfiction = !nonfictionBooks.liked().isEmpty() || !nonfictionBooks.ok().isEmpty() || !nonfictionBooks.disliked().isEmpty();
         boolean hasWantToRead = !wantToReadBooks.isEmpty();
@@ -441,15 +441,19 @@ public class BookController {
         return Mode.RANK;
     }
 
+    private static BookInfo toBookInfo(Ranking r) {
+        return new BookInfo(r.getId(), r.getBook().getWorkOlid(), r.getBook().getTitle(), r.getBook().getAuthor(), r.getReview());
+    }
+
     private BookLists getBookLists(Bookshelf bookshelf, Long userId) {
         List<BookInfo> liked = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(userId, bookshelf, BookCategory.LIKED)
-            .stream().map(r -> new BookInfo(r.getId(), r.getBook().getWorkOlid(), r.getBook().getTitle(), r.getBook().getAuthor(), r.getReview())).toList();
+            .stream().map(BookController::toBookInfo).toList();
         List<BookInfo> ok = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(userId, bookshelf, BookCategory.OK)
-            .stream().map(r -> new BookInfo(r.getId(), r.getBook().getWorkOlid(), r.getBook().getTitle(), r.getBook().getAuthor(), r.getReview())).toList();
+            .stream().map(BookController::toBookInfo).toList();
         List<BookInfo> disliked = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(userId, bookshelf, BookCategory.DISLIKED)
-            .stream().map(r -> new BookInfo(r.getId(), r.getBook().getWorkOlid(), r.getBook().getTitle(), r.getBook().getAuthor(), r.getReview())).toList();
+            .stream().map(BookController::toBookInfo).toList();
         List<BookInfo> unranked = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(userId, bookshelf, BookCategory.UNRANKED)
-            .stream().map(r -> new BookInfo(r.getId(), r.getBook().getWorkOlid(), r.getBook().getTitle(), r.getBook().getAuthor(), r.getReview())).toList();
+            .stream().map(BookController::toBookInfo).toList();
         return new BookLists(liked, ok, disliked, unranked);
     }
 
