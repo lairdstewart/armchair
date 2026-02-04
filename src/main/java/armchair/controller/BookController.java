@@ -642,9 +642,7 @@ public class BookController {
             return "redirect:/my-books";
         }
 
-        rankingState.setWorkOlidBeingRanked(ranking.getBook().getWorkOlid());
-        rankingState.setTitleBeingRanked(ranking.getBook().getTitle());
-        rankingState.setAuthorBeingRanked(ranking.getBook().getAuthor());
+        rankingState.setBookInfo(ranking.getBook().getWorkOlid(), ranking.getBook().getTitle(), ranking.getBook().getAuthor());
         rankingStateRepository.save(rankingState);
 
         // Remove the ranking from its current position and close the gap
@@ -1015,9 +1013,7 @@ public class BookController {
         bookRepository.save(existingBook);
 
         // Update RankingState to match
-        rankingState.setWorkOlidBeingRanked(workOlid);
-        rankingState.setTitleBeingRanked(title);
-        rankingState.setAuthorBeingRanked(author);
+        rankingState.setBookInfo(workOlid, title, author);
         rankingStateRepository.save(rankingState);
 
         session.removeAttribute("skipResolve");
@@ -1148,9 +1144,7 @@ public class BookController {
         }
 
         // Set the book info, leave category null to enter CATEGORIZE mode
-        rankingState.setWorkOlidBeingRanked(workOlid);
-        rankingState.setTitleBeingRanked(bookName);
-        rankingState.setAuthorBeingRanked(author);
+        rankingState.setBookInfo(workOlid, bookName, author);
         rankingStateRepository.save(rankingState);
 
         return "redirect:/my-books";
@@ -1240,9 +1234,7 @@ public class BookController {
             int lowIndex = 0;
             int highIndex = currentList.size() - 1;
             int compareToIndex = (lowIndex + highIndex) / 2;
-            rankingState.setWorkOlidBeingRanked(workOlid);
-            rankingState.setTitleBeingRanked(bookName);
-            rankingState.setAuthorBeingRanked(author);
+            rankingState.setBookInfo(workOlid, bookName, author);
             rankingState.setReviewBeingRanked(trimmedReview);
             rankingState.setBookshelf(bookshelfEnum);
             rankingState.setCategory(bookCategory);

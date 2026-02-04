@@ -91,6 +91,12 @@ public class RankingState {
         this.authorBeingRanked = authorBeingRanked;
     }
 
+    public void setBookInfo(String workOlid, String title, String author) {
+        this.workOlidBeingRanked = workOlid;
+        this.titleBeingRanked = title;
+        this.authorBeingRanked = author;
+    }
+
     public String getReviewBeingRanked() {
         return reviewBeingRanked;
     }
