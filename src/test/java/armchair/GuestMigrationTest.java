@@ -1,0 +1,113 @@
+package armchair;
+
+import armchair.entity.Book;
+import armchair.entity.BookCategory;
+import armchair.entity.Bookshelf;
+import armchair.entity.Ranking;
+import armchair.entity.RankingState;
+import armchair.entity.User;
+import org.junit.jupiter.api.Test;
+import org.springframework.mock.web.MockHttpSession;
+
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+class GuestMigrationTest extends BaseIntegrationTest {
+
+    @Test
+    void basicMigration() throws Exception {
+        MockHttpSession session = guestSession();
+        mockMvc.perform(get("/my-books").session(session)).andExpect(status().isOk());
+
+        Long guestUserId = (Long) session.getAttribute("guestUserId");
+        assertThat(guestUserId).isNotNull();
+
+        Book dune = createVerifiedBook("OL123W", "Dune", "Frank Herbert");
+        Book orwell = createVerifiedBook("OL456W", "1984", "George Orwell");
+        addRanking(guestUserId, dune, Bookshelf.FICTION, BookCategory.LIKED, 0);
+        addRanking(guestUserId, orwell, Bookshelf.FICTION, BookCategory.LIKED, 1);
+
+        assertThat(rankingRepository.findByUserId(guestUserId)).hasSize(2);
+
+        User oauthUser = createOAuthUser("migrator", "oauth-migrate-1");
+
+        mockMvc.perform(get("/my-books").session(session)
+                        .with(oauthUser("oauth-migrate-1")))
+                .andExpect(status().isOk());
+
+        assertThat(rankingRepository.findByUserId(oauthUser.getId())).hasSize(2);
+        assertThat(rankingRepository.findByUserId(guestUserId)).isEmpty();
+        assertThat(userRepository.findById(guestUserId)).isEmpty();
+    }
+
+    @Test
+    void migrationWithRankingState() throws Exception {
+        MockHttpSession session = guestSession();
+        mockMvc.perform(get("/my-books").session(session)).andExpect(status().isOk());
+
+        Long guestUserId = (Long) session.getAttribute("guestUserId");
+
+        Book dune = createVerifiedBook("OL123W", "Dune", "Frank Herbert");
+        addRanking(guestUserId, dune, Bookshelf.FICTION, BookCategory.LIKED, 0);
+
+        RankingState state = new RankingState(guestUserId, "OL789W", "Neuromancer", "William Gibson",
+                Bookshelf.FICTION, BookCategory.LIKED, 0, 0, 0);
+        state.setReviewBeingRanked("Great book");
+        state.setReRank(true);
+        state.setRankAll(true);
+        rankingStateRepository.save(state);
+
+        User oauthUser = createOAuthUser("migrator2", "oauth-migrate-2");
+
+        mockMvc.perform(get("/my-books").session(session)
+                        .with(oauthUser("oauth-migrate-2")))
+                .andExpect(status().isOk());
+
+        RankingState migratedState = rankingStateRepository.findById(oauthUser.getId()).orElse(null);
+        assertThat(migratedState).isNotNull();
+        assertThat(migratedState.getTitleBeingRanked()).isEqualTo("Neuromancer");
+        assertThat(migratedState.getAuthorBeingRanked()).isEqualTo("William Gibson");
+        assertThat(migratedState.getReviewBeingRanked()).isEqualTo("Great book");
+        assertThat(migratedState.isReRank()).isTrue();
+        assertThat(migratedState.isRankAll()).isTrue();
+
+        assertThat(rankingStateRepository.findById(guestUserId)).isEmpty();
+    }
+
+    @Test
+    void migrationWithReviews() throws Exception {
+        MockHttpSession session = guestSession();
+        mockMvc.perform(get("/my-books").session(session)).andExpect(status().isOk());
+
+        Long guestUserId = (Long) session.getAttribute("guestUserId");
+
+        Book dune = createVerifiedBook("OL123W", "Dune", "Frank Herbert");
+        addRankingWithReview(guestUserId, dune, Bookshelf.FICTION, BookCategory.LIKED, 0, "My favorite book");
+
+        User oauthUser = createOAuthUser("migrator3", "oauth-migrate-3");
+
+        mockMvc.perform(get("/my-books").session(session)
+                        .with(oauthUser("oauth-migrate-3")))
+                .andExpect(status().isOk());
+
+        List<Ranking> rankings = rankingRepository.findByUserId(oauthUser.getId());
+        assertThat(rankings).hasSize(1);
+        assertThat(rankings.get(0).getReview()).isEqualTo("My favorite book");
+    }
+
+    @Test
+    void noDoubleMigration() throws Exception {
+        User oauthUser = createOAuthUser("nodouble", "oauth-no-double");
+        Book dune = createVerifiedBook("OL123W", "Dune", "Frank Herbert");
+        addRanking(oauthUser.getId(), dune, Bookshelf.FICTION, BookCategory.LIKED, 0);
+
+        mockMvc.perform(get("/my-books")
+                        .with(oauthUser("oauth-no-double")))
+                .andExpect(status().isOk());
+
+        assertThat(rankingRepository.findByUserId(oauthUser.getId())).hasSize(1);
+    }
+}

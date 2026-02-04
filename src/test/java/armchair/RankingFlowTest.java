@@ -1,0 +1,279 @@
+package armchair;
+
+import armchair.entity.Book;
+import armchair.entity.BookCategory;
+import armchair.entity.Bookshelf;
+import armchair.entity.Ranking;
+import armchair.entity.RankingState;
+import armchair.entity.User;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+class RankingFlowTest extends BaseIntegrationTest {
+
+    @Test
+    void addToEmptyCategory() throws Exception {
+        User user = createOAuthUser("ranker1", "oauth-rank-1");
+
+        mockMvc.perform(post("/select-book")
+                        .param("workOlid", "OL100W")
+                        .param("bookName", "Dune")
+                        .param("author", "Frank Herbert")
+                        .with(oauthUser("oauth-rank-1")).with(csrf()))
+                .andExpect(status().is3xxRedirection());
+
+        mockMvc.perform(post("/categorize")
+                        .param("bookshelf", "fiction")
+                        .param("category", "liked")
+                        .with(oauthUser("oauth-rank-1")).with(csrf()))
+                .andExpect(status().is3xxRedirection());
+
+        List<Ranking> liked = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(
+                user.getId(), Bookshelf.FICTION, BookCategory.LIKED);
+        assertThat(liked).hasSize(1);
+        assertThat(liked.get(0).getBook().getTitle()).isEqualTo("Dune");
+        assertThat(liked.get(0).getPosition()).isEqualTo(0);
+
+        assertThat(rankingStateRepository.findById(user.getId())).isEmpty();
+    }
+
+    @Test
+    void binarySearchRanking() throws Exception {
+        User user = createOAuthUser("ranker2", "oauth-rank-2");
+
+        Book bookA = createVerifiedBook("OL1W", "Book A", "Author A");
+        Book bookB = createVerifiedBook("OL2W", "Book B", "Author B");
+        addRanking(user.getId(), bookA, Bookshelf.FICTION, BookCategory.LIKED, 0);
+        addRanking(user.getId(), bookB, Bookshelf.FICTION, BookCategory.LIKED, 1);
+
+        mockMvc.perform(post("/select-book")
+                        .param("workOlid", "OL3W")
+                        .param("bookName", "Book C")
+                        .param("author", "Author C")
+                        .with(oauthUser("oauth-rank-2")).with(csrf()))
+                .andExpect(status().is3xxRedirection());
+
+        mockMvc.perform(post("/categorize")
+                        .param("bookshelf", "fiction")
+                        .param("category", "liked")
+                        .with(oauthUser("oauth-rank-2")).with(csrf()))
+                .andExpect(status().is3xxRedirection());
+
+        RankingState state = rankingStateRepository.findById(user.getId()).orElseThrow();
+        assertThat(state.getCategory()).isEqualTo(BookCategory.LIKED);
+        assertThat(state.getLowIndex()).isEqualTo(0);
+        assertThat(state.getHighIndex()).isEqualTo(1);
+
+        mockMvc.perform(post("/choose")
+                        .param("choice", "new")
+                        .with(oauthUser("oauth-rank-2")).with(csrf()))
+                .andExpect(status().is3xxRedirection());
+
+        List<Ranking> liked = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(
+                user.getId(), Bookshelf.FICTION, BookCategory.LIKED);
+        assertThat(liked).hasSize(3);
+        assertThat(liked.get(0).getBook().getTitle()).isEqualTo("Book C");
+        assertThat(liked.get(1).getBook().getTitle()).isEqualTo("Book A");
+        assertThat(liked.get(2).getBook().getTitle()).isEqualTo("Book B");
+    }
+
+    @Test
+    void binarySearchExistingBetter() throws Exception {
+        User user = createOAuthUser("ranker3", "oauth-rank-3");
+
+        Book bookA = createVerifiedBook("OL1W", "Book A", "Author A");
+        addRanking(user.getId(), bookA, Bookshelf.FICTION, BookCategory.LIKED, 0);
+
+        mockMvc.perform(post("/select-book")
+                        .param("workOlid", "OL3W")
+                        .param("bookName", "Book C")
+                        .param("author", "Author C")
+                        .with(oauthUser("oauth-rank-3")).with(csrf()))
+                .andExpect(status().is3xxRedirection());
+
+        mockMvc.perform(post("/categorize")
+                        .param("bookshelf", "fiction")
+                        .param("category", "liked")
+                        .with(oauthUser("oauth-rank-3")).with(csrf()))
+                .andExpect(status().is3xxRedirection());
+
+        mockMvc.perform(post("/choose")
+                        .param("choice", "existing")
+                        .with(oauthUser("oauth-rank-3")).with(csrf()))
+                .andExpect(status().is3xxRedirection());
+
+        List<Ranking> liked = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(
+                user.getId(), Bookshelf.FICTION, BookCategory.LIKED);
+        assertThat(liked).hasSize(2);
+        assertThat(liked.get(0).getBook().getTitle()).isEqualTo("Book A");
+        assertThat(liked.get(1).getBook().getTitle()).isEqualTo("Book C");
+    }
+
+    @Test
+    void directRemove() throws Exception {
+        User user = createOAuthUser("ranker4", "oauth-rank-4");
+
+        Book bookA = createVerifiedBook("OL1W", "Book A", "Author A");
+        Book bookB = createVerifiedBook("OL2W", "Book B", "Author B");
+        Book bookC = createVerifiedBook("OL3W", "Book C", "Author C");
+        addRanking(user.getId(), bookA, Bookshelf.FICTION, BookCategory.LIKED, 0);
+        Ranking rB = addRanking(user.getId(), bookB, Bookshelf.FICTION, BookCategory.LIKED, 1);
+        addRanking(user.getId(), bookC, Bookshelf.FICTION, BookCategory.LIKED, 2);
+
+        mockMvc.perform(post("/direct-remove")
+                        .param("bookId", String.valueOf(rB.getId()))
+                        .with(oauthUser("oauth-rank-4")).with(csrf()))
+                .andExpect(status().is3xxRedirection());
+
+        List<Ranking> liked = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(
+                user.getId(), Bookshelf.FICTION, BookCategory.LIKED);
+        assertThat(liked).hasSize(2);
+        assertThat(liked.get(0).getBook().getTitle()).isEqualTo("Book A");
+        assertThat(liked.get(0).getPosition()).isEqualTo(0);
+        assertThat(liked.get(1).getBook().getTitle()).isEqualTo("Book C");
+        assertThat(liked.get(1).getPosition()).isEqualTo(1);
+    }
+
+    @Test
+    void directReview() throws Exception {
+        User user = createOAuthUser("ranker5", "oauth-rank-5");
+
+        Book dune = createVerifiedBook("OL1W", "Dune", "Frank Herbert");
+        Ranking ranking = addRanking(user.getId(), dune, Bookshelf.FICTION, BookCategory.LIKED, 0);
+
+        mockMvc.perform(post("/direct-review")
+                        .param("bookId", String.valueOf(ranking.getId()))
+                        .with(oauthUser("oauth-rank-5")).with(csrf()))
+                .andExpect(status().is3xxRedirection());
+
+        RankingState state = rankingStateRepository.findById(user.getId()).orElseThrow();
+        assertThat(state.isReview()).isTrue();
+        assertThat(state.getBookIdBeingReviewed()).isEqualTo(ranking.getId());
+
+        mockMvc.perform(post("/save-review")
+                        .param("review", "A masterpiece")
+                        .with(oauthUser("oauth-rank-5")).with(csrf()))
+                .andExpect(status().is3xxRedirection());
+
+        Ranking updated = rankingRepository.findById(ranking.getId()).orElseThrow();
+        assertThat(updated.getReview()).isEqualTo("A masterpiece");
+        assertThat(rankingStateRepository.findById(user.getId())).isEmpty();
+    }
+
+    @Test
+    void wantToReadThenRank() throws Exception {
+        User user = createOAuthUser("ranker6", "oauth-rank-6");
+
+        mockMvc.perform(post("/add-to-reading-list")
+                        .param("workOlid", "OL100W")
+                        .param("bookName", "Dune")
+                        .param("author", "Frank Herbert")
+                        .with(oauthUser("oauth-rank-6")).with(csrf()))
+                .andExpect(status().is3xxRedirection());
+
+        List<Ranking> wtr = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(
+                user.getId(), Bookshelf.WANT_TO_READ, BookCategory.UNRANKED);
+        assertThat(wtr).hasSize(1);
+
+        mockMvc.perform(post("/mark-as-read")
+                        .param("bookId", String.valueOf(wtr.get(0).getId()))
+                        .with(oauthUser("oauth-rank-6")).with(csrf()))
+                .andExpect(status().is3xxRedirection());
+
+        assertThat(rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(
+                user.getId(), Bookshelf.WANT_TO_READ, BookCategory.UNRANKED)).isEmpty();
+
+        RankingState state = rankingStateRepository.findById(user.getId()).orElseThrow();
+        assertThat(state.getTitleBeingRanked()).isEqualTo("Dune");
+
+        mockMvc.perform(post("/categorize")
+                        .param("bookshelf", "fiction")
+                        .param("category", "liked")
+                        .with(oauthUser("oauth-rank-6")).with(csrf()))
+                .andExpect(status().is3xxRedirection());
+
+        List<Ranking> liked = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(
+                user.getId(), Bookshelf.FICTION, BookCategory.LIKED);
+        assertThat(liked).hasSize(1);
+        assertThat(liked.get(0).getBook().getTitle()).isEqualTo("Dune");
+    }
+
+    @Test
+    void categorizeWithReview() throws Exception {
+        User user = createOAuthUser("ranker7", "oauth-rank-7");
+
+        mockMvc.perform(post("/select-book")
+                        .param("workOlid", "OL100W")
+                        .param("bookName", "Dune")
+                        .param("author", "Frank Herbert")
+                        .with(oauthUser("oauth-rank-7")).with(csrf()))
+                .andExpect(status().is3xxRedirection());
+
+        mockMvc.perform(post("/categorize")
+                        .param("bookshelf", "fiction")
+                        .param("category", "liked")
+                        .param("review", "My favorite book ever")
+                        .with(oauthUser("oauth-rank-7")).with(csrf()))
+                .andExpect(status().is3xxRedirection());
+
+        List<Ranking> liked = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(
+                user.getId(), Bookshelf.FICTION, BookCategory.LIKED);
+        assertThat(liked).hasSize(1);
+        assertThat(liked.get(0).getReview()).isEqualTo("My favorite book ever");
+    }
+
+    @Test
+    void directRerank() throws Exception {
+        User user = createOAuthUser("ranker8", "oauth-rank-8");
+
+        Book bookA = createVerifiedBook("OL1W", "Book A", "Author A");
+        Book bookB = createVerifiedBook("OL2W", "Book B", "Author B");
+        Book bookC = createVerifiedBook("OL3W", "Book C", "Author C");
+        addRanking(user.getId(), bookA, Bookshelf.FICTION, BookCategory.LIKED, 0);
+        Ranking rB = addRanking(user.getId(), bookB, Bookshelf.FICTION, BookCategory.LIKED, 1);
+        addRanking(user.getId(), bookC, Bookshelf.FICTION, BookCategory.LIKED, 2);
+
+        mockMvc.perform(post("/direct-rerank")
+                        .param("bookId", String.valueOf(rB.getId()))
+                        .with(oauthUser("oauth-rank-8")).with(csrf()))
+                .andExpect(status().is3xxRedirection());
+
+        List<Ranking> liked = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(
+                user.getId(), Bookshelf.FICTION, BookCategory.LIKED);
+        assertThat(liked).hasSize(2);
+        assertThat(liked.get(0).getBook().getTitle()).isEqualTo("Book A");
+        assertThat(liked.get(1).getBook().getTitle()).isEqualTo("Book C");
+
+        RankingState state = rankingStateRepository.findById(user.getId()).orElseThrow();
+        assertThat(state.getTitleBeingRanked()).isEqualTo("Book B");
+        assertThat(state.isReRank()).isTrue();
+    }
+
+    @Test
+    void removeFromReadingList() throws Exception {
+        User user = createOAuthUser("ranker9", "oauth-rank-9");
+
+        Book dune = createVerifiedBook("OL100W", "Dune", "Frank Herbert");
+        Book orwell = createVerifiedBook("OL200W", "1984", "George Orwell");
+        Ranking rDune = addRanking(user.getId(), dune, Bookshelf.WANT_TO_READ, BookCategory.UNRANKED, 0);
+        addRanking(user.getId(), orwell, Bookshelf.WANT_TO_READ, BookCategory.UNRANKED, 1);
+
+        mockMvc.perform(post("/remove-from-reading-list")
+                        .param("bookId", String.valueOf(rDune.getId()))
+                        .with(oauthUser("oauth-rank-9")).with(csrf()))
+                .andExpect(status().is3xxRedirection());
+
+        List<Ranking> wtr = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(
+                user.getId(), Bookshelf.WANT_TO_READ, BookCategory.UNRANKED);
+        assertThat(wtr).hasSize(1);
+        assertThat(wtr.get(0).getBook().getTitle()).isEqualTo("1984");
+        assertThat(wtr.get(0).getPosition()).isEqualTo(0);
+    }
+}
