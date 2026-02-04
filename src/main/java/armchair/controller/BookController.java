@@ -1852,7 +1852,7 @@ public class BookController {
             log.error("Error reading Goodreads CSV: {}", e.getMessage());
         }
 
-        return "redirect:/import-goodreads?imported=" + imported + "&skipped=" + skipped + "&failed=" + failed;
+        return "redirect:/my-books?selectedBookshelf=UNRANKED";
     }
 
     private List<String> parseCsvLine(String line) {
