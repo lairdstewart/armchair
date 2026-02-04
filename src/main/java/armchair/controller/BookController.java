@@ -68,7 +68,8 @@ public class BookController {
         REMOVE,
         REVIEW,
         RESOLVE,
-        MANUAL_RESOLVE;
+        MANUAL_RESOLVE,
+        DUPLICATE_RESOLVE;
     }
 
     private static final String SESSION_GUEST_USER_ID = "guestUserId";
@@ -252,6 +253,9 @@ public class BookController {
             rankingStateRepository.deleteById(userId);
             session.removeAttribute("bookSearchResults");
             session.removeAttribute("skipResolve");
+            session.removeAttribute("duplicateResolveTitle");
+            session.removeAttribute("duplicateResolveWorkOlid");
+            session.removeAttribute("duplicateResolveBookId");
         }
         return "redirect:/my-books";
     }
@@ -271,6 +275,13 @@ public class BookController {
 
         RankingState rankingState = rankingStateRepository.findById(userId).orElse(null);
         Mode mode = determineMode(rankingState);
+
+        // Intercept for duplicate resolve — user picked a book during RESOLVE that's already in their library
+        String duplicateResolveTitle = (String) session.getAttribute("duplicateResolveTitle");
+        if (duplicateResolveTitle != null) {
+            mode = Mode.DUPLICATE_RESOLVE;
+            model.addAttribute("duplicateResolveTitle", duplicateResolveTitle);
+        }
 
         // Intercept CATEGORIZE for unverified books — show RESOLVE screen
         if (mode == Mode.CATEGORIZE && rankingState.getWorkOlidBeingRanked() == null) {
@@ -1061,6 +1072,18 @@ public class BookController {
             return "redirect:/my-books";
         }
 
+        // Check if user already has a ranking for a book with this workOlid
+        if (rankingRepository.existsByUserIdAndBookWorkOlid(userId, workOlid)) {
+            // Find the unverified book being ranked
+            Book unverifiedBook = findOrCreateBook(rankingState.getWorkOlidBeingRanked(),
+                null, rankingState.getTitleBeingRanked(), rankingState.getAuthorBeingRanked(), null);
+            session.setAttribute("duplicateResolveTitle", title);
+            session.setAttribute("duplicateResolveWorkOlid", workOlid);
+            session.setAttribute("duplicateResolveBookId", unverifiedBook.getId());
+            session.removeAttribute("skipResolve");
+            return "redirect:/my-books";
+        }
+
         // Find the existing book and update it with the selected result's metadata
         Book existingBook = findOrCreateBook(rankingState.getWorkOlidBeingRanked(),
             null, rankingState.getTitleBeingRanked(), rankingState.getAuthorBeingRanked(), null);
@@ -1105,6 +1128,113 @@ public class BookController {
         session.removeAttribute("skipResolve");
         session.setAttribute("resolveWarning", title);
         return "redirect:/my-books?selectedBookshelf=UNRANKED";
+    }
+
+    @Transactional
+    @PostMapping("/skip-duplicate-resolve")
+    public String skipDuplicateResolve(HttpSession session) {
+        Long userId = getCurrentUserId(session);
+        if (userId == null) {
+            return "redirect:/setup-username";
+        }
+
+        Long unverifiedBookId = (Long) session.getAttribute("duplicateResolveBookId");
+        session.removeAttribute("duplicateResolveTitle");
+        session.removeAttribute("duplicateResolveWorkOlid");
+        session.removeAttribute("duplicateResolveBookId");
+
+        // Delete ranking state
+        rankingStateRepository.deleteById(userId);
+        session.removeAttribute("skipResolve");
+
+        // Delete the unverified book's ranking if the user has one, and the book if orphaned
+        if (unverifiedBookId != null) {
+            cleanupUnverifiedBook(userId, unverifiedBookId);
+        }
+
+        return "redirect:/my-books";
+    }
+
+    @Transactional
+    @PostMapping("/rerank-duplicate-resolve")
+    public String rerankDuplicateResolve(HttpSession session) {
+        Long userId = getCurrentUserId(session);
+        if (userId == null) {
+            return "redirect:/setup-username";
+        }
+
+        Long unverifiedBookId = (Long) session.getAttribute("duplicateResolveBookId");
+        String duplicateWorkOlid = (String) session.getAttribute("duplicateResolveWorkOlid");
+        session.removeAttribute("duplicateResolveTitle");
+        session.removeAttribute("duplicateResolveWorkOlid");
+        session.removeAttribute("duplicateResolveBookId");
+        session.removeAttribute("skipResolve");
+
+        // Clean up the unverified book
+        if (unverifiedBookId != null) {
+            cleanupUnverifiedBook(userId, unverifiedBookId);
+        }
+
+        // Find the existing ranking by workOlid
+        Ranking existingRanking = duplicateWorkOlid != null
+            ? rankingRepository.findByUserIdAndBookWorkOlid(userId, duplicateWorkOlid)
+            : null;
+
+        if (existingRanking == null) {
+            rankingStateRepository.deleteById(userId);
+            return "redirect:/my-books";
+        }
+
+        // Set up RankingState for re-ranking the existing book through CATEGORIZE
+        Book existingBook = existingRanking.getBook();
+        RankingState newState = new RankingState(userId, existingBook.getWorkOlid(), existingBook.getTitle(), existingBook.getAuthor(), null, null, 0, 0, 0);
+        newState.setReRank(true);
+        newState.setReviewBeingRanked(existingRanking.getReview());
+        rankingStateRepository.save(newState);
+
+        // Remove the existing ranking from its current position
+        Bookshelf bookshelf = existingRanking.getBookshelf();
+        BookCategory category = existingRanking.getCategory();
+        int removedPosition = existingRanking.getPosition();
+        rankingRepository.delete(existingRanking);
+
+        // Shift remaining rankings to fill the gap
+        List<Ranking> rankingsToShift = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(userId, bookshelf, category);
+        for (Ranking r : rankingsToShift) {
+            if (r.getPosition() > removedPosition) {
+                r.setPosition(r.getPosition() - 1);
+                rankingRepository.save(r);
+            }
+        }
+
+        return "redirect:/my-books";
+    }
+
+    private void cleanupUnverifiedBook(Long userId, Long bookId) {
+        // Delete user's ranking for this book if they have one
+        List<Ranking> userRankings = rankingRepository.findByUserId(userId).stream()
+            .filter(r -> r.getBook().getId().equals(bookId))
+            .toList();
+        for (Ranking r : userRankings) {
+            Bookshelf bookshelf = r.getBookshelf();
+            BookCategory category = r.getCategory();
+            int removedPosition = r.getPosition();
+            rankingRepository.delete(r);
+
+            // Shift remaining rankings to fill the gap
+            List<Ranking> rankingsToShift = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(userId, bookshelf, category);
+            for (Ranking shift : rankingsToShift) {
+                if (shift.getPosition() > removedPosition) {
+                    shift.setPosition(shift.getPosition() - 1);
+                    rankingRepository.save(shift);
+                }
+            }
+        }
+
+        // Delete the book if no other rankings reference it
+        if (!rankingRepository.existsByBookId(bookId)) {
+            bookRepository.deleteById(bookId);
+        }
     }
 
     @PostMapping("/select-book")
