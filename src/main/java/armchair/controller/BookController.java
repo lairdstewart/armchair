@@ -67,7 +67,8 @@ public class BookController {
         RE_RANK,
         REMOVE,
         REVIEW,
-        RESOLVE;
+        RESOLVE,
+        MANUAL_RESOLVE;
     }
 
     private static final String SESSION_GUEST_USER_ID = "guestUserId";
@@ -252,7 +253,7 @@ public class BookController {
     }
 
     @GetMapping("/my-books")
-    public String showPage(Model model, HttpSession session, @RequestParam(required = false) String selectedBookshelf) {
+    public String showPage(Model model, HttpSession session, @RequestParam(required = false) String selectedBookshelf, @RequestParam(required = false) String resolveQuery) {
         Long userId = getCurrentUserId(session);
 
         addNavigationAttributes(model, "list");
@@ -270,7 +271,23 @@ public class BookController {
         // Intercept CATEGORIZE for unverified books — show RESOLVE screen
         if (mode == Mode.CATEGORIZE && rankingState.getWorkOlidBeingRanked() == null) {
             Object skipResolve = session.getAttribute("skipResolve");
-            if (skipResolve == null || "expanded".equals(skipResolve)) {
+            if ("manual".equals(skipResolve)) {
+                // Manual search mode — user searches Open Library themselves
+                mode = Mode.MANUAL_RESOLVE;
+                if (resolveQuery != null && !resolveQuery.isBlank()) {
+                    List<OpenLibraryService.BookResult> resolveResults =
+                        openLibraryService.searchBooks(resolveQuery, 10);
+                    var seen = new java.util.LinkedHashSet<String>();
+                    resolveResults = resolveResults.stream()
+                        .filter(r -> seen.add((r.title() + "\0" + r.author()).toLowerCase()))
+                        .toList();
+                    model.addAttribute("resolveResults", resolveResults);
+                    model.addAttribute("resolveQuery", resolveQuery);
+                    if (resolveResults.isEmpty()) {
+                        model.addAttribute("resolveNoResults", true);
+                    }
+                }
+            } else if (skipResolve == null || "expanded".equals(skipResolve)) {
                 int maxResults = "expanded".equals(skipResolve) ? 10 : 3;
                 List<OpenLibraryService.BookResult> resolveResults =
                     openLibraryService.searchByTitleAndAuthor(
@@ -304,22 +321,16 @@ public class BookController {
                         mode = Mode.RESOLVE;
                         model.addAttribute("resolveResults", resolveResults);
                     } else {
-                        // No results at all — warn the user and abandon ranking
-                        String title = rankingState.getTitleBeingRanked();
-                        log.warn("RESOLVE failed: no Open Library results for \"{}\" by {}", title, rankingState.getAuthorBeingRanked());
-                        rankingStateRepository.delete(rankingState);
-                        session.removeAttribute("skipResolve");
-                        session.setAttribute("resolveWarning", title);
-                        return "redirect:/my-books?selectedBookshelf=UNRANKED";
+                        // No results at all — redirect to manual search
+                        log.warn("RESOLVE auto-search found nothing for \"{}\" by {}", rankingState.getTitleBeingRanked(), rankingState.getAuthorBeingRanked());
+                        session.setAttribute("skipResolve", "manual");
+                        return "redirect:/my-books";
                     }
                 } else {
-                    // Expanded attempt also returned nothing — warn and abandon
-                    String title = rankingState.getTitleBeingRanked();
-                    log.warn("RESOLVE failed: no Open Library results for \"{}\" by {}", title, rankingState.getAuthorBeingRanked());
-                    rankingStateRepository.delete(rankingState);
-                    session.removeAttribute("skipResolve");
-                    session.setAttribute("resolveWarning", title);
-                    return "redirect:/my-books?selectedBookshelf=UNRANKED";
+                    // Expanded attempt also returned nothing — redirect to manual search
+                    log.warn("RESOLVE auto-search found nothing for \"{}\" by {}", rankingState.getTitleBeingRanked(), rankingState.getAuthorBeingRanked());
+                    session.setAttribute("skipResolve", "manual");
+                    return "redirect:/my-books";
                 }
             }
         }
@@ -1069,22 +1080,27 @@ public class BookController {
     public String skipResolve(HttpSession session) {
         Object current = session.getAttribute("skipResolve");
         if ("expanded".equals(current)) {
-            // User rejected all results — abandon ranking and warn
-            Long userId = getCurrentUserId(session);
-            RankingState rs = rankingStateRepository.findById(userId).orElse(null);
-            String title = "unknown book";
-            if (rs != null) {
-                title = rs.getTitleBeingRanked();
-                log.warn("RESOLVE failed: user rejected all results for \"{}\" by {}", title, rs.getAuthorBeingRanked());
-                rankingStateRepository.delete(rs);
-            }
-            session.removeAttribute("skipResolve");
-            session.setAttribute("resolveWarning", title);
-            return "redirect:/my-books?selectedBookshelf=UNRANKED";
+            // User rejected all results — redirect to manual search
+            session.setAttribute("skipResolve", "manual");
         } else {
             session.setAttribute("skipResolve", "expanded");
         }
         return "redirect:/my-books";
+    }
+
+    @PostMapping("/abandon-resolve")
+    public String abandonResolve(HttpSession session) {
+        Long userId = getCurrentUserId(session);
+        RankingState rs = rankingStateRepository.findById(userId).orElse(null);
+        String title = "unknown book";
+        if (rs != null) {
+            title = rs.getTitleBeingRanked();
+            log.warn("RESOLVE abandoned: user skipped manual search for \"{}\" by {}", title, rs.getAuthorBeingRanked());
+            rankingStateRepository.delete(rs);
+        }
+        session.removeAttribute("skipResolve");
+        session.setAttribute("resolveWarning", title);
+        return "redirect:/my-books?selectedBookshelf=UNRANKED";
     }
 
     @PostMapping("/select-book")

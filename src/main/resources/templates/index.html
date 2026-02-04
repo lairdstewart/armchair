@@ -439,6 +439,34 @@
           <button type="submit" class="book-action-link">None of these</button>
         </form>
       </div>
+      <div th:case="'MANUAL_RESOLVE'">
+        <h3>Search for <span th:text="${rankingState.titleBeingRanked}"></span> in Open Library's database</h3>
+        <p>Try searching with or without the author, or with a shorter version of the title.</p>
+        <form th:action="@{/my-books}" method="GET" style="margin-bottom: 15px;">
+          <input type="text" name="resolveQuery" th:value="${resolveQuery}" placeholder="Search Open Library..." style="width: 300px;" />
+          <button type="submit">Search</button>
+        </form>
+        <div th:if="${resolveNoResults}" style="margin-bottom: 15px; color: #888;">
+          No results found, try a different search.
+        </div>
+        <div th:if="${resolveResults != null && !resolveResults.isEmpty()}">
+          <div th:each="result : ${resolveResults}" style="margin-bottom: 10px;">
+            <form th:action="@{/resolve-book}" method="POST" style="display: inline;">
+              <input type="hidden" name="workOlid" th:value="${result.workOlid()}" />
+              <input type="hidden" name="title" th:value="${result.title()}" />
+              <input type="hidden" name="author" th:value="${result.author()}" />
+              <input type="hidden" name="coverEditionOlid" th:value="${result.coverEditionOlid()}" />
+              <button type="submit" class="book-number rerank">-&gt;</button>
+            </form>
+            <a th:href="${result.bookUrl()}" target="_blank" th:text="${result.title()}"></a>
+            <span th:if="${result.author() != null && !result.author().isBlank()}"
+                  th:text="${', ' + result.author()}"></span>
+          </div>
+        </div>
+        <form th:action="@{/abandon-resolve}" method="POST" style="margin-top: 15px;">
+          <button type="submit" class="book-action-link">Skip this book</button>
+        </form>
+      </div>
       <div th:case="'RANK'">
         <h3>Which is better?</h3>
         <form th:action="@{/choose}" method="POST">
