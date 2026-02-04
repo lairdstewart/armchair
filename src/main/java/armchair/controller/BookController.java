@@ -103,6 +103,16 @@ public class BookController {
     @Autowired
     private BookService bookService;
 
+    private void closePositionGap(Long userId, Bookshelf bookshelf, BookCategory category, int removedPosition) {
+        List<Ranking> rankings = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(userId, bookshelf, category);
+        for (Ranking r : rankings) {
+            if (r.getPosition() > removedPosition) {
+                r.setPosition(r.getPosition() - 1);
+                rankingRepository.save(r);
+            }
+        }
+    }
+
     private void restoreAbandonedBook(Long userId) {
         RankingState state = rankingStateRepository.findById(userId).orElse(null);
         if (state == null || state.getTitleBeingRanked() == null) return;
@@ -592,22 +602,10 @@ public class BookController {
         rankingState.setAuthorBeingRanked(ranking.getBook().getAuthor());
         rankingStateRepository.save(rankingState);
 
-        // Remove the ranking from its current position
-        Bookshelf bookshelf = ranking.getBookshelf();
-        BookCategory category = ranking.getCategory();
+        // Remove the ranking from its current position and close the gap
         int removedPosition = ranking.getPosition();
         rankingRepository.delete(ranking);
-
-        // Shift remaining rankings in that category to fill the gap
-        List<Ranking> rankingsToShift = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(
-            userId, bookshelf, category
-        );
-        for (Ranking r : rankingsToShift) {
-            if (r.getPosition() > removedPosition) {
-                r.setPosition(r.getPosition() - 1);
-                rankingRepository.save(r);
-            }
-        }
+        closePositionGap(userId, ranking.getBookshelf(), ranking.getCategory(), removedPosition);
 
         return "redirect:/my-books";
     }
@@ -664,18 +662,10 @@ public class BookController {
             return "redirect:/my-books?selectedBookshelf=WANT_TO_READ";
         }
 
-        // Remove the ranking
+        // Remove the ranking and close the gap
         int removedPosition = ranking.getPosition();
         rankingRepository.delete(ranking);
-
-        // Shift remaining rankings to fill the gap
-        List<Ranking> rankingsToShift = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(userId, Bookshelf.WANT_TO_READ, BookCategory.UNRANKED);
-        for (Ranking r : rankingsToShift) {
-            if (r.getPosition() > removedPosition) {
-                r.setPosition(r.getPosition() - 1);
-                rankingRepository.save(r);
-            }
-        }
+        closePositionGap(userId, Bookshelf.WANT_TO_READ, BookCategory.UNRANKED, removedPosition);
 
         // Clear the ranking state
         rankingStateRepository.deleteById(userId);
@@ -726,20 +716,10 @@ public class BookController {
         rankingState.setReviewBeingRanked(ranking.getReview());
         rankingStateRepository.save(rankingState);
 
-        // Remove the ranking from its current position
-        Bookshelf bookshelf = ranking.getBookshelf();
-        BookCategory category = ranking.getCategory();
+        // Remove the ranking from its current position and close the gap
         int removedPosition = ranking.getPosition();
         rankingRepository.delete(ranking);
-
-        // Shift remaining rankings in that category to fill the gap
-        List<Ranking> rankingsToShift = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(userId, bookshelf, category);
-        for (Ranking r : rankingsToShift) {
-            if (r.getPosition() > removedPosition) {
-                r.setPosition(r.getPosition() - 1);
-                rankingRepository.save(r);
-            }
-        }
+        closePositionGap(userId, ranking.getBookshelf(), ranking.getCategory(), removedPosition);
 
         return "redirect:/my-books";
     }
@@ -757,20 +737,10 @@ public class BookController {
             return "redirect:/my-books";
         }
 
-        Bookshelf bookshelf = ranking.getBookshelf();
-        BookCategory category = ranking.getCategory();
+        String selectedBookshelf = ranking.getBookshelf().name();
         int removedPosition = ranking.getPosition();
-        String selectedBookshelf = bookshelf.name();
         rankingRepository.delete(ranking);
-
-        // Shift remaining rankings in that category to fill the gap
-        List<Ranking> rankingsToShift = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(userId, bookshelf, category);
-        for (Ranking r : rankingsToShift) {
-            if (r.getPosition() > removedPosition) {
-                r.setPosition(r.getPosition() - 1);
-                rankingRepository.save(r);
-            }
-        }
+        closePositionGap(userId, ranking.getBookshelf(), ranking.getCategory(), removedPosition);
 
         return "redirect:/my-books?selectedBookshelf=" + selectedBookshelf;
     }
@@ -793,18 +763,10 @@ public class BookController {
         RankingState rankingState = new RankingState(userId, ranking.getBook().getWorkOlid(), ranking.getBook().getTitle(), ranking.getBook().getAuthor(), null, null, 0, 0, 0);
         rankingStateRepository.save(rankingState);
 
-        // Remove the ranking from want-to-read list
+        // Remove the ranking from want-to-read list and close the gap
         int removedPosition = ranking.getPosition();
         rankingRepository.delete(ranking);
-
-        // Shift remaining rankings to fill the gap
-        List<Ranking> rankingsToShift = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(userId, Bookshelf.WANT_TO_READ, BookCategory.UNRANKED);
-        for (Ranking r : rankingsToShift) {
-            if (r.getPosition() > removedPosition) {
-                r.setPosition(r.getPosition() - 1);
-                rankingRepository.save(r);
-            }
-        }
+        closePositionGap(userId, Bookshelf.WANT_TO_READ, BookCategory.UNRANKED, removedPosition);
 
         return "redirect:/my-books";
     }
@@ -823,18 +785,10 @@ public class BookController {
             return "redirect:/my-books?selectedBookshelf=WANT_TO_READ";
         }
 
-        // Remove the ranking
+        // Remove the ranking and close the gap
         int removedPosition = ranking.getPosition();
         rankingRepository.delete(ranking);
-
-        // Shift remaining rankings to fill the gap
-        List<Ranking> rankingsToShift = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(userId, Bookshelf.WANT_TO_READ, BookCategory.UNRANKED);
-        for (Ranking r : rankingsToShift) {
-            if (r.getPosition() > removedPosition) {
-                r.setPosition(r.getPosition() - 1);
-                rankingRepository.save(r);
-            }
-        }
+        closePositionGap(userId, Bookshelf.WANT_TO_READ, BookCategory.UNRANKED, removedPosition);
 
         return "redirect:/my-books?selectedBookshelf=WANT_TO_READ";
     }
@@ -859,22 +813,10 @@ public class BookController {
             return "redirect:/my-books";
         }
 
-        // Remove the ranking
-        Bookshelf bookshelf = ranking.getBookshelf();
-        BookCategory category = ranking.getCategory();
+        // Remove the ranking and close the gap
         int removedPosition = ranking.getPosition();
         rankingRepository.delete(ranking);
-
-        // Shift remaining rankings in that category to fill the gap
-        List<Ranking> rankingsToShift = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(
-            userId, bookshelf, category
-        );
-        for (Ranking r : rankingsToShift) {
-            if (r.getPosition() > removedPosition) {
-                r.setPosition(r.getPosition() - 1);
-                rankingRepository.save(r);
-            }
-        }
+        closePositionGap(userId, ranking.getBookshelf(), ranking.getCategory(), removedPosition);
 
         // Clear the ranking state
         rankingStateRepository.deleteById(userId);
@@ -1144,20 +1086,10 @@ public class BookController {
         newState.setReviewBeingRanked(existingRanking.getReview());
         rankingStateRepository.save(newState);
 
-        // Remove the existing ranking from its current position
-        Bookshelf bookshelf = existingRanking.getBookshelf();
-        BookCategory category = existingRanking.getCategory();
+        // Remove the existing ranking from its current position and close the gap
         int removedPosition = existingRanking.getPosition();
         rankingRepository.delete(existingRanking);
-
-        // Shift remaining rankings to fill the gap
-        List<Ranking> rankingsToShift = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(userId, bookshelf, category);
-        for (Ranking r : rankingsToShift) {
-            if (r.getPosition() > removedPosition) {
-                r.setPosition(r.getPosition() - 1);
-                rankingRepository.save(r);
-            }
-        }
+        closePositionGap(userId, existingRanking.getBookshelf(), existingRanking.getCategory(), removedPosition);
 
         return "redirect:/my-books";
     }
@@ -1168,19 +1100,9 @@ public class BookController {
             .filter(r -> r.getBook().getId().equals(bookId))
             .toList();
         for (Ranking r : userRankings) {
-            Bookshelf bookshelf = r.getBookshelf();
-            BookCategory category = r.getCategory();
             int removedPosition = r.getPosition();
             rankingRepository.delete(r);
-
-            // Shift remaining rankings to fill the gap
-            List<Ranking> rankingsToShift = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(userId, bookshelf, category);
-            for (Ranking shift : rankingsToShift) {
-                if (shift.getPosition() > removedPosition) {
-                    shift.setPosition(shift.getPosition() - 1);
-                    rankingRepository.save(shift);
-                }
-            }
+            closePositionGap(userId, r.getBookshelf(), r.getCategory(), removedPosition);
         }
 
         // Delete the book if no other rankings reference it
@@ -2083,18 +2005,10 @@ public class BookController {
         rankingState.setReviewBeingRanked(ranking.getReview());
         rankingStateRepository.save(rankingState);
 
-        // Remove the ranking from unranked list
+        // Remove the ranking from unranked list and close the gap
         int removedPosition = ranking.getPosition();
         rankingRepository.delete(ranking);
-
-        // Shift remaining unranked rankings to fill the gap
-        List<Ranking> rankingsToShift = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(userId, Bookshelf.UNRANKED, BookCategory.UNRANKED);
-        for (Ranking r : rankingsToShift) {
-            if (r.getPosition() > removedPosition) {
-                r.setPosition(r.getPosition() - 1);
-                rankingRepository.save(r);
-            }
-        }
+        closePositionGap(userId, Bookshelf.UNRANKED, BookCategory.UNRANKED, removedPosition);
 
         return "redirect:/my-books";
     }
@@ -2126,18 +2040,10 @@ public class BookController {
         rankingState.setRankAll(true);
         rankingStateRepository.save(rankingState);
 
-        // Remove from unranked list
+        // Remove from unranked list and close the gap
         int removedPosition = nextBook.getPosition();
         rankingRepository.delete(nextBook);
-
-        // Shift remaining unranked rankings to fill the gap
-        List<Ranking> rankingsToShift = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(userId, Bookshelf.UNRANKED, BookCategory.UNRANKED);
-        for (Ranking r : rankingsToShift) {
-            if (r.getPosition() > removedPosition) {
-                r.setPosition(r.getPosition() - 1);
-                rankingRepository.save(r);
-            }
-        }
+        closePositionGap(userId, Bookshelf.UNRANKED, BookCategory.UNRANKED, removedPosition);
 
         return "redirect:/my-books";
     }
