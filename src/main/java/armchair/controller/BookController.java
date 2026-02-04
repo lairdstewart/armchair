@@ -251,9 +251,11 @@ public class BookController {
             Object skipResolve = session.getAttribute("skipResolve");
             if (skipResolve == null || "expanded".equals(skipResolve)) {
                 int maxResults = "expanded".equals(skipResolve) ? 10 : 3;
-                String resolveQuery = rankingState.getTitleBeingRanked() + " " + rankingState.getAuthorBeingRanked();
                 List<OpenLibraryService.BookResult> resolveResults =
-                    openLibraryService.searchBooks(resolveQuery, maxResults);
+                    openLibraryService.searchByTitleAndAuthor(
+                        rankingState.getTitleBeingRanked(),
+                        rankingState.getAuthorBeingRanked(),
+                        maxResults);
                 // Deduplicate results with the same title+author (different editions)
                 var seen = new java.util.LinkedHashSet<String>();
                 resolveResults = resolveResults.stream()

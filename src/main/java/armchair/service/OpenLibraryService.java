@@ -33,15 +33,29 @@ public class OpenLibraryService {
         return searchBooks(query, 3);
     }
 
+    public List<BookResult> searchByTitleAndAuthor(String title, String author, int maxResults) {
+        if (title == null || title.isBlank()) {
+            return List.of();
+        }
+        String params = "title=" + URLEncoder.encode(title, StandardCharsets.UTF_8);
+        if (author != null && !author.isBlank()) {
+            params += "&author=" + URLEncoder.encode(author, StandardCharsets.UTF_8);
+        }
+        return doSearch(params, maxResults);
+    }
+
     public List<BookResult> searchBooks(String query, int maxResults) {
         if (query == null || query.isBlank()) {
             return List.of();
         }
+        return doSearch("q=" + URLEncoder.encode(query, StandardCharsets.UTF_8), maxResults);
+    }
 
+    private List<BookResult> doSearch(String queryParams, int maxResults) {
         try {
             String url = String.format(
-                "https://openlibrary.org/search.json?q=%s&lang=en&limit=%d&fields=author_name,author_key,title,cover_edition_key,key,first_publish_year,editions,editions.title,editions.key",
-                URLEncoder.encode(query, StandardCharsets.UTF_8),
+                "https://openlibrary.org/search.json?%s&lang=en&limit=%d&fields=author_name,author_key,title,cover_edition_key,key,first_publish_year,editions,editions.title,editions.key",
+                queryParams,
                 maxResults
             );
 
