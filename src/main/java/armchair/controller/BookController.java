@@ -1194,17 +1194,31 @@ public class BookController {
             .body(csv);
     }
 
+    private Long getExistingUserId(HttpSession session) {
+        String oauthSubject = getOauthSubject();
+        if (oauthSubject != null) {
+            User user = userRepository.findByOauthSubject(oauthSubject).orElse(null);
+            if (user != null) return user.getId();
+            return null;
+        }
+        Long guestId = (Long) session.getAttribute(SESSION_GUEST_USER_ID);
+        if (guestId != null) {
+            User guest = userRepository.findById(guestId).orElse(null);
+            if (guest != null) return guestId;
+        }
+        return null;
+    }
+
     @GetMapping("/search")
     public String showUnifiedSearch(@RequestParam(required = false, defaultValue = "books") String type,
                                      @RequestParam(required = false) String query,
                                      @RequestParam(required = false) Boolean more,
                                      Model model, HttpSession session) {
-        getCurrentUserId(session);
         addNavigationAttributes(model, "search");
         model.addAttribute("searchType", type);
         model.addAttribute("query", query);
 
-        Long currentUserId = getCurrentUserId(session);
+        Long currentUserId = getExistingUserId(session);
         boolean isLoggedIn = getOauthSubject() != null && currentUserId != null;
         User currentUser = isLoggedIn ? userRepository.findById(currentUserId).orElse(null) : null;
         boolean isRealUser = currentUser != null && !currentUser.isGuest();
