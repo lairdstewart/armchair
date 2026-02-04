@@ -40,7 +40,7 @@ public class OpenLibraryService {
 
         try {
             String url = String.format(
-                "https://openlibrary.org/search.json?q=%s&limit=%d&fields=author_name,title,cover_edition_key,key,first_publish_year",
+                "https://openlibrary.org/search.json?q=%s&lang=en&limit=%d&fields=author_name,title,cover_edition_key,key,first_publish_year,editions,editions.title,editions.key",
                 URLEncoder.encode(query, StandardCharsets.UTF_8),
                 maxResults
             );
@@ -61,15 +61,26 @@ public class OpenLibraryService {
                 // Strip /works/ prefix from key to get the work OLID
                 String workOlid = key.startsWith("/works/") ? key.substring("/works/".length()) : key;
 
+                // Prefer English edition title over work-level title (which may be in the original language)
                 String title = doc.has("title") ? doc.get("title").asText() : "Unknown Title";
+                String coverEditionOlid = doc.has("cover_edition_key") ? doc.get("cover_edition_key").asText(null) : null;
+                JsonNode editions = doc.path("editions").path("docs");
+                if (editions.isArray() && editions.size() > 0) {
+                    JsonNode edition = editions.get(0);
+                    if (edition.has("title")) {
+                        title = edition.get("title").asText();
+                    }
+                    String editionKey = edition.has("key") ? edition.get("key").asText() : null;
+                    if (editionKey != null) {
+                        coverEditionOlid = editionKey.startsWith("/books/") ? editionKey.substring("/books/".length()) : editionKey;
+                    }
+                }
 
                 String author = "Unknown Author";
                 JsonNode authorNames = doc.get("author_name");
                 if (authorNames != null && authorNames.isArray() && authorNames.size() > 0) {
                     author = authorNames.get(0).asText();
                 }
-
-                String coverEditionOlid = doc.has("cover_edition_key") ? doc.get("cover_edition_key").asText(null) : null;
 
                 Integer firstPublishYear = null;
                 if (doc.has("first_publish_year") && !doc.get("first_publish_year").isNull()) {
