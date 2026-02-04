@@ -195,6 +195,12 @@ public class BookController {
             // Find user by their OAuth subject
             User user = userRepository.findByOauthSubject(oauthSubject).orElse(null);
             if (user != null) {
+                // Migrate guest data if returning user was browsing as guest
+                Long guestUserId = (Long) session.getAttribute(SESSION_GUEST_USER_ID);
+                if (guestUserId != null && !guestUserId.equals(user.getId())) {
+                    migrateGuestDataToUser(guestUserId, user.getId());
+                    session.removeAttribute(SESSION_GUEST_USER_ID);
+                }
                 return user.getId();
             }
             // User is authenticated but hasn't set up username yet — fall through to guest mode
