@@ -1260,6 +1260,7 @@ public class BookController {
         Book book = bookService.findOrCreateBook(rankingState.getWorkOlidBeingRanked(),
             editionOlid, rankingState.getTitleBeingRanked(),
             rankingState.getAuthorBeingRanked(), null);
+        book.setEditionOlid(editionOlid);
         book.setIsbn13(isbn13);
         if (title != null && !title.isBlank()) {
             book.setTitle(title);

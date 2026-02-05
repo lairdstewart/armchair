@@ -385,4 +385,31 @@ class RankingFlowTest extends BaseIntegrationTest {
         // Verify no ranking state left
         assertThat(rankingStateRepository.findById(user.getId())).isEmpty();
     }
+
+    @Test
+    void selectEditionUpdatesBookEditionOlid() throws Exception {
+        User user = createOAuthUser("ranker14", "oauth-rank-14");
+
+        // Create a book with initial editionOlid (simulates what happens from search)
+        Book book = bookRepository.save(new Book("OL200W", "OL200M-original", "Test Book", "Test Author", null));
+        assertThat(book.getEditionOlid()).isEqualTo("OL200M-original");
+
+        // Set up RankingState as if user came from /select-book
+        RankingState rankingState = new RankingState(user.getId(), "OL200W", "Test Book", "Test Author", null, null);
+        rankingStateRepository.save(rankingState);
+
+        // User selects a different edition
+        mockMvc.perform(post("/select-edition")
+                        .param("editionOlid", "OL200M-selected")
+                        .param("isbn13", "9781234567890")
+                        .param("title", "Test Book - Selected Edition")
+                        .with(oauthUser("oauth-rank-14")).with(csrf()))
+                .andExpect(status().is3xxRedirection());
+
+        // Verify the book's editionOlid was updated to the selected one
+        Book updatedBook = bookRepository.findByWorkOlid("OL200W").orElseThrow();
+        assertThat(updatedBook.getEditionOlid()).isEqualTo("OL200M-selected");
+        assertThat(updatedBook.getIsbn13()).isEqualTo("9781234567890");
+        assertThat(updatedBook.getTitle()).isEqualTo("Test Book - Selected Edition");
+    }
 }
