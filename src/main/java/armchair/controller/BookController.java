@@ -1148,6 +1148,9 @@ public class BookController {
             rankingState = new RankingState(userId, null, null, null, null, null);
         }
 
+        // Eagerly create the Book row so coverEditionOlid is persisted
+        bookService.findOrCreateBook(workOlid, coverEditionOlid, bookName, author, null);
+
         // Set the book info, leave category null to enter CATEGORIZE mode
         rankingState.setBookInfo(workOlid, bookName, author);
         rankingStateRepository.save(rankingState);
