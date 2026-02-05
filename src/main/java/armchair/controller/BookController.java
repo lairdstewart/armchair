@@ -1262,23 +1262,6 @@ public class BookController {
         return "redirect:/my-books";
     }
 
-    @PostMapping("/skip-edition-selection")
-    public String skipEditionSelection(HttpSession session) {
-        Long userId = getCurrentUserId(session);
-        if (userId == null) {
-            return "redirect:/setup-username";
-        }
-
-        RankingState rankingState = rankingStateRepository.findById(userId).orElse(null);
-        if (rankingState != null) {
-            rankingState.setEditionSelected(true);
-            rankingStateRepository.save(rankingState);
-        }
-
-        session.removeAttribute("editionOffset");
-        return "redirect:/my-books";
-    }
-
     @PostMapping("/add-to-reading-list")
     public String addToReadingList(@RequestParam String workOlid,
                                    @RequestParam String bookName,

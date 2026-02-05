@@ -492,20 +492,17 @@
           </form>
           <div class="book-entry">
             <div class="book-info">
-              <div class="book-title" th:text="${edition.title()}"></div>
+              <div class="book-title">
+                <a th:href="${'https://openlibrary.org/books/' + edition.editionOlid()}" target="_blank" th:text="${edition.title()}"></a>
+              </div>
               <div class="book-author" th:text="${edition.isbn13()}"></div>
             </div>
             <img th:if="${edition.coverUrl() != null}" class="book-cover" th:src="${edition.coverUrl()}" />
           </div>
         </div>
-        <div style="margin-top: 15px;">
-          <form th:if="${hasMoreEditions}" th:action="@{/more-editions}" method="POST" style="display: inline;">
-            <button type="submit" class="book-action-link">[more editions]</button>
-          </form>
-          <form th:action="@{/skip-edition-selection}" method="POST" style="display: inline; margin-left: 10px;">
-            <button type="submit" class="book-action-link">[skip]</button>
-          </form>
-        </div>
+        <form th:if="${hasMoreEditions}" th:action="@{/more-editions}" method="POST" style="margin-top: 15px;">
+          <button type="submit" class="book-action-link">[more editions]</button>
+        </form>
       </div>
       <div th:case="'CATEGORIZE'">
         <h3>Add <span th:text="${rankingState.titleBeingRanked}"></span></h3>
