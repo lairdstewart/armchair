@@ -165,3 +165,13 @@ ALTER TABLE books ADD COLUMN IF NOT EXISTS isbn_13 VARCHAR(255);
 ALTER TABLE ranking_state ADD COLUMN IF NOT EXISTS edition_olid_being_ranked VARCHAR(255);
 ALTER TABLE ranking_state ADD COLUMN IF NOT EXISTS isbn13_being_ranked VARCHAR(255);
 ALTER TABLE ranking_state ADD COLUMN IF NOT EXISTS edition_selected BOOLEAN DEFAULT FALSE;
+
+-- ============================================================================
+-- Migration: Re-rank restoration fix
+-- Add columns to track original position so abandoned re-ranks can be restored.
+-- Run this manually against the database BEFORE deploying the new code.
+-- ============================================================================
+
+-- 28. Add re-rank restoration columns to ranking_state
+ALTER TABLE ranking_state ADD COLUMN IF NOT EXISTS original_category VARCHAR(255);
+ALTER TABLE ranking_state ADD COLUMN IF NOT EXISTS original_position INTEGER;

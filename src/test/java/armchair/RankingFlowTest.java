@@ -342,4 +342,47 @@ class RankingFlowTest extends BaseIntegrationTest {
         assertThat(wtr).hasSize(1);
         assertThat(wtr.get(0).getBook().getFirstPublishYear()).isEqualTo(1965);
     }
+
+    @Test
+    void abandonedRerankRestoresOriginalPosition() throws Exception {
+        User user = createOAuthUser("ranker13", "oauth-rank-13");
+
+        // Create 3 ranked books: A at 0, B at 1, C at 2
+        Book bookA = createVerifiedBook("OL101W", "Book A", "Author A");
+        Book bookB = createVerifiedBook("OL102W", "Book B", "Author B");
+        Book bookC = createVerifiedBook("OL103W", "Book C", "Author C");
+        addRanking(user.getId(), bookA, Bookshelf.FICTION, BookCategory.LIKED, 0);
+        Ranking rB = addRanking(user.getId(), bookB, Bookshelf.FICTION, BookCategory.LIKED, 1);
+        addRanking(user.getId(), bookC, Bookshelf.FICTION, BookCategory.LIKED, 2);
+
+        // Start re-ranking book B
+        mockMvc.perform(post("/direct-rerank")
+                        .param("bookId", String.valueOf(rB.getId()))
+                        .with(oauthUser("oauth-rank-13")).with(csrf()))
+                .andExpect(status().is3xxRedirection());
+
+        // Verify B was removed temporarily
+        List<Ranking> likedDuringRerank = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(
+                user.getId(), Bookshelf.FICTION, BookCategory.LIKED);
+        assertThat(likedDuringRerank).hasSize(2);
+
+        // Cancel the re-rank (abandons it)
+        mockMvc.perform(post("/cancel-add")
+                        .with(oauthUser("oauth-rank-13")).with(csrf()))
+                .andExpect(status().is3xxRedirection());
+
+        // Verify B is restored at its original position (1)
+        List<Ranking> likedAfterCancel = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(
+                user.getId(), Bookshelf.FICTION, BookCategory.LIKED);
+        assertThat(likedAfterCancel).hasSize(3);
+        assertThat(likedAfterCancel.get(0).getBook().getTitle()).isEqualTo("Book A");
+        assertThat(likedAfterCancel.get(0).getPosition()).isEqualTo(0);
+        assertThat(likedAfterCancel.get(1).getBook().getTitle()).isEqualTo("Book B");
+        assertThat(likedAfterCancel.get(1).getPosition()).isEqualTo(1);
+        assertThat(likedAfterCancel.get(2).getBook().getTitle()).isEqualTo("Book C");
+        assertThat(likedAfterCancel.get(2).getPosition()).isEqualTo(2);
+
+        // Verify no ranking state left
+        assertThat(rankingStateRepository.findById(user.getId())).isEmpty();
+    }
 }

@@ -178,11 +178,32 @@ public class BookController {
             null, state.getTitleBeingRanked(), state.getAuthorBeingRanked(), null);
 
         if (!rankingRepository.existsByUserIdAndBookId(userId, book.getId())) {
-            List<Ranking> unranked = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(
-                userId, Bookshelf.UNRANKED, BookCategory.UNRANKED);
-            Ranking restored = new Ranking(userId, book, Bookshelf.UNRANKED, BookCategory.UNRANKED, unranked.size());
-            restored.setReview(state.getReviewBeingRanked());
-            rankingRepository.save(restored);
+            // For re-rank: restore to original bookshelf/category/position
+            if (state.isReRank() && state.getOriginalCategory() != null && state.getOriginalPosition() != null) {
+                Bookshelf bookshelf = state.getBookshelf();
+                BookCategory category = state.getOriginalCategory();
+                int position = state.getOriginalPosition();
+
+                // Shift books at or after the original position up by 1
+                List<Ranking> rankings = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(userId, bookshelf, category);
+                for (Ranking r : rankings) {
+                    if (r.getPosition() >= position) {
+                        r.setPosition(r.getPosition() + 1);
+                        rankingRepository.save(r);
+                    }
+                }
+
+                Ranking restored = new Ranking(userId, book, bookshelf, category, position);
+                restored.setReview(state.getReviewBeingRanked());
+                rankingRepository.save(restored);
+            } else {
+                // For new books: add to UNRANKED
+                List<Ranking> unranked = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(
+                    userId, Bookshelf.UNRANKED, BookCategory.UNRANKED);
+                Ranking restored = new Ranking(userId, book, Bookshelf.UNRANKED, BookCategory.UNRANKED, unranked.size());
+                restored.setReview(state.getReviewBeingRanked());
+                rankingRepository.save(restored);
+            }
         }
     }
 
@@ -808,11 +829,13 @@ public class BookController {
             return "redirect:/my-books";
         }
 
-        // Store book info in ranking state (including existing review)
+        // Store book info in ranking state (including existing review and original position for restoration)
         restoreAbandonedBook(userId);
         RankingState rankingState = new RankingState(userId, ranking.getBook().getWorkOlid(), ranking.getBook().getTitle(), ranking.getBook().getAuthor(), ranking.getBookshelf(), null);
         rankingState.setReRank(true);
         rankingState.setReviewBeingRanked(ranking.getReview());
+        rankingState.setOriginalCategory(ranking.getCategory());
+        rankingState.setOriginalPosition(ranking.getPosition());
         rankingStateRepository.save(rankingState);
 
         // Remove the ranking from its current position and close the gap

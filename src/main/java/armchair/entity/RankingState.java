@@ -41,6 +41,11 @@ public class RankingState {
     private boolean rankAll;
     private Long bookIdBeingReviewed;
 
+    // For re-rank restoration: store original position so abandoned re-ranks can be restored
+    @Enumerated(EnumType.STRING)
+    private BookCategory originalCategory;
+    private Integer originalPosition;
+
     public RankingState() {}
 
     public RankingState(Long userId, String workOlidBeingRanked, String titleBeingRanked, String authorBeingRanked,
@@ -210,5 +215,21 @@ public class RankingState {
 
     public void setEditionSelected(boolean editionSelected) {
         this.editionSelected = editionSelected;
+    }
+
+    public BookCategory getOriginalCategory() {
+        return originalCategory;
+    }
+
+    public void setOriginalCategory(BookCategory originalCategory) {
+        this.originalCategory = originalCategory;
+    }
+
+    public Integer getOriginalPosition() {
+        return originalPosition;
+    }
+
+    public void setOriginalPosition(Integer originalPosition) {
+        this.originalPosition = originalPosition;
     }
 }
