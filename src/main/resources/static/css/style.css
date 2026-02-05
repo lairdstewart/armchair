@@ -33,7 +33,7 @@ ul.plain-list li form {
 
 ol.book-list li {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   margin-bottom: 4px;
 }
 
