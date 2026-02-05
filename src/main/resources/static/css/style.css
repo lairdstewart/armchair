@@ -37,6 +37,11 @@ ol.book-list li {
   margin-bottom: 4px;
 }
 
+ol.book-list li > .book-number {
+  /* Center with book cover: (76px cover - 30px number) / 2 = 23px */
+  margin-top: 23px;
+}
+
 ol.book-list li form {
   margin-bottom: 0;
   display: flex;
