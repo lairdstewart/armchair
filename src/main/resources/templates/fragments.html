@@ -32,7 +32,7 @@
                     <a th:if="${book.bookUrl() != null}" th:href="${book.bookUrl()}" th:text="${book.title()}" target="_blank"></a>
                     <span th:if="${book.bookUrl() == null}" th:text="${book.title()}"></span>
                   </div>
-                  <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author" th:text="${book.author()}"></div>
+                  <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author"><span th:text="${book.author()}"></span><span th:if="${book.firstPublishYear() != null}" th:text="${' (' + book.firstPublishYear() + ')'}"></span></div>
                 </div>
                 <img th:if="${book.editionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.editionOlid() + '-M.jpg'}" />
               </div>
@@ -45,7 +45,7 @@
                       <a th:if="${book.bookUrl() != null}" th:href="${book.bookUrl()}" th:text="${book.title()}" target="_blank"></a>
                       <span th:if="${book.bookUrl() == null}" th:text="${book.title()}"></span>
                     </div>
-                    <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author" th:text="${book.author()}"></div>
+                    <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author"><span th:text="${book.author()}"></span><span th:if="${book.firstPublishYear() != null}" th:text="${' (' + book.firstPublishYear() + ')'}"></span></div>
                     <span class="review-toggle"></span>
                   </div>
                   <img th:if="${book.editionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.editionOlid() + '-M.jpg'}" />
@@ -63,7 +63,7 @@
                     <a th:if="${book.bookUrl() != null}" th:href="${book.bookUrl()}" th:text="${book.title()}" target="_blank"></a>
                     <span th:if="${book.bookUrl() == null}" th:text="${book.title()}"></span>
                   </div>
-                  <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author" th:text="${book.author()}"></div>
+                  <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author"><span th:text="${book.author()}"></span><span th:if="${book.firstPublishYear() != null}" th:text="${' (' + book.firstPublishYear() + ')'}"></span></div>
                 </div>
                 <img th:if="${book.editionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.editionOlid() + '-M.jpg'}" />
               </div>
@@ -76,7 +76,7 @@
                       <a th:if="${book.bookUrl() != null}" th:href="${book.bookUrl()}" th:text="${book.title()}" target="_blank"></a>
                       <span th:if="${book.bookUrl() == null}" th:text="${book.title()}"></span>
                     </div>
-                    <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author" th:text="${book.author()}"></div>
+                    <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author"><span th:text="${book.author()}"></span><span th:if="${book.firstPublishYear() != null}" th:text="${' (' + book.firstPublishYear() + ')'}"></span></div>
                     <span class="review-toggle"></span>
                   </div>
                   <img th:if="${book.editionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.editionOlid() + '-M.jpg'}" />
@@ -94,7 +94,7 @@
                     <a th:if="${book.bookUrl() != null}" th:href="${book.bookUrl()}" th:text="${book.title()}" target="_blank"></a>
                     <span th:if="${book.bookUrl() == null}" th:text="${book.title()}"></span>
                   </div>
-                  <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author" th:text="${book.author()}"></div>
+                  <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author"><span th:text="${book.author()}"></span><span th:if="${book.firstPublishYear() != null}" th:text="${' (' + book.firstPublishYear() + ')'}"></span></div>
                 </div>
                 <img th:if="${book.editionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.editionOlid() + '-M.jpg'}" />
               </div>
@@ -107,7 +107,7 @@
                       <a th:if="${book.bookUrl() != null}" th:href="${book.bookUrl()}" th:text="${book.title()}" target="_blank"></a>
                       <span th:if="${book.bookUrl() == null}" th:text="${book.title()}"></span>
                     </div>
-                    <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author" th:text="${book.author()}"></div>
+                    <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author"><span th:text="${book.author()}"></span><span th:if="${book.firstPublishYear() != null}" th:text="${' (' + book.firstPublishYear() + ')'}"></span></div>
                     <span class="review-toggle"></span>
                   </div>
                   <img th:if="${book.editionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.editionOlid() + '-M.jpg'}" />
@@ -125,7 +125,7 @@
                     <a th:if="${book.bookUrl() != null}" th:href="${book.bookUrl()}" th:text="${book.title()}" target="_blank"></a>
                     <span th:if="${book.bookUrl() == null}" th:text="${book.title()}"></span>
                   </div>
-                  <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author" th:text="${book.author()}"></div>
+                  <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author"><span th:text="${book.author()}"></span><span th:if="${book.firstPublishYear() != null}" th:text="${' (' + book.firstPublishYear() + ')'}"></span></div>
                 </div>
                 <img th:if="${book.editionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.editionOlid() + '-M.jpg'}" />
               </div>
@@ -138,7 +138,7 @@
                       <a th:if="${book.bookUrl() != null}" th:href="${book.bookUrl()}" th:text="${book.title()}" target="_blank"></a>
                       <span th:if="${book.bookUrl() == null}" th:text="${book.title()}"></span>
                     </div>
-                    <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author" th:text="${book.author()}"></div>
+                    <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author"><span th:text="${book.author()}"></span><span th:if="${book.firstPublishYear() != null}" th:text="${' (' + book.firstPublishYear() + ')'}"></span></div>
                     <span class="review-toggle"></span>
                   </div>
                   <img th:if="${book.editionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.editionOlid() + '-M.jpg'}" />
@@ -162,7 +162,7 @@
                     <a th:if="${book.bookUrl() != null}" th:href="${book.bookUrl()}" th:text="${book.title()}" target="_blank"></a>
                     <span th:if="${book.bookUrl() == null}" th:text="${book.title()}"></span>
                   </div>
-                  <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author" th:text="${book.author()}"></div>
+                  <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author"><span th:text="${book.author()}"></span><span th:if="${book.firstPublishYear() != null}" th:text="${' (' + book.firstPublishYear() + ')'}"></span></div>
                 </div>
                 <img th:if="${book.editionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.editionOlid() + '-M.jpg'}" />
               </div>
@@ -175,7 +175,7 @@
                       <a th:if="${book.bookUrl() != null}" th:href="${book.bookUrl()}" th:text="${book.title()}" target="_blank"></a>
                       <span th:if="${book.bookUrl() == null}" th:text="${book.title()}"></span>
                     </div>
-                    <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author" th:text="${book.author()}"></div>
+                    <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author"><span th:text="${book.author()}"></span><span th:if="${book.firstPublishYear() != null}" th:text="${' (' + book.firstPublishYear() + ')'}"></span></div>
                     <span class="review-toggle"></span>
                   </div>
                   <img th:if="${book.editionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.editionOlid() + '-M.jpg'}" />
@@ -193,7 +193,7 @@
                     <a th:if="${book.bookUrl() != null}" th:href="${book.bookUrl()}" th:text="${book.title()}" target="_blank"></a>
                     <span th:if="${book.bookUrl() == null}" th:text="${book.title()}"></span>
                   </div>
-                  <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author" th:text="${book.author()}"></div>
+                  <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author"><span th:text="${book.author()}"></span><span th:if="${book.firstPublishYear() != null}" th:text="${' (' + book.firstPublishYear() + ')'}"></span></div>
                 </div>
                 <img th:if="${book.editionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.editionOlid() + '-M.jpg'}" />
               </div>
@@ -206,7 +206,7 @@
                       <a th:if="${book.bookUrl() != null}" th:href="${book.bookUrl()}" th:text="${book.title()}" target="_blank"></a>
                       <span th:if="${book.bookUrl() == null}" th:text="${book.title()}"></span>
                     </div>
-                    <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author" th:text="${book.author()}"></div>
+                    <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author"><span th:text="${book.author()}"></span><span th:if="${book.firstPublishYear() != null}" th:text="${' (' + book.firstPublishYear() + ')'}"></span></div>
                     <span class="review-toggle"></span>
                   </div>
                   <img th:if="${book.editionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.editionOlid() + '-M.jpg'}" />
@@ -224,7 +224,7 @@
                     <a th:if="${book.bookUrl() != null}" th:href="${book.bookUrl()}" th:text="${book.title()}" target="_blank"></a>
                     <span th:if="${book.bookUrl() == null}" th:text="${book.title()}"></span>
                   </div>
-                  <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author" th:text="${book.author()}"></div>
+                  <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author"><span th:text="${book.author()}"></span><span th:if="${book.firstPublishYear() != null}" th:text="${' (' + book.firstPublishYear() + ')'}"></span></div>
                 </div>
                 <img th:if="${book.editionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.editionOlid() + '-M.jpg'}" />
               </div>
@@ -237,7 +237,7 @@
                       <a th:if="${book.bookUrl() != null}" th:href="${book.bookUrl()}" th:text="${book.title()}" target="_blank"></a>
                       <span th:if="${book.bookUrl() == null}" th:text="${book.title()}"></span>
                     </div>
-                    <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author" th:text="${book.author()}"></div>
+                    <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author"><span th:text="${book.author()}"></span><span th:if="${book.firstPublishYear() != null}" th:text="${' (' + book.firstPublishYear() + ')'}"></span></div>
                     <span class="review-toggle"></span>
                   </div>
                   <img th:if="${book.editionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.editionOlid() + '-M.jpg'}" />
@@ -255,7 +255,7 @@
                     <a th:if="${book.bookUrl() != null}" th:href="${book.bookUrl()}" th:text="${book.title()}" target="_blank"></a>
                     <span th:if="${book.bookUrl() == null}" th:text="${book.title()}"></span>
                   </div>
-                  <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author" th:text="${book.author()}"></div>
+                  <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author"><span th:text="${book.author()}"></span><span th:if="${book.firstPublishYear() != null}" th:text="${' (' + book.firstPublishYear() + ')'}"></span></div>
                 </div>
                 <img th:if="${book.editionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.editionOlid() + '-M.jpg'}" />
               </div>
@@ -268,7 +268,7 @@
                       <a th:if="${book.bookUrl() != null}" th:href="${book.bookUrl()}" th:text="${book.title()}" target="_blank"></a>
                       <span th:if="${book.bookUrl() == null}" th:text="${book.title()}"></span>
                     </div>
-                    <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author" th:text="${book.author()}"></div>
+                    <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author"><span th:text="${book.author()}"></span><span th:if="${book.firstPublishYear() != null}" th:text="${' (' + book.firstPublishYear() + ')'}"></span></div>
                     <span class="review-toggle"></span>
                   </div>
                   <img th:if="${book.editionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.editionOlid() + '-M.jpg'}" />

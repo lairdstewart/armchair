@@ -50,7 +50,7 @@ import java.util.stream.Collectors;
 public class BookController {
     private static final Logger log = LoggerFactory.getLogger(BookController.class);
 
-    public record BookInfo(Long id, String workOlid, String editionOlid, String title, String author, String review) {
+    public record BookInfo(Long id, String workOlid, String editionOlid, String title, String author, String review, Integer firstPublishYear) {
         public String bookUrl() {
             if (workOlid != null) return "https://openlibrary.org/works/" + workOlid;
             return "https://openlibrary.org/search?q=" + java.net.URLEncoder.encode(title + " " + author, java.nio.charset.StandardCharsets.UTF_8);
@@ -543,7 +543,7 @@ public class BookController {
     }
 
     private static BookInfo toBookInfo(Ranking r) {
-        return new BookInfo(r.getId(), r.getBook().getWorkOlid(), r.getBook().getEditionOlid(), r.getBook().getTitle(), r.getBook().getAuthor(), r.getReview());
+        return new BookInfo(r.getId(), r.getBook().getWorkOlid(), r.getBook().getEditionOlid(), r.getBook().getTitle(), r.getBook().getAuthor(), r.getReview(), r.getBook().getFirstPublishYear());
     }
 
     private BookLists getBookLists(Bookshelf bookshelf, Long userId) {

@@ -32,7 +32,7 @@
                   <a th:if="${book.bookUrl() != null}" th:href="${book.bookUrl()}" target="_blank" th:text="${book.title()}"></a>
                   <span th:if="${book.bookUrl() == null}" th:text="${book.title()}"></span>
                 </div>
-                <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author" th:text="${book.author()}"></div>
+                <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author"><span th:text="${book.author()}"></span><span th:if="${book.firstPublishYear() != null}" th:text="${' (' + book.firstPublishYear() + ')'}"></span></div>
                 <!-- Already ranked -->
                 <span th:if="${ubr != null && ubr.category() != 'want_to_read' && ubr.category() != 'unranked'}"
                       class="book-action-text" th:text="${'[#' + ubr.rank() + ']'}"></span>

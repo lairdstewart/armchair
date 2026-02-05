@@ -46,7 +46,7 @@
                         <a th:if="${book.bookUrl() != null}" th:href="${book.bookUrl()}" th:text="${book.title()}" target="_blank"></a>
                         <span th:if="${book.bookUrl() == null}" th:text="${book.title()}"></span>
                       </div>
-                      <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author" th:text="${book.author()}"></div>
+                      <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author"><span th:text="${book.author()}"></span><span th:if="${book.firstPublishYear() != null}" th:text="${' (' + book.firstPublishYear() + ')'}"></span></div>
                       <span class="book-actions">
                         <form th:action="@{/direct-review}" method="POST" style="display: inline;">
                           <input type="hidden" name="bookId" th:value="${book.id()}" />
@@ -73,7 +73,7 @@
                           <a th:if="${book.bookUrl() != null}" th:href="${book.bookUrl()}" th:text="${book.title()}" target="_blank"></a>
                           <span th:if="${book.bookUrl() == null}" th:text="${book.title()}"></span>
                         </div>
-                        <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author" th:text="${book.author()}"></div>
+                        <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author"><span th:text="${book.author()}"></span><span th:if="${book.firstPublishYear() != null}" th:text="${' (' + book.firstPublishYear() + ')'}"></span></div>
                         <span class="book-actions">
                           <span class="review-toggle"></span>
                           <form th:action="@{/direct-review}" method="POST" style="display: inline;">
@@ -105,7 +105,7 @@
                         <a th:if="${book.bookUrl() != null}" th:href="${book.bookUrl()}" th:text="${book.title()}" target="_blank"></a>
                         <span th:if="${book.bookUrl() == null}" th:text="${book.title()}"></span>
                       </div>
-                      <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author" th:text="${book.author()}"></div>
+                      <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author"><span th:text="${book.author()}"></span><span th:if="${book.firstPublishYear() != null}" th:text="${' (' + book.firstPublishYear() + ')'}"></span></div>
                       <span class="book-actions">
                         <form th:action="@{/direct-review}" method="POST" style="display: inline;">
                           <input type="hidden" name="bookId" th:value="${book.id()}" />
@@ -132,7 +132,7 @@
                           <a th:if="${book.bookUrl() != null}" th:href="${book.bookUrl()}" th:text="${book.title()}" target="_blank"></a>
                           <span th:if="${book.bookUrl() == null}" th:text="${book.title()}"></span>
                         </div>
-                        <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author" th:text="${book.author()}"></div>
+                        <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author"><span th:text="${book.author()}"></span><span th:if="${book.firstPublishYear() != null}" th:text="${' (' + book.firstPublishYear() + ')'}"></span></div>
                         <span class="book-actions">
                           <span class="review-toggle"></span>
                           <form th:action="@{/direct-review}" method="POST" style="display: inline;">
@@ -164,7 +164,7 @@
                         <a th:if="${book.bookUrl() != null}" th:href="${book.bookUrl()}" th:text="${book.title()}" target="_blank"></a>
                         <span th:if="${book.bookUrl() == null}" th:text="${book.title()}"></span>
                       </div>
-                      <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author" th:text="${book.author()}"></div>
+                      <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author"><span th:text="${book.author()}"></span><span th:if="${book.firstPublishYear() != null}" th:text="${' (' + book.firstPublishYear() + ')'}"></span></div>
                       <span class="book-actions">
                         <form th:action="@{/direct-review}" method="POST" style="display: inline;">
                           <input type="hidden" name="bookId" th:value="${book.id()}" />
@@ -191,7 +191,7 @@
                           <a th:if="${book.bookUrl() != null}" th:href="${book.bookUrl()}" th:text="${book.title()}" target="_blank"></a>
                           <span th:if="${book.bookUrl() == null}" th:text="${book.title()}"></span>
                         </div>
-                        <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author" th:text="${book.author()}"></div>
+                        <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author"><span th:text="${book.author()}"></span><span th:if="${book.firstPublishYear() != null}" th:text="${' (' + book.firstPublishYear() + ')'}"></span></div>
                         <span class="book-actions">
                           <span class="review-toggle"></span>
                           <form th:action="@{/direct-review}" method="POST" style="display: inline;">
@@ -232,7 +232,7 @@
                         <a th:if="${book.bookUrl() != null}" th:href="${book.bookUrl()}" th:text="${book.title()}" target="_blank"></a>
                         <span th:if="${book.bookUrl() == null}" th:text="${book.title()}"></span>
                       </div>
-                      <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author" th:text="${book.author()}"></div>
+                      <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author"><span th:text="${book.author()}"></span><span th:if="${book.firstPublishYear() != null}" th:text="${' (' + book.firstPublishYear() + ')'}"></span></div>
                       <span class="book-actions">
                         <form th:action="@{/direct-review}" method="POST" style="display: inline;">
                           <input type="hidden" name="bookId" th:value="${book.id()}" />
@@ -259,7 +259,7 @@
                           <a th:if="${book.bookUrl() != null}" th:href="${book.bookUrl()}" th:text="${book.title()}" target="_blank"></a>
                           <span th:if="${book.bookUrl() == null}" th:text="${book.title()}"></span>
                         </div>
-                        <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author" th:text="${book.author()}"></div>
+                        <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author"><span th:text="${book.author()}"></span><span th:if="${book.firstPublishYear() != null}" th:text="${' (' + book.firstPublishYear() + ')'}"></span></div>
                         <span class="book-actions">
                           <span class="review-toggle"></span>
                           <form th:action="@{/direct-review}" method="POST" style="display: inline;">
@@ -291,7 +291,7 @@
                         <a th:if="${book.bookUrl() != null}" th:href="${book.bookUrl()}" th:text="${book.title()}" target="_blank"></a>
                         <span th:if="${book.bookUrl() == null}" th:text="${book.title()}"></span>
                       </div>
-                      <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author" th:text="${book.author()}"></div>
+                      <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author"><span th:text="${book.author()}"></span><span th:if="${book.firstPublishYear() != null}" th:text="${' (' + book.firstPublishYear() + ')'}"></span></div>
                       <span class="book-actions">
                         <form th:action="@{/direct-review}" method="POST" style="display: inline;">
                           <input type="hidden" name="bookId" th:value="${book.id()}" />
@@ -318,7 +318,7 @@
                           <a th:if="${book.bookUrl() != null}" th:href="${book.bookUrl()}" th:text="${book.title()}" target="_blank"></a>
                           <span th:if="${book.bookUrl() == null}" th:text="${book.title()}"></span>
                         </div>
-                        <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author" th:text="${book.author()}"></div>
+                        <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author"><span th:text="${book.author()}"></span><span th:if="${book.firstPublishYear() != null}" th:text="${' (' + book.firstPublishYear() + ')'}"></span></div>
                         <span class="book-actions">
                           <span class="review-toggle"></span>
                           <form th:action="@{/direct-review}" method="POST" style="display: inline;">
@@ -350,7 +350,7 @@
                         <a th:if="${book.bookUrl() != null}" th:href="${book.bookUrl()}" th:text="${book.title()}" target="_blank"></a>
                         <span th:if="${book.bookUrl() == null}" th:text="${book.title()}"></span>
                       </div>
-                      <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author" th:text="${book.author()}"></div>
+                      <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author"><span th:text="${book.author()}"></span><span th:if="${book.firstPublishYear() != null}" th:text="${' (' + book.firstPublishYear() + ')'}"></span></div>
                       <span class="book-actions">
                         <form th:action="@{/direct-review}" method="POST" style="display: inline;">
                           <input type="hidden" name="bookId" th:value="${book.id()}" />
@@ -377,7 +377,7 @@
                           <a th:if="${book.bookUrl() != null}" th:href="${book.bookUrl()}" th:text="${book.title()}" target="_blank"></a>
                           <span th:if="${book.bookUrl() == null}" th:text="${book.title()}"></span>
                         </div>
-                        <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author" th:text="${book.author()}"></div>
+                        <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author"><span th:text="${book.author()}"></span><span th:if="${book.firstPublishYear() != null}" th:text="${' (' + book.firstPublishYear() + ')'}"></span></div>
                         <span class="book-actions">
                           <span class="review-toggle"></span>
                           <form th:action="@{/direct-review}" method="POST" style="display: inline;">
@@ -416,7 +416,7 @@
                       <a th:if="${book.bookUrl() != null}" th:href="${book.bookUrl()}" th:text="${book.title()}" target="_blank"></a>
                       <span th:if="${book.bookUrl() == null}" th:text="${book.title()}"></span>
                     </div>
-                    <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author" th:text="${book.author()}"></div>
+                    <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author"><span th:text="${book.author()}"></span><span th:if="${book.firstPublishYear() != null}" th:text="${' (' + book.firstPublishYear() + ')'}"></span></div>
                     <span class="book-actions">
                       <form th:action="@{/mark-as-read}" method="POST" style="display: inline;">
                         <input type="hidden" name="bookId" th:value="${book.id()}" />
@@ -617,6 +617,9 @@
               <img th:if="${comparisonBookCoverOlid != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + comparisonBookCoverOlid + '-M.jpg'}" />
             </div>
           </div>
+        </form>
+        <form th:action="@{/cancel-add}" method="POST" style="margin-top: 15px;">
+          <button type="submit" class="book-action-link">[cancel]</button>
         </form>
       </div>
       <div th:case="'REVIEW'">
