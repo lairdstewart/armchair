@@ -495,7 +495,11 @@
               <div class="book-title">
                 <a th:href="${'https://openlibrary.org/books/' + edition.editionOlid()}" target="_blank" th:text="${edition.title()}"></a>
               </div>
-              <div class="book-author" th:text="${edition.isbn13()}"></div>
+              <div class="book-author">
+                <span th:if="${edition.publisher() != null}" th:text="${edition.publisher()}"></span>
+                <span th:if="${edition.publisher() != null && edition.publishDate() != null}">, </span>
+                <span th:if="${edition.publishDate() != null}" th:text="${edition.publishDate()}"></span>
+              </div>
             </div>
             <img th:if="${edition.coverUrl() != null}" class="book-cover" th:src="${edition.coverUrl()}" />
           </div>

@@ -30,7 +30,7 @@ public class OpenLibraryService {
         }
     }
 
-    public record EditionResult(String editionOlid, String title, String isbn13, Integer coverId) {
+    public record EditionResult(String editionOlid, String title, String isbn13, Integer coverId, String publisher, String publishDate) {
         public String coverUrl() {
             if (coverId != null) return "https://covers.openlibrary.org/b/id/" + coverId + "-M.jpg";
             if (editionOlid != null) return "https://covers.openlibrary.org/b/olid/" + editionOlid + "-M.jpg";
@@ -223,7 +223,17 @@ public class OpenLibraryService {
                     coverId = covers.get(0).asInt();
                 }
 
-                results.add(new EditionResult(editionOlid, title, isbn13, coverId));
+                // Extract publisher (first one from array)
+                String publisher = null;
+                JsonNode publishers = entry.get("publishers");
+                if (publishers != null && publishers.isArray() && publishers.size() > 0) {
+                    publisher = publishers.get(0).asText();
+                }
+
+                // Extract publish date
+                String publishDate = entry.has("publish_date") ? entry.get("publish_date").asText() : null;
+
+                results.add(new EditionResult(editionOlid, title, isbn13, coverId, publisher, publishDate));
             }
 
             return results;
