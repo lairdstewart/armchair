@@ -257,6 +257,30 @@ class RankingFlowTest extends BaseIntegrationTest {
     }
 
     @Test
+    void selectBookSavesCoverEditionOlid() throws Exception {
+        User user = createOAuthUser("ranker10", "oauth-rank-10");
+
+        mockMvc.perform(post("/select-book")
+                        .param("workOlid", "OL100W")
+                        .param("bookName", "Dune")
+                        .param("author", "Frank Herbert")
+                        .param("coverEditionOlid", "OL999M")
+                        .with(oauthUser("oauth-rank-10")).with(csrf()))
+                .andExpect(status().is3xxRedirection());
+
+        mockMvc.perform(post("/categorize")
+                        .param("bookshelf", "fiction")
+                        .param("category", "liked")
+                        .with(oauthUser("oauth-rank-10")).with(csrf()))
+                .andExpect(status().is3xxRedirection());
+
+        List<Ranking> liked = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(
+                user.getId(), Bookshelf.FICTION, BookCategory.LIKED);
+        assertThat(liked).hasSize(1);
+        assertThat(liked.get(0).getBook().getCoverEditionOlid()).isEqualTo("OL999M");
+    }
+
+    @Test
     void removeFromReadingList() throws Exception {
         User user = createOAuthUser("ranker9", "oauth-rank-9");
 
