@@ -67,7 +67,7 @@
                   </form>
                 </span>
               </div>
-              <img th:if="${book.editionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.editionOlid() + '-M.jpg'}" />
+              <img th:if="${book.editionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.editionOlid() + '-M.jpg'}" /><div th:if="${book.editionOlid() == null}" class="book-cover-placeholder">?</div>
             </div>
           </li>
         </ol>

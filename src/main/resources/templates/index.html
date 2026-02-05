@@ -62,7 +62,7 @@
                         </form>
                       </span>
                     </div>
-                    <img th:if="${book.editionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.editionOlid() + '-M.jpg'}" />
+                    <img th:if="${book.editionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.editionOlid() + '-M.jpg'}" /><div th:if="${book.editionOlid() == null}" class="book-cover-placeholder">?</div>
                   </div>
                 </span>
                 <details th:if="${book.review() != null}" class="book-review">
@@ -90,7 +90,7 @@
                           </form>
                         </span>
                       </div>
-                      <img th:if="${book.editionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.editionOlid() + '-M.jpg'}" />
+                      <img th:if="${book.editionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.editionOlid() + '-M.jpg'}" /><div th:if="${book.editionOlid() == null}" class="book-cover-placeholder">?</div>
                     </div>
                   </summary>
                   <div class="review-text" th:text="${book.review()}"></div>
@@ -121,7 +121,7 @@
                         </form>
                       </span>
                     </div>
-                    <img th:if="${book.editionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.editionOlid() + '-M.jpg'}" />
+                    <img th:if="${book.editionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.editionOlid() + '-M.jpg'}" /><div th:if="${book.editionOlid() == null}" class="book-cover-placeholder">?</div>
                   </div>
                 </span>
                 <details th:if="${book.review() != null}" class="book-review">
@@ -149,7 +149,7 @@
                           </form>
                         </span>
                       </div>
-                      <img th:if="${book.editionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.editionOlid() + '-M.jpg'}" />
+                      <img th:if="${book.editionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.editionOlid() + '-M.jpg'}" /><div th:if="${book.editionOlid() == null}" class="book-cover-placeholder">?</div>
                     </div>
                   </summary>
                   <div class="review-text" th:text="${book.review()}"></div>
@@ -180,7 +180,7 @@
                         </form>
                       </span>
                     </div>
-                    <img th:if="${book.editionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.editionOlid() + '-M.jpg'}" />
+                    <img th:if="${book.editionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.editionOlid() + '-M.jpg'}" /><div th:if="${book.editionOlid() == null}" class="book-cover-placeholder">?</div>
                   </div>
                 </span>
                 <details th:if="${book.review() != null}" class="book-review">
@@ -208,7 +208,7 @@
                           </form>
                         </span>
                       </div>
-                      <img th:if="${book.editionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.editionOlid() + '-M.jpg'}" />
+                      <img th:if="${book.editionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.editionOlid() + '-M.jpg'}" /><div th:if="${book.editionOlid() == null}" class="book-cover-placeholder">?</div>
                     </div>
                   </summary>
                   <div class="review-text" th:text="${book.review()}"></div>
@@ -248,7 +248,7 @@
                         </form>
                       </span>
                     </div>
-                    <img th:if="${book.editionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.editionOlid() + '-M.jpg'}" />
+                    <img th:if="${book.editionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.editionOlid() + '-M.jpg'}" /><div th:if="${book.editionOlid() == null}" class="book-cover-placeholder">?</div>
                   </div>
                 </span>
                 <details th:if="${book.review() != null}" class="book-review">
@@ -276,7 +276,7 @@
                           </form>
                         </span>
                       </div>
-                      <img th:if="${book.editionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.editionOlid() + '-M.jpg'}" />
+                      <img th:if="${book.editionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.editionOlid() + '-M.jpg'}" /><div th:if="${book.editionOlid() == null}" class="book-cover-placeholder">?</div>
                     </div>
                   </summary>
                   <div class="review-text" th:text="${book.review()}"></div>
@@ -307,7 +307,7 @@
                         </form>
                       </span>
                     </div>
-                    <img th:if="${book.editionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.editionOlid() + '-M.jpg'}" />
+                    <img th:if="${book.editionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.editionOlid() + '-M.jpg'}" /><div th:if="${book.editionOlid() == null}" class="book-cover-placeholder">?</div>
                   </div>
                 </span>
                 <details th:if="${book.review() != null}" class="book-review">
@@ -335,7 +335,7 @@
                           </form>
                         </span>
                       </div>
-                      <img th:if="${book.editionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.editionOlid() + '-M.jpg'}" />
+                      <img th:if="${book.editionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.editionOlid() + '-M.jpg'}" /><div th:if="${book.editionOlid() == null}" class="book-cover-placeholder">?</div>
                     </div>
                   </summary>
                   <div class="review-text" th:text="${book.review()}"></div>
@@ -366,7 +366,7 @@
                         </form>
                       </span>
                     </div>
-                    <img th:if="${book.editionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.editionOlid() + '-M.jpg'}" />
+                    <img th:if="${book.editionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.editionOlid() + '-M.jpg'}" /><div th:if="${book.editionOlid() == null}" class="book-cover-placeholder">?</div>
                   </div>
                 </span>
                 <details th:if="${book.review() != null}" class="book-review">
@@ -394,7 +394,7 @@
                           </form>
                         </span>
                       </div>
-                      <img th:if="${book.editionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.editionOlid() + '-M.jpg'}" />
+                      <img th:if="${book.editionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.editionOlid() + '-M.jpg'}" /><div th:if="${book.editionOlid() == null}" class="book-cover-placeholder">?</div>
                     </div>
                   </summary>
                   <div class="review-text" th:text="${book.review()}"></div>
@@ -428,7 +428,7 @@
                       </form>
                     </span>
                   </div>
-                  <img th:if="${book.editionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.editionOlid() + '-M.jpg'}" />
+                  <img th:if="${book.editionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.editionOlid() + '-M.jpg'}" /><div th:if="${book.editionOlid() == null}" class="book-cover-placeholder">?</div>
                 </div>
               </li>
             </ul>
@@ -501,7 +501,7 @@
                 <span th:if="${edition.publishDate() != null}" th:text="${edition.publishDate()}"></span>
               </div>
             </div>
-            <img th:if="${edition.coverUrl() != null}" class="book-cover" th:src="${edition.coverUrl()}" />
+            <img th:if="${edition.coverUrl() != null}" class="book-cover" th:src="${edition.coverUrl()}" /><div th:if="${edition.coverUrl() == null}" class="book-cover-placeholder">?</div>
           </div>
         </div>
         <form th:if="${hasMoreEditions}" th:action="@{/more-editions}" method="POST" style="margin-top: 15px;">
@@ -546,7 +546,7 @@
               </div>
               <div th:if="${result.author() != null && !result.author().isBlank()}" class="book-author" th:text="${result.author()}"></div>
             </div>
-            <img th:if="${result.editionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + result.editionOlid() + '-M.jpg'}" />
+            <img th:if="${result.editionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + result.editionOlid() + '-M.jpg'}" /><div th:if="${result.editionOlid() == null}" class="book-cover-placeholder">?</div>
           </div>
         </div>
         <form th:action="@{/skip-resolve}" method="POST" style="margin-top: 15px;">
@@ -580,7 +580,7 @@
                 </div>
                 <div th:if="${result.author() != null && !result.author().isBlank()}" class="book-author" th:text="${result.author()}"></div>
               </div>
-              <img th:if="${result.editionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + result.editionOlid() + '-M.jpg'}" />
+              <img th:if="${result.editionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + result.editionOlid() + '-M.jpg'}" /><div th:if="${result.editionOlid() == null}" class="book-cover-placeholder">?</div>
             </div>
           </div>
         </div>
@@ -601,7 +601,7 @@
                 </div>
                 <div th:if="${rankingState.authorBeingRanked != null && !rankingState.authorBeingRanked.isBlank()}" class="book-author" th:text="${rankingState.authorBeingRanked}"></div>
               </div>
-              <img th:if="${rankingBookCoverOlid != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + rankingBookCoverOlid + '-M.jpg'}" />
+              <img th:if="${rankingBookCoverOlid != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + rankingBookCoverOlid + '-M.jpg'}" /><div th:if="${rankingBookCoverOlid == null}" class="book-cover-placeholder">?</div>
             </div>
           </div>
           <div class="book-entry-row">
@@ -614,7 +614,7 @@
                 </div>
                 <div th:if="${comparisonBookAuthor != null && !comparisonBookAuthor.isBlank()}" class="book-author" th:text="${comparisonBookAuthor}"></div>
               </div>
-              <img th:if="${comparisonBookCoverOlid != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + comparisonBookCoverOlid + '-M.jpg'}" />
+              <img th:if="${comparisonBookCoverOlid != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + comparisonBookCoverOlid + '-M.jpg'}" /><div th:if="${comparisonBookCoverOlid == null}" class="book-cover-placeholder">?</div>
             </div>
           </div>
         </form>
