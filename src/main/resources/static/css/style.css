@@ -42,6 +42,12 @@ ol.book-list li > .book-number {
   margin-top: 23px;
 }
 
+ol.book-list li > span:not(.book-number) {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
 ol.book-list li form {
   margin-bottom: 0;
   display: flex;
@@ -235,6 +241,8 @@ input:checked + .slider:before {
 /* Book review styles */
 .book-review {
   flex: 1;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .book-review summary {
