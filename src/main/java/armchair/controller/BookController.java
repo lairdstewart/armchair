@@ -1097,10 +1097,8 @@ public class BookController {
         existingBook.setFirstPublishYear(firstPublishYear);
         bookRepository.save(existingBook);
 
-        // Update RankingState to match - and mark edition as selected since RESOLVE already picks one
+        // Update RankingState to match - edition selection happens next in SELECT_EDITION mode
         rankingState.setBookInfo(workOlid, title, author);
-        rankingState.setEditionOlidBeingRanked(editionOlid);
-        rankingState.setEditionSelected(true);
         rankingStateRepository.save(rankingState);
 
         session.removeAttribute("skipResolve");

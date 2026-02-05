@@ -217,4 +217,50 @@ class ResolveFlowTest extends BaseIntegrationTest {
         Book book = bookRepository.findByWorkOlid("OL123W").orElseThrow();
         assertThat(book.getFirstPublishYear()).isEqualTo(1965);
     }
+
+    @Test
+    void resolveFlowsContinuesToEditionSelection() throws Exception {
+        MockHttpSession session = guestSession();
+        mockMvc.perform(get("/my-books").session(session)).andExpect(status().isOk());
+        Long guestUserId = (Long) session.getAttribute("guestUserId");
+
+        setupUnverifiedBookForRanking(guestUserId, "Dune", "Frank Herbert");
+
+        when(openLibraryService.searchByTitleAndAuthor(eq("Dune"), eq("Frank Herbert"), eq(3)))
+                .thenReturn(List.of(
+                        new OpenLibraryService.BookResult("OL123W", "OL123M", "Dune", "Frank Herbert", 1965)
+                ));
+
+        // First visit shows RESOLVE mode
+        mockMvc.perform(get("/my-books").session(session))
+                .andExpect(status().isOk())
+                .andExpect(model().attributeExists("resolveResults"));
+
+        // Resolve the book
+        mockMvc.perform(post("/resolve-book")
+                        .param("workOlid", "OL123W")
+                        .param("title", "Dune")
+                        .param("author", "Frank Herbert")
+                        .param("editionOlid", "OL123M")
+                        .param("firstPublishYear", "1965")
+                        .session(session).with(csrf()))
+                .andExpect(status().is3xxRedirection());
+
+        // Verify RankingState has workOlid but edition NOT selected
+        RankingState state = rankingStateRepository.findById(guestUserId).orElseThrow();
+        assertThat(state.getWorkOlidBeingRanked()).isEqualTo("OL123W");
+        assertThat(state.isEditionSelected()).isFalse();
+
+        // Mock edition selection API - return multiple editions so it doesn't auto-select
+        when(openLibraryService.getEditionsForWork(eq("OL123W"), anyInt(), eq(0)))
+                .thenReturn(List.of(
+                        new OpenLibraryService.EditionResult("OL123M", "Dune (1st Edition)", "9780801950773", 12345, "Chilton", "1965"),
+                        new OpenLibraryService.EditionResult("OL456M", "Dune (Paperback)", "9780441172719", 67890, "Ace", "1990")
+                ));
+
+        // Next visit should show SELECT_EDITION mode (not CATEGORIZE)
+        mockMvc.perform(get("/my-books").session(session))
+                .andExpect(status().isOk())
+                .andExpect(model().attributeExists("editionResults"));
+    }
 }
