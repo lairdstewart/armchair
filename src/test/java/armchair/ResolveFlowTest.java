@@ -52,7 +52,7 @@ class ResolveFlowTest extends BaseIntegrationTest {
                         .param("workOlid", "OL123W")
                         .param("title", "Dune")
                         .param("author", "Frank Herbert")
-                        .param("coverEditionOlid", "OL123M")
+                        .param("editionOlid", "OL123M")
                         .session(session).with(csrf()))
                 .andExpect(status().is3xxRedirection());
 
@@ -167,7 +167,7 @@ class ResolveFlowTest extends BaseIntegrationTest {
                         .param("workOlid", "OL123W")
                         .param("title", "Dune")
                         .param("author", "Frank Herbert")
-                        .param("coverEditionOlid", "OL123M")
+                        .param("editionOlid", "OL123M")
                         .session(session).with(csrf()))
                 .andExpect(status().is3xxRedirection());
 
@@ -187,5 +187,34 @@ class ResolveFlowTest extends BaseIntegrationTest {
 
         assertThat(rankingStateRepository.findById(guestUserId)).isEmpty();
         assertThat(session.getAttribute("resolveWarning")).isEqualTo("Unknown Book");
+    }
+
+    @Test
+    void resolveBookSavesFirstPublishYear() throws Exception {
+        MockHttpSession session = guestSession();
+        mockMvc.perform(get("/my-books").session(session)).andExpect(status().isOk());
+        Long guestUserId = (Long) session.getAttribute("guestUserId");
+
+        setupUnverifiedBookForRanking(guestUserId, "Dune Import", "F. Herbert");
+
+        when(openLibraryService.searchByTitleAndAuthor(eq("Dune Import"), eq("F. Herbert"), eq(3)))
+                .thenReturn(List.of(
+                        new OpenLibraryService.BookResult("OL123W", "OL123M", "Dune", "Frank Herbert", 1965)
+                ));
+
+        mockMvc.perform(get("/my-books").session(session))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post("/resolve-book")
+                        .param("workOlid", "OL123W")
+                        .param("title", "Dune")
+                        .param("author", "Frank Herbert")
+                        .param("editionOlid", "OL123M")
+                        .param("firstPublishYear", "1965")
+                        .session(session).with(csrf()))
+                .andExpect(status().is3xxRedirection());
+
+        Book book = bookRepository.findByWorkOlid("OL123W").orElseThrow();
+        assertThat(book.getFirstPublishYear()).isEqualTo(1965);
     }
 }

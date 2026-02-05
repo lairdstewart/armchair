@@ -20,15 +20,15 @@ public class BookService {
      * Finds an existing book or creates a new one. Deduplicates by workOlid first,
      * then falls back to case-insensitive title+author match for unverified books.
      */
-    public Book findOrCreateBook(String workOlid, String coverEditionOlid, String title, String author, Integer firstPublishYear) {
+    public Book findOrCreateBook(String workOlid, String editionOlid, String title, String author, Integer firstPublishYear) {
         // Look up by workOlid
         if (workOlid != null) {
             var existing = bookRepository.findByWorkOlid(workOlid);
             if (existing.isPresent()) {
                 Book book = existing.get();
-                // Enrich with coverEditionOlid if missing
-                if (book.getCoverEditionOlid() == null && coverEditionOlid != null) {
-                    book.setCoverEditionOlid(coverEditionOlid);
+                // Enrich with editionOlid if missing
+                if (book.getEditionOlid() == null && editionOlid != null) {
+                    book.setEditionOlid(editionOlid);
                     bookRepository.save(book);
                 }
                 return book;
@@ -45,7 +45,7 @@ public class BookService {
         }
 
         // No match — create new Book
-        return bookRepository.save(new Book(workOlid, coverEditionOlid, title, author, firstPublishYear));
+        return bookRepository.save(new Book(workOlid, editionOlid, title, author, firstPublishYear));
     }
 
     /**
@@ -69,7 +69,7 @@ public class BookService {
             return List.of();
         }
         return candidates.stream()
-            .map(b -> new OpenLibraryService.BookResult(b.getWorkOlid(), b.getCoverEditionOlid(), b.getTitle(), b.getAuthor(), b.getFirstPublishYear()))
+            .map(b -> new OpenLibraryService.BookResult(b.getWorkOlid(), b.getEditionOlid(), b.getTitle(), b.getAuthor(), b.getFirstPublishYear()))
             .toList();
     }
 }

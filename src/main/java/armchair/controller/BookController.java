@@ -50,7 +50,7 @@ import java.util.stream.Collectors;
 public class BookController {
     private static final Logger log = LoggerFactory.getLogger(BookController.class);
 
-    public record BookInfo(Long id, String workOlid, String coverEditionOlid, String title, String author, String review) {
+    public record BookInfo(Long id, String workOlid, String editionOlid, String title, String author, String review) {
         public String bookUrl() {
             if (workOlid != null) return "https://openlibrary.org/works/" + workOlid;
             return "https://openlibrary.org/search?q=" + java.net.URLEncoder.encode(title + " " + author, java.nio.charset.StandardCharsets.UTF_8);
@@ -63,6 +63,7 @@ public class BookController {
 
     private enum Mode {
         LIST,
+        SELECT_EDITION,
         CATEGORIZE,
         RANK,
         RE_RANK,
@@ -353,6 +354,51 @@ public class BookController {
             }
         }
 
+        // Handle SELECT_EDITION mode - fetch editions and potentially auto-select
+        if (mode == Mode.SELECT_EDITION && rankingState != null && rankingState.getWorkOlidBeingRanked() != null) {
+            Integer editionOffset = (Integer) session.getAttribute("editionOffset");
+            if (editionOffset == null) editionOffset = 0;
+            int limit = 3;
+
+            List<OpenLibraryService.EditionResult> editions = openLibraryService.getEditionsForWork(
+                rankingState.getWorkOlidBeingRanked(), limit + 1, editionOffset);
+
+            boolean hasMore = editions.size() > limit;
+            if (hasMore) {
+                editions = editions.subList(0, limit);
+            }
+
+            // Auto-select if only 1 edition with ISBN exists (and this is the first fetch)
+            if (editionOffset == 0 && editions.size() == 1 && !hasMore) {
+                OpenLibraryService.EditionResult soleEdition = editions.get(0);
+                rankingState.setEditionOlidBeingRanked(soleEdition.editionOlid());
+                rankingState.setIsbn13BeingRanked(soleEdition.isbn13());
+                rankingState.setEditionSelected(true);
+                rankingStateRepository.save(rankingState);
+
+                // Update the Book with the edition info
+                Book book = bookService.findOrCreateBook(rankingState.getWorkOlidBeingRanked(),
+                    soleEdition.editionOlid(), rankingState.getTitleBeingRanked(),
+                    rankingState.getAuthorBeingRanked(), null);
+                book.setIsbn13(soleEdition.isbn13());
+                bookRepository.save(book);
+
+                session.removeAttribute("editionOffset");
+                return "redirect:/my-books"; // Will now show CATEGORIZE
+            }
+
+            // Skip edition selection if no editions with ISBN found
+            if (editions.isEmpty()) {
+                rankingState.setEditionSelected(true); // Mark as selected (even though none chosen)
+                rankingStateRepository.save(rankingState);
+                session.removeAttribute("editionOffset");
+                return "redirect:/my-books"; // Will now show CATEGORIZE
+            }
+
+            model.addAttribute("editionResults", editions);
+            model.addAttribute("hasMoreEditions", hasMore);
+        }
+
         // Add username for display if logged in
         String userName = null;
         User user = userRepository.findById(userId).orElse(null);
@@ -451,10 +497,10 @@ public class BookController {
             model.addAttribute("comparisonBookTitle", compRanking.getBook().getTitle());
             model.addAttribute("comparisonBookAuthor", compRanking.getBook().getAuthor());
             model.addAttribute("comparisonBookWorkOlid", compRanking.getBook().getWorkOlid());
-            model.addAttribute("comparisonBookCoverOlid", compRanking.getBook().getCoverEditionOlid());
+            model.addAttribute("comparisonBookCoverOlid", compRanking.getBook().getEditionOlid());
             if (rankingState.getWorkOlidBeingRanked() != null) {
                 bookRepository.findByWorkOlid(rankingState.getWorkOlidBeingRanked())
-                    .ifPresent(b -> model.addAttribute("rankingBookCoverOlid", b.getCoverEditionOlid()));
+                    .ifPresent(b -> model.addAttribute("rankingBookCoverOlid", b.getEditionOlid()));
             }
         }
 
@@ -482,13 +528,22 @@ public class BookController {
             return Mode.LIST;
         }
         if (rankingState.getCategory() == null) {
+            // Check if edition selection is needed:
+            // - workOlid must be set (otherwise we need RESOLVE first)
+            // - not re-ranking (already has edition)
+            // - edition not yet selected
+            if (rankingState.getWorkOlidBeingRanked() != null
+                    && !rankingState.isReRank()
+                    && !rankingState.isEditionSelected()) {
+                return Mode.SELECT_EDITION;
+            }
             return Mode.CATEGORIZE;
         }
         return Mode.RANK;
     }
 
     private static BookInfo toBookInfo(Ranking r) {
-        return new BookInfo(r.getId(), r.getBook().getWorkOlid(), r.getBook().getCoverEditionOlid(), r.getBook().getTitle(), r.getBook().getAuthor(), r.getReview());
+        return new BookInfo(r.getId(), r.getBook().getWorkOlid(), r.getBook().getEditionOlid(), r.getBook().getTitle(), r.getBook().getAuthor(), r.getReview());
     }
 
     private BookLists getBookLists(Bookshelf bookshelf, Long userId) {
@@ -985,7 +1040,8 @@ public class BookController {
     public String resolveBook(@RequestParam String workOlid,
                               @RequestParam String title,
                               @RequestParam String author,
-                              @RequestParam(required = false) String coverEditionOlid,
+                              @RequestParam(required = false) String editionOlid,
+                              @RequestParam(required = false) Integer firstPublishYear,
                               HttpSession session) {
         Long userId = getCurrentUserId(session);
         if (userId == null) {
@@ -1012,13 +1068,16 @@ public class BookController {
         Book existingBook = bookService.findOrCreateBook(rankingState.getWorkOlidBeingRanked(),
             null, rankingState.getTitleBeingRanked(), rankingState.getAuthorBeingRanked(), null);
         existingBook.setWorkOlid(workOlid);
-        existingBook.setCoverEditionOlid(coverEditionOlid);
+        existingBook.setEditionOlid(editionOlid);
         existingBook.setTitle(title);
         existingBook.setAuthor(author);
+        existingBook.setFirstPublishYear(firstPublishYear);
         bookRepository.save(existingBook);
 
-        // Update RankingState to match
+        // Update RankingState to match - and mark edition as selected since RESOLVE already picks one
         rankingState.setBookInfo(workOlid, title, author);
+        rankingState.setEditionOlidBeingRanked(editionOlid);
+        rankingState.setEditionSelected(true);
         rankingStateRepository.save(rankingState);
 
         session.removeAttribute("skipResolve");
@@ -1135,7 +1194,8 @@ public class BookController {
     public String selectBook(@RequestParam String workOlid,
                              @RequestParam String bookName,
                              @RequestParam String author,
-                             @RequestParam(required = false) String coverEditionOlid,
+                             @RequestParam(required = false) String editionOlid,
+                             @RequestParam(required = false) Integer firstPublishYear,
                              HttpSession session) {
         Long userId = getCurrentUserId(session);
         if (userId == null) {
@@ -1148,8 +1208,8 @@ public class BookController {
             rankingState = new RankingState(userId, null, null, null, null, null);
         }
 
-        // Eagerly create the Book row so coverEditionOlid is persisted
-        bookService.findOrCreateBook(workOlid, coverEditionOlid, bookName, author, null);
+        // Eagerly create the Book row so editionOlid is persisted
+        bookService.findOrCreateBook(workOlid, editionOlid, bookName, author, firstPublishYear);
 
         // Set the book info, leave category null to enter CATEGORIZE mode
         rankingState.setBookInfo(workOlid, bookName, author);
@@ -1158,11 +1218,73 @@ public class BookController {
         return "redirect:/my-books";
     }
 
+    @PostMapping("/select-edition")
+    public String selectEdition(@RequestParam String editionOlid,
+                                @RequestParam(required = false) String isbn13,
+                                @RequestParam(required = false) String title,
+                                HttpSession session) {
+        Long userId = getCurrentUserId(session);
+        if (userId == null) {
+            return "redirect:/setup-username";
+        }
+
+        RankingState rankingState = rankingStateRepository.findById(userId).orElse(null);
+        if (rankingState == null || rankingState.getWorkOlidBeingRanked() == null) {
+            return "redirect:/my-books";
+        }
+
+        // Update the Book with the selected edition
+        Book book = bookService.findOrCreateBook(rankingState.getWorkOlidBeingRanked(),
+            editionOlid, rankingState.getTitleBeingRanked(),
+            rankingState.getAuthorBeingRanked(), null);
+        book.setIsbn13(isbn13);
+        if (title != null && !title.isBlank()) {
+            book.setTitle(title);
+            rankingState.setTitleBeingRanked(title);
+        }
+        bookRepository.save(book);
+
+        // Update RankingState
+        rankingState.setEditionOlidBeingRanked(editionOlid);
+        rankingState.setIsbn13BeingRanked(isbn13);
+        rankingState.setEditionSelected(true);
+        rankingStateRepository.save(rankingState);
+
+        session.removeAttribute("editionOffset");
+        return "redirect:/my-books";
+    }
+
+    @PostMapping("/more-editions")
+    public String moreEditions(HttpSession session) {
+        Integer editionOffset = (Integer) session.getAttribute("editionOffset");
+        if (editionOffset == null) editionOffset = 0;
+        session.setAttribute("editionOffset", editionOffset + 3);
+        return "redirect:/my-books";
+    }
+
+    @PostMapping("/skip-edition-selection")
+    public String skipEditionSelection(HttpSession session) {
+        Long userId = getCurrentUserId(session);
+        if (userId == null) {
+            return "redirect:/setup-username";
+        }
+
+        RankingState rankingState = rankingStateRepository.findById(userId).orElse(null);
+        if (rankingState != null) {
+            rankingState.setEditionSelected(true);
+            rankingStateRepository.save(rankingState);
+        }
+
+        session.removeAttribute("editionOffset");
+        return "redirect:/my-books";
+    }
+
     @PostMapping("/add-to-reading-list")
     public String addToReadingList(@RequestParam String workOlid,
                                    @RequestParam String bookName,
                                    @RequestParam String author,
-                                   @RequestParam(required = false) String coverEditionOlid,
+                                   @RequestParam(required = false) String editionOlid,
+                                   @RequestParam(required = false) Integer firstPublishYear,
                                    @RequestParam(required = false) String returnUrl,
                                    HttpSession session) {
         Long userId = getCurrentUserId(session);
@@ -1173,7 +1295,7 @@ public class BookController {
         String redirectTo = isSafeRedirectUrl(returnUrl) ? "redirect:" + returnUrl : "redirect:/search?type=books";
 
         // Resolve the book
-        Book book = bookService.findOrCreateBook(workOlid, coverEditionOlid, bookName, author, null);
+        Book book = bookService.findOrCreateBook(workOlid, editionOlid, bookName, author, firstPublishYear);
 
         // Check if book is already in user's library (any category)
         if (rankingRepository.existsByUserIdAndBookId(userId, book.getId())) {
@@ -1333,7 +1455,7 @@ public class BookController {
             Map<String, UserBookRank> finalUserBooks = userBooks;
             bookResults = bookRepository.findRandom10Books().stream()
                 .filter(b -> !finalUserBooks.containsKey(b.getWorkOlid()))
-                .map(b -> new OpenLibraryService.BookResult(b.getWorkOlid(), b.getCoverEditionOlid(), b.getTitle(), b.getAuthor(), b.getFirstPublishYear()))
+                .map(b -> new OpenLibraryService.BookResult(b.getWorkOlid(), b.getEditionOlid(), b.getTitle(), b.getAuthor(), b.getFirstPublishYear()))
                 .toList();
         }
         model.addAttribute("bookResults", bookResults);

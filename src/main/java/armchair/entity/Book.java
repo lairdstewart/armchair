@@ -15,7 +15,8 @@ public class Book {
     private Long id;
 
     private String workOlid;
-    private String coverEditionOlid;
+    private String editionOlid;
+    private String isbn13;
     @Column(nullable = false, length = 1000)
     private String title;
     @Column(nullable = false, length = 1000)
@@ -24,9 +25,9 @@ public class Book {
 
     public Book() {}
 
-    public Book(String workOlid, String coverEditionOlid, String title, String author, Integer firstPublishYear) {
+    public Book(String workOlid, String editionOlid, String title, String author, Integer firstPublishYear) {
         this.workOlid = workOlid;
-        this.coverEditionOlid = coverEditionOlid;
+        this.editionOlid = editionOlid;
         this.title = title;
         this.author = author;
         this.firstPublishYear = firstPublishYear;
@@ -48,12 +49,20 @@ public class Book {
         this.workOlid = workOlid;
     }
 
-    public String getCoverEditionOlid() {
-        return coverEditionOlid;
+    public String getEditionOlid() {
+        return editionOlid;
     }
 
-    public void setCoverEditionOlid(String coverEditionOlid) {
-        this.coverEditionOlid = coverEditionOlid;
+    public void setEditionOlid(String editionOlid) {
+        this.editionOlid = editionOlid;
+    }
+
+    public String getIsbn13() {
+        return isbn13;
+    }
+
+    public void setIsbn13(String isbn13) {
+        this.isbn13 = isbn13;
     }
 
     public String getTitle() {

@@ -14,6 +14,9 @@ public class RankingState {
     private Long userId;
 
     private String workOlidBeingRanked;
+    private String editionOlidBeingRanked;
+    private String isbn13BeingRanked;
+    private boolean editionSelected;
     @Column(length = 1000)
     private String titleBeingRanked;
     @Column(length = 1000)
@@ -183,5 +186,29 @@ public class RankingState {
 
     public void setBookIdBeingReviewed(Long bookIdBeingReviewed) {
         this.bookIdBeingReviewed = bookIdBeingReviewed;
+    }
+
+    public String getEditionOlidBeingRanked() {
+        return editionOlidBeingRanked;
+    }
+
+    public void setEditionOlidBeingRanked(String editionOlidBeingRanked) {
+        this.editionOlidBeingRanked = editionOlidBeingRanked;
+    }
+
+    public String getIsbn13BeingRanked() {
+        return isbn13BeingRanked;
+    }
+
+    public void setIsbn13BeingRanked(String isbn13BeingRanked) {
+        this.isbn13BeingRanked = isbn13BeingRanked;
+    }
+
+    public boolean isEditionSelected() {
+        return editionSelected;
+    }
+
+    public void setEditionSelected(boolean editionSelected) {
+        this.editionSelected = editionSelected;
     }
 }

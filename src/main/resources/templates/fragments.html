@@ -34,7 +34,7 @@
                   </div>
                   <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author" th:text="${book.author()}"></div>
                 </div>
-                <img th:if="${book.coverEditionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.coverEditionOlid() + '-M.jpg'}" />
+                <img th:if="${book.editionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.editionOlid() + '-M.jpg'}" />
               </div>
             </span>
             <details th:if="${book.review() != null}" class="book-review">
@@ -48,7 +48,7 @@
                     <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author" th:text="${book.author()}"></div>
                     <span class="review-toggle"></span>
                   </div>
-                  <img th:if="${book.coverEditionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.coverEditionOlid() + '-M.jpg'}" />
+                  <img th:if="${book.editionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.editionOlid() + '-M.jpg'}" />
                 </div>
               </summary>
               <div class="review-text" th:text="${book.review()}"></div>
@@ -65,7 +65,7 @@
                   </div>
                   <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author" th:text="${book.author()}"></div>
                 </div>
-                <img th:if="${book.coverEditionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.coverEditionOlid() + '-M.jpg'}" />
+                <img th:if="${book.editionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.editionOlid() + '-M.jpg'}" />
               </div>
             </span>
             <details th:if="${book.review() != null}" class="book-review">
@@ -79,7 +79,7 @@
                     <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author" th:text="${book.author()}"></div>
                     <span class="review-toggle"></span>
                   </div>
-                  <img th:if="${book.coverEditionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.coverEditionOlid() + '-M.jpg'}" />
+                  <img th:if="${book.editionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.editionOlid() + '-M.jpg'}" />
                 </div>
               </summary>
               <div class="review-text" th:text="${book.review()}"></div>
@@ -96,7 +96,7 @@
                   </div>
                   <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author" th:text="${book.author()}"></div>
                 </div>
-                <img th:if="${book.coverEditionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.coverEditionOlid() + '-M.jpg'}" />
+                <img th:if="${book.editionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.editionOlid() + '-M.jpg'}" />
               </div>
             </span>
             <details th:if="${book.review() != null}" class="book-review">
@@ -110,7 +110,7 @@
                     <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author" th:text="${book.author()}"></div>
                     <span class="review-toggle"></span>
                   </div>
-                  <img th:if="${book.coverEditionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.coverEditionOlid() + '-M.jpg'}" />
+                  <img th:if="${book.editionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.editionOlid() + '-M.jpg'}" />
                 </div>
               </summary>
               <div class="review-text" th:text="${book.review()}"></div>
@@ -127,7 +127,7 @@
                   </div>
                   <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author" th:text="${book.author()}"></div>
                 </div>
-                <img th:if="${book.coverEditionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.coverEditionOlid() + '-M.jpg'}" />
+                <img th:if="${book.editionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.editionOlid() + '-M.jpg'}" />
               </div>
             </span>
             <details th:if="${book.review() != null}" class="book-review">
@@ -141,7 +141,7 @@
                     <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author" th:text="${book.author()}"></div>
                     <span class="review-toggle"></span>
                   </div>
-                  <img th:if="${book.coverEditionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.coverEditionOlid() + '-M.jpg'}" />
+                  <img th:if="${book.editionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.editionOlid() + '-M.jpg'}" />
                 </div>
               </summary>
               <div class="review-text" th:text="${book.review()}"></div>
@@ -164,7 +164,7 @@
                   </div>
                   <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author" th:text="${book.author()}"></div>
                 </div>
-                <img th:if="${book.coverEditionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.coverEditionOlid() + '-M.jpg'}" />
+                <img th:if="${book.editionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.editionOlid() + '-M.jpg'}" />
               </div>
             </span>
             <details th:if="${book.review() != null}" class="book-review">
@@ -178,7 +178,7 @@
                     <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author" th:text="${book.author()}"></div>
                     <span class="review-toggle"></span>
                   </div>
-                  <img th:if="${book.coverEditionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.coverEditionOlid() + '-M.jpg'}" />
+                  <img th:if="${book.editionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.editionOlid() + '-M.jpg'}" />
                 </div>
               </summary>
               <div class="review-text" th:text="${book.review()}"></div>
@@ -195,7 +195,7 @@
                   </div>
                   <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author" th:text="${book.author()}"></div>
                 </div>
-                <img th:if="${book.coverEditionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.coverEditionOlid() + '-M.jpg'}" />
+                <img th:if="${book.editionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.editionOlid() + '-M.jpg'}" />
               </div>
             </span>
             <details th:if="${book.review() != null}" class="book-review">
@@ -209,7 +209,7 @@
                     <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author" th:text="${book.author()}"></div>
                     <span class="review-toggle"></span>
                   </div>
-                  <img th:if="${book.coverEditionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.coverEditionOlid() + '-M.jpg'}" />
+                  <img th:if="${book.editionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.editionOlid() + '-M.jpg'}" />
                 </div>
               </summary>
               <div class="review-text" th:text="${book.review()}"></div>
@@ -226,7 +226,7 @@
                   </div>
                   <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author" th:text="${book.author()}"></div>
                 </div>
-                <img th:if="${book.coverEditionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.coverEditionOlid() + '-M.jpg'}" />
+                <img th:if="${book.editionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.editionOlid() + '-M.jpg'}" />
               </div>
             </span>
             <details th:if="${book.review() != null}" class="book-review">
@@ -240,7 +240,7 @@
                     <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author" th:text="${book.author()}"></div>
                     <span class="review-toggle"></span>
                   </div>
-                  <img th:if="${book.coverEditionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.coverEditionOlid() + '-M.jpg'}" />
+                  <img th:if="${book.editionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.editionOlid() + '-M.jpg'}" />
                 </div>
               </summary>
               <div class="review-text" th:text="${book.review()}"></div>
@@ -257,7 +257,7 @@
                   </div>
                   <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author" th:text="${book.author()}"></div>
                 </div>
-                <img th:if="${book.coverEditionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.coverEditionOlid() + '-M.jpg'}" />
+                <img th:if="${book.editionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.editionOlid() + '-M.jpg'}" />
               </div>
             </span>
             <details th:if="${book.review() != null}" class="book-review">
@@ -271,7 +271,7 @@
                     <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author" th:text="${book.author()}"></div>
                     <span class="review-toggle"></span>
                   </div>
-                  <img th:if="${book.coverEditionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.coverEditionOlid() + '-M.jpg'}" />
+                  <img th:if="${book.editionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.editionOlid() + '-M.jpg'}" />
                 </div>
               </summary>
               <div class="review-text" th:text="${book.review()}"></div>

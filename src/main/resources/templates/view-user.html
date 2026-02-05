@@ -51,12 +51,12 @@
                     <input type="hidden" name="workOlid" th:value="${book.workOlid()}" />
                     <input type="hidden" name="bookName" th:value="${book.title()}" />
                     <input type="hidden" name="author" th:value="${book.author()}" />
-                    <input type="hidden" name="coverEditionOlid" th:value="${book.coverEditionOlid()}" />
+                    <input type="hidden" name="editionOlid" th:value="${book.editionOlid()}" />
                     <input type="hidden" name="returnUrl" th:value="${'/user/' + viewUsername}" />
                     <button type="submit" class="book-action-link">[want to read]</button>
                   </form>
                 </div>
-                <img th:if="${book.coverEditionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.coverEditionOlid() + '-M.jpg'}" />
+                <img th:if="${book.editionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.editionOlid() + '-M.jpg'}" />
               </div>
             </span>
             <details th:if="${book.review() != null}" class="book-review">
@@ -74,13 +74,13 @@
                         <input type="hidden" name="workOlid" th:value="${book.workOlid()}" />
                         <input type="hidden" name="bookName" th:value="${book.title()}" />
                         <input type="hidden" name="author" th:value="${book.author()}" />
-                        <input type="hidden" name="coverEditionOlid" th:value="${book.coverEditionOlid()}" />
+                        <input type="hidden" name="editionOlid" th:value="${book.editionOlid()}" />
                         <input type="hidden" name="returnUrl" th:value="${'/user/' + viewUsername}" />
                         <button type="submit" class="book-action-link">[want to read]</button>
                       </form>
                     </span>
                   </div>
-                  <img th:if="${book.coverEditionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.coverEditionOlid() + '-M.jpg'}" />
+                  <img th:if="${book.editionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.editionOlid() + '-M.jpg'}" />
                 </div>
               </summary>
               <div class="review-text" th:text="${book.review()}"></div>
@@ -100,12 +100,12 @@
                     <input type="hidden" name="workOlid" th:value="${book.workOlid()}" />
                     <input type="hidden" name="bookName" th:value="${book.title()}" />
                     <input type="hidden" name="author" th:value="${book.author()}" />
-                    <input type="hidden" name="coverEditionOlid" th:value="${book.coverEditionOlid()}" />
+                    <input type="hidden" name="editionOlid" th:value="${book.editionOlid()}" />
                     <input type="hidden" name="returnUrl" th:value="${'/user/' + viewUsername}" />
                     <button type="submit" class="book-action-link">[want to read]</button>
                   </form>
                 </div>
-                <img th:if="${book.coverEditionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.coverEditionOlid() + '-M.jpg'}" />
+                <img th:if="${book.editionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.editionOlid() + '-M.jpg'}" />
               </div>
             </span>
             <details th:if="${book.review() != null}" class="book-review">
@@ -123,13 +123,13 @@
                         <input type="hidden" name="workOlid" th:value="${book.workOlid()}" />
                         <input type="hidden" name="bookName" th:value="${book.title()}" />
                         <input type="hidden" name="author" th:value="${book.author()}" />
-                        <input type="hidden" name="coverEditionOlid" th:value="${book.coverEditionOlid()}" />
+                        <input type="hidden" name="editionOlid" th:value="${book.editionOlid()}" />
                         <input type="hidden" name="returnUrl" th:value="${'/user/' + viewUsername}" />
                         <button type="submit" class="book-action-link">[want to read]</button>
                       </form>
                     </span>
                   </div>
-                  <img th:if="${book.coverEditionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.coverEditionOlid() + '-M.jpg'}" />
+                  <img th:if="${book.editionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.editionOlid() + '-M.jpg'}" />
                 </div>
               </summary>
               <div class="review-text" th:text="${book.review()}"></div>
@@ -149,12 +149,12 @@
                     <input type="hidden" name="workOlid" th:value="${book.workOlid()}" />
                     <input type="hidden" name="bookName" th:value="${book.title()}" />
                     <input type="hidden" name="author" th:value="${book.author()}" />
-                    <input type="hidden" name="coverEditionOlid" th:value="${book.coverEditionOlid()}" />
+                    <input type="hidden" name="editionOlid" th:value="${book.editionOlid()}" />
                     <input type="hidden" name="returnUrl" th:value="${'/user/' + viewUsername}" />
                     <button type="submit" class="book-action-link">[want to read]</button>
                   </form>
                 </div>
-                <img th:if="${book.coverEditionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.coverEditionOlid() + '-M.jpg'}" />
+                <img th:if="${book.editionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.editionOlid() + '-M.jpg'}" />
               </div>
             </span>
             <details th:if="${book.review() != null}" class="book-review">
@@ -172,13 +172,13 @@
                         <input type="hidden" name="workOlid" th:value="${book.workOlid()}" />
                         <input type="hidden" name="bookName" th:value="${book.title()}" />
                         <input type="hidden" name="author" th:value="${book.author()}" />
-                        <input type="hidden" name="coverEditionOlid" th:value="${book.coverEditionOlid()}" />
+                        <input type="hidden" name="editionOlid" th:value="${book.editionOlid()}" />
                         <input type="hidden" name="returnUrl" th:value="${'/user/' + viewUsername}" />
                         <button type="submit" class="book-action-link">[want to read]</button>
                       </form>
                     </span>
                   </div>
-                  <img th:if="${book.coverEditionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.coverEditionOlid() + '-M.jpg'}" />
+                  <img th:if="${book.editionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.editionOlid() + '-M.jpg'}" />
                 </div>
               </summary>
               <div class="review-text" th:text="${book.review()}"></div>
@@ -198,12 +198,12 @@
                     <input type="hidden" name="workOlid" th:value="${book.workOlid()}" />
                     <input type="hidden" name="bookName" th:value="${book.title()}" />
                     <input type="hidden" name="author" th:value="${book.author()}" />
-                    <input type="hidden" name="coverEditionOlid" th:value="${book.coverEditionOlid()}" />
+                    <input type="hidden" name="editionOlid" th:value="${book.editionOlid()}" />
                     <input type="hidden" name="returnUrl" th:value="${'/user/' + viewUsername}" />
                     <button type="submit" class="book-action-link">[want to read]</button>
                   </form>
                 </div>
-                <img th:if="${book.coverEditionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.coverEditionOlid() + '-M.jpg'}" />
+                <img th:if="${book.editionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.editionOlid() + '-M.jpg'}" />
               </div>
             </span>
             <details th:if="${book.review() != null}" class="book-review">
@@ -221,13 +221,13 @@
                         <input type="hidden" name="workOlid" th:value="${book.workOlid()}" />
                         <input type="hidden" name="bookName" th:value="${book.title()}" />
                         <input type="hidden" name="author" th:value="${book.author()}" />
-                        <input type="hidden" name="coverEditionOlid" th:value="${book.coverEditionOlid()}" />
+                        <input type="hidden" name="editionOlid" th:value="${book.editionOlid()}" />
                         <input type="hidden" name="returnUrl" th:value="${'/user/' + viewUsername}" />
                         <button type="submit" class="book-action-link">[want to read]</button>
                       </form>
                     </span>
                   </div>
-                  <img th:if="${book.coverEditionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.coverEditionOlid() + '-M.jpg'}" />
+                  <img th:if="${book.editionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.editionOlid() + '-M.jpg'}" />
                 </div>
               </summary>
               <div class="review-text" th:text="${book.review()}"></div>
@@ -253,12 +253,12 @@
                     <input type="hidden" name="workOlid" th:value="${book.workOlid()}" />
                     <input type="hidden" name="bookName" th:value="${book.title()}" />
                     <input type="hidden" name="author" th:value="${book.author()}" />
-                    <input type="hidden" name="coverEditionOlid" th:value="${book.coverEditionOlid()}" />
+                    <input type="hidden" name="editionOlid" th:value="${book.editionOlid()}" />
                     <input type="hidden" name="returnUrl" th:value="${'/user/' + viewUsername}" />
                     <button type="submit" class="book-action-link">[want to read]</button>
                   </form>
                 </div>
-                <img th:if="${book.coverEditionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.coverEditionOlid() + '-M.jpg'}" />
+                <img th:if="${book.editionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.editionOlid() + '-M.jpg'}" />
               </div>
             </span>
             <details th:if="${book.review() != null}" class="book-review">
@@ -276,13 +276,13 @@
                         <input type="hidden" name="workOlid" th:value="${book.workOlid()}" />
                         <input type="hidden" name="bookName" th:value="${book.title()}" />
                         <input type="hidden" name="author" th:value="${book.author()}" />
-                        <input type="hidden" name="coverEditionOlid" th:value="${book.coverEditionOlid()}" />
+                        <input type="hidden" name="editionOlid" th:value="${book.editionOlid()}" />
                         <input type="hidden" name="returnUrl" th:value="${'/user/' + viewUsername}" />
                         <button type="submit" class="book-action-link">[want to read]</button>
                       </form>
                     </span>
                   </div>
-                  <img th:if="${book.coverEditionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.coverEditionOlid() + '-M.jpg'}" />
+                  <img th:if="${book.editionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.editionOlid() + '-M.jpg'}" />
                 </div>
               </summary>
               <div class="review-text" th:text="${book.review()}"></div>
@@ -302,12 +302,12 @@
                     <input type="hidden" name="workOlid" th:value="${book.workOlid()}" />
                     <input type="hidden" name="bookName" th:value="${book.title()}" />
                     <input type="hidden" name="author" th:value="${book.author()}" />
-                    <input type="hidden" name="coverEditionOlid" th:value="${book.coverEditionOlid()}" />
+                    <input type="hidden" name="editionOlid" th:value="${book.editionOlid()}" />
                     <input type="hidden" name="returnUrl" th:value="${'/user/' + viewUsername}" />
                     <button type="submit" class="book-action-link">[want to read]</button>
                   </form>
                 </div>
-                <img th:if="${book.coverEditionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.coverEditionOlid() + '-M.jpg'}" />
+                <img th:if="${book.editionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.editionOlid() + '-M.jpg'}" />
               </div>
             </span>
             <details th:if="${book.review() != null}" class="book-review">
@@ -325,13 +325,13 @@
                         <input type="hidden" name="workOlid" th:value="${book.workOlid()}" />
                         <input type="hidden" name="bookName" th:value="${book.title()}" />
                         <input type="hidden" name="author" th:value="${book.author()}" />
-                        <input type="hidden" name="coverEditionOlid" th:value="${book.coverEditionOlid()}" />
+                        <input type="hidden" name="editionOlid" th:value="${book.editionOlid()}" />
                         <input type="hidden" name="returnUrl" th:value="${'/user/' + viewUsername}" />
                         <button type="submit" class="book-action-link">[want to read]</button>
                       </form>
                     </span>
                   </div>
-                  <img th:if="${book.coverEditionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.coverEditionOlid() + '-M.jpg'}" />
+                  <img th:if="${book.editionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.editionOlid() + '-M.jpg'}" />
                 </div>
               </summary>
               <div class="review-text" th:text="${book.review()}"></div>
@@ -351,12 +351,12 @@
                     <input type="hidden" name="workOlid" th:value="${book.workOlid()}" />
                     <input type="hidden" name="bookName" th:value="${book.title()}" />
                     <input type="hidden" name="author" th:value="${book.author()}" />
-                    <input type="hidden" name="coverEditionOlid" th:value="${book.coverEditionOlid()}" />
+                    <input type="hidden" name="editionOlid" th:value="${book.editionOlid()}" />
                     <input type="hidden" name="returnUrl" th:value="${'/user/' + viewUsername}" />
                     <button type="submit" class="book-action-link">[want to read]</button>
                   </form>
                 </div>
-                <img th:if="${book.coverEditionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.coverEditionOlid() + '-M.jpg'}" />
+                <img th:if="${book.editionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.editionOlid() + '-M.jpg'}" />
               </div>
             </span>
             <details th:if="${book.review() != null}" class="book-review">
@@ -374,13 +374,13 @@
                         <input type="hidden" name="workOlid" th:value="${book.workOlid()}" />
                         <input type="hidden" name="bookName" th:value="${book.title()}" />
                         <input type="hidden" name="author" th:value="${book.author()}" />
-                        <input type="hidden" name="coverEditionOlid" th:value="${book.coverEditionOlid()}" />
+                        <input type="hidden" name="editionOlid" th:value="${book.editionOlid()}" />
                         <input type="hidden" name="returnUrl" th:value="${'/user/' + viewUsername}" />
                         <button type="submit" class="book-action-link">[want to read]</button>
                       </form>
                     </span>
                   </div>
-                  <img th:if="${book.coverEditionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.coverEditionOlid() + '-M.jpg'}" />
+                  <img th:if="${book.editionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.editionOlid() + '-M.jpg'}" />
                 </div>
               </summary>
               <div class="review-text" th:text="${book.review()}"></div>
@@ -400,12 +400,12 @@
                     <input type="hidden" name="workOlid" th:value="${book.workOlid()}" />
                     <input type="hidden" name="bookName" th:value="${book.title()}" />
                     <input type="hidden" name="author" th:value="${book.author()}" />
-                    <input type="hidden" name="coverEditionOlid" th:value="${book.coverEditionOlid()}" />
+                    <input type="hidden" name="editionOlid" th:value="${book.editionOlid()}" />
                     <input type="hidden" name="returnUrl" th:value="${'/user/' + viewUsername}" />
                     <button type="submit" class="book-action-link">[want to read]</button>
                   </form>
                 </div>
-                <img th:if="${book.coverEditionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.coverEditionOlid() + '-M.jpg'}" />
+                <img th:if="${book.editionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.editionOlid() + '-M.jpg'}" />
               </div>
             </span>
             <details th:if="${book.review() != null}" class="book-review">
@@ -423,13 +423,13 @@
                         <input type="hidden" name="workOlid" th:value="${book.workOlid()}" />
                         <input type="hidden" name="bookName" th:value="${book.title()}" />
                         <input type="hidden" name="author" th:value="${book.author()}" />
-                        <input type="hidden" name="coverEditionOlid" th:value="${book.coverEditionOlid()}" />
+                        <input type="hidden" name="editionOlid" th:value="${book.editionOlid()}" />
                         <input type="hidden" name="returnUrl" th:value="${'/user/' + viewUsername}" />
                         <button type="submit" class="book-action-link">[want to read]</button>
                       </form>
                     </span>
                   </div>
-                  <img th:if="${book.coverEditionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.coverEditionOlid() + '-M.jpg'}" />
+                  <img th:if="${book.editionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.editionOlid() + '-M.jpg'}" />
                 </div>
               </summary>
               <div class="review-text" th:text="${book.review()}"></div>

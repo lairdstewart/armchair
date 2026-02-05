@@ -257,14 +257,14 @@ class RankingFlowTest extends BaseIntegrationTest {
     }
 
     @Test
-    void selectBookSavesCoverEditionOlid() throws Exception {
+    void selectBookSavesEditionOlid() throws Exception {
         User user = createOAuthUser("ranker10", "oauth-rank-10");
 
         mockMvc.perform(post("/select-book")
                         .param("workOlid", "OL100W")
                         .param("bookName", "Dune")
                         .param("author", "Frank Herbert")
-                        .param("coverEditionOlid", "OL999M")
+                        .param("editionOlid", "OL999M")
                         .with(oauthUser("oauth-rank-10")).with(csrf()))
                 .andExpect(status().is3xxRedirection());
 
@@ -277,7 +277,7 @@ class RankingFlowTest extends BaseIntegrationTest {
         List<Ranking> liked = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(
                 user.getId(), Bookshelf.FICTION, BookCategory.LIKED);
         assertThat(liked).hasSize(1);
-        assertThat(liked.get(0).getBook().getCoverEditionOlid()).isEqualTo("OL999M");
+        assertThat(liked.get(0).getBook().getEditionOlid()).isEqualTo("OL999M");
     }
 
     @Test
@@ -299,5 +299,47 @@ class RankingFlowTest extends BaseIntegrationTest {
         assertThat(wtr).hasSize(1);
         assertThat(wtr.get(0).getBook().getTitle()).isEqualTo("1984");
         assertThat(wtr.get(0).getPosition()).isEqualTo(0);
+    }
+
+    @Test
+    void selectBookSavesFirstPublishYear() throws Exception {
+        User user = createOAuthUser("ranker11", "oauth-rank-11");
+
+        mockMvc.perform(post("/select-book")
+                        .param("workOlid", "OL100W")
+                        .param("bookName", "Dune")
+                        .param("author", "Frank Herbert")
+                        .param("firstPublishYear", "1965")
+                        .with(oauthUser("oauth-rank-11")).with(csrf()))
+                .andExpect(status().is3xxRedirection());
+
+        mockMvc.perform(post("/categorize")
+                        .param("bookshelf", "fiction")
+                        .param("category", "liked")
+                        .with(oauthUser("oauth-rank-11")).with(csrf()))
+                .andExpect(status().is3xxRedirection());
+
+        List<Ranking> liked = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(
+                user.getId(), Bookshelf.FICTION, BookCategory.LIKED);
+        assertThat(liked).hasSize(1);
+        assertThat(liked.get(0).getBook().getFirstPublishYear()).isEqualTo(1965);
+    }
+
+    @Test
+    void addToReadingListSavesFirstPublishYear() throws Exception {
+        User user = createOAuthUser("ranker12", "oauth-rank-12");
+
+        mockMvc.perform(post("/add-to-reading-list")
+                        .param("workOlid", "OL100W")
+                        .param("bookName", "Dune")
+                        .param("author", "Frank Herbert")
+                        .param("firstPublishYear", "1965")
+                        .with(oauthUser("oauth-rank-12")).with(csrf()))
+                .andExpect(status().is3xxRedirection());
+
+        List<Ranking> wtr = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(
+                user.getId(), Bookshelf.WANT_TO_READ, BookCategory.UNRANKED);
+        assertThat(wtr).hasSize(1);
+        assertThat(wtr.get(0).getBook().getFirstPublishYear()).isEqualTo(1965);
     }
 }

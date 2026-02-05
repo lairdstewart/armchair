@@ -209,14 +209,14 @@ public class CuratedListImporter {
             List<OpenLibraryService.BookResult> results = openLibraryService.searchBooks(jb.title() + ", " + jb.author());
 
             String workOlid;
-            String coverEditionOlid;
+            String editionOlid;
             String title;
             String author;
             Integer firstPublishYear;
             if (!results.isEmpty()) {
                 OpenLibraryService.BookResult firstResult = results.get(0);
                 workOlid = firstResult.workOlid();
-                coverEditionOlid = firstResult.coverEditionOlid();
+                editionOlid = firstResult.editionOlid();
                 title = firstResult.title();
                 author = firstResult.author();
                 firstPublishYear = firstResult.firstPublishYear();
@@ -224,11 +224,11 @@ public class CuratedListImporter {
                 author = jb.author();
                 title = jb.title();
                 workOlid = null;
-                coverEditionOlid = null;
+                editionOlid = null;
                 firstPublishYear = null;
             }
 
-            Book book = bookService.findOrCreateBook(workOlid, coverEditionOlid, title, author, firstPublishYear);
+            Book book = bookService.findOrCreateBook(workOlid, editionOlid, title, author, firstPublishYear);
 
             Ranking ranking = new Ranking(userId, book, jb.bookshelf(), jb.category(), position);
             if (jb.review() != null && !jb.review().isEmpty()) {

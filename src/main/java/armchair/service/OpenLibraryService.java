@@ -23,10 +23,18 @@ public class OpenLibraryService {
         .build();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public record BookResult(String workOlid, String coverEditionOlid, String title, String author, Integer firstPublishYear) {
+    public record BookResult(String workOlid, String editionOlid, String title, String author, Integer firstPublishYear) {
         public String bookUrl() {
             if (workOlid != null) return "https://openlibrary.org/works/" + workOlid;
             return "https://openlibrary.org/search?q=" + URLEncoder.encode(title + " " + author, StandardCharsets.UTF_8);
+        }
+    }
+
+    public record EditionResult(String editionOlid, String title, String isbn13, Integer coverId) {
+        public String coverUrl() {
+            if (coverId != null) return "https://covers.openlibrary.org/b/id/" + coverId + "-M.jpg";
+            if (editionOlid != null) return "https://covers.openlibrary.org/b/olid/" + editionOlid + "-M.jpg";
+            return null;
         }
     }
 
@@ -79,7 +87,7 @@ public class OpenLibraryService {
 
                 // Prefer English edition title over work-level title (which may be in the original language)
                 String title = doc.has("title") ? doc.get("title").asText() : "Unknown Title";
-                String coverEditionOlid = doc.has("cover_edition_key") ? doc.get("cover_edition_key").asText(null) : null;
+                String editionOlid = doc.has("cover_edition_key") ? doc.get("cover_edition_key").asText(null) : null;
                 JsonNode editions = doc.path("editions").path("docs");
                 if (editions.isArray() && editions.size() > 0) {
                     JsonNode edition = editions.get(0);
@@ -88,7 +96,7 @@ public class OpenLibraryService {
                     }
                     String editionKey = edition.has("key") ? edition.get("key").asText() : null;
                     if (editionKey != null) {
-                        coverEditionOlid = editionKey.startsWith("/books/") ? editionKey.substring("/books/".length()) : editionKey;
+                        editionOlid = editionKey.startsWith("/books/") ? editionKey.substring("/books/".length()) : editionKey;
                     }
                 }
 
@@ -114,7 +122,7 @@ public class OpenLibraryService {
                     firstPublishYear = doc.get("first_publish_year").asInt();
                 }
 
-                results.add(new BookResult(workOlid, coverEditionOlid, title, author, firstPublishYear));
+                results.add(new BookResult(workOlid, editionOlid, title, author, firstPublishYear));
             }
 
             return results;
@@ -168,5 +176,107 @@ public class OpenLibraryService {
             log.debug("Could not fetch author {}: {}", authorKey, e.getMessage());
         }
         return null;
+    }
+
+    /**
+     * Fetches editions for a work from Open Library's editions API.
+     * Only returns editions that have an ISBN (either isbn_13 or isbn_10).
+     */
+    public List<EditionResult> getEditionsForWork(String workOlid, int limit, int offset) {
+        if (workOlid == null || workOlid.isBlank()) {
+            return List.of();
+        }
+        try {
+            String url = String.format(
+                "https://openlibrary.org/works/%s/editions.json?limit=%d&offset=%d",
+                workOlid, limit, offset
+            );
+
+            String response = restTemplate.getForObject(URI.create(url), String.class);
+            JsonNode root = objectMapper.readTree(response);
+            JsonNode entries = root.get("entries");
+
+            if (entries == null || !entries.isArray()) {
+                return List.of();
+            }
+
+            List<EditionResult> results = new ArrayList<>();
+            for (JsonNode entry : entries) {
+                // Extract ISBN - prefer isbn_13, fall back to isbn_10 (converted)
+                String isbn13 = extractIsbn13(entry);
+                if (isbn13 == null) {
+                    continue; // Skip editions without ISBN
+                }
+
+                // Extract edition OLID from key field
+                String key = entry.has("key") ? entry.get("key").asText() : null;
+                if (key == null) continue;
+                String editionOlid = key.startsWith("/books/") ? key.substring("/books/".length()) : key;
+
+                // Extract title
+                String title = entry.has("title") ? entry.get("title").asText() : "Unknown Title";
+
+                // Extract cover ID (numeric ID for covers.openlibrary.org/b/id/)
+                Integer coverId = null;
+                JsonNode covers = entry.get("covers");
+                if (covers != null && covers.isArray() && covers.size() > 0) {
+                    coverId = covers.get(0).asInt();
+                }
+
+                results.add(new EditionResult(editionOlid, title, isbn13, coverId));
+            }
+
+            return results;
+        } catch (Exception e) {
+            log.error("Error fetching editions for work {}: {}", workOlid, e.getMessage());
+            return List.of();
+        }
+    }
+
+    /**
+     * Extracts ISBN-13 from an edition entry. Prefers isbn_13 field, converts isbn_10 if needed.
+     */
+    private String extractIsbn13(JsonNode entry) {
+        // Try isbn_13 first
+        JsonNode isbn13Node = entry.get("isbn_13");
+        if (isbn13Node != null && isbn13Node.isArray() && isbn13Node.size() > 0) {
+            return isbn13Node.get(0).asText();
+        }
+
+        // Fall back to isbn_10 and convert
+        JsonNode isbn10Node = entry.get("isbn_10");
+        if (isbn10Node != null && isbn10Node.isArray() && isbn10Node.size() > 0) {
+            return convertIsbn10ToIsbn13(isbn10Node.get(0).asText());
+        }
+
+        return null;
+    }
+
+    /**
+     * Converts an ISBN-10 to ISBN-13 by prepending "978" and recalculating the check digit.
+     */
+    static String convertIsbn10ToIsbn13(String isbn10) {
+        if (isbn10 == null || isbn10.length() != 10) {
+            return null;
+        }
+
+        // Remove any hyphens
+        isbn10 = isbn10.replace("-", "");
+        if (isbn10.length() != 10) {
+            return null;
+        }
+
+        // Take first 9 digits and prepend "978"
+        String prefix = "978" + isbn10.substring(0, 9);
+
+        // Calculate ISBN-13 check digit
+        int sum = 0;
+        for (int i = 0; i < 12; i++) {
+            int digit = Character.getNumericValue(prefix.charAt(i));
+            sum += (i % 2 == 0) ? digit : digit * 3;
+        }
+        int checkDigit = (10 - (sum % 10)) % 10;
+
+        return prefix + checkDigit;
     }
 }

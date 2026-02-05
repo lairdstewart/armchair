@@ -147,3 +147,21 @@ ALTER TABLE ranking_state DROP COLUMN IF EXISTS isbn13_being_ranked;
 
 -- 24. Drop book_isbns table
 DROP TABLE IF EXISTS book_isbns;
+
+-- ============================================================================
+-- Migration: Edition selection feature
+-- Rename cover_edition_olid → edition_olid, add isbn_13 column to books,
+-- add edition tracking columns to ranking_state.
+-- Run this manually against the database BEFORE deploying the new code.
+-- ============================================================================
+
+-- 25. Rename cover_edition_olid → edition_olid in books
+ALTER TABLE books RENAME COLUMN cover_edition_olid TO edition_olid;
+
+-- 26. Add isbn_13 column to books
+ALTER TABLE books ADD COLUMN IF NOT EXISTS isbn_13 VARCHAR(255);
+
+-- 27. Add edition tracking columns to ranking_state
+ALTER TABLE ranking_state ADD COLUMN IF NOT EXISTS edition_olid_being_ranked VARCHAR(255);
+ALTER TABLE ranking_state ADD COLUMN IF NOT EXISTS isbn13_being_ranked VARCHAR(255);
+ALTER TABLE ranking_state ADD COLUMN IF NOT EXISTS edition_selected BOOLEAN DEFAULT FALSE;

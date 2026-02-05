@@ -50,9 +50,9 @@ class BookDeduplicationTest extends BaseIntegrationTest {
     }
 
     @Test
-    void enrichCoverEditionOlid() throws Exception {
+    void enrichEditionOlid() throws Exception {
         Book book = bookRepository.save(new Book("OL200W", null, "1984", "George Orwell", null));
-        assertThat(book.getCoverEditionOlid()).isNull();
+        assertThat(book.getEditionOlid()).isNull();
 
         User user = createOAuthUser("dedup2", "oauth-dedup-2");
 
@@ -60,12 +60,12 @@ class BookDeduplicationTest extends BaseIntegrationTest {
                         .param("workOlid", "OL200W")
                         .param("bookName", "1984")
                         .param("author", "George Orwell")
-                        .param("coverEditionOlid", "OL200M")
+                        .param("editionOlid", "OL200M")
                         .with(oauthUser("oauth-dedup-2")).with(csrf()))
                 .andExpect(status().is3xxRedirection());
 
         Book updated = bookRepository.findByWorkOlid("OL200W").orElseThrow();
-        assertThat(updated.getCoverEditionOlid()).isEqualTo("OL200M");
+        assertThat(updated.getEditionOlid()).isEqualTo("OL200M");
     }
 
     @Test
