@@ -190,11 +190,15 @@ input:checked + .slider:before {
 
 .book-info {
   flex: 1;
+  min-width: 0; /* Allow flex item to shrink below content size */
 }
 
 .book-title {
   font-size: 1.1em;
   color: black;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .book-title a {
