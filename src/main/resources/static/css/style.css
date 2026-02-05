@@ -184,7 +184,6 @@ input:checked + .slider:before {
 }
 
 .book-info {
-  flex: 1;
 }
 
 .book-title {
