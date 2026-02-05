@@ -50,7 +50,7 @@ import java.util.stream.Collectors;
 public class BookController {
     private static final Logger log = LoggerFactory.getLogger(BookController.class);
 
-    public record BookInfo(Long id, String workOlid, String title, String author, String review) {
+    public record BookInfo(Long id, String workOlid, String coverEditionOlid, String title, String author, String review) {
         public String bookUrl() {
             if (workOlid != null) return "https://openlibrary.org/works/" + workOlid;
             return "https://openlibrary.org/search?q=" + java.net.URLEncoder.encode(title + " " + author, java.nio.charset.StandardCharsets.UTF_8);
@@ -451,6 +451,11 @@ public class BookController {
             model.addAttribute("comparisonBookTitle", compRanking.getBook().getTitle());
             model.addAttribute("comparisonBookAuthor", compRanking.getBook().getAuthor());
             model.addAttribute("comparisonBookWorkOlid", compRanking.getBook().getWorkOlid());
+            model.addAttribute("comparisonBookCoverOlid", compRanking.getBook().getCoverEditionOlid());
+            if (rankingState.getWorkOlidBeingRanked() != null) {
+                bookRepository.findByWorkOlid(rankingState.getWorkOlidBeingRanked())
+                    .ifPresent(b -> model.addAttribute("rankingBookCoverOlid", b.getCoverEditionOlid()));
+            }
         }
 
         return "index";
@@ -483,7 +488,7 @@ public class BookController {
     }
 
     private static BookInfo toBookInfo(Ranking r) {
-        return new BookInfo(r.getId(), r.getBook().getWorkOlid(), r.getBook().getTitle(), r.getBook().getAuthor(), r.getReview());
+        return new BookInfo(r.getId(), r.getBook().getWorkOlid(), r.getBook().getCoverEditionOlid(), r.getBook().getTitle(), r.getBook().getAuthor(), r.getReview());
     }
 
     private BookLists getBookLists(Bookshelf bookshelf, Long userId) {

@@ -176,13 +176,42 @@ input:checked + .slider:before {
   transform: translateX(24px);
 }
 
+/* Book entry layout */
+.book-entry {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.book-info {
+  flex: 1;
+}
+
+.book-title {
+  font-size: 1.1em;
+  color: black;
+}
+
+.book-title a {
+  color: black;
+}
+
+.book-author {
+  color: black;
+}
+
+.book-cover {
+  width: 70px;
+  flex-shrink: 0;
+}
+
 /* Book review styles */
 .book-review {
-  display: inline;
+  flex: 1;
 }
 
 .book-review summary {
-  display: inline;
+  display: block;
   cursor: pointer;
   list-style: none;
 }

@@ -39,32 +39,14 @@
             <ol class="book-list">
               <li th:each="book, iter : ${fictionBooks.liked()}">
                 <span class="book-number liked" th:text="${iter.index + 1}"></span>
-                <span>
-                  <span th:if="${book.review() == null}">
-                    <a th:if="${book.bookUrl() != null}" th:href="${book.bookUrl()}" th:text="${book.title()}" target="_blank"></a>
-                    <span th:if="${book.bookUrl() == null}" th:text="${book.title()}"></span>
-                    <span th:if="${book.author() != null && !book.author().isBlank()}" th:text="${', ' + book.author()}"></span>
-                    <span class="book-actions">
-                      <form th:action="@{/direct-review}" method="POST" style="display: inline;">
-                        <input type="hidden" name="bookId" th:value="${book.id()}" />
-                        <button type="submit" class="book-action-link">[review]</button>
-                      </form>
-                      <form th:action="@{/direct-rerank}" method="POST" style="display: inline;">
-                        <input type="hidden" name="bookId" th:value="${book.id()}" />
-                        <button type="submit" class="book-action-link">[re-rank]</button>
-                      </form>
-                      <form th:action="@{/direct-remove}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to remove this book?');">
-                        <input type="hidden" name="bookId" th:value="${book.id()}" />
-                        <button type="submit" class="book-action-link">[remove]</button>
-                      </form>
-                    </span>
-                  </span>
-                  <details th:if="${book.review() != null}" class="book-review">
-                    <summary>
-                      <a th:if="${book.bookUrl() != null}" th:href="${book.bookUrl()}" th:text="${book.title()}" target="_blank"></a>
-                      <span th:if="${book.bookUrl() == null}" th:text="${book.title()}"></span>
-                      <span th:if="${book.author() != null && !book.author().isBlank()}" th:text="${', ' + book.author()}"></span>
-                      <span class="review-toggle"></span>
+                <span th:if="${book.review() == null}">
+                  <div class="book-entry">
+                    <div class="book-info">
+                      <div class="book-title">
+                        <a th:if="${book.bookUrl() != null}" th:href="${book.bookUrl()}" th:text="${book.title()}" target="_blank"></a>
+                        <span th:if="${book.bookUrl() == null}" th:text="${book.title()}"></span>
+                      </div>
+                      <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author" th:text="${book.author()}"></div>
                       <span class="book-actions">
                         <form th:action="@{/direct-review}" method="POST" style="display: inline;">
                           <input type="hidden" name="bookId" th:value="${book.id()}" />
@@ -79,39 +61,51 @@
                           <button type="submit" class="book-action-link">[remove]</button>
                         </form>
                       </span>
-                    </summary>
-                    <div class="review-text" th:text="${book.review()}"></div>
-                  </details>
+                    </div>
+                    <img th:if="${book.coverEditionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.coverEditionOlid() + '-M.jpg'}" />
+                  </div>
                 </span>
+                <details th:if="${book.review() != null}" class="book-review">
+                  <summary>
+                    <div class="book-entry">
+                      <div class="book-info">
+                        <div class="book-title">
+                          <a th:if="${book.bookUrl() != null}" th:href="${book.bookUrl()}" th:text="${book.title()}" target="_blank"></a>
+                          <span th:if="${book.bookUrl() == null}" th:text="${book.title()}"></span>
+                        </div>
+                        <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author" th:text="${book.author()}"></div>
+                        <span class="book-actions">
+                          <span class="review-toggle"></span>
+                          <form th:action="@{/direct-review}" method="POST" style="display: inline;">
+                            <input type="hidden" name="bookId" th:value="${book.id()}" />
+                            <button type="submit" class="book-action-link">[review]</button>
+                          </form>
+                          <form th:action="@{/direct-rerank}" method="POST" style="display: inline;">
+                            <input type="hidden" name="bookId" th:value="${book.id()}" />
+                            <button type="submit" class="book-action-link">[re-rank]</button>
+                          </form>
+                          <form th:action="@{/direct-remove}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to remove this book?');">
+                            <input type="hidden" name="bookId" th:value="${book.id()}" />
+                            <button type="submit" class="book-action-link">[remove]</button>
+                          </form>
+                        </span>
+                      </div>
+                      <img th:if="${book.coverEditionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.coverEditionOlid() + '-M.jpg'}" />
+                    </div>
+                  </summary>
+                  <div class="review-text" th:text="${book.review()}"></div>
+                </details>
               </li>
               <li th:each="book, iter : ${fictionBooks.ok()}">
                 <span class="book-number ok" th:text="${fictionBooks.liked().size() + iter.index + 1}"></span>
-                <span>
-                  <span th:if="${book.review() == null}">
-                    <a th:if="${book.bookUrl() != null}" th:href="${book.bookUrl()}" th:text="${book.title()}" target="_blank"></a>
-                    <span th:if="${book.bookUrl() == null}" th:text="${book.title()}"></span>
-                    <span th:if="${book.author() != null && !book.author().isBlank()}" th:text="${', ' + book.author()}"></span>
-                    <span class="book-actions">
-                      <form th:action="@{/direct-review}" method="POST" style="display: inline;">
-                        <input type="hidden" name="bookId" th:value="${book.id()}" />
-                        <button type="submit" class="book-action-link">[review]</button>
-                      </form>
-                      <form th:action="@{/direct-rerank}" method="POST" style="display: inline;">
-                        <input type="hidden" name="bookId" th:value="${book.id()}" />
-                        <button type="submit" class="book-action-link">[re-rank]</button>
-                      </form>
-                      <form th:action="@{/direct-remove}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to remove this book?');">
-                        <input type="hidden" name="bookId" th:value="${book.id()}" />
-                        <button type="submit" class="book-action-link">[remove]</button>
-                      </form>
-                    </span>
-                  </span>
-                  <details th:if="${book.review() != null}" class="book-review">
-                    <summary>
-                      <a th:if="${book.bookUrl() != null}" th:href="${book.bookUrl()}" th:text="${book.title()}" target="_blank"></a>
-                      <span th:if="${book.bookUrl() == null}" th:text="${book.title()}"></span>
-                      <span th:if="${book.author() != null && !book.author().isBlank()}" th:text="${', ' + book.author()}"></span>
-                      <span class="review-toggle"></span>
+                <span th:if="${book.review() == null}">
+                  <div class="book-entry">
+                    <div class="book-info">
+                      <div class="book-title">
+                        <a th:if="${book.bookUrl() != null}" th:href="${book.bookUrl()}" th:text="${book.title()}" target="_blank"></a>
+                        <span th:if="${book.bookUrl() == null}" th:text="${book.title()}"></span>
+                      </div>
+                      <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author" th:text="${book.author()}"></div>
                       <span class="book-actions">
                         <form th:action="@{/direct-review}" method="POST" style="display: inline;">
                           <input type="hidden" name="bookId" th:value="${book.id()}" />
@@ -126,39 +120,51 @@
                           <button type="submit" class="book-action-link">[remove]</button>
                         </form>
                       </span>
-                    </summary>
-                    <div class="review-text" th:text="${book.review()}"></div>
-                  </details>
+                    </div>
+                    <img th:if="${book.coverEditionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.coverEditionOlid() + '-M.jpg'}" />
+                  </div>
                 </span>
+                <details th:if="${book.review() != null}" class="book-review">
+                  <summary>
+                    <div class="book-entry">
+                      <div class="book-info">
+                        <div class="book-title">
+                          <a th:if="${book.bookUrl() != null}" th:href="${book.bookUrl()}" th:text="${book.title()}" target="_blank"></a>
+                          <span th:if="${book.bookUrl() == null}" th:text="${book.title()}"></span>
+                        </div>
+                        <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author" th:text="${book.author()}"></div>
+                        <span class="book-actions">
+                          <span class="review-toggle"></span>
+                          <form th:action="@{/direct-review}" method="POST" style="display: inline;">
+                            <input type="hidden" name="bookId" th:value="${book.id()}" />
+                            <button type="submit" class="book-action-link">[review]</button>
+                          </form>
+                          <form th:action="@{/direct-rerank}" method="POST" style="display: inline;">
+                            <input type="hidden" name="bookId" th:value="${book.id()}" />
+                            <button type="submit" class="book-action-link">[re-rank]</button>
+                          </form>
+                          <form th:action="@{/direct-remove}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to remove this book?');">
+                            <input type="hidden" name="bookId" th:value="${book.id()}" />
+                            <button type="submit" class="book-action-link">[remove]</button>
+                          </form>
+                        </span>
+                      </div>
+                      <img th:if="${book.coverEditionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.coverEditionOlid() + '-M.jpg'}" />
+                    </div>
+                  </summary>
+                  <div class="review-text" th:text="${book.review()}"></div>
+                </details>
               </li>
               <li th:each="book, iter : ${fictionBooks.disliked()}">
                 <span class="book-number disliked" th:text="${fictionBooks.liked().size() + fictionBooks.ok().size() + iter.index + 1}"></span>
-                <span>
-                  <span th:if="${book.review() == null}">
-                    <a th:if="${book.bookUrl() != null}" th:href="${book.bookUrl()}" th:text="${book.title()}" target="_blank"></a>
-                    <span th:if="${book.bookUrl() == null}" th:text="${book.title()}"></span>
-                    <span th:if="${book.author() != null && !book.author().isBlank()}" th:text="${', ' + book.author()}"></span>
-                    <span class="book-actions">
-                      <form th:action="@{/direct-review}" method="POST" style="display: inline;">
-                        <input type="hidden" name="bookId" th:value="${book.id()}" />
-                        <button type="submit" class="book-action-link">[review]</button>
-                      </form>
-                      <form th:action="@{/direct-rerank}" method="POST" style="display: inline;">
-                        <input type="hidden" name="bookId" th:value="${book.id()}" />
-                        <button type="submit" class="book-action-link">[re-rank]</button>
-                      </form>
-                      <form th:action="@{/direct-remove}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to remove this book?');">
-                        <input type="hidden" name="bookId" th:value="${book.id()}" />
-                        <button type="submit" class="book-action-link">[remove]</button>
-                      </form>
-                    </span>
-                  </span>
-                  <details th:if="${book.review() != null}" class="book-review">
-                    <summary>
-                      <a th:if="${book.bookUrl() != null}" th:href="${book.bookUrl()}" th:text="${book.title()}" target="_blank"></a>
-                      <span th:if="${book.bookUrl() == null}" th:text="${book.title()}"></span>
-                      <span th:if="${book.author() != null && !book.author().isBlank()}" th:text="${', ' + book.author()}"></span>
-                      <span class="review-toggle"></span>
+                <span th:if="${book.review() == null}">
+                  <div class="book-entry">
+                    <div class="book-info">
+                      <div class="book-title">
+                        <a th:if="${book.bookUrl() != null}" th:href="${book.bookUrl()}" th:text="${book.title()}" target="_blank"></a>
+                        <span th:if="${book.bookUrl() == null}" th:text="${book.title()}"></span>
+                      </div>
+                      <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author" th:text="${book.author()}"></div>
                       <span class="book-actions">
                         <form th:action="@{/direct-review}" method="POST" style="display: inline;">
                           <input type="hidden" name="bookId" th:value="${book.id()}" />
@@ -173,10 +179,40 @@
                           <button type="submit" class="book-action-link">[remove]</button>
                         </form>
                       </span>
-                    </summary>
-                    <div class="review-text" th:text="${book.review()}"></div>
-                  </details>
+                    </div>
+                    <img th:if="${book.coverEditionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.coverEditionOlid() + '-M.jpg'}" />
+                  </div>
                 </span>
+                <details th:if="${book.review() != null}" class="book-review">
+                  <summary>
+                    <div class="book-entry">
+                      <div class="book-info">
+                        <div class="book-title">
+                          <a th:if="${book.bookUrl() != null}" th:href="${book.bookUrl()}" th:text="${book.title()}" target="_blank"></a>
+                          <span th:if="${book.bookUrl() == null}" th:text="${book.title()}"></span>
+                        </div>
+                        <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author" th:text="${book.author()}"></div>
+                        <span class="book-actions">
+                          <span class="review-toggle"></span>
+                          <form th:action="@{/direct-review}" method="POST" style="display: inline;">
+                            <input type="hidden" name="bookId" th:value="${book.id()}" />
+                            <button type="submit" class="book-action-link">[review]</button>
+                          </form>
+                          <form th:action="@{/direct-rerank}" method="POST" style="display: inline;">
+                            <input type="hidden" name="bookId" th:value="${book.id()}" />
+                            <button type="submit" class="book-action-link">[re-rank]</button>
+                          </form>
+                          <form th:action="@{/direct-remove}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to remove this book?');">
+                            <input type="hidden" name="bookId" th:value="${book.id()}" />
+                            <button type="submit" class="book-action-link">[remove]</button>
+                          </form>
+                        </span>
+                      </div>
+                      <img th:if="${book.coverEditionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.coverEditionOlid() + '-M.jpg'}" />
+                    </div>
+                  </summary>
+                  <div class="review-text" th:text="${book.review()}"></div>
+                </details>
               </li>
             </ol>
             </div>
@@ -189,32 +225,14 @@
             <ol class="book-list">
               <li th:each="book, iter : ${nonfictionBooks.liked()}">
                 <span class="book-number liked" th:text="${iter.index + 1}"></span>
-                <span>
-                  <span th:if="${book.review() == null}">
-                    <a th:if="${book.bookUrl() != null}" th:href="${book.bookUrl()}" th:text="${book.title()}" target="_blank"></a>
-                    <span th:if="${book.bookUrl() == null}" th:text="${book.title()}"></span>
-                    <span th:if="${book.author() != null && !book.author().isBlank()}" th:text="${', ' + book.author()}"></span>
-                    <span class="book-actions">
-                      <form th:action="@{/direct-review}" method="POST" style="display: inline;">
-                        <input type="hidden" name="bookId" th:value="${book.id()}" />
-                        <button type="submit" class="book-action-link">[review]</button>
-                      </form>
-                      <form th:action="@{/direct-rerank}" method="POST" style="display: inline;">
-                        <input type="hidden" name="bookId" th:value="${book.id()}" />
-                        <button type="submit" class="book-action-link">[re-rank]</button>
-                      </form>
-                      <form th:action="@{/direct-remove}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to remove this book?');">
-                        <input type="hidden" name="bookId" th:value="${book.id()}" />
-                        <button type="submit" class="book-action-link">[remove]</button>
-                      </form>
-                    </span>
-                  </span>
-                  <details th:if="${book.review() != null}" class="book-review">
-                    <summary>
-                      <a th:if="${book.bookUrl() != null}" th:href="${book.bookUrl()}" th:text="${book.title()}" target="_blank"></a>
-                      <span th:if="${book.bookUrl() == null}" th:text="${book.title()}"></span>
-                      <span th:if="${book.author() != null && !book.author().isBlank()}" th:text="${', ' + book.author()}"></span>
-                      <span class="review-toggle"></span>
+                <span th:if="${book.review() == null}">
+                  <div class="book-entry">
+                    <div class="book-info">
+                      <div class="book-title">
+                        <a th:if="${book.bookUrl() != null}" th:href="${book.bookUrl()}" th:text="${book.title()}" target="_blank"></a>
+                        <span th:if="${book.bookUrl() == null}" th:text="${book.title()}"></span>
+                      </div>
+                      <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author" th:text="${book.author()}"></div>
                       <span class="book-actions">
                         <form th:action="@{/direct-review}" method="POST" style="display: inline;">
                           <input type="hidden" name="bookId" th:value="${book.id()}" />
@@ -229,39 +247,51 @@
                           <button type="submit" class="book-action-link">[remove]</button>
                         </form>
                       </span>
-                    </summary>
-                    <div class="review-text" th:text="${book.review()}"></div>
-                  </details>
+                    </div>
+                    <img th:if="${book.coverEditionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.coverEditionOlid() + '-M.jpg'}" />
+                  </div>
                 </span>
+                <details th:if="${book.review() != null}" class="book-review">
+                  <summary>
+                    <div class="book-entry">
+                      <div class="book-info">
+                        <div class="book-title">
+                          <a th:if="${book.bookUrl() != null}" th:href="${book.bookUrl()}" th:text="${book.title()}" target="_blank"></a>
+                          <span th:if="${book.bookUrl() == null}" th:text="${book.title()}"></span>
+                        </div>
+                        <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author" th:text="${book.author()}"></div>
+                        <span class="book-actions">
+                          <span class="review-toggle"></span>
+                          <form th:action="@{/direct-review}" method="POST" style="display: inline;">
+                            <input type="hidden" name="bookId" th:value="${book.id()}" />
+                            <button type="submit" class="book-action-link">[review]</button>
+                          </form>
+                          <form th:action="@{/direct-rerank}" method="POST" style="display: inline;">
+                            <input type="hidden" name="bookId" th:value="${book.id()}" />
+                            <button type="submit" class="book-action-link">[re-rank]</button>
+                          </form>
+                          <form th:action="@{/direct-remove}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to remove this book?');">
+                            <input type="hidden" name="bookId" th:value="${book.id()}" />
+                            <button type="submit" class="book-action-link">[remove]</button>
+                          </form>
+                        </span>
+                      </div>
+                      <img th:if="${book.coverEditionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.coverEditionOlid() + '-M.jpg'}" />
+                    </div>
+                  </summary>
+                  <div class="review-text" th:text="${book.review()}"></div>
+                </details>
               </li>
               <li th:each="book, iter : ${nonfictionBooks.ok()}">
                 <span class="book-number ok" th:text="${nonfictionBooks.liked().size() + iter.index + 1}"></span>
-                <span>
-                  <span th:if="${book.review() == null}">
-                    <a th:if="${book.bookUrl() != null}" th:href="${book.bookUrl()}" th:text="${book.title()}" target="_blank"></a>
-                    <span th:if="${book.bookUrl() == null}" th:text="${book.title()}"></span>
-                    <span th:if="${book.author() != null && !book.author().isBlank()}" th:text="${', ' + book.author()}"></span>
-                    <span class="book-actions">
-                      <form th:action="@{/direct-review}" method="POST" style="display: inline;">
-                        <input type="hidden" name="bookId" th:value="${book.id()}" />
-                        <button type="submit" class="book-action-link">[review]</button>
-                      </form>
-                      <form th:action="@{/direct-rerank}" method="POST" style="display: inline;">
-                        <input type="hidden" name="bookId" th:value="${book.id()}" />
-                        <button type="submit" class="book-action-link">[re-rank]</button>
-                      </form>
-                      <form th:action="@{/direct-remove}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to remove this book?');">
-                        <input type="hidden" name="bookId" th:value="${book.id()}" />
-                        <button type="submit" class="book-action-link">[remove]</button>
-                      </form>
-                    </span>
-                  </span>
-                  <details th:if="${book.review() != null}" class="book-review">
-                    <summary>
-                      <a th:if="${book.bookUrl() != null}" th:href="${book.bookUrl()}" th:text="${book.title()}" target="_blank"></a>
-                      <span th:if="${book.bookUrl() == null}" th:text="${book.title()}"></span>
-                      <span th:if="${book.author() != null && !book.author().isBlank()}" th:text="${', ' + book.author()}"></span>
-                      <span class="review-toggle"></span>
+                <span th:if="${book.review() == null}">
+                  <div class="book-entry">
+                    <div class="book-info">
+                      <div class="book-title">
+                        <a th:if="${book.bookUrl() != null}" th:href="${book.bookUrl()}" th:text="${book.title()}" target="_blank"></a>
+                        <span th:if="${book.bookUrl() == null}" th:text="${book.title()}"></span>
+                      </div>
+                      <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author" th:text="${book.author()}"></div>
                       <span class="book-actions">
                         <form th:action="@{/direct-review}" method="POST" style="display: inline;">
                           <input type="hidden" name="bookId" th:value="${book.id()}" />
@@ -276,39 +306,51 @@
                           <button type="submit" class="book-action-link">[remove]</button>
                         </form>
                       </span>
-                    </summary>
-                    <div class="review-text" th:text="${book.review()}"></div>
-                  </details>
+                    </div>
+                    <img th:if="${book.coverEditionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.coverEditionOlid() + '-M.jpg'}" />
+                  </div>
                 </span>
+                <details th:if="${book.review() != null}" class="book-review">
+                  <summary>
+                    <div class="book-entry">
+                      <div class="book-info">
+                        <div class="book-title">
+                          <a th:if="${book.bookUrl() != null}" th:href="${book.bookUrl()}" th:text="${book.title()}" target="_blank"></a>
+                          <span th:if="${book.bookUrl() == null}" th:text="${book.title()}"></span>
+                        </div>
+                        <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author" th:text="${book.author()}"></div>
+                        <span class="book-actions">
+                          <span class="review-toggle"></span>
+                          <form th:action="@{/direct-review}" method="POST" style="display: inline;">
+                            <input type="hidden" name="bookId" th:value="${book.id()}" />
+                            <button type="submit" class="book-action-link">[review]</button>
+                          </form>
+                          <form th:action="@{/direct-rerank}" method="POST" style="display: inline;">
+                            <input type="hidden" name="bookId" th:value="${book.id()}" />
+                            <button type="submit" class="book-action-link">[re-rank]</button>
+                          </form>
+                          <form th:action="@{/direct-remove}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to remove this book?');">
+                            <input type="hidden" name="bookId" th:value="${book.id()}" />
+                            <button type="submit" class="book-action-link">[remove]</button>
+                          </form>
+                        </span>
+                      </div>
+                      <img th:if="${book.coverEditionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.coverEditionOlid() + '-M.jpg'}" />
+                    </div>
+                  </summary>
+                  <div class="review-text" th:text="${book.review()}"></div>
+                </details>
               </li>
               <li th:each="book, iter : ${nonfictionBooks.disliked()}">
                 <span class="book-number disliked" th:text="${nonfictionBooks.liked().size() + nonfictionBooks.ok().size() + iter.index + 1}"></span>
-                <span>
-                  <span th:if="${book.review() == null}">
-                    <a th:if="${book.bookUrl() != null}" th:href="${book.bookUrl()}" th:text="${book.title()}" target="_blank"></a>
-                    <span th:if="${book.bookUrl() == null}" th:text="${book.title()}"></span>
-                    <span th:if="${book.author() != null && !book.author().isBlank()}" th:text="${', ' + book.author()}"></span>
-                    <span class="book-actions">
-                      <form th:action="@{/direct-review}" method="POST" style="display: inline;">
-                        <input type="hidden" name="bookId" th:value="${book.id()}" />
-                        <button type="submit" class="book-action-link">[review]</button>
-                      </form>
-                      <form th:action="@{/direct-rerank}" method="POST" style="display: inline;">
-                        <input type="hidden" name="bookId" th:value="${book.id()}" />
-                        <button type="submit" class="book-action-link">[re-rank]</button>
-                      </form>
-                      <form th:action="@{/direct-remove}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to remove this book?');">
-                        <input type="hidden" name="bookId" th:value="${book.id()}" />
-                        <button type="submit" class="book-action-link">[remove]</button>
-                      </form>
-                    </span>
-                  </span>
-                  <details th:if="${book.review() != null}" class="book-review">
-                    <summary>
-                      <a th:if="${book.bookUrl() != null}" th:href="${book.bookUrl()}" th:text="${book.title()}" target="_blank"></a>
-                      <span th:if="${book.bookUrl() == null}" th:text="${book.title()}"></span>
-                      <span th:if="${book.author() != null && !book.author().isBlank()}" th:text="${', ' + book.author()}"></span>
-                      <span class="review-toggle"></span>
+                <span th:if="${book.review() == null}">
+                  <div class="book-entry">
+                    <div class="book-info">
+                      <div class="book-title">
+                        <a th:if="${book.bookUrl() != null}" th:href="${book.bookUrl()}" th:text="${book.title()}" target="_blank"></a>
+                        <span th:if="${book.bookUrl() == null}" th:text="${book.title()}"></span>
+                      </div>
+                      <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author" th:text="${book.author()}"></div>
                       <span class="book-actions">
                         <form th:action="@{/direct-review}" method="POST" style="display: inline;">
                           <input type="hidden" name="bookId" th:value="${book.id()}" />
@@ -323,10 +365,40 @@
                           <button type="submit" class="book-action-link">[remove]</button>
                         </form>
                       </span>
-                    </summary>
-                    <div class="review-text" th:text="${book.review()}"></div>
-                  </details>
+                    </div>
+                    <img th:if="${book.coverEditionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.coverEditionOlid() + '-M.jpg'}" />
+                  </div>
                 </span>
+                <details th:if="${book.review() != null}" class="book-review">
+                  <summary>
+                    <div class="book-entry">
+                      <div class="book-info">
+                        <div class="book-title">
+                          <a th:if="${book.bookUrl() != null}" th:href="${book.bookUrl()}" th:text="${book.title()}" target="_blank"></a>
+                          <span th:if="${book.bookUrl() == null}" th:text="${book.title()}"></span>
+                        </div>
+                        <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author" th:text="${book.author()}"></div>
+                        <span class="book-actions">
+                          <span class="review-toggle"></span>
+                          <form th:action="@{/direct-review}" method="POST" style="display: inline;">
+                            <input type="hidden" name="bookId" th:value="${book.id()}" />
+                            <button type="submit" class="book-action-link">[review]</button>
+                          </form>
+                          <form th:action="@{/direct-rerank}" method="POST" style="display: inline;">
+                            <input type="hidden" name="bookId" th:value="${book.id()}" />
+                            <button type="submit" class="book-action-link">[re-rank]</button>
+                          </form>
+                          <form th:action="@{/direct-remove}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to remove this book?');">
+                            <input type="hidden" name="bookId" th:value="${book.id()}" />
+                            <button type="submit" class="book-action-link">[remove]</button>
+                          </form>
+                        </span>
+                      </div>
+                      <img th:if="${book.coverEditionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.coverEditionOlid() + '-M.jpg'}" />
+                    </div>
+                  </summary>
+                  <div class="review-text" th:text="${book.review()}"></div>
+                </details>
               </li>
             </ol>
             </div>
@@ -338,19 +410,26 @@
             <div th:if="${hasWantToRead}">
             <ul class="plain-list">
               <li th:each="book, iter : ${wantToReadBooks}">
-                <a th:if="${book.bookUrl() != null}" th:href="${book.bookUrl()}" th:text="${book.title()}" target="_blank"></a>
-                <span th:if="${book.bookUrl() == null}" th:text="${book.title()}"></span>
-                <span th:if="${book.author() != null && !book.author().isBlank()}" th:text="${', ' + book.author()}"></span>
-                <span class="book-actions">
-                  <form th:action="@{/mark-as-read}" method="POST" style="display: inline;">
-                    <input type="hidden" name="bookId" th:value="${book.id()}" />
-                    <button type="submit" class="book-action-link">[rank]</button>
-                  </form>
-                  <form th:action="@{/remove-from-reading-list}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to remove this book?');">
-                    <input type="hidden" name="bookId" th:value="${book.id()}" />
-                    <button type="submit" class="book-action-link">[remove]</button>
-                  </form>
-                </span>
+                <div class="book-entry">
+                  <div class="book-info">
+                    <div class="book-title">
+                      <a th:if="${book.bookUrl() != null}" th:href="${book.bookUrl()}" th:text="${book.title()}" target="_blank"></a>
+                      <span th:if="${book.bookUrl() == null}" th:text="${book.title()}"></span>
+                    </div>
+                    <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author" th:text="${book.author()}"></div>
+                    <span class="book-actions">
+                      <form th:action="@{/mark-as-read}" method="POST" style="display: inline;">
+                        <input type="hidden" name="bookId" th:value="${book.id()}" />
+                        <button type="submit" class="book-action-link">[rank]</button>
+                      </form>
+                      <form th:action="@{/remove-from-reading-list}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to remove this book?');">
+                        <input type="hidden" name="bookId" th:value="${book.id()}" />
+                        <button type="submit" class="book-action-link">[remove]</button>
+                      </form>
+                    </span>
+                  </div>
+                  <img th:if="${book.coverEditionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + book.coverEditionOlid() + '-M.jpg'}" />
+                </div>
               </li>
             </ul>
             </div>
@@ -424,16 +503,22 @@
       <div th:case="'RESOLVE'">
         <h3>Which version of <span th:text="${rankingState.titleBeingRanked}"></span> did you read?</h3>
         <div th:each="result : ${resolveResults}" style="margin-bottom: 10px;">
-          <form th:action="@{/resolve-book}" method="POST" style="display: inline;">
-            <input type="hidden" name="workOlid" th:value="${result.workOlid()}" />
-            <input type="hidden" name="title" th:value="${result.title()}" />
-            <input type="hidden" name="author" th:value="${result.author()}" />
-            <input type="hidden" name="coverEditionOlid" th:value="${result.coverEditionOlid()}" />
-            <button type="submit" class="book-number rerank">-&gt;</button>
-          </form>
-          <a th:href="${result.bookUrl()}" target="_blank" th:text="${result.title()}"></a>
-          <span th:if="${result.author() != null && !result.author().isBlank()}"
-                th:text="${', ' + result.author()}"></span>
+          <div class="book-entry">
+            <div class="book-info">
+              <form th:action="@{/resolve-book}" method="POST" style="display: inline;">
+                <input type="hidden" name="workOlid" th:value="${result.workOlid()}" />
+                <input type="hidden" name="title" th:value="${result.title()}" />
+                <input type="hidden" name="author" th:value="${result.author()}" />
+                <input type="hidden" name="coverEditionOlid" th:value="${result.coverEditionOlid()}" />
+                <button type="submit" class="book-number rerank">-&gt;</button>
+              </form>
+              <div class="book-title" style="display: inline;">
+                <a th:href="${result.bookUrl()}" target="_blank" th:text="${result.title()}"></a>
+              </div>
+              <div th:if="${result.author() != null && !result.author().isBlank()}" class="book-author" th:text="${result.author()}"></div>
+            </div>
+            <img th:if="${result.coverEditionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + result.coverEditionOlid() + '-M.jpg'}" />
+          </div>
         </div>
         <form th:action="@{/skip-resolve}" method="POST" style="margin-top: 15px;">
           <button type="submit" class="book-action-link">None of these</button>
@@ -451,16 +536,22 @@
         </div>
         <div th:if="${resolveResults != null && !resolveResults.isEmpty()}">
           <div th:each="result : ${resolveResults}" style="margin-bottom: 10px;">
-            <form th:action="@{/resolve-book}" method="POST" style="display: inline;">
-              <input type="hidden" name="workOlid" th:value="${result.workOlid()}" />
-              <input type="hidden" name="title" th:value="${result.title()}" />
-              <input type="hidden" name="author" th:value="${result.author()}" />
-              <input type="hidden" name="coverEditionOlid" th:value="${result.coverEditionOlid()}" />
-              <button type="submit" class="book-number rerank">-&gt;</button>
-            </form>
-            <a th:href="${result.bookUrl()}" target="_blank" th:text="${result.title()}"></a>
-            <span th:if="${result.author() != null && !result.author().isBlank()}"
-                  th:text="${', ' + result.author()}"></span>
+            <div class="book-entry">
+              <div class="book-info">
+                <form th:action="@{/resolve-book}" method="POST" style="display: inline;">
+                  <input type="hidden" name="workOlid" th:value="${result.workOlid()}" />
+                  <input type="hidden" name="title" th:value="${result.title()}" />
+                  <input type="hidden" name="author" th:value="${result.author()}" />
+                  <input type="hidden" name="coverEditionOlid" th:value="${result.coverEditionOlid()}" />
+                  <button type="submit" class="book-number rerank">-&gt;</button>
+                </form>
+                <div class="book-title" style="display: inline;">
+                  <a th:href="${result.bookUrl()}" target="_blank" th:text="${result.title()}"></a>
+                </div>
+                <div th:if="${result.author() != null && !result.author().isBlank()}" class="book-author" th:text="${result.author()}"></div>
+              </div>
+              <img th:if="${result.coverEditionOlid() != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + result.coverEditionOlid() + '-M.jpg'}" />
+            </div>
           </div>
         </div>
         <form th:action="@{/abandon-resolve}" method="POST" style="margin-top: 15px;">
@@ -471,16 +562,30 @@
         <h3>Which is better?</h3>
         <form th:action="@{/choose}" method="POST">
           <div style="margin-bottom: 10px;">
-            <button type="submit" name="choice" value="new" class="book-number rerank">-&gt;</button>
-            <a th:if="${rankingState.workOlidBeingRanked != null}" th:href="${'https://openlibrary.org/works/' + rankingState.workOlidBeingRanked}" target="_blank" th:text="${rankingState.titleBeingRanked}"></a>
-            <a th:if="${rankingState.workOlidBeingRanked == null}" th:href="${'https://openlibrary.org/search?q=' + #uris.escapeQueryParam(rankingState.titleBeingRanked + ' ' + rankingState.authorBeingRanked)}" target="_blank" th:text="${rankingState.titleBeingRanked}"></a>
-            <span th:if="${rankingState.authorBeingRanked != null && !rankingState.authorBeingRanked.isBlank()}" th:text="${', ' + rankingState.authorBeingRanked}"></span>
+            <div class="book-entry">
+              <div class="book-info">
+                <button type="submit" name="choice" value="new" class="book-number rerank">-&gt;</button>
+                <div class="book-title" style="display: inline;">
+                  <a th:if="${rankingState.workOlidBeingRanked != null}" th:href="${'https://openlibrary.org/works/' + rankingState.workOlidBeingRanked}" target="_blank" th:text="${rankingState.titleBeingRanked}"></a>
+                  <a th:if="${rankingState.workOlidBeingRanked == null}" th:href="${'https://openlibrary.org/search?q=' + #uris.escapeQueryParam(rankingState.titleBeingRanked + ' ' + rankingState.authorBeingRanked)}" target="_blank" th:text="${rankingState.titleBeingRanked}"></a>
+                </div>
+                <div th:if="${rankingState.authorBeingRanked != null && !rankingState.authorBeingRanked.isBlank()}" class="book-author" th:text="${rankingState.authorBeingRanked}"></div>
+              </div>
+              <img th:if="${rankingBookCoverOlid != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + rankingBookCoverOlid + '-M.jpg'}" />
+            </div>
           </div>
           <div>
-            <button type="submit" name="choice" value="existing" class="book-number rerank">-&gt;</button>
-            <a th:if="${comparisonBookWorkOlid != null}" th:href="${'https://openlibrary.org/works/' + comparisonBookWorkOlid}" target="_blank" th:text="${comparisonBookTitle}"></a>
-            <a th:if="${comparisonBookWorkOlid == null}" th:href="${'https://openlibrary.org/search?q=' + #uris.escapeQueryParam(comparisonBookTitle + ' ' + comparisonBookAuthor)}" target="_blank" th:text="${comparisonBookTitle}"></a>
-            <span th:if="${comparisonBookAuthor != null && !comparisonBookAuthor.isBlank()}" th:text="${', ' + comparisonBookAuthor}"></span>
+            <div class="book-entry">
+              <div class="book-info">
+                <button type="submit" name="choice" value="existing" class="book-number rerank">-&gt;</button>
+                <div class="book-title" style="display: inline;">
+                  <a th:if="${comparisonBookWorkOlid != null}" th:href="${'https://openlibrary.org/works/' + comparisonBookWorkOlid}" target="_blank" th:text="${comparisonBookTitle}"></a>
+                  <a th:if="${comparisonBookWorkOlid == null}" th:href="${'https://openlibrary.org/search?q=' + #uris.escapeQueryParam(comparisonBookTitle + ' ' + comparisonBookAuthor)}" target="_blank" th:text="${comparisonBookTitle}"></a>
+                </div>
+                <div th:if="${comparisonBookAuthor != null && !comparisonBookAuthor.isBlank()}" class="book-author" th:text="${comparisonBookAuthor}"></div>
+              </div>
+              <img th:if="${comparisonBookCoverOlid != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/olid/' + comparisonBookCoverOlid + '-M.jpg'}" />
+            </div>
           </div>
         </form>
       </div>
