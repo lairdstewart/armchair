@@ -356,20 +356,20 @@ public class BookController {
 
         // Handle SELECT_EDITION mode - fetch editions and potentially auto-select
         if (mode == Mode.SELECT_EDITION && rankingState != null && rankingState.getWorkOlidBeingRanked() != null) {
-            Integer editionOffset = (Integer) session.getAttribute("editionOffset");
-            if (editionOffset == null) editionOffset = 0;
-            int limit = 3;
+            Integer editionLimit = (Integer) session.getAttribute("editionLimit");
+            if (editionLimit == null) editionLimit = 3;
 
+            // Always fetch from offset=0 to accumulate editions
             List<OpenLibraryService.EditionResult> editions = openLibraryService.getEditionsForWork(
-                rankingState.getWorkOlidBeingRanked(), limit + 1, editionOffset);
+                rankingState.getWorkOlidBeingRanked(), editionLimit + 1, 0);
 
-            boolean hasMore = editions.size() > limit;
+            boolean hasMore = editions.size() > editionLimit;
             if (hasMore) {
-                editions = editions.subList(0, limit);
+                editions = editions.subList(0, editionLimit);
             }
 
             // Auto-select if only 1 edition with ISBN exists (and this is the first fetch)
-            if (editionOffset == 0 && editions.size() == 1 && !hasMore) {
+            if (editionLimit == 3 && editions.size() == 1 && !hasMore) {
                 OpenLibraryService.EditionResult soleEdition = editions.get(0);
                 rankingState.setEditionOlidBeingRanked(soleEdition.editionOlid());
                 rankingState.setIsbn13BeingRanked(soleEdition.isbn13());
@@ -383,7 +383,7 @@ public class BookController {
                 book.setIsbn13(soleEdition.isbn13());
                 bookRepository.save(book);
 
-                session.removeAttribute("editionOffset");
+                session.removeAttribute("editionLimit");
                 return "redirect:/my-books"; // Will now show CATEGORIZE
             }
 
@@ -391,7 +391,7 @@ public class BookController {
             if (editions.isEmpty()) {
                 rankingState.setEditionSelected(true); // Mark as selected (even though none chosen)
                 rankingStateRepository.save(rankingState);
-                session.removeAttribute("editionOffset");
+                session.removeAttribute("editionLimit");
                 return "redirect:/my-books"; // Will now show CATEGORIZE
             }
 
@@ -1250,15 +1250,15 @@ public class BookController {
         rankingState.setEditionSelected(true);
         rankingStateRepository.save(rankingState);
 
-        session.removeAttribute("editionOffset");
+        session.removeAttribute("editionLimit");
         return "redirect:/my-books";
     }
 
     @PostMapping("/more-editions")
     public String moreEditions(HttpSession session) {
-        Integer editionOffset = (Integer) session.getAttribute("editionOffset");
-        if (editionOffset == null) editionOffset = 0;
-        session.setAttribute("editionOffset", editionOffset + 3);
+        Integer editionLimit = (Integer) session.getAttribute("editionLimit");
+        if (editionLimit == null) editionLimit = 3;
+        session.setAttribute("editionLimit", editionLimit + 3);
         return "redirect:/my-books";
     }
 
