@@ -5,6 +5,7 @@ import armchair.entity.BookCategory;
 import armchair.entity.Bookshelf;
 import armchair.entity.Follow;
 import armchair.entity.Ranking;
+import armchair.entity.RankingMode;
 import armchair.entity.RankingState;
 import armchair.entity.User;
 import armchair.repository.BookRepository;
@@ -327,8 +328,10 @@ public class BookController {
             model.addAttribute("duplicateResolveTitle", duplicateResolveTitle);
         }
 
-        // Intercept CATEGORIZE for unverified books — show RESOLVE screen
-        if (mode == Mode.CATEGORIZE && rankingState.getWorkOlidBeingRanked() == null) {
+        // Handle RESOLVE mode (explicit or legacy fallback for CATEGORIZE with unverified books)
+        boolean needsResolve = mode == Mode.RESOLVE ||
+            (mode == Mode.CATEGORIZE && rankingState != null && rankingState.getWorkOlidBeingRanked() == null);
+        if (needsResolve && rankingState != null) {
             Object skipResolve = session.getAttribute("skipResolve");
             if ("manual".equals(skipResolve)) {
                 // Manual search mode — user searches Open Library themselves
@@ -406,6 +409,7 @@ public class BookController {
                 rankingState.setEditionOlidBeingRanked(soleEdition.editionOlid());
                 rankingState.setIsbn13BeingRanked(soleEdition.isbn13());
                 rankingState.setEditionSelected(true);
+                rankingState.setMode(RankingMode.CATEGORIZE);
                 rankingStateRepository.save(rankingState);
 
                 // Update the Book with the edition info
@@ -422,6 +426,7 @@ public class BookController {
             // Skip edition selection if no editions with ISBN found
             if (allEditions.isEmpty()) {
                 rankingState.setEditionSelected(true); // Mark as selected (even though none chosen)
+                rankingState.setMode(RankingMode.CATEGORIZE);
                 rankingStateRepository.save(rankingState);
                 session.removeAttribute("cachedEditions");
                 return "redirect:/my-books"; // Will now show CATEGORIZE
@@ -562,6 +567,13 @@ public class BookController {
         if (rankingState == null) {
             return Mode.LIST;
         }
+
+        // Use explicit mode if set (new approach)
+        if (rankingState.getMode() != null) {
+            return convertRankingMode(rankingState.getMode());
+        }
+
+        // Legacy fallback for existing sessions without explicit mode
         if (rankingState.isReview() && rankingState.getBookIdBeingReviewed() != null) {
             return Mode.REVIEW;
         }
@@ -591,6 +603,16 @@ public class BookController {
             return Mode.CATEGORIZE;
         }
         return Mode.RANK;
+    }
+
+    private Mode convertRankingMode(RankingMode rankingMode) {
+        return switch (rankingMode) {
+            case RESOLVE -> Mode.RESOLVE;
+            case SELECT_EDITION -> Mode.SELECT_EDITION;
+            case CATEGORIZE -> Mode.CATEGORIZE;
+            case RANK -> Mode.RANK;
+            case REVIEW -> Mode.REVIEW;
+        };
     }
 
     private static BookInfo toBookInfo(Ranking r) {
@@ -841,6 +863,7 @@ public class BookController {
         RankingState rankingState = new RankingState(userId, null, null, null, ranking.getBookshelf(), null);
         rankingState.setReview(true);
         rankingState.setBookIdBeingReviewed(bookId);
+        rankingState.setMode(RankingMode.REVIEW);
         rankingStateRepository.save(rankingState);
 
         return "redirect:/my-books";
@@ -866,6 +889,7 @@ public class BookController {
         rankingState.setReviewBeingRanked(ranking.getReview());
         rankingState.setOriginalCategory(ranking.getCategory());
         rankingState.setOriginalPosition(ranking.getPosition());
+        rankingState.setMode(RankingMode.CATEGORIZE);
         rankingStateRepository.save(rankingState);
 
         // Remove the ranking from its current position and close the gap
@@ -909,6 +933,12 @@ public class BookController {
 
         // Store book info in ranking state for categorization
         RankingState rankingState = new RankingState(userId, ranking.getBook().getWorkOlid(), ranking.getBook().getTitle(), ranking.getBook().getAuthor(), null, null);
+        // Unverified books need RESOLVE first, verified books go to SELECT_EDITION
+        if (ranking.getBook().getWorkOlid() == null) {
+            rankingState.setMode(RankingMode.RESOLVE);
+        } else {
+            rankingState.setMode(RankingMode.SELECT_EDITION);
+        }
         rankingStateRepository.save(rankingState);
 
         // Remove the ranking from want-to-read list and close the gap
@@ -1131,6 +1161,7 @@ public class BookController {
 
         // Update RankingState to match - edition selection happens next in SELECT_EDITION mode
         rankingState.setBookInfo(workOlid, title, author);
+        rankingState.setMode(RankingMode.SELECT_EDITION);
         rankingStateRepository.save(rankingState);
 
         session.removeAttribute("skipResolve");
@@ -1267,6 +1298,9 @@ public class BookController {
 
         // Set the book info, leave category null to enter CATEGORIZE mode
         rankingState.setBookInfo(workOlid, bookName, author);
+        // Explicit mode: verified books go to SELECT_EDITION, unverified would go to RESOLVE
+        // (but /select-book always has workOlid from API results)
+        rankingState.setMode(RankingMode.SELECT_EDITION);
         rankingStateRepository.save(rankingState);
 
         return "redirect:/my-books";
@@ -1303,6 +1337,7 @@ public class BookController {
         rankingState.setEditionOlidBeingRanked(editionOlid);
         rankingState.setIsbn13BeingRanked(isbn13);
         rankingState.setEditionSelected(true);
+        rankingState.setMode(RankingMode.CATEGORIZE);
         rankingStateRepository.save(rankingState);
 
         session.removeAttribute("cachedEditions");
@@ -1409,6 +1444,7 @@ public class BookController {
             rankingState.setCompareToIndex(compareToIndex);
             rankingState.setLowIndex(lowIndex);
             rankingState.setHighIndex(highIndex);
+            rankingState.setMode(RankingMode.RANK);
             rankingStateRepository.save(rankingState);
         }
 
@@ -2154,6 +2190,12 @@ public class BookController {
         // Create RankingState for categorization (no bookshelf/category set — enters CATEGORIZE mode)
         RankingState rankingState = new RankingState(userId, ranking.getBook().getWorkOlid(), ranking.getBook().getTitle(), ranking.getBook().getAuthor(), null, null);
         rankingState.setReviewBeingRanked(ranking.getReview());
+        // Unverified books need RESOLVE first, verified books go to SELECT_EDITION
+        if (ranking.getBook().getWorkOlid() == null) {
+            rankingState.setMode(RankingMode.RESOLVE);
+        } else {
+            rankingState.setMode(RankingMode.SELECT_EDITION);
+        }
         rankingStateRepository.save(rankingState);
 
         // Remove the ranking from unranked list and close the gap
@@ -2187,6 +2229,12 @@ public class BookController {
         RankingState rankingState = new RankingState(userId, nextBook.getBook().getWorkOlid(), nextBook.getBook().getTitle(), nextBook.getBook().getAuthor(), null, null);
         rankingState.setReviewBeingRanked(nextBook.getReview());
         rankingState.setRankAll(true);
+        // Unverified books need RESOLVE first, verified books go to SELECT_EDITION
+        if (nextBook.getBook().getWorkOlid() == null) {
+            rankingState.setMode(RankingMode.RESOLVE);
+        } else {
+            rankingState.setMode(RankingMode.SELECT_EDITION);
+        }
         rankingStateRepository.save(rankingState);
 
         // Remove from unranked list and close the gap

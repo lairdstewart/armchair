@@ -41,6 +41,9 @@ public class RankingState {
     private boolean rankAll;
     private Long bookIdBeingReviewed;
 
+    @Enumerated(EnumType.STRING)
+    private RankingMode mode;
+
     // For re-rank restoration: store original position so abandoned re-ranks can be restored
     @Enumerated(EnumType.STRING)
     private BookCategory originalCategory;
@@ -231,5 +234,13 @@ public class RankingState {
 
     public void setOriginalPosition(Integer originalPosition) {
         this.originalPosition = originalPosition;
+    }
+
+    public RankingMode getMode() {
+        return mode;
+    }
+
+    public void setMode(RankingMode mode) {
+        this.mode = mode;
     }
 }
