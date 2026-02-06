@@ -1493,7 +1493,7 @@ public class BookController {
         }
 
         // --- Profiles tab ---
-        int pageSize = 5;
+        int pageSize = 10;
         if ("profiles".equals(type)) {
             List<User> allProfiles;
             if (query != null && !query.isBlank()) {
