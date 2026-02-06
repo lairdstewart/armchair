@@ -57,6 +57,8 @@ public class BookController {
         }
         public String coverUrl() {
             if (coverId != null) return "https://covers.openlibrary.org/b/id/" + coverId + "-M.jpg";
+            // Fall back to editionOlid for books added before coverId was tracked
+            if (editionOlid != null) return "https://covers.openlibrary.org/b/olid/" + editionOlid + "-M.jpg";
             return null;
         }
     }
@@ -543,9 +545,13 @@ public class BookController {
             model.addAttribute("comparisonBookAuthor", compRanking.getBook().getAuthor());
             model.addAttribute("comparisonBookWorkOlid", compRanking.getBook().getWorkOlid());
             model.addAttribute("comparisonBookCoverId", compRanking.getBook().getCoverId());
+            model.addAttribute("comparisonBookEditionOlid", compRanking.getBook().getEditionOlid());
             if (rankingState.getWorkOlidBeingRanked() != null) {
                 bookRepository.findByWorkOlid(rankingState.getWorkOlidBeingRanked())
-                    .ifPresent(b -> model.addAttribute("rankingBookCoverId", b.getCoverId()));
+                    .ifPresent(b -> {
+                        model.addAttribute("rankingBookCoverId", b.getCoverId());
+                        model.addAttribute("rankingBookEditionOlid", b.getEditionOlid());
+                    });
             }
         }
 
