@@ -69,7 +69,7 @@ public class BookService {
             return List.of();
         }
         return candidates.stream()
-            .map(b -> new OpenLibraryService.BookResult(b.getWorkOlid(), b.getEditionOlid(), b.getTitle(), b.getAuthor(), b.getFirstPublishYear()))
+            .map(b -> new OpenLibraryService.BookResult(b.getWorkOlid(), b.getEditionOlid(), b.getTitle(), b.getAuthor(), b.getFirstPublishYear(), null))
             .toList();
     }
 }

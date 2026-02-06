@@ -23,10 +23,14 @@ public class OpenLibraryService {
         .build();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public record BookResult(String workOlid, String editionOlid, String title, String author, Integer firstPublishYear) {
+    public record BookResult(String workOlid, String editionOlid, String title, String author, Integer firstPublishYear, Integer coverId) {
         public String bookUrl() {
             if (workOlid != null) return "https://openlibrary.org/works/" + workOlid;
             return "https://openlibrary.org/search?q=" + URLEncoder.encode(title + " " + author, StandardCharsets.UTF_8);
+        }
+        public String coverUrl() {
+            if (coverId != null) return "https://covers.openlibrary.org/b/id/" + coverId + "-M.jpg";
+            return null;
         }
     }
 
@@ -63,7 +67,7 @@ public class OpenLibraryService {
     private List<BookResult> doSearch(String queryParams, int maxResults) {
         try {
             String url = String.format(
-                "https://openlibrary.org/search.json?%s&lang=en&limit=%d&fields=author_name,author_key,title,cover_edition_key,key,first_publish_year,editions,editions.title,editions.key",
+                "https://openlibrary.org/search.json?%s&lang=en&limit=%d&fields=author_name,author_key,title,cover_edition_key,cover_i,key,first_publish_year,editions,editions.title,editions.key",
                 queryParams,
                 maxResults
             );
@@ -122,7 +126,12 @@ public class OpenLibraryService {
                     firstPublishYear = doc.get("first_publish_year").asInt();
                 }
 
-                results.add(new BookResult(workOlid, editionOlid, title, author, firstPublishYear));
+                Integer coverId = null;
+                if (doc.has("cover_i") && !doc.get("cover_i").isNull()) {
+                    coverId = doc.get("cover_i").asInt();
+                }
+
+                results.add(new BookResult(workOlid, editionOlid, title, author, firstPublishYear, coverId));
             }
 
             return results;

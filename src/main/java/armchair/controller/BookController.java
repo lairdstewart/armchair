@@ -1465,7 +1465,7 @@ public class BookController {
             Map<String, UserBookRank> finalUserBooks = userBooks;
             bookResults = bookRepository.findRandom10Books().stream()
                 .filter(b -> !finalUserBooks.containsKey(b.getWorkOlid()))
-                .map(b -> new OpenLibraryService.BookResult(b.getWorkOlid(), b.getEditionOlid(), b.getTitle(), b.getAuthor(), b.getFirstPublishYear()))
+                .map(b -> new OpenLibraryService.BookResult(b.getWorkOlid(), b.getEditionOlid(), b.getTitle(), b.getAuthor(), b.getFirstPublishYear(), null))
                 .toList();
         }
         model.addAttribute("bookResults", bookResults);

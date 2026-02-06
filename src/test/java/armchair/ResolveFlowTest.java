@@ -40,8 +40,8 @@ class ResolveFlowTest extends BaseIntegrationTest {
 
         when(openLibraryService.searchByTitleAndAuthor(eq("Dune"), eq("Frank Herbert"), eq(3)))
                 .thenReturn(List.of(
-                        new OpenLibraryService.BookResult("OL123W", "OL123M", "Dune", "Frank Herbert", 1965),
-                        new OpenLibraryService.BookResult("OL456W", "OL456M", "Dune Messiah", "Frank Herbert", 1969)
+                        new OpenLibraryService.BookResult("OL123W", "OL123M", "Dune", "Frank Herbert", 1965, 12345),
+                        new OpenLibraryService.BookResult("OL456W", "OL456M", "Dune Messiah", "Frank Herbert", 1969, 12346)
                 ));
 
         mockMvc.perform(get("/my-books").session(session))
@@ -72,9 +72,9 @@ class ResolveFlowTest extends BaseIntegrationTest {
 
         when(openLibraryService.searchByTitleAndAuthor(eq("Dune"), eq("Frank Herbert"), eq(3)))
                 .thenReturn(List.of(
-                        new OpenLibraryService.BookResult("OL111W", null, "Wrong Dune", "Someone", 2000),
-                        new OpenLibraryService.BookResult("OL222W", null, "Also Wrong", "Another", 2001),
-                        new OpenLibraryService.BookResult("OL333W", null, "Still Wrong", "Third", 2002)
+                        new OpenLibraryService.BookResult("OL111W", null, "Wrong Dune", "Someone", 2000, null),
+                        new OpenLibraryService.BookResult("OL222W", null, "Also Wrong", "Another", 2001, null),
+                        new OpenLibraryService.BookResult("OL333W", null, "Still Wrong", "Third", 2002, null)
                 ));
 
         mockMvc.perform(get("/my-books").session(session))
@@ -86,7 +86,7 @@ class ResolveFlowTest extends BaseIntegrationTest {
 
         when(openLibraryService.searchByTitleAndAuthor(eq("Dune"), eq("Frank Herbert"), eq(10)))
                 .thenReturn(List.of(
-                        new OpenLibraryService.BookResult("OL123W", "OL123M", "Dune", "Frank Herbert", 1965)
+                        new OpenLibraryService.BookResult("OL123W", "OL123M", "Dune", "Frank Herbert", 1965, 12345)
                 ));
 
         mockMvc.perform(get("/my-books").session(session))
@@ -104,11 +104,11 @@ class ResolveFlowTest extends BaseIntegrationTest {
 
         when(openLibraryService.searchByTitleAndAuthor(eq("Dune"), eq("Frank Herbert"), eq(3)))
                 .thenReturn(List.of(
-                        new OpenLibraryService.BookResult("OL111W", null, "Wrong", "Wrong", 2000)
+                        new OpenLibraryService.BookResult("OL111W", null, "Wrong", "Wrong", 2000, null)
                 ));
         when(openLibraryService.searchByTitleAndAuthor(eq("Dune"), eq("Frank Herbert"), eq(10)))
                 .thenReturn(List.of(
-                        new OpenLibraryService.BookResult("OL222W", null, "Still Wrong", "Wrong", 2001)
+                        new OpenLibraryService.BookResult("OL222W", null, "Still Wrong", "Wrong", 2001, null)
                 ));
 
         // First visit — show initial results (which are < 3, so skipResolve goes to "expanded")
@@ -157,7 +157,7 @@ class ResolveFlowTest extends BaseIntegrationTest {
 
         when(openLibraryService.searchByTitleAndAuthor(eq("Dune Import"), eq("F. Herbert"), eq(3)))
                 .thenReturn(List.of(
-                        new OpenLibraryService.BookResult("OL123W", "OL123M", "Dune", "Frank Herbert", 1965)
+                        new OpenLibraryService.BookResult("OL123W", "OL123M", "Dune", "Frank Herbert", 1965, 12345)
                 ));
 
         mockMvc.perform(get("/my-books").session(session))
@@ -199,7 +199,7 @@ class ResolveFlowTest extends BaseIntegrationTest {
 
         when(openLibraryService.searchByTitleAndAuthor(eq("Dune Import"), eq("F. Herbert"), eq(3)))
                 .thenReturn(List.of(
-                        new OpenLibraryService.BookResult("OL123W", "OL123M", "Dune", "Frank Herbert", 1965)
+                        new OpenLibraryService.BookResult("OL123W", "OL123M", "Dune", "Frank Herbert", 1965, 12345)
                 ));
 
         mockMvc.perform(get("/my-books").session(session))
@@ -228,7 +228,7 @@ class ResolveFlowTest extends BaseIntegrationTest {
 
         when(openLibraryService.searchByTitleAndAuthor(eq("Dune"), eq("Frank Herbert"), eq(3)))
                 .thenReturn(List.of(
-                        new OpenLibraryService.BookResult("OL123W", "OL123M", "Dune", "Frank Herbert", 1965)
+                        new OpenLibraryService.BookResult("OL123W", "OL123M", "Dune", "Frank Herbert", 1965, 12345)
                 ));
 
         // First visit shows RESOLVE mode
