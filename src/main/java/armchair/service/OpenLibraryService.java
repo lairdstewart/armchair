@@ -181,15 +181,22 @@ public class OpenLibraryService {
     /**
      * Fetches editions for a work from Open Library's editions API.
      * Only returns editions that have an ISBN (either isbn_13 or isbn_10).
+     *
+     * Results are sorted to prioritize English editions with covers, since the
+     * Open Library API returns editions in arbitrary database insertion order.
+     * See open-library-api-notes.txt for details.
      */
     public List<EditionResult> getEditionsForWork(String workOlid, int limit, int offset) {
         if (workOlid == null || workOlid.isBlank()) {
             return List.of();
         }
         try {
+            // Fetch more editions than requested so we can sort and return the best ones.
+            // The API returns editions in database insertion order, not by relevance.
+            int fetchLimit = Math.max(50, limit + offset);
             String url = String.format(
-                "https://openlibrary.org/works/%s/editions.json?limit=%d&offset=%d",
-                workOlid, limit, offset
+                "https://openlibrary.org/works/%s/editions.json?limit=%d&offset=0",
+                workOlid, fetchLimit
             );
 
             String response = restTemplate.getForObject(URI.create(url), String.class);
@@ -200,7 +207,7 @@ public class OpenLibraryService {
                 return List.of();
             }
 
-            List<EditionResult> results = new ArrayList<>();
+            List<EditionWithScore> scoredResults = new ArrayList<>();
             for (JsonNode entry : entries) {
                 // Extract ISBN - prefer isbn_13, fall back to isbn_10 (converted)
                 String isbn13 = extractIsbn13(entry);
@@ -233,7 +240,35 @@ public class OpenLibraryService {
                 // Extract publish date
                 String publishDate = entry.has("publish_date") ? entry.get("publish_date").asText() : null;
 
-                results.add(new EditionResult(editionOlid, title, isbn13, coverId, publisher, publishDate));
+                // Check if English language
+                boolean isEnglish = false;
+                JsonNode languages = entry.get("languages");
+                if (languages != null && languages.isArray()) {
+                    for (JsonNode lang : languages) {
+                        String langKey = lang.has("key") ? lang.get("key").asText() : "";
+                        if (langKey.equals("/languages/eng")) {
+                            isEnglish = true;
+                            break;
+                        }
+                    }
+                }
+
+                // Calculate relevance score (higher = better)
+                int score = 0;
+                if (isEnglish) score += 100;
+                if (isAscii(title)) score += 50;  // ASCII title suggests English
+                if (coverId != null) score += 25;
+
+                EditionResult result = new EditionResult(editionOlid, title, isbn13, coverId, publisher, publishDate);
+                scoredResults.add(new EditionWithScore(result, score));
+            }
+
+            // Sort by score descending, then apply offset and limit
+            scoredResults.sort((a, b) -> Integer.compare(b.score, a.score));
+
+            List<EditionResult> results = new ArrayList<>();
+            for (int i = offset; i < scoredResults.size() && results.size() < limit; i++) {
+                results.add(scoredResults.get(i).edition);
             }
 
             return results;
@@ -242,6 +277,8 @@ public class OpenLibraryService {
             return List.of();
         }
     }
+
+    private record EditionWithScore(EditionResult edition, int score) {}
 
     /**
      * Extracts ISBN-13 from an edition entry. Prefers isbn_13 field, converts isbn_10 if needed.

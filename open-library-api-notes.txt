@@ -1,0 +1,66 @@
+# Open Library API Notes
+
+This file documents findings and design decisions related to the Open Library API integration.
+
+## Editions API Ordering Problem (Feb 2025)
+
+### Problem
+
+The Open Library editions API (`/works/{id}/editions.json`) returns editions in database
+insertion order (when they were added to Open Library), NOT by relevance or popularity.
+
+For example, "21 Lessons for the 21st Century" by Yuval Noah Harari has 32 editions. The
+API returns them in this order:
+- Row 1: Debolsillo 2022 (Spanish, no cover)
+- Row 2-3: German editions
+- Row 4-5: Catalan editions
+- ...
+- Row 10: First English edition (Spiegel & Grau)
+- Row 24: Penguin Random House 2019 English edition
+
+This is problematic for English-speaking users who want to select the edition they read.
+
+### API Investigation
+
+Tested parameters on the editions API:
+- `sort=new` - No effect, not supported
+- `language=eng` - No effect, not supported
+
+The editions API has NO server-side sorting or filtering capabilities.
+
+The Search API (`/search.json`) DOES have smarter ordering when using `lang=en`, but it
+only returns 1 edition per work (pagination is "planned but not yet implemented" per docs).
+
+### Solution Implemented
+
+In `OpenLibraryService.getEditionsForWork()`:
+
+1. Fetch more editions than requested (up to 50) to have a pool to sort from
+2. Score each edition based on:
+   - +100 points: English language (languages field contains /languages/eng)
+   - +50 points: ASCII-only title (suggests English vs translated title)
+   - +25 points: Has cover image
+3. Sort by score descending
+4. Return the requested number of editions after sorting
+
+This ensures English editions with covers appear first, matching user expectations.
+
+### API Endpoints Used
+
+- Search API: `https://openlibrary.org/search.json?q=...`
+  - Supports `lang=en` to favor English results
+  - Supports `fields=` to specify returned data
+  - Good for finding works, not for getting multiple editions
+
+- Editions API: `https://openlibrary.org/works/{workOlid}/editions.json`
+  - Supports `limit` and `offset` for pagination
+  - NO sorting or filtering support
+  - Returns editions in arbitrary database order
+
+- Covers API: `https://covers.openlibrary.org/b/olid/{editionOlid}-M.jpg`
+  - or: `https://covers.openlibrary.org/b/id/{coverId}-M.jpg`
+
+### References
+
+- Open Library API docs: https://openlibrary.org/developers/api
+- Search API docs: https://openlibrary.org/dev/docs/api/search
