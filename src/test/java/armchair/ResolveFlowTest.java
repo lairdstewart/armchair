@@ -219,6 +219,36 @@ class ResolveFlowTest extends BaseIntegrationTest {
     }
 
     @Test
+    void resolveBookSavesCoverId() throws Exception {
+        MockHttpSession session = guestSession();
+        mockMvc.perform(get("/my-books").session(session)).andExpect(status().isOk());
+        Long guestUserId = (Long) session.getAttribute("guestUserId");
+
+        setupUnverifiedBookForRanking(guestUserId, "Dune Import", "F. Herbert");
+
+        when(openLibraryService.searchByTitleAndAuthor(eq("Dune Import"), eq("F. Herbert"), eq(3)))
+                .thenReturn(List.of(
+                        new OpenLibraryService.BookResult("OL123W", "OL123M", "Dune", "Frank Herbert", 1965, 12345)
+                ));
+
+        mockMvc.perform(get("/my-books").session(session))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post("/resolve-book")
+                        .param("workOlid", "OL123W")
+                        .param("title", "Dune")
+                        .param("author", "Frank Herbert")
+                        .param("editionOlid", "OL123M")
+                        .param("firstPublishYear", "1965")
+                        .param("coverId", "12345")
+                        .session(session).with(csrf()))
+                .andExpect(status().is3xxRedirection());
+
+        Book book = bookRepository.findByWorkOlid("OL123W").orElseThrow();
+        assertThat(book.getCoverId()).isEqualTo(12345);
+    }
+
+    @Test
     void resolveFlowsContinuesToEditionSelection() throws Exception {
         MockHttpSession session = guestSession();
         mockMvc.perform(get("/my-books").session(session)).andExpect(status().isOk());

@@ -1095,6 +1095,7 @@ public class BookController {
                               @RequestParam String author,
                               @RequestParam(required = false) String editionOlid,
                               @RequestParam(required = false) Integer firstPublishYear,
+                              @RequestParam(required = false) Integer coverId,
                               HttpSession session) {
         Long userId = getCurrentUserId(session);
         if (userId == null) {
@@ -1125,6 +1126,7 @@ public class BookController {
         existingBook.setTitle(title);
         existingBook.setAuthor(author);
         existingBook.setFirstPublishYear(firstPublishYear);
+        existingBook.setCoverId(coverId);
         bookRepository.save(existingBook);
 
         // Update RankingState to match - edition selection happens next in SELECT_EDITION mode
