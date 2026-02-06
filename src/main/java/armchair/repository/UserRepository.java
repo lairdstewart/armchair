@@ -18,11 +18,13 @@ public interface UserRepository extends JpaRepository<User, Long> {
     long countByIsGuestAndIsCurated(boolean isGuest, boolean isCurated);
     List<User> findByIsGuestFalseAndIsCuratedFalseAndPublishListsTrueAndUsernameContainingIgnoreCase(String username);
     List<User> findTop10ByIsGuestFalseAndIsCuratedFalseAndPublishListsTrueOrderBySignupDateDesc();
+    List<User> findByIsGuestFalseAndIsCuratedFalseAndPublishListsTrueOrderBySignupDateDesc();
     long countByIsGuestFalseAndIsCuratedFalseAndPublishListsTrue();
     List<User> findByIsCuratedTrueAndUsernameContainingIgnoreCase(String username);
 
     // Exclude a specific user from profile search results
     List<User> findByIsGuestFalseAndIsCuratedFalseAndPublishListsTrueAndUsernameContainingIgnoreCaseAndIdNot(String username, Long excludeId);
     List<User> findTop10ByIsGuestFalseAndIsCuratedFalseAndPublishListsTrueAndIdNotOrderBySignupDateDesc(Long excludeId);
+    List<User> findByIsGuestFalseAndIsCuratedFalseAndPublishListsTrueAndIdNotOrderBySignupDateDesc(Long excludeId);
     long countByIsGuestFalseAndIsCuratedFalseAndPublishListsTrueAndIdNot(Long excludeId);
 }

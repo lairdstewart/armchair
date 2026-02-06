@@ -1441,6 +1441,7 @@ public class BookController {
     public String showUnifiedSearch(@RequestParam(required = false, defaultValue = "books") String type,
                                      @RequestParam(required = false) String query,
                                      @RequestParam(required = false) Boolean more,
+                                     @RequestParam(required = false, defaultValue = "0") int page,
                                      Model model, HttpSession session) {
         addNavigationAttributes(model, "search");
         model.addAttribute("searchType", type);
@@ -1492,64 +1493,103 @@ public class BookController {
         }
 
         // --- Profiles tab ---
-        if ("profiles".equals(type) && query != null && !query.isBlank()) {
-            List<User> results;
-            if (isRealUser) {
-                results = userRepository.findByIsGuestFalseAndIsCuratedFalseAndPublishListsTrueAndUsernameContainingIgnoreCaseAndIdNot(query.trim(), currentUserId);
+        int pageSize = 5;
+        if ("profiles".equals(type)) {
+            List<User> allProfiles;
+            if (query != null && !query.isBlank()) {
+                if (isRealUser) {
+                    allProfiles = userRepository.findByIsGuestFalseAndIsCuratedFalseAndPublishListsTrueAndUsernameContainingIgnoreCaseAndIdNot(query.trim(), currentUserId);
+                } else {
+                    allProfiles = userRepository.findByIsGuestFalseAndIsCuratedFalseAndPublishListsTrueAndUsernameContainingIgnoreCase(query.trim());
+                }
             } else {
-                results = userRepository.findByIsGuestFalseAndIsCuratedFalseAndPublishListsTrueAndUsernameContainingIgnoreCase(query.trim());
+                if (isRealUser) {
+                    allProfiles = userRepository.findByIsGuestFalseAndIsCuratedFalseAndPublishListsTrueAndIdNotOrderBySignupDateDesc(currentUserId);
+                } else {
+                    allProfiles = userRepository.findByIsGuestFalseAndIsCuratedFalseAndPublishListsTrueOrderBySignupDateDesc();
+                }
             }
-            model.addAttribute("profileSearchResults", results.stream()
+            int totalItems = allProfiles.size();
+            int totalPages = (totalItems + pageSize - 1) / pageSize;
+            int startIndex = page * pageSize;
+            int endIndex = Math.min(startIndex + pageSize, totalItems);
+            List<User> pageProfiles = startIndex < totalItems ? allProfiles.subList(startIndex, endIndex) : List.of();
+            model.addAttribute("profileSearchResults", pageProfiles.stream()
                 .map(u -> createProfileDisplayWithFollow(u, isRealUser ? currentUserId : null)).toList());
+            model.addAttribute("profilesPage", page);
+            model.addAttribute("profilesTotalPages", totalPages);
+            model.addAttribute("profilesTotalCount", totalItems);
         } else {
-            List<User> recentProfiles;
-            long totalProfiles;
-            if (isRealUser) {
-                recentProfiles = userRepository.findTop10ByIsGuestFalseAndIsCuratedFalseAndPublishListsTrueAndIdNotOrderBySignupDateDesc(currentUserId);
-                totalProfiles = userRepository.countByIsGuestFalseAndIsCuratedFalseAndPublishListsTrueAndIdNot(currentUserId);
-            } else {
-                recentProfiles = userRepository.findTop10ByIsGuestFalseAndIsCuratedFalseAndPublishListsTrueOrderBySignupDateDesc();
-                totalProfiles = userRepository.countByIsGuestFalseAndIsCuratedFalseAndPublishListsTrue();
-            }
-            model.addAttribute("profileSearchResults", recentProfiles.stream()
-                .map(u -> createProfileDisplayWithFollow(u, isRealUser ? currentUserId : null)).toList());
-            model.addAttribute("moreProfilesCount", Math.max(0, totalProfiles - recentProfiles.size()));
+            model.addAttribute("profileSearchResults", List.of());
         }
 
         // --- Following tab ---
-        if (isRealUser) {
+        if ("following".equals(type) && isRealUser) {
             List<Follow> follows = followRepository.findByFollowerId(currentUserId);
-            model.addAttribute("followingResults", follows.stream()
+            List<ProfileDisplayWithFollow> allFollowing = follows.stream()
                 .map(f -> userRepository.findById(f.getFollowedId()).orElse(null))
                 .filter(u -> u != null)
                 .map(u -> createProfileDisplayWithFollow(u, currentUserId))
-                .toList());
+                .toList();
+            int totalItems = allFollowing.size();
+            int totalPages = (totalItems + pageSize - 1) / pageSize;
+            int startIndex = page * pageSize;
+            int endIndex = Math.min(startIndex + pageSize, totalItems);
+            List<ProfileDisplayWithFollow> pageFollowing = startIndex < totalItems ? allFollowing.subList(startIndex, endIndex) : List.of();
+            model.addAttribute("followingResults", pageFollowing);
+            model.addAttribute("followingPage", page);
+            model.addAttribute("followingTotalPages", totalPages);
+            model.addAttribute("followingTotalCount", totalItems);
         } else {
             model.addAttribute("followingResults", List.of());
         }
 
         // --- Followers tab ---
-        if (isRealUser) {
+        if ("followers".equals(type) && isRealUser) {
             List<Follow> followers = followRepository.findByFollowedId(currentUserId);
-            model.addAttribute("followerResults", followers.stream()
+            List<ProfileDisplayWithFollow> allFollowers = followers.stream()
                 .map(f -> userRepository.findById(f.getFollowerId()).orElse(null))
                 .filter(u -> u != null)
                 .map(u -> createProfileDisplayWithFollow(u, currentUserId))
-                .toList());
+                .toList();
+            int totalItems = allFollowers.size();
+            int totalPages = (totalItems + pageSize - 1) / pageSize;
+            int startIndex = page * pageSize;
+            int endIndex = Math.min(startIndex + pageSize, totalItems);
+            List<ProfileDisplayWithFollow> pageFollowers = startIndex < totalItems ? allFollowers.subList(startIndex, endIndex) : List.of();
+            model.addAttribute("followerResults", pageFollowers);
+            model.addAttribute("followersPage", page);
+            model.addAttribute("followersTotalPages", totalPages);
+            model.addAttribute("followersTotalCount", totalItems);
         } else {
             model.addAttribute("followerResults", List.of());
         }
 
         // --- Curated tab ---
-        if ("curated".equals(type) && query != null && !query.isBlank()) {
-            model.addAttribute("curatedResults", userRepository.findByIsCuratedTrueAndUsernameContainingIgnoreCase(query.trim()));
+        if ("curated".equals(type)) {
+            List<User> allCurated;
+            if (query != null && !query.isBlank()) {
+                allCurated = userRepository.findByIsCuratedTrueAndUsernameContainingIgnoreCase(query.trim());
+            } else {
+                allCurated = userRepository.findByIsCurated(true);
+            }
+            int totalItems = allCurated.size();
+            int totalPages = (totalItems + pageSize - 1) / pageSize;
+            int startIndex = page * pageSize;
+            int endIndex = Math.min(startIndex + pageSize, totalItems);
+            List<User> pageCurated = startIndex < totalItems ? allCurated.subList(startIndex, endIndex) : List.of();
+            model.addAttribute("curatedResults", pageCurated);
+            model.addAttribute("curatedPage", page);
+            model.addAttribute("curatedTotalPages", totalPages);
+            model.addAttribute("curatedTotalCount", totalItems);
         } else {
-            model.addAttribute("curatedResults", userRepository.findByIsCurated(true));
+            model.addAttribute("curatedResults", List.of());
         }
 
         // Shared attributes
         model.addAttribute("canFollow", isRealUser);
         model.addAttribute("userHasPublished", currentUser != null && currentUser.isPublishLists());
+        model.addAttribute("pageSize", pageSize);
 
         return "search";
     }

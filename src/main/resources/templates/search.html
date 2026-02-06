@@ -101,7 +101,12 @@
           </div>
         </div>
         <p th:if="${profileSearchResults == null || profileSearchResults.isEmpty()}">No profiles found.</p>
-        <p th:if="${moreProfilesCount != null}" th:text="${'... ' + moreProfilesCount + ' more profiles'}"></p>
+        <div th:if="${profilesTotalPages != null && profilesTotalPages > 1}" style="margin-top: 15px;">
+          <th:block th:each="p : ${#numbers.sequence(0, profilesTotalPages - 1)}">
+            <span th:if="${p == profilesPage}" th:text="${(p * pageSize + 1) + '-' + T(java.lang.Math).min((p + 1) * pageSize, profilesTotalCount)}" style="font-weight: bold; margin-right: 8px;"></span>
+            <a th:if="${p != profilesPage}" th:href="@{/search(type='profiles', query=${query}, page=${p})}" class="book-action-link" th:text="${'[' + (p * pageSize + 1) + '-' + T(java.lang.Math).min((p + 1) * pageSize, profilesTotalCount) + ']'}" style="margin-right: 8px;"></a>
+          </th:block>
+        </div>
       </div>
 
       <!-- Following results -->
@@ -119,6 +124,12 @@
           </div>
         </div>
         <p th:if="${followingResults == null || followingResults.isEmpty()}">You're not following anyone yet.</p>
+        <div th:if="${followingTotalPages != null && followingTotalPages > 1}" style="margin-top: 15px;">
+          <th:block th:each="p : ${#numbers.sequence(0, followingTotalPages - 1)}">
+            <span th:if="${p == followingPage}" th:text="${(p * pageSize + 1) + '-' + T(java.lang.Math).min((p + 1) * pageSize, followingTotalCount)}" style="font-weight: bold; margin-right: 8px;"></span>
+            <a th:if="${p != followingPage}" th:href="@{/search(type='following', page=${p})}" class="book-action-link" th:text="${'[' + (p * pageSize + 1) + '-' + T(java.lang.Math).min((p + 1) * pageSize, followingTotalCount) + ']'}" style="margin-right: 8px;"></a>
+          </th:block>
+        </div>
       </div>
 
       <!-- Followers results -->
@@ -144,6 +155,12 @@
           </div>
         </div>
         <p th:if="${followerResults == null || followerResults.isEmpty()}">You don't have any followers yet.</p>
+        <div th:if="${followersTotalPages != null && followersTotalPages > 1}" style="margin-top: 15px;">
+          <th:block th:each="p : ${#numbers.sequence(0, followersTotalPages - 1)}">
+            <span th:if="${p == followersPage}" th:text="${(p * pageSize + 1) + '-' + T(java.lang.Math).min((p + 1) * pageSize, followersTotalCount)}" style="font-weight: bold; margin-right: 8px;"></span>
+            <a th:if="${p != followersPage}" th:href="@{/search(type='followers', page=${p})}" class="book-action-link" th:text="${'[' + (p * pageSize + 1) + '-' + T(java.lang.Math).min((p + 1) * pageSize, followersTotalCount) + ']'}" style="margin-right: 8px;"></a>
+          </th:block>
+        </div>
       </div>
 
       <!-- Curated lists results -->
@@ -154,6 +171,12 @@
           </div>
         </div>
         <p th:if="${curatedResults == null || curatedResults.isEmpty()}">No curated lists available.</p>
+        <div th:if="${curatedTotalPages != null && curatedTotalPages > 1}" style="margin-top: 15px;">
+          <th:block th:each="p : ${#numbers.sequence(0, curatedTotalPages - 1)}">
+            <span th:if="${p == curatedPage}" th:text="${(p * pageSize + 1) + '-' + T(java.lang.Math).min((p + 1) * pageSize, curatedTotalCount)}" style="font-weight: bold; margin-right: 8px;"></span>
+            <a th:if="${p != curatedPage}" th:href="@{/search(type='curated', query=${query}, page=${p})}" class="book-action-link" th:text="${'[' + (p * pageSize + 1) + '-' + T(java.lang.Math).min((p + 1) * pageSize, curatedTotalCount) + ']'}" style="margin-right: 8px;"></a>
+          </th:block>
+        </div>
       </div>
     </div>
     <script>
