@@ -50,10 +50,14 @@ import java.util.stream.Collectors;
 public class BookController {
     private static final Logger log = LoggerFactory.getLogger(BookController.class);
 
-    public record BookInfo(Long id, String workOlid, String editionOlid, String title, String author, String review, Integer firstPublishYear) {
+    public record BookInfo(Long id, String workOlid, String editionOlid, String title, String author, String review, Integer firstPublishYear, Integer coverId) {
         public String bookUrl() {
             if (workOlid != null) return "https://openlibrary.org/works/" + workOlid;
             return "https://openlibrary.org/search?q=" + java.net.URLEncoder.encode(title + " " + author, java.nio.charset.StandardCharsets.UTF_8);
+        }
+        public String coverUrl() {
+            if (coverId != null) return "https://covers.openlibrary.org/b/id/" + coverId + "-M.jpg";
+            return null;
         }
     }
     public record BookLists(List<BookInfo> liked, List<BookInfo> ok, List<BookInfo> disliked, List<BookInfo> unranked) {}
@@ -584,7 +588,7 @@ public class BookController {
     }
 
     private static BookInfo toBookInfo(Ranking r) {
-        return new BookInfo(r.getId(), r.getBook().getWorkOlid(), r.getBook().getEditionOlid(), r.getBook().getTitle(), r.getBook().getAuthor(), r.getReview(), r.getBook().getFirstPublishYear());
+        return new BookInfo(r.getId(), r.getBook().getWorkOlid(), r.getBook().getEditionOlid(), r.getBook().getTitle(), r.getBook().getAuthor(), r.getReview(), r.getBook().getFirstPublishYear(), r.getBook().getCoverId());
     }
 
     private BookLists getBookLists(Bookshelf bookshelf, Long userId) {
