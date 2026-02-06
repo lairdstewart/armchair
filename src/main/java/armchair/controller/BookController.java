@@ -797,42 +797,11 @@ public class BookController {
         if (rankingState == null) {
             return Mode.LIST;
         }
-
-        // Use explicit mode if set (new approach)
         if (rankingState.getMode() != null) {
             return convertRankingMode(rankingState.getMode());
         }
-
-        // Legacy fallback for existing sessions without explicit mode
-        if (rankingState.isReview() && rankingState.getBookIdBeingReviewed() != null) {
-            return Mode.REVIEW;
-        }
-        if (rankingState.getTitleBeingRanked() == null) {
-            if (rankingState.isReRank()) {
-                return Mode.RE_RANK;
-            }
-            if (rankingState.isRemove()) {
-                return Mode.REMOVE;
-            }
-            if (rankingState.isReview()) {
-                return Mode.REVIEW;
-            }
-            // No longer using ADD mode - orphaned RankingStates show LIST
-            return Mode.LIST;
-        }
-        if (rankingState.getCategory() == null) {
-            // Check if edition selection is needed:
-            // - workOlid must be set (otherwise we need RESOLVE first)
-            // - not re-ranking (already has edition)
-            // - edition not yet selected
-            if (rankingState.getWorkOlidBeingRanked() != null
-                    && !rankingState.isReRank()
-                    && !rankingState.isEditionSelected()) {
-                return Mode.SELECT_EDITION;
-            }
-            return Mode.CATEGORIZE;
-        }
-        return Mode.RANK;
+        // Orphaned RankingState without explicit mode
+        return Mode.LIST;
     }
 
     private Mode convertRankingMode(RankingMode rankingMode) {
@@ -842,6 +811,8 @@ public class BookController {
             case CATEGORIZE -> Mode.CATEGORIZE;
             case RANK -> Mode.RANK;
             case REVIEW -> Mode.REVIEW;
+            case RE_RANK -> Mode.RE_RANK;
+            case REMOVE -> Mode.REMOVE;
         };
     }
 
@@ -980,6 +951,7 @@ public class BookController {
         restoreAbandonedBook(userId);
         RankingState rankingState = new RankingState(userId, null, null, null, bookshlf, null);
         rankingState.setReRank(true);
+        rankingState.setMode(RankingMode.RE_RANK);
         rankingStateRepository.save(rankingState);
         return "redirect:/my-books";
     }
@@ -1028,6 +1000,7 @@ public class BookController {
         restoreAbandonedBook(userId);
         RankingState rankingState = new RankingState(userId, null, null, null, bookshlf, null);
         rankingState.setRemove(true);
+        rankingState.setMode(RankingMode.REMOVE);
         rankingStateRepository.save(rankingState);
         return "redirect:/my-books";
     }
@@ -1041,6 +1014,7 @@ public class BookController {
         restoreAbandonedBook(userId);
         RankingState rankingState = new RankingState(userId, null, null, null, Bookshelf.WANT_TO_READ, BookCategory.UNRANKED);
         rankingState.setRemove(true);
+        rankingState.setMode(RankingMode.REMOVE);
         rankingStateRepository.save(rankingState);
         return "redirect:/my-books?selectedBookshelf=WANT_TO_READ";
     }

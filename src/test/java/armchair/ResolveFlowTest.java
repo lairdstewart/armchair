@@ -4,6 +4,7 @@ import armchair.entity.Book;
 import armchair.entity.BookCategory;
 import armchair.entity.Bookshelf;
 import armchair.entity.Ranking;
+import armchair.entity.RankingMode;
 import armchair.entity.RankingState;
 import armchair.entity.User;
 import armchair.service.OpenLibraryService;
@@ -27,6 +28,7 @@ class ResolveFlowTest extends BaseIntegrationTest {
         addRanking(userId, unverified, Bookshelf.UNRANKED, BookCategory.UNRANKED, 0);
 
         RankingState state = new RankingState(userId, null, title, author, null, null, 0, 0, 0);
+        state.setMode(RankingMode.RESOLVE);
         rankingStateRepository.save(state);
     }
 
