@@ -249,6 +249,7 @@ input:checked + .slider:before {
 
 .book-entry-row .book-entry {
   flex: 1;
+  min-width: 0;
 }
 
 /* Book review styles */
