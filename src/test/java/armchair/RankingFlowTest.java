@@ -155,7 +155,7 @@ class RankingFlowTest extends BaseIntegrationTest {
                 .andExpect(status().is3xxRedirection());
 
         RankingState state = rankingStateRepository.findById(user.getId()).orElseThrow();
-        assertThat(state.isReview()).isTrue();
+        assertThat(state.getMode()).isEqualTo(RankingMode.REVIEW);
         assertThat(state.getBookIdBeingReviewed()).isEqualTo(ranking.getId());
 
         mockMvc.perform(post("/save-review")

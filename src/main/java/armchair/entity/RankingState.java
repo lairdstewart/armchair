@@ -35,7 +35,6 @@ public class RankingState {
     private Integer lowIndex;
     private Integer highIndex;
 
-    private boolean review;
     private boolean rankAll;
     private Long bookIdBeingReviewed;
 
@@ -152,14 +151,6 @@ public class RankingState {
 
     public void setHighIndex(Integer highIndex) {
         this.highIndex = highIndex;
-    }
-
-    public boolean isReview() {
-        return review;
-    }
-
-    public void setReview(boolean review) {
-        this.review = review;
     }
 
     public boolean isRankAll() {

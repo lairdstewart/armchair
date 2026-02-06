@@ -1061,7 +1061,6 @@ public class BookController {
         // Set up review mode directly
         restoreAbandonedBook(userId);
         RankingState rankingState = new RankingState(userId, null, null, null, ranking.getBookshelf(), null);
-        rankingState.setReview(true);
         rankingState.setBookIdBeingReviewed(bookId);
         rankingState.setMode(RankingMode.REVIEW);
         rankingStateRepository.save(rankingState);
@@ -1210,7 +1209,7 @@ public class BookController {
             return "redirect:/my-books";
         }
         RankingState rankingState = new RankingState(userId, null, null, null, bookshlf, null);
-        rankingState.setReview(true);
+        rankingState.setMode(RankingMode.REVIEW);
         rankingStateRepository.save(rankingState);
         return "redirect:/my-books";
     }
@@ -1230,7 +1229,7 @@ public class BookController {
 
         // Verify we're in review mode
         RankingState rankingState = rankingStateRepository.findById(userId).orElse(null);
-        if (rankingState == null || !rankingState.isReview()) {
+        if (rankingState == null || rankingState.getMode() != RankingMode.REVIEW) {
             return "redirect:/my-books";
         }
 
@@ -1249,7 +1248,7 @@ public class BookController {
         }
 
         RankingState rankingState = rankingStateRepository.findById(userId).orElse(null);
-        if (rankingState == null || !rankingState.isReview() || rankingState.getBookIdBeingReviewed() == null) {
+        if (rankingState == null || rankingState.getMode() != RankingMode.REVIEW || rankingState.getBookIdBeingReviewed() == null) {
             return "redirect:/my-books";
         }
 
@@ -2504,7 +2503,6 @@ public class BookController {
             );
             newRankingState.setReviewBeingRanked(guestRankingState.getReviewBeingRanked());
             newRankingState.setMode(guestRankingState.getMode());
-            newRankingState.setReview(guestRankingState.isReview());
             newRankingState.setRankAll(guestRankingState.isRankAll());
             newRankingState.setBookIdBeingReviewed(guestRankingState.getBookIdBeingReviewed());
             newRankingState.setOriginalCategory(guestRankingState.getOriginalCategory());
