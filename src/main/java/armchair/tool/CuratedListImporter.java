@@ -228,7 +228,7 @@ public class CuratedListImporter {
                 firstPublishYear = null;
             }
 
-            Book book = bookService.findOrCreateBook(workOlid, editionOlid, title, author, firstPublishYear);
+            Book book = bookService.findOrCreateBook(workOlid, editionOlid, title, author, firstPublishYear, null);
 
             Ranking ranking = new Ranking(userId, book, jb.bookshelf(), jb.category(), position);
             if (jb.review() != null && !jb.review().isEmpty()) {

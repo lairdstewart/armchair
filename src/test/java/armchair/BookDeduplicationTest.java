@@ -51,7 +51,7 @@ class BookDeduplicationTest extends BaseIntegrationTest {
 
     @Test
     void enrichEditionOlid() throws Exception {
-        Book book = bookRepository.save(new Book("OL200W", null, "1984", "George Orwell", null));
+        Book book = bookRepository.save(new Book("OL200W", null, "1984", "George Orwell", null, null));
         assertThat(book.getEditionOlid()).isNull();
 
         User user = createOAuthUser("dedup2", "oauth-dedup-2");

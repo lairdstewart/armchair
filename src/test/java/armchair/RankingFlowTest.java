@@ -391,7 +391,7 @@ class RankingFlowTest extends BaseIntegrationTest {
         User user = createOAuthUser("ranker14", "oauth-rank-14");
 
         // Create a book with initial editionOlid (simulates what happens from search)
-        Book book = bookRepository.save(new Book("OL200W", "OL200M-original", "Test Book", "Test Author", null));
+        Book book = bookRepository.save(new Book("OL200W", "OL200M-original", "Test Book", "Test Author", null, null));
         assertThat(book.getEditionOlid()).isEqualTo("OL200M-original");
 
         // Set up RankingState as if user came from /select-book

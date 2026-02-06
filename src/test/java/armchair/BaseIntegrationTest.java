@@ -73,14 +73,14 @@ public abstract class BaseIntegrationTest {
      * Create a verified book (has workOlid).
      */
     protected Book createVerifiedBook(String workOlid, String title, String author) {
-        return bookRepository.save(new Book(workOlid, null, title, author, null));
+        return bookRepository.save(new Book(workOlid, null, title, author, null, null));
     }
 
     /**
      * Create an unverified book (null workOlid).
      */
     protected Book createUnverifiedBook(String title, String author) {
-        return bookRepository.save(new Book(null, null, title, author, null));
+        return bookRepository.save(new Book(null, null, title, author, null, null));
     }
 
     /**

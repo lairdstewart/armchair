@@ -17,6 +17,7 @@ public class Book {
     private String workOlid;
     private String editionOlid;
     private String isbn13;
+    private Integer coverId;
     @Column(nullable = false, length = 1000)
     private String title;
     @Column(nullable = false, length = 1000)
@@ -25,12 +26,13 @@ public class Book {
 
     public Book() {}
 
-    public Book(String workOlid, String editionOlid, String title, String author, Integer firstPublishYear) {
+    public Book(String workOlid, String editionOlid, String title, String author, Integer firstPublishYear, Integer coverId) {
         this.workOlid = workOlid;
         this.editionOlid = editionOlid;
         this.title = title;
         this.author = author;
         this.firstPublishYear = firstPublishYear;
+        this.coverId = coverId;
     }
 
     public Long getId() {
@@ -63,6 +65,14 @@ public class Book {
 
     public void setIsbn13(String isbn13) {
         this.isbn13 = isbn13;
+    }
+
+    public Integer getCoverId() {
+        return coverId;
+    }
+
+    public void setCoverId(Integer coverId) {
+        this.coverId = coverId;
     }
 
     public String getTitle() {

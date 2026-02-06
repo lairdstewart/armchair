@@ -20,15 +20,24 @@ public class BookService {
      * Finds an existing book or creates a new one. Deduplicates by workOlid first,
      * then falls back to case-insensitive title+author match for unverified books.
      */
-    public Book findOrCreateBook(String workOlid, String editionOlid, String title, String author, Integer firstPublishYear) {
+    public Book findOrCreateBook(String workOlid, String editionOlid, String title, String author, Integer firstPublishYear, Integer coverId) {
         // Look up by workOlid
         if (workOlid != null) {
             var existing = bookRepository.findByWorkOlid(workOlid);
             if (existing.isPresent()) {
                 Book book = existing.get();
+                boolean updated = false;
                 // Enrich with editionOlid if missing
                 if (book.getEditionOlid() == null && editionOlid != null) {
                     book.setEditionOlid(editionOlid);
+                    updated = true;
+                }
+                // Enrich with coverId if missing
+                if (book.getCoverId() == null && coverId != null) {
+                    book.setCoverId(coverId);
+                    updated = true;
+                }
+                if (updated) {
                     bookRepository.save(book);
                 }
                 return book;
@@ -45,7 +54,7 @@ public class BookService {
         }
 
         // No match — create new Book
-        return bookRepository.save(new Book(workOlid, editionOlid, title, author, firstPublishYear));
+        return bookRepository.save(new Book(workOlid, editionOlid, title, author, firstPublishYear, coverId));
     }
 
     /**
@@ -69,7 +78,7 @@ public class BookService {
             return List.of();
         }
         return candidates.stream()
-            .map(b -> new OpenLibraryService.BookResult(b.getWorkOlid(), b.getEditionOlid(), b.getTitle(), b.getAuthor(), b.getFirstPublishYear(), null))
+            .map(b -> new OpenLibraryService.BookResult(b.getWorkOlid(), b.getEditionOlid(), b.getTitle(), b.getAuthor(), b.getFirstPublishYear(), b.getCoverId()))
             .toList();
     }
 }

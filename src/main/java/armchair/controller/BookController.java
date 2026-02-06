@@ -175,7 +175,7 @@ public class BookController {
         if (state == null || state.getTitleBeingRanked() == null) return;
 
         Book book = bookService.findOrCreateBook(state.getWorkOlidBeingRanked(),
-            null, state.getTitleBeingRanked(), state.getAuthorBeingRanked(), null);
+            null, state.getTitleBeingRanked(), state.getAuthorBeingRanked(), null, null);
 
         if (!rankingRepository.existsByUserIdAndBookId(userId, book.getId())) {
             // For re-rank: restore to original bookshelf/category/position
@@ -405,7 +405,7 @@ public class BookController {
                 // Update the Book with the edition info
                 Book book = bookService.findOrCreateBook(rankingState.getWorkOlidBeingRanked(),
                     soleEdition.editionOlid(), rankingState.getTitleBeingRanked(),
-                    rankingState.getAuthorBeingRanked(), null);
+                    rankingState.getAuthorBeingRanked(), null, null);
                 book.setIsbn13(soleEdition.isbn13());
                 bookRepository.save(book);
 
@@ -523,10 +523,10 @@ public class BookController {
             model.addAttribute("comparisonBookTitle", compRanking.getBook().getTitle());
             model.addAttribute("comparisonBookAuthor", compRanking.getBook().getAuthor());
             model.addAttribute("comparisonBookWorkOlid", compRanking.getBook().getWorkOlid());
-            model.addAttribute("comparisonBookCoverOlid", compRanking.getBook().getEditionOlid());
+            model.addAttribute("comparisonBookCoverId", compRanking.getBook().getCoverId());
             if (rankingState.getWorkOlidBeingRanked() != null) {
                 bookRepository.findByWorkOlid(rankingState.getWorkOlidBeingRanked())
-                    .ifPresent(b -> model.addAttribute("rankingBookCoverOlid", b.getEditionOlid()));
+                    .ifPresent(b -> model.addAttribute("rankingBookCoverId", b.getCoverId()));
             }
         }
 
@@ -683,7 +683,7 @@ public class BookController {
         }
 
         // Insert the new ranking
-        Book book = bookService.findOrCreateBook(workOlid, null, title, author, null);
+        Book book = bookService.findOrCreateBook(workOlid, null, title, author, null, null);
         Ranking newRanking = new Ranking(userId, book, bookshelf, category, position);
         newRanking.setReview(review);
         rankingRepository.save(newRanking);
@@ -1084,7 +1084,7 @@ public class BookController {
         if (rankingRepository.existsByUserIdAndBookWorkOlid(userId, workOlid)) {
             // Find the unverified book being ranked
             Book unverifiedBook = bookService.findOrCreateBook(rankingState.getWorkOlidBeingRanked(),
-                null, rankingState.getTitleBeingRanked(), rankingState.getAuthorBeingRanked(), null);
+                null, rankingState.getTitleBeingRanked(), rankingState.getAuthorBeingRanked(), null, null);
             session.setAttribute("duplicateResolveTitle", title);
             session.setAttribute("duplicateResolveWorkOlid", workOlid);
             session.setAttribute("duplicateResolveBookId", unverifiedBook.getId());
@@ -1094,7 +1094,7 @@ public class BookController {
 
         // Find the existing book and update it with the selected result's metadata
         Book existingBook = bookService.findOrCreateBook(rankingState.getWorkOlidBeingRanked(),
-            null, rankingState.getTitleBeingRanked(), rankingState.getAuthorBeingRanked(), null);
+            null, rankingState.getTitleBeingRanked(), rankingState.getAuthorBeingRanked(), null, null);
         existingBook.setWorkOlid(workOlid);
         existingBook.setEditionOlid(editionOlid);
         existingBook.setTitle(title);
@@ -1222,6 +1222,7 @@ public class BookController {
                              @RequestParam String author,
                              @RequestParam(required = false) String editionOlid,
                              @RequestParam(required = false) Integer firstPublishYear,
+                             @RequestParam(required = false) Integer coverId,
                              HttpSession session) {
         Long userId = getCurrentUserId(session);
         if (userId == null) {
@@ -1234,8 +1235,8 @@ public class BookController {
             rankingState = new RankingState(userId, null, null, null, null, null);
         }
 
-        // Eagerly create the Book row so editionOlid is persisted
-        bookService.findOrCreateBook(workOlid, editionOlid, bookName, author, firstPublishYear);
+        // Eagerly create the Book row so editionOlid and coverId are persisted
+        bookService.findOrCreateBook(workOlid, editionOlid, bookName, author, firstPublishYear, coverId);
 
         // Set the book info, leave category null to enter CATEGORIZE mode
         rankingState.setBookInfo(workOlid, bookName, author);
@@ -1262,7 +1263,7 @@ public class BookController {
         // Update the Book with the selected edition
         Book book = bookService.findOrCreateBook(rankingState.getWorkOlidBeingRanked(),
             editionOlid, rankingState.getTitleBeingRanked(),
-            rankingState.getAuthorBeingRanked(), null);
+            rankingState.getAuthorBeingRanked(), null, null);
         book.setEditionOlid(editionOlid);
         book.setIsbn13(isbn13);
         if (title != null && !title.isBlank()) {
@@ -1295,6 +1296,7 @@ public class BookController {
                                    @RequestParam String author,
                                    @RequestParam(required = false) String editionOlid,
                                    @RequestParam(required = false) Integer firstPublishYear,
+                                   @RequestParam(required = false) Integer coverId,
                                    @RequestParam(required = false) String returnUrl,
                                    HttpSession session) {
         Long userId = getCurrentUserId(session);
@@ -1305,7 +1307,7 @@ public class BookController {
         String redirectTo = isSafeRedirectUrl(returnUrl) ? "redirect:" + returnUrl : "redirect:/search?type=books";
 
         // Resolve the book
-        Book book = bookService.findOrCreateBook(workOlid, editionOlid, bookName, author, firstPublishYear);
+        Book book = bookService.findOrCreateBook(workOlid, editionOlid, bookName, author, firstPublishYear, coverId);
 
         // Check if book is already in user's library (any category)
         if (rankingRepository.existsByUserIdAndBookId(userId, book.getId())) {
@@ -1356,7 +1358,7 @@ public class BookController {
         if (currentList.isEmpty()) {
             // Category is empty, insert at the start
             boolean wasRankAll = rankingState.isRankAll();
-            Book book = bookService.findOrCreateBook(workOlid, null, bookName, author, null);
+            Book book = bookService.findOrCreateBook(workOlid, null, bookName, author, null, null);
             Ranking newRanking = new Ranking(userId, book, bookshelfEnum, bookCategory, 0);
             newRanking.setReview(trimmedReview);
             rankingRepository.save(newRanking);
@@ -2000,7 +2002,7 @@ public class BookController {
                     }
 
                     // Create unverified book (null workOlid)
-                    Book book = bookService.findOrCreateBook(null, null, title, author, null);
+                    Book book = bookService.findOrCreateBook(null, null, title, author, null, null);
 
                     // Update title to stripped version if book was found with a subtitle
                     if (!title.equals(book.getTitle())) {
