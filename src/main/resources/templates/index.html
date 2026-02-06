@@ -514,9 +514,15 @@
             <img th:if="${edition.coverUrl() != null}" class="book-cover" th:src="${edition.coverUrl()}" /><div th:if="${edition.coverUrl() == null}" class="book-cover-placeholder">?</div>
           </div>
         </div>
-        <form th:if="${hasMoreEditions}" th:action="@{/more-editions}" method="POST" style="margin-top: 15px;">
-          <button type="submit" class="book-action-link">[more editions]</button>
-        </form>
+        <div th:if="${editionTotalPages > 1}" style="margin-top: 15px;">
+          <th:block th:each="page : ${#numbers.sequence(0, editionTotalPages - 1)}">
+            <span th:if="${page == editionPage}" th:text="${(page * editionPageSize + 1) + '-' + T(java.lang.Math).min((page + 1) * editionPageSize, editionTotalCount)}" style="font-weight: bold; margin-right: 8px;"></span>
+            <form th:if="${page != editionPage}" th:action="@{/edition-page}" method="POST" style="display: inline;">
+              <input type="hidden" name="page" th:value="${page}" />
+              <button type="submit" class="book-action-link" th:text="${'[' + (page * editionPageSize + 1) + '-' + T(java.lang.Math).min((page + 1) * editionPageSize, editionTotalCount) + ']'}"></button>
+            </form>
+          </th:block>
+        </div>
       </div>
       <div th:case="'CATEGORIZE'">
         <h3>Add <span th:text="${rankingState.titleBeingRanked}"></span></h3>

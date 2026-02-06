@@ -377,26 +377,26 @@ public class BookController {
 
         // Handle SELECT_EDITION mode - fetch editions and potentially auto-select
         if (mode == Mode.SELECT_EDITION && rankingState != null && rankingState.getWorkOlidBeingRanked() != null) {
-            Integer editionLimit = (Integer) session.getAttribute("editionLimit");
-            if (editionLimit == null) editionLimit = 3;
+            // Get cached editions from session, or fetch from API
+            @SuppressWarnings("unchecked")
+            List<OpenLibraryService.EditionResult> allEditions =
+                (List<OpenLibraryService.EditionResult>) session.getAttribute("cachedEditions");
 
-            // Get the cover edition from the Book (set during /select-book) to show it first
-            String preferredEditionOlid = bookRepository.findByWorkOlid(rankingState.getWorkOlidBeingRanked())
-                .map(Book::getEditionOlid)
-                .orElse(null);
+            if (allEditions == null) {
+                // Get the cover edition from the Book (set during /select-book) to show it first
+                String preferredEditionOlid = bookRepository.findByWorkOlid(rankingState.getWorkOlidBeingRanked())
+                    .map(Book::getEditionOlid)
+                    .orElse(null);
 
-            // Always fetch from offset=0 to accumulate editions
-            List<OpenLibraryService.EditionResult> editions = openLibraryService.getEditionsForWork(
-                rankingState.getWorkOlidBeingRanked(), editionLimit + 1, 0, preferredEditionOlid);
-
-            boolean hasMore = editions.size() > editionLimit;
-            if (hasMore) {
-                editions = editions.subList(0, editionLimit);
+                // Fetch up to 50 editions
+                allEditions = openLibraryService.getEditionsForWork(
+                    rankingState.getWorkOlidBeingRanked(), 50, 0, preferredEditionOlid);
+                session.setAttribute("cachedEditions", allEditions);
             }
 
-            // Auto-select if only 1 edition with ISBN exists (and this is the first fetch)
-            if (editionLimit == 3 && editions.size() == 1 && !hasMore) {
-                OpenLibraryService.EditionResult soleEdition = editions.get(0);
+            // Auto-select if only 1 edition with ISBN exists
+            if (allEditions.size() == 1) {
+                OpenLibraryService.EditionResult soleEdition = allEditions.get(0);
                 rankingState.setEditionOlidBeingRanked(soleEdition.editionOlid());
                 rankingState.setIsbn13BeingRanked(soleEdition.isbn13());
                 rankingState.setEditionSelected(true);
@@ -409,20 +409,35 @@ public class BookController {
                 book.setIsbn13(soleEdition.isbn13());
                 bookRepository.save(book);
 
-                session.removeAttribute("editionLimit");
+                session.removeAttribute("cachedEditions");
                 return "redirect:/my-books"; // Will now show CATEGORIZE
             }
 
             // Skip edition selection if no editions with ISBN found
-            if (editions.isEmpty()) {
+            if (allEditions.isEmpty()) {
                 rankingState.setEditionSelected(true); // Mark as selected (even though none chosen)
                 rankingStateRepository.save(rankingState);
-                session.removeAttribute("editionLimit");
+                session.removeAttribute("cachedEditions");
                 return "redirect:/my-books"; // Will now show CATEGORIZE
             }
 
-            model.addAttribute("editionResults", editions);
-            model.addAttribute("hasMoreEditions", hasMore);
+            // Pagination: 5 items per page
+            int pageSize = 5;
+            Integer editionPage = (Integer) session.getAttribute("editionPage");
+            if (editionPage == null) editionPage = 0;
+
+            int totalEditions = allEditions.size();
+            int totalPages = (totalEditions + pageSize - 1) / pageSize;
+            int startIndex = editionPage * pageSize;
+            int endIndex = Math.min(startIndex + pageSize, totalEditions);
+
+            List<OpenLibraryService.EditionResult> pageEditions = allEditions.subList(startIndex, endIndex);
+
+            model.addAttribute("editionResults", pageEditions);
+            model.addAttribute("editionPage", editionPage);
+            model.addAttribute("editionTotalPages", totalPages);
+            model.addAttribute("editionTotalCount", totalEditions);
+            model.addAttribute("editionPageSize", pageSize);
         }
 
         // Add username for display if logged in
@@ -1278,15 +1293,14 @@ public class BookController {
         rankingState.setEditionSelected(true);
         rankingStateRepository.save(rankingState);
 
-        session.removeAttribute("editionLimit");
+        session.removeAttribute("cachedEditions");
+        session.removeAttribute("editionPage");
         return "redirect:/my-books";
     }
 
-    @PostMapping("/more-editions")
-    public String moreEditions(HttpSession session) {
-        Integer editionLimit = (Integer) session.getAttribute("editionLimit");
-        if (editionLimit == null) editionLimit = 3;
-        session.setAttribute("editionLimit", editionLimit + 3);
+    @PostMapping("/edition-page")
+    public String editionPage(@RequestParam int page, HttpSession session) {
+        session.setAttribute("editionPage", page);
         return "redirect:/my-books";
     }
 
