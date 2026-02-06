@@ -186,7 +186,7 @@ public class BookController {
 
         if (!rankingRepository.existsByUserIdAndBookId(userId, book.getId())) {
             // For re-rank: restore to original bookshelf/category/position
-            if (state.isReRank() && state.getOriginalCategory() != null && state.getOriginalPosition() != null) {
+            if (state.getOriginalCategory() != null && state.getOriginalPosition() != null) {
                 Bookshelf bookshelf = state.getBookshelf();
                 BookCategory category = state.getOriginalCategory();
                 int position = state.getOriginalPosition();
@@ -950,7 +950,6 @@ public class BookController {
         }
         restoreAbandonedBook(userId);
         RankingState rankingState = new RankingState(userId, null, null, null, bookshlf, null);
-        rankingState.setReRank(true);
         rankingState.setMode(RankingMode.RE_RANK);
         rankingStateRepository.save(rankingState);
         return "redirect:/my-books";
@@ -972,7 +971,7 @@ public class BookController {
 
         // Store book info in ranking state
         RankingState rankingState = rankingStateRepository.findById(userId).orElse(null);
-        if (rankingState == null || !rankingState.isReRank()) {
+        if (rankingState == null || rankingState.getMode() != RankingMode.RE_RANK) {
             return "redirect:/my-books";
         }
 
@@ -999,7 +998,6 @@ public class BookController {
         }
         restoreAbandonedBook(userId);
         RankingState rankingState = new RankingState(userId, null, null, null, bookshlf, null);
-        rankingState.setRemove(true);
         rankingState.setMode(RankingMode.REMOVE);
         rankingStateRepository.save(rankingState);
         return "redirect:/my-books";
@@ -1013,7 +1011,6 @@ public class BookController {
         }
         restoreAbandonedBook(userId);
         RankingState rankingState = new RankingState(userId, null, null, null, Bookshelf.WANT_TO_READ, BookCategory.UNRANKED);
-        rankingState.setRemove(true);
         rankingState.setMode(RankingMode.REMOVE);
         rankingStateRepository.save(rankingState);
         return "redirect:/my-books?selectedBookshelf=WANT_TO_READ";
@@ -1035,7 +1032,7 @@ public class BookController {
 
         // Verify we're in remove mode for want-to-read
         RankingState rankingState = rankingStateRepository.findById(userId).orElse(null);
-        if (rankingState == null || !rankingState.isRemove() || rankingState.getBookshelf() != Bookshelf.WANT_TO_READ) {
+        if (rankingState == null || rankingState.getMode() != RankingMode.REMOVE || rankingState.getBookshelf() != Bookshelf.WANT_TO_READ) {
             return "redirect:/my-books?selectedBookshelf=WANT_TO_READ";
         }
 
@@ -1088,7 +1085,6 @@ public class BookController {
         // Store book info in ranking state (including existing review and original position for restoration)
         restoreAbandonedBook(userId);
         RankingState rankingState = new RankingState(userId, ranking.getBook().getWorkOlid(), ranking.getBook().getTitle(), ranking.getBook().getAuthor(), ranking.getBookshelf(), null);
-        rankingState.setReRank(true);
         rankingState.setReviewBeingRanked(ranking.getReview());
         rankingState.setOriginalCategory(ranking.getCategory());
         rankingState.setOriginalPosition(ranking.getPosition());
@@ -1187,7 +1183,7 @@ public class BookController {
 
         // Verify we're in remove mode
         RankingState rankingState = rankingStateRepository.findById(userId).orElse(null);
-        if (rankingState == null || !rankingState.isRemove()) {
+        if (rankingState == null || rankingState.getMode() != RankingMode.REMOVE) {
             return "redirect:/my-books";
         }
 
@@ -1453,14 +1449,14 @@ public class BookController {
         // Set up RankingState for re-ranking the existing book through CATEGORIZE
         Book existingBook = existingRanking.getBook();
         RankingState newState = new RankingState(userId, existingBook.getWorkOlid(), existingBook.getTitle(), existingBook.getAuthor(), null, null);
-        newState.setReRank(true);
         newState.setReviewBeingRanked(existingRanking.getReview());
+        newState.setMode(RankingMode.CATEGORIZE);
         rankingStateRepository.save(newState);
 
         // Remove the existing ranking from its current position and close the gap
         deleteRankingAndCloseGap(userId, existingRanking);
 
-        return "redirect:/my-books";
+        return "redirect:/rank/categorize";
     }
 
     private void cleanupUnverifiedBook(Long userId, Long bookId) {
@@ -2507,11 +2503,12 @@ public class BookController {
                 guestRankingState.getHighIndex()
             );
             newRankingState.setReviewBeingRanked(guestRankingState.getReviewBeingRanked());
-            newRankingState.setReRank(guestRankingState.isReRank());
-            newRankingState.setRemove(guestRankingState.isRemove());
+            newRankingState.setMode(guestRankingState.getMode());
             newRankingState.setReview(guestRankingState.isReview());
             newRankingState.setRankAll(guestRankingState.isRankAll());
             newRankingState.setBookIdBeingReviewed(guestRankingState.getBookIdBeingReviewed());
+            newRankingState.setOriginalCategory(guestRankingState.getOriginalCategory());
+            newRankingState.setOriginalPosition(guestRankingState.getOriginalPosition());
             rankingStateRepository.save(newRankingState);
         }
 

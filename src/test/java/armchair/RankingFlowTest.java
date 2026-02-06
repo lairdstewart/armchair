@@ -4,6 +4,7 @@ import armchair.entity.Book;
 import armchair.entity.BookCategory;
 import armchair.entity.Bookshelf;
 import armchair.entity.Ranking;
+import armchair.entity.RankingMode;
 import armchair.entity.RankingState;
 import armchair.entity.User;
 import org.junit.jupiter.api.Test;
@@ -253,7 +254,9 @@ class RankingFlowTest extends BaseIntegrationTest {
 
         RankingState state = rankingStateRepository.findById(user.getId()).orElseThrow();
         assertThat(state.getTitleBeingRanked()).isEqualTo("Book B");
-        assertThat(state.isReRank()).isTrue();
+        assertThat(state.getMode()).isEqualTo(RankingMode.CATEGORIZE);
+        assertThat(state.getOriginalCategory()).isEqualTo(BookCategory.LIKED);
+        assertThat(state.getOriginalPosition()).isEqualTo(1);
     }
 
     @Test

@@ -35,8 +35,6 @@ public class RankingState {
     private Integer lowIndex;
     private Integer highIndex;
 
-    private boolean reRank;
-    private boolean remove;
     private boolean review;
     private boolean rankAll;
     private Long bookIdBeingReviewed;
@@ -154,22 +152,6 @@ public class RankingState {
 
     public void setHighIndex(Integer highIndex) {
         this.highIndex = highIndex;
-    }
-
-    public boolean isReRank() {
-        return reRank;
-    }
-
-    public void setReRank(boolean reRank) {
-        this.reRank = reRank;
-    }
-
-    public boolean isRemove() {
-        return remove;
-    }
-
-    public void setRemove(boolean remove) {
-        this.remove = remove;
     }
 
     public boolean isReview() {

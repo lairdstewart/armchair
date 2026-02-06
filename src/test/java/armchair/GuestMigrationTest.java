@@ -4,6 +4,7 @@ import armchair.entity.Book;
 import armchair.entity.BookCategory;
 import armchair.entity.Bookshelf;
 import armchair.entity.Ranking;
+import armchair.entity.RankingMode;
 import armchair.entity.RankingState;
 import armchair.entity.User;
 import org.junit.jupiter.api.Test;
@@ -56,7 +57,7 @@ class GuestMigrationTest extends BaseIntegrationTest {
         RankingState state = new RankingState(guestUserId, "OL789W", "Neuromancer", "William Gibson",
                 Bookshelf.FICTION, BookCategory.LIKED, 0, 0, 0);
         state.setReviewBeingRanked("Great book");
-        state.setReRank(true);
+        state.setMode(RankingMode.CATEGORIZE);
         state.setRankAll(true);
         rankingStateRepository.save(state);
 
@@ -71,7 +72,7 @@ class GuestMigrationTest extends BaseIntegrationTest {
         assertThat(migratedState.getTitleBeingRanked()).isEqualTo("Neuromancer");
         assertThat(migratedState.getAuthorBeingRanked()).isEqualTo("William Gibson");
         assertThat(migratedState.getReviewBeingRanked()).isEqualTo("Great book");
-        assertThat(migratedState.isReRank()).isTrue();
+        assertThat(migratedState.getMode()).isEqualTo(RankingMode.CATEGORIZE);
         assertThat(migratedState.isRankAll()).isTrue();
 
         assertThat(rankingStateRepository.findById(guestUserId)).isEmpty();
