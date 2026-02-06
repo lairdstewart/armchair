@@ -1,0 +1,35 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+  <th:block th:fragment="content">
+    <h3>Which edition did you read?</h3>
+    <div th:each="edition : ${editionResults}" class="book-entry-row" style="margin-bottom: 10px;">
+      <form th:action="@{/select-edition}" method="POST" style="display: inline;">
+        <input type="hidden" name="editionOlid" th:value="${edition.editionOlid()}" />
+        <input type="hidden" name="isbn13" th:value="${edition.isbn13()}" />
+        <input type="hidden" name="title" th:value="${edition.title()}" />
+        <button type="submit" class="book-number rerank">-&gt;</button>
+      </form>
+      <div class="book-entry">
+        <div class="book-info">
+          <div class="book-title">
+            <a th:href="${'https://openlibrary.org/books/' + edition.editionOlid()}" target="_blank" th:text="${edition.title()}"></a>
+          </div>
+          <div th:if="${edition.publisher() != null}" class="book-author">Publisher: <span th:text="${edition.publisher()}"></span></div>
+          <div th:if="${edition.publishDate() != null}" class="book-author">Publish Date: <span th:text="${edition.publishDate()}"></span></div>
+        </div>
+        <img th:if="${edition.coverUrl() != null}" class="book-cover" th:src="${edition.coverUrl()}" /><div th:if="${edition.coverUrl() == null}" class="book-cover-placeholder">?</div>
+      </div>
+    </div>
+    <div th:if="${editionTotalPages > 1}" style="margin-top: 15px;">
+      <th:block th:each="page : ${#numbers.sequence(0, editionTotalPages - 1)}">
+        <span th:if="${page == editionPage}" th:text="${(page * editionPageSize + 1) + '-' + T(java.lang.Math).min((page + 1) * editionPageSize, editionTotalCount)}" style="font-weight: bold; margin-right: 8px;"></span>
+        <form th:if="${page != editionPage}" th:action="@{/edition-page}" method="POST" style="display: inline;">
+          <input type="hidden" name="page" th:value="${page}" />
+          <button type="submit" class="book-action-link" th:text="${'[' + (page * editionPageSize + 1) + '-' + T(java.lang.Math).min((page + 1) * editionPageSize, editionTotalCount) + ']'}"></button>
+        </form>
+      </th:block>
+    </div>
+  </th:block>
+</body>
+</html>

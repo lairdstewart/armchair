@@ -1,0 +1,25 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+  <th:block th:fragment="content">
+    <h3>Add <span th:text="${rankingState.titleBeingRanked}"></span></h3>
+    <p th:if="${isRankAll}" style="margin-bottom: 15px;"><span th:text="${rankAllRemaining}"></span> unranked book<span th:if="${rankAllRemaining != 1}">s</span> remaining</p>
+    <form th:action="@{/categorize}" method="POST">
+      <div style="margin-bottom: 15px;">
+        <label><input type="radio" name="bookshelf" value="fiction" required /> Fiction</label>
+        <label style="margin-left: 15px;"><input type="radio" name="bookshelf" value="nonfiction" /> Non-Fiction</label>
+      </div>
+      <div style="margin-bottom: 15px;">
+        <label><input type="radio" name="category" value="liked" required /> liked it</label>
+        <label style="margin-left: 15px;"><input type="radio" name="category" value="ok" /> it was ok</label>
+        <label style="margin-left: 15px;"><input type="radio" name="category" value="disliked" /> didn't like it</label>
+      </div>
+      <div style="margin-bottom: 15px;">
+        <label for="review">Review (optional):</label><br />
+        <textarea id="review" name="review" rows="4" cols="50" maxlength="5000" placeholder="Write your thoughts about this book..." th:text="${rankingState.reviewBeingRanked}"></textarea>
+      </div>
+      <button type="submit">Continue</button>
+    </form>
+  </th:block>
+</body>
+</html>

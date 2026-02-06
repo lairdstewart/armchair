@@ -19,6 +19,105 @@
       </div>
     </div>
 
+    <!--
+      Book display fragment - the core book info display (title, author, year, cover)
+      Used in Library list items, Want to Read, RANK comparisons, etc.
+      Parameters:
+        - book: BookInfo record
+        - showActions: boolean - whether to show action links slot
+        - actionsContent: fragment to render for actions (optional)
+    -->
+    <th:block th:fragment="bookDisplay(book)">
+      <div class="book-entry">
+        <div class="book-info">
+          <div class="book-title">
+            <a th:if="${book.bookUrl() != null}" th:href="${book.bookUrl()}" th:text="${book.title()}" target="_blank"></a>
+            <span th:if="${book.bookUrl() == null}" th:text="${book.title()}"></span>
+          </div>
+          <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author">
+            <span th:text="${book.author()}"></span>
+            <span th:if="${book.firstPublishYear() != null}" th:text="${' (' + book.firstPublishYear() + ')'}"></span>
+          </div>
+        </div>
+        <img th:if="${book.coverUrl() != null}" class="book-cover" th:src="${book.coverUrl()}" />
+        <div th:if="${book.coverUrl() == null}" class="book-cover-placeholder">?</div>
+      </div>
+    </th:block>
+
+    <!--
+      Book with actions and optional review toggle - for LIST mode items
+      Parameters:
+        - book: BookInfo record
+        - rankNum: the rank number to display (or null for no number)
+        - categoryClass: CSS class for the rank number (liked/ok/disliked/unranked)
+    -->
+    <th:block th:fragment="bookListItem(book, rankNum, categoryClass)">
+      <span th:if="${book.review() == null}">
+        <div class="book-entry">
+          <div class="book-info">
+            <div class="book-title">
+              <a th:if="${book.bookUrl() != null}" th:href="${book.bookUrl()}" th:text="${book.title()}" target="_blank"></a>
+              <span th:if="${book.bookUrl() == null}" th:text="${book.title()}"></span>
+            </div>
+            <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author">
+              <span th:text="${book.author()}"></span>
+              <span th:if="${book.firstPublishYear() != null}" th:text="${' (' + book.firstPublishYear() + ')'}"></span>
+            </div>
+            <span class="book-actions">
+              <form th:action="@{/direct-review}" method="POST" style="display: inline;">
+                <input type="hidden" name="bookId" th:value="${book.id()}" />
+                <button type="submit" class="book-action-link">[review]</button>
+              </form>
+              <form th:action="@{/direct-rerank}" method="POST" style="display: inline;">
+                <input type="hidden" name="bookId" th:value="${book.id()}" />
+                <button type="submit" class="book-action-link">[re-rank]</button>
+              </form>
+              <form th:action="@{/direct-remove}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to remove this book?');">
+                <input type="hidden" name="bookId" th:value="${book.id()}" />
+                <button type="submit" class="book-action-link">[remove]</button>
+              </form>
+            </span>
+          </div>
+          <img th:if="${book.coverUrl() != null}" class="book-cover" th:src="${book.coverUrl()}" />
+          <div th:if="${book.coverUrl() == null}" class="book-cover-placeholder">?</div>
+        </div>
+      </span>
+      <details th:if="${book.review() != null}" class="book-review">
+        <summary>
+          <div class="book-entry">
+            <div class="book-info">
+              <div class="book-title">
+                <a th:if="${book.bookUrl() != null}" th:href="${book.bookUrl()}" th:text="${book.title()}" target="_blank"></a>
+                <span th:if="${book.bookUrl() == null}" th:text="${book.title()}"></span>
+              </div>
+              <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author">
+                <span th:text="${book.author()}"></span>
+                <span th:if="${book.firstPublishYear() != null}" th:text="${' (' + book.firstPublishYear() + ')'}"></span>
+              </div>
+              <span class="book-actions">
+                <span class="review-toggle"></span>
+                <form th:action="@{/direct-review}" method="POST" style="display: inline;">
+                  <input type="hidden" name="bookId" th:value="${book.id()}" />
+                  <button type="submit" class="book-action-link">[review]</button>
+                </form>
+                <form th:action="@{/direct-rerank}" method="POST" style="display: inline;">
+                  <input type="hidden" name="bookId" th:value="${book.id()}" />
+                  <button type="submit" class="book-action-link">[re-rank]</button>
+                </form>
+                <form th:action="@{/direct-remove}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to remove this book?');">
+                  <input type="hidden" name="bookId" th:value="${book.id()}" />
+                  <button type="submit" class="book-action-link">[remove]</button>
+                </form>
+              </span>
+            </div>
+            <img th:if="${book.coverUrl() != null}" class="book-cover" th:src="${book.coverUrl()}" />
+            <div th:if="${book.coverUrl() == null}" class="book-cover-placeholder">?</div>
+          </div>
+        </summary>
+        <div class="review-text" th:text="${book.review()}"></div>
+      </details>
+    </th:block>
+
     <div th:fragment="bookLists(fictionBooks, nonfictionBooks)" style="display: flex; gap: 40px">
       <div th:if="${!fictionBooks.liked().isEmpty() || !fictionBooks.ok().isEmpty() || !fictionBooks.disliked().isEmpty() || !fictionBooks.unranked().isEmpty()}" style="flex: 1">
         <h3>Fiction</h3>

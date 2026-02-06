@@ -1,0 +1,25 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+  <th:block th:fragment="content">
+    <h3>Review <span th:text="${reviewBook.book.title}"></span></h3>
+    <form th:action="@{/save-review}" method="POST">
+      <div style="margin-bottom: 15px;">
+        <label><input type="radio" checked disabled /> <span th:text="${reviewBook.bookshelf.name() == 'FICTION' ? 'Fiction' : 'Non-Fiction'}"></span></label>
+      </div>
+      <div style="margin-bottom: 15px;">
+        <label><input type="radio" checked disabled /> <span th:switch="${reviewBook.category.name()}">
+          <span th:case="'LIKED'">liked it</span>
+          <span th:case="'OK'">it was ok</span>
+          <span th:case="'DISLIKED'">didn't like it</span>
+        </span></label>
+      </div>
+      <div style="margin-bottom: 15px;">
+        <label for="review">Review (optional):</label><br />
+        <textarea id="review" name="review" rows="4" cols="50" maxlength="5000" placeholder="Write your thoughts about this book..." th:text="${reviewBook.review}"></textarea>
+      </div>
+      <button type="submit">Done</button>
+    </form>
+  </th:block>
+</body>
+</html>
