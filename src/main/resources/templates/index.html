@@ -496,7 +496,6 @@
       </div>
       <div th:case="'SELECT_EDITION'">
         <h3>Which edition did you read?</h3>
-        <p style="margin-bottom: 15px;"><span th:text="${rankingState.titleBeingRanked}"></span> by <span th:text="${rankingState.authorBeingRanked}"></span></p>
         <div th:each="edition : ${editionResults}" class="book-entry-row" style="margin-bottom: 10px;">
           <form th:action="@{/select-edition}" method="POST" style="display: inline;">
             <input type="hidden" name="editionOlid" th:value="${edition.editionOlid()}" />
