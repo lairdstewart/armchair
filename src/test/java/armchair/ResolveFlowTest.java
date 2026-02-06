@@ -288,12 +288,7 @@ class ResolveFlowTest extends BaseIntegrationTest {
                         new OpenLibraryService.EditionResult("OL456M", "Dune (Paperback)", "9780441172719", 67890, "Ace", "1990")
                 ));
 
-        // /my-books now redirects to the mode-specific URL
-        mockMvc.perform(get("/my-books").session(session))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/rank/edition"));
-
-        // Visit /rank/edition directly to show SELECT_EDITION mode
+        // Visit /rank/edition to show SELECT_EDITION mode
         mockMvc.perform(get("/rank/edition").session(session))
                 .andExpect(status().isOk())
                 .andExpect(model().attributeExists("editionResults"));

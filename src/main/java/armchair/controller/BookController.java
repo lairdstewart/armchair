@@ -320,21 +320,6 @@ public class BookController {
 
         RankingState rankingState = rankingStateRepository.findById(userId).orElse(null);
 
-        // Redirect to mode-specific URLs if explicit mode is set (backward compatibility)
-        if (rankingState != null && rankingState.getMode() != null) {
-            switch (rankingState.getMode()) {
-                case RESOLVE -> { return "redirect:/resolve"; }
-                case SELECT_EDITION -> { return "redirect:/rank/edition"; }
-                case CATEGORIZE -> { return "redirect:/rank/categorize"; }
-                case RANK -> { return "redirect:/rank/compare"; }
-                case REVIEW -> {
-                    if (rankingState.getBookIdBeingReviewed() != null) {
-                        return "redirect:/review/" + rankingState.getBookIdBeingReviewed();
-                    }
-                }
-            }
-        }
-
         Mode mode = determineMode(rankingState);
 
         // Intercept for duplicate resolve — user picked a book during RESOLVE that's already in their library
