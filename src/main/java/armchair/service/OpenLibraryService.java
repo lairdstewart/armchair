@@ -187,6 +187,15 @@ public class OpenLibraryService {
      * See open-library-api-notes.txt for details.
      */
     public List<EditionResult> getEditionsForWork(String workOlid, int limit, int offset) {
+        return getEditionsForWork(workOlid, limit, offset, null);
+    }
+
+    /**
+     * Fetches editions for a work, with an optional preferred edition to show first.
+     * The preferredEditionOlid (typically the cover edition from search) gets a large
+     * score boost to ensure it appears at the top of results.
+     */
+    public List<EditionResult> getEditionsForWork(String workOlid, int limit, int offset, String preferredEditionOlid) {
         if (workOlid == null || workOlid.isBlank()) {
             return List.of();
         }
@@ -255,6 +264,9 @@ public class OpenLibraryService {
 
                 // Calculate relevance score (higher = better)
                 int score = 0;
+                if (preferredEditionOlid != null && editionOlid.equals(preferredEditionOlid)) {
+                    score += 1000;  // Strongly prefer the cover edition from search
+                }
                 if (isEnglish) score += 100;
                 if (isAscii(title)) score += 50;  // ASCII title suggests English
                 if (coverId != null) score += 25;

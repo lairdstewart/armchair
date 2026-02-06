@@ -380,9 +380,14 @@ public class BookController {
             Integer editionLimit = (Integer) session.getAttribute("editionLimit");
             if (editionLimit == null) editionLimit = 3;
 
+            // Get the cover edition from the Book (set during /select-book) to show it first
+            String preferredEditionOlid = bookRepository.findByWorkOlid(rankingState.getWorkOlidBeingRanked())
+                .map(Book::getEditionOlid)
+                .orElse(null);
+
             // Always fetch from offset=0 to accumulate editions
             List<OpenLibraryService.EditionResult> editions = openLibraryService.getEditionsForWork(
-                rankingState.getWorkOlidBeingRanked(), editionLimit + 1, 0);
+                rankingState.getWorkOlidBeingRanked(), editionLimit + 1, 0, preferredEditionOlid);
 
             boolean hasMore = editions.size() > editionLimit;
             if (hasMore) {

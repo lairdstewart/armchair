@@ -252,7 +252,7 @@ class ResolveFlowTest extends BaseIntegrationTest {
         assertThat(state.isEditionSelected()).isFalse();
 
         // Mock edition selection API - return multiple editions so it doesn't auto-select
-        when(openLibraryService.getEditionsForWork(eq("OL123W"), anyInt(), eq(0)))
+        when(openLibraryService.getEditionsForWork(eq("OL123W"), anyInt(), eq(0), any()))
                 .thenReturn(List.of(
                         new OpenLibraryService.EditionResult("OL123M", "Dune (1st Edition)", "9780801950773", 12345, "Chilton", "1965"),
                         new OpenLibraryService.EditionResult("OL456M", "Dune (Paperback)", "9780441172719", 67890, "Ace", "1990")

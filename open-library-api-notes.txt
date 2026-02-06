@@ -37,13 +37,17 @@ In `OpenLibraryService.getEditionsForWork()`:
 
 1. Fetch more editions than requested (up to 50) to have a pool to sort from
 2. Score each edition based on:
+   - +1000 points: Matches the cover edition from search (preferredEditionOlid parameter)
    - +100 points: English language (languages field contains /languages/eng)
    - +50 points: ASCII-only title (suggests English vs translated title)
    - +25 points: Has cover image
 3. Sort by score descending
 4. Return the requested number of editions after sorting
 
-This ensures English editions with covers appear first, matching user expectations.
+The cover edition from the Search API is passed to `getEditionsForWork()` and gets a large
+score boost. This ensures the edition the user saw in search results appears first, which
+is intuitive and matches what they expect. This doesn't require any additional API calls
+since the cover edition OLID is already stored on the Book entity during `/select-book`.
 
 ### API Endpoints Used
 
