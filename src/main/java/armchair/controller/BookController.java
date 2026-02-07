@@ -1291,10 +1291,7 @@ public class BookController {
             return "redirect:/setup-username";
         }
 
-        List<OpenLibraryService.BookResult> results = bookService.searchLocalBooks(query);
-        if (results.isEmpty()) {
-            results = openLibraryService.searchBooks(query);
-        }
+        List<OpenLibraryService.BookResult> results = openLibraryService.searchBooks(query);
         session.setAttribute("bookSearchResults", results);
         session.setAttribute("bookSearchQuery", query);
 
@@ -1809,7 +1806,6 @@ public class BookController {
     @GetMapping("/search")
     public String showUnifiedSearch(@RequestParam(required = false, defaultValue = "books") String type,
                                      @RequestParam(required = false) String query,
-                                     @RequestParam(required = false) Boolean more,
                                      @RequestParam(required = false, defaultValue = "0") int page,
                                      Model model, HttpSession session) {
         addNavigationAttributes(model, "search");
@@ -1824,39 +1820,16 @@ public class BookController {
         // --- Books tab ---
         Map<String, UserBookRank> userBooks = currentUserId != null ? buildUserBooksMap(currentUserId) : Map.of();
         List<OpenLibraryService.BookResult> bookResults;
-        boolean localResults = false;
-        boolean moreResults = false;
         if ("books".equals(type) && query != null && !query.isBlank()) {
-            bookResults = bookService.searchLocalBooks(query);
-            if (bookResults.isEmpty()) {
-                bookResults = deduplicateResults(openLibraryService.searchBooks(query));
-            } else {
-                localResults = true;
-                if (Boolean.TRUE.equals(more)) {
-                    moreResults = true;
-                    // Deduplicate API results against local results and against themselves
-                    Set<String> seen = bookResults.stream()
-                        .map(BookController::bookResultKey)
-                        .collect(Collectors.toCollection(java.util.LinkedHashSet::new));
-                    List<OpenLibraryService.BookResult> apiResults = openLibraryService.searchBooks(query);
-                    List<OpenLibraryService.BookResult> extraResults = apiResults.stream()
-                        .filter(b -> seen.add(bookResultKey(b)))
-                        .limit(3)
-                        .toList();
-                    bookResults = new ArrayList<>(bookResults);
-                    bookResults.addAll(extraResults);
-                }
-            }
+            bookResults = deduplicateResults(openLibraryService.searchBooks(query));
         } else {
             Map<String, UserBookRank> finalUserBooks = userBooks;
-            bookResults = bookRepository.findRandom10Books().stream()
+            bookResults = bookRepository.findRandomBooks().stream()
                 .filter(b -> !finalUserBooks.containsKey(b.getWorkOlid()))
                 .map(b -> new OpenLibraryService.BookResult(b.getWorkOlid(), b.getEditionOlid(), b.getTitle(), b.getAuthor(), b.getFirstPublishYear(), b.getCoverId(), null))
                 .toList();
         }
         model.addAttribute("bookResults", bookResults);
-        model.addAttribute("localResults", localResults);
-        model.addAttribute("moreResults", moreResults);
         if (currentUserId != null) {
             model.addAttribute("userBooks", userBooks);
         }

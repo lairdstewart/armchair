@@ -57,7 +57,6 @@
             </div>
           </li>
         </ol>
-        <p th:if="${localResults && !moreResults}"><a th:href="@{/search(type='books', query=${query}, more=true)}" style="color: #888; text-decoration: none;">[more results]</a></p>
         <p th:if="${query == null || query.isBlank()}">... 40 million more books</p>
         <p th:if="${query != null && !query.isBlank() && (bookResults == null || bookResults.isEmpty())}">No results found.</p>
       </div>
