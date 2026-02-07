@@ -41,6 +41,7 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -458,11 +459,12 @@ public class BookController {
         }
         model.addAttribute("userName", userName);
 
-        BookLists fictionBooks = getBookLists(Bookshelf.FICTION, userId);
-        BookLists nonfictionBooks = getBookLists(Bookshelf.NONFICTION, userId);
-        List<BookInfo> wantToReadBooks = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(userId, Bookshelf.WANT_TO_READ, BookCategory.UNRANKED)
+        Map<Bookshelf, Map<BookCategory, List<Ranking>>> allRankings = fetchAllRankingsGrouped(userId);
+        BookLists fictionBooks = getBookLists(Bookshelf.FICTION, allRankings);
+        BookLists nonfictionBooks = getBookLists(Bookshelf.NONFICTION, allRankings);
+        List<BookInfo> wantToReadBooks = getRankings(allRankings, Bookshelf.WANT_TO_READ, BookCategory.UNRANKED)
             .stream().map(BookController::toBookInfo).toList();
-        List<BookInfo> unrankedBooks = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(userId, Bookshelf.UNRANKED, BookCategory.UNRANKED)
+        List<BookInfo> unrankedBooks = getRankings(allRankings, Bookshelf.UNRANKED, BookCategory.UNRANKED)
             .stream().map(BookController::toBookInfo).toList();
         boolean hasFiction = !fictionBooks.liked().isEmpty() || !fictionBooks.ok().isEmpty() || !fictionBooks.disliked().isEmpty();
         boolean hasNonfiction = !nonfictionBooks.liked().isEmpty() || !nonfictionBooks.ok().isEmpty() || !nonfictionBooks.disliked().isEmpty();
@@ -820,15 +822,11 @@ public class BookController {
         return new BookInfo(r.getId(), r.getBook().getWorkOlid(), r.getBook().getEditionOlid(), r.getBook().getTitle(), r.getBook().getAuthor(), r.getReview(), r.getBook().getFirstPublishYear(), r.getBook().getCoverId());
     }
 
-    private BookLists getBookLists(Bookshelf bookshelf, Long userId) {
-        List<BookInfo> liked = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(userId, bookshelf, BookCategory.LIKED)
-            .stream().map(BookController::toBookInfo).toList();
-        List<BookInfo> ok = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(userId, bookshelf, BookCategory.OK)
-            .stream().map(BookController::toBookInfo).toList();
-        List<BookInfo> disliked = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(userId, bookshelf, BookCategory.DISLIKED)
-            .stream().map(BookController::toBookInfo).toList();
-        List<BookInfo> unranked = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(userId, bookshelf, BookCategory.UNRANKED)
-            .stream().map(BookController::toBookInfo).toList();
+    private BookLists getBookLists(Bookshelf bookshelf, Map<Bookshelf, Map<BookCategory, List<Ranking>>> grouped) {
+        List<BookInfo> liked = getRankings(grouped, bookshelf, BookCategory.LIKED).stream().map(BookController::toBookInfo).toList();
+        List<BookInfo> ok = getRankings(grouped, bookshelf, BookCategory.OK).stream().map(BookController::toBookInfo).toList();
+        List<BookInfo> disliked = getRankings(grouped, bookshelf, BookCategory.DISLIKED).stream().map(BookController::toBookInfo).toList();
+        List<BookInfo> unranked = getRankings(grouped, bookshelf, BookCategory.UNRANKED).stream().map(BookController::toBookInfo).toList();
         return new BookLists(liked, ok, disliked, unranked);
     }
 
@@ -839,12 +837,10 @@ public class BookController {
         int rank = 1;
 
         // Iterate through all bookshelves and categories
+        Map<Bookshelf, Map<BookCategory, List<Ranking>>> grouped = fetchAllRankingsGrouped(userId);
         for (Bookshelf bookshelf : Bookshelf.values()) {
             for (BookCategory category : BookCategory.values()) {
-                List<Ranking> rankings = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(
-                    userId, bookshelf, category
-                );
-                for (Ranking ranking : rankings) {
+                for (Ranking ranking : getRankings(grouped, bookshelf, category)) {
                     csv.append(rank++).append(",");
                     csv.append("\"").append(escapeCsv(ranking.getBook().getTitle())).append("\",");
                     csv.append("\"").append(escapeCsv(ranking.getBook().getAuthor())).append("\",");
@@ -1818,7 +1814,8 @@ public class BookController {
         boolean isRealUser = currentUser != null && !currentUser.isGuest();
 
         // --- Books tab ---
-        Map<String, UserBookRank> userBooks = currentUserId != null ? buildUserBooksMap(currentUserId) : Map.of();
+        Map<Bookshelf, Map<BookCategory, List<Ranking>>> allRankings = currentUserId != null ? fetchAllRankingsGrouped(currentUserId) : Map.of();
+        Map<String, UserBookRank> userBooks = currentUserId != null ? buildUserBooksMap(allRankings) : Map.of();
         List<OpenLibraryService.BookResult> bookResults;
         if ("books".equals(type) && query != null && !query.isBlank()) {
             bookResults = deduplicateResults(openLibraryService.searchBooks(query));
@@ -1969,14 +1966,38 @@ public class BookController {
         }
     }
 
-    private Map<String, UserBookRank> buildUserBooksMap(Long userId) {
+    /**
+     * Fetches all rankings for a user in a single DB query and groups them by bookshelf+category,
+     * sorted by position within each group. Used by buildUserBooksMap, getBookLists, and countBooksByBookshelf.
+     */
+    private Map<Bookshelf, Map<BookCategory, List<Ranking>>> fetchAllRankingsGrouped(Long userId) {
+        List<Ranking> allRankings = rankingRepository.findByUserId(userId);
+        Map<Bookshelf, Map<BookCategory, List<Ranking>>> grouped = new HashMap<>();
+        for (Ranking r : allRankings) {
+            grouped.computeIfAbsent(r.getBookshelf(), k -> new HashMap<>())
+                   .computeIfAbsent(r.getCategory(), k -> new ArrayList<>())
+                   .add(r);
+        }
+        // Sort each group by position
+        for (Map<BookCategory, List<Ranking>> byCategory : grouped.values()) {
+            for (List<Ranking> rankings : byCategory.values()) {
+                rankings.sort(Comparator.comparingInt(r -> r.getPosition() != null ? r.getPosition() : 0));
+            }
+        }
+        return grouped;
+    }
+
+    private List<Ranking> getRankings(Map<Bookshelf, Map<BookCategory, List<Ranking>>> grouped, Bookshelf bookshelf, BookCategory category) {
+        return grouped.getOrDefault(bookshelf, Map.of()).getOrDefault(category, List.of());
+    }
+
+    private Map<String, UserBookRank> buildUserBooksMap(Map<Bookshelf, Map<BookCategory, List<Ranking>>> grouped) {
         Map<String, UserBookRank> userBooks = new HashMap<>();
 
         for (Bookshelf bookshelf : List.of(Bookshelf.FICTION, Bookshelf.NONFICTION)) {
             int rank = 1;
             for (BookCategory category : List.of(BookCategory.LIKED, BookCategory.OK, BookCategory.DISLIKED)) {
-                List<Ranking> rankings = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(userId, bookshelf, category);
-                for (Ranking ranking : rankings) {
+                for (Ranking ranking : getRankings(grouped, bookshelf, category)) {
                     UserBookRank ubr = new UserBookRank(ranking.getId(), rank, category.name().toLowerCase(), bookshelf.name().toLowerCase());
                     putBookKeys(userBooks, ranking.getBook(), ubr);
                     rank++;
@@ -1984,16 +2005,12 @@ public class BookController {
             }
         }
 
-        // Add want-to-read books
-        List<Ranking> wantToReadRankings = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(userId, Bookshelf.WANT_TO_READ, BookCategory.UNRANKED);
-        for (Ranking ranking : wantToReadRankings) {
+        for (Ranking ranking : getRankings(grouped, Bookshelf.WANT_TO_READ, BookCategory.UNRANKED)) {
             UserBookRank ubr = new UserBookRank(ranking.getId(), 0, "want_to_read", "want_to_read");
             putBookKeys(userBooks, ranking.getBook(), ubr);
         }
 
-        // Add unranked books
-        List<Ranking> unrankedRankings = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(userId, Bookshelf.UNRANKED, BookCategory.UNRANKED);
-        for (Ranking ranking : unrankedRankings) {
+        for (Ranking ranking : getRankings(grouped, Bookshelf.UNRANKED, BookCategory.UNRANKED)) {
             UserBookRank ubr = new UserBookRank(ranking.getId(), 0, "unranked", "unranked");
             putBookKeys(userBooks, ranking.getBook(), ubr);
         }
@@ -2001,27 +2018,26 @@ public class BookController {
         return userBooks;
     }
 
-    private long countBooksByBookshelf(Long userId, Bookshelf bookshelf) {
-        long count = 0;
-        for (BookCategory category : BookCategory.values()) {
-            count += rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(userId, bookshelf, category).size();
-        }
-        return count;
+    private long countBooksByBookshelf(Map<Bookshelf, Map<BookCategory, List<Ranking>>> grouped, Bookshelf bookshelf) {
+        Map<BookCategory, List<Ranking>> byCategory = grouped.getOrDefault(bookshelf, Map.of());
+        return byCategory.values().stream().mapToLong(List::size).sum();
     }
 
-    private String formatBookStats(Long userId) {
+    private String formatBookStats(Map<Bookshelf, Map<BookCategory, List<Ranking>>> grouped) {
         return String.format(" | %d fiction | %d non-fiction",
-            countBooksByBookshelf(userId, Bookshelf.FICTION),
-            countBooksByBookshelf(userId, Bookshelf.NONFICTION));
+            countBooksByBookshelf(grouped, Bookshelf.FICTION),
+            countBooksByBookshelf(grouped, Bookshelf.NONFICTION));
     }
 
     private ProfileDisplay createProfileDisplay(User user) {
-        return new ProfileDisplay(user.getUsername(), formatBookStats(user.getId()));
+        Map<Bookshelf, Map<BookCategory, List<Ranking>>> grouped = fetchAllRankingsGrouped(user.getId());
+        return new ProfileDisplay(user.getUsername(), formatBookStats(grouped));
     }
 
     private ProfileDisplayWithFollow createProfileDisplayWithFollow(User user, Long currentUserId) {
         boolean isFollowing = currentUserId != null && followRepository.existsByFollowerIdAndFollowedId(currentUserId, user.getId());
-        return new ProfileDisplayWithFollow(user.getUsername(), formatBookStats(user.getId()), user.getId(), isFollowing);
+        Map<Bookshelf, Map<BookCategory, List<Ranking>>> grouped = fetchAllRankingsGrouped(user.getId());
+        return new ProfileDisplayWithFollow(user.getUsername(), formatBookStats(grouped), user.getId(), isFollowing);
     }
 
     @GetMapping("/curated-lists")
@@ -2057,13 +2073,15 @@ public class BookController {
         // Keep the appropriate nav button selected based on user type
         addNavigationAttributes(model, user.isCurated() ? "curated" : "explore");
 
-        BookLists fictionBooks = getBookLists(Bookshelf.FICTION, user.getId());
-        BookLists nonfictionBooks = getBookLists(Bookshelf.NONFICTION, user.getId());
+        Map<Bookshelf, Map<BookCategory, List<Ranking>>> viewedUserRankings = fetchAllRankingsGrouped(user.getId());
+        BookLists fictionBooks = getBookLists(Bookshelf.FICTION, viewedUserRankings);
+        BookLists nonfictionBooks = getBookLists(Bookshelf.NONFICTION, viewedUserRankings);
         boolean hasFiction = !fictionBooks.liked().isEmpty() || !fictionBooks.ok().isEmpty() || !fictionBooks.disliked().isEmpty() || !fictionBooks.unranked().isEmpty();
         boolean hasNonfiction = !nonfictionBooks.liked().isEmpty() || !nonfictionBooks.ok().isEmpty() || !nonfictionBooks.disliked().isEmpty() || !nonfictionBooks.unranked().isEmpty();
 
         Long currentUserId = getCurrentUserId(session);
-        Map<String, UserBookRank> userBooks = currentUserId != null ? buildUserBooksMap(currentUserId) : Map.of();
+        Map<Bookshelf, Map<BookCategory, List<Ranking>>> currentUserRankings = currentUserId != null ? fetchAllRankingsGrouped(currentUserId) : Map.of();
+        Map<String, UserBookRank> userBooks = currentUserId != null ? buildUserBooksMap(currentUserRankings) : Map.of();
 
         model.addAttribute("viewUsername", user.getUsername());
         model.addAttribute("fictionBooks", fictionBooks);
@@ -2101,8 +2119,9 @@ public class BookController {
 
         addNavigationAttributes(model, "profile");
 
-        long fictionCount = countBooksByBookshelf(userId, Bookshelf.FICTION);
-        long nonfictionCount = countBooksByBookshelf(userId, Bookshelf.NONFICTION);
+        Map<Bookshelf, Map<BookCategory, List<Ranking>>> profileRankings = fetchAllRankingsGrouped(userId);
+        long fictionCount = countBooksByBookshelf(profileRankings, Bookshelf.FICTION);
+        long nonfictionCount = countBooksByBookshelf(profileRankings, Bookshelf.NONFICTION);
 
         model.addAttribute("username", user.getUsername());
         model.addAttribute("signupDate", user.getSignupDate());
