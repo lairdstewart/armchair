@@ -37,7 +37,6 @@ public class OpenLibraryService {
     public record EditionResult(String editionOlid, String title, String isbn13, Integer coverId, String publisher, String publishDate) {
         public String coverUrl() {
             if (coverId != null) return "https://covers.openlibrary.org/b/id/" + coverId + "-M.jpg";
-            if (editionOlid != null) return "https://covers.openlibrary.org/b/olid/" + editionOlid + "-M.jpg";
             return null;
         }
     }
