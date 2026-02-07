@@ -271,7 +271,7 @@ public class BookController {
         }
 
         // Create new guest user
-        User newGuest = new User("guest");
+        User newGuest = new User("guest-" + java.util.UUID.randomUUID());
         newGuest.setGuest(true);
         userRepository.save(newGuest);
         session.setAttribute(SESSION_GUEST_USER_ID, newGuest.getId());
