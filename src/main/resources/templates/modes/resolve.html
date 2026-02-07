@@ -21,7 +21,11 @@
           <div class="book-title">
             <a th:href="${result.bookUrl()}" target="_blank" th:text="${result.title()}"></a>
           </div>
-          <div th:if="${result.author() != null && !result.author().isBlank()}" class="book-author" th:text="${result.author()}"></div>
+          <div th:if="${result.author() != null && !result.author().isBlank()}" class="book-author">
+            <span th:text="${result.author()}"></span>
+            <span th:if="${result.firstPublishYear() != null}" th:text="'(' + ${result.firstPublishYear()} + ')'"></span>
+          </div>
+          <div th:if="${result.editionCount() != null && result.editionCount() > 0}" class="book-author" th:text="${result.editionCount() + ' edition' + (result.editionCount() != 1 ? 's' : '')}"></div>
         </div>
         <img th:if="${result.coverUrl() != null}" class="book-cover" th:src="${result.coverUrl()}" /><div th:if="${result.coverUrl() == null}" class="book-cover-placeholder">?</div>
       </div>
