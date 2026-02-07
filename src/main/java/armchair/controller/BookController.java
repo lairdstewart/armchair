@@ -2440,13 +2440,11 @@ public class BookController {
             int titleIndex = -1;
             int authorIndex = -1;
             int reviewIndex = -1;
-            int exclusiveShelfIndex = -1;
             for (int i = 0; i < headers.size(); i++) {
                 String h = headers.get(i).trim();
                 if ("Title".equalsIgnoreCase(h)) titleIndex = i;
                 else if ("Author".equalsIgnoreCase(h)) authorIndex = i;
                 else if ("My Review".equalsIgnoreCase(h)) reviewIndex = i;
-                else if ("Exclusive Shelf".equalsIgnoreCase(h)) exclusiveShelfIndex = i;
             }
             if (titleIndex == -1 || authorIndex == -1) {
                 return "redirect:/import-goodreads?imported=0&skipped=0&failed=0";
@@ -2457,11 +2455,9 @@ public class BookController {
                 .map(r -> r.getBook().getTitle().toLowerCase().trim() + "\0" + r.getBook().getAuthor().toLowerCase().trim())
                 .collect(Collectors.toSet());
 
-            // Get current max positions for unranked and want-to-read rankings
+            // Get current max position for uncategorized (unranked) rankings
             List<Ranking> existingUnranked = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(userId, Bookshelf.UNRANKED, BookCategory.UNRANKED);
             int nextUnrankedPosition = existingUnranked.size();
-            List<Ranking> existingWantToRead = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(userId, Bookshelf.WANT_TO_READ, BookCategory.UNRANKED);
-            int nextWantToReadPosition = existingWantToRead.size();
 
             String line;
             int rowCount = 0;
@@ -2483,8 +2479,6 @@ public class BookController {
                     title = title.replaceAll("\\s*\\([^)]*#\\d+\\)\\s*$", "").trim();
                     String author = fields.get(authorIndex).trim();
                     String review = reviewIndex >= 0 && reviewIndex < fields.size() ? fields.get(reviewIndex).trim() : "";
-                    String exclusiveShelf = exclusiveShelfIndex >= 0 && exclusiveShelfIndex < fields.size() ? fields.get(exclusiveShelfIndex).trim() : "";
-                    boolean isToRead = "to-read".equals(exclusiveShelf) || "currently-reading".equals(exclusiveShelf);
                     if (title.isEmpty() || author.isEmpty()) continue;
 
                     // Skip if user already has this book (by title+author, catches resolved books with changed titles)
@@ -2509,14 +2503,8 @@ public class BookController {
                     } else {
                         String trimmedReview = trimReview(review);
 
-                        Ranking newRanking;
-                        if (isToRead) {
-                            newRanking = new Ranking(userId, book, Bookshelf.WANT_TO_READ, BookCategory.UNRANKED, nextWantToReadPosition);
-                            nextWantToReadPosition++;
-                        } else {
-                            newRanking = new Ranking(userId, book, Bookshelf.UNRANKED, BookCategory.UNRANKED, nextUnrankedPosition);
-                            nextUnrankedPosition++;
-                        }
+                        Ranking newRanking = new Ranking(userId, book, Bookshelf.UNRANKED, BookCategory.UNRANKED, nextUnrankedPosition);
+                        nextUnrankedPosition++;
                         newRanking.setReview(trimmedReview);
                         rankingRepository.save(newRanking);
                         imported++;
