@@ -662,6 +662,7 @@ public class BookController {
         return "index";
     }
 
+    @Transactional
     @GetMapping("/rank/edition")
     public String showEditionSelection(@RequestParam(required = false, defaultValue = "0") int page,
                                        Model model, HttpSession session) {
@@ -1611,6 +1612,7 @@ public class BookController {
         return "redirect:/rank/edition";
     }
 
+    @Transactional
     @PostMapping("/select-edition")
     public String selectEdition(@RequestParam String editionOlid,
                                 @RequestParam(required = false) String isbn13,
@@ -1645,6 +1647,8 @@ public class BookController {
 
         // If want-to-read (from flag or action param), add to Want to Read and skip categorize
         if (rankingState.isWantToRead() || "want-to-read".equals(action)) {
+            session.removeAttribute("cachedEditions");
+            session.removeAttribute("editionPage");
             return addToWantToReadAndContinue(userId, rankingState, book);
         }
 
