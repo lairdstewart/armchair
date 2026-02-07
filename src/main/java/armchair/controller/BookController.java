@@ -387,13 +387,25 @@ public class BookController {
 
             if (allEditions == null) {
                 // Get the cover edition from the Book (set during /select-book) to show it first
-                String preferredEditionOlid = bookRepository.findByWorkOlid(rankingState.getWorkOlidBeingRanked())
-                    .map(Book::getEditionOlid)
-                    .orElse(null);
+                Book editionBook = bookRepository.findByWorkOlid(rankingState.getWorkOlidBeingRanked()).orElse(null);
+                String preferredEditionOlid = editionBook != null ? editionBook.getEditionOlid() : null;
 
                 // Fetch up to 50 editions
                 allEditions = openLibraryService.getEditionsForWork(
                     rankingState.getWorkOlidBeingRanked(), 50, 0, preferredEditionOlid);
+                // Move edition with matching cover to the front (same behavior as browse editions)
+                Integer editionCoverId = editionBook != null ? editionBook.getCoverId() : null;
+                if (editionCoverId != null && !allEditions.isEmpty() && !editionCoverId.equals(allEditions.get(0).coverId())) {
+                    for (int i = 1; i < allEditions.size(); i++) {
+                        if (editionCoverId.equals(allEditions.get(i).coverId())) {
+                            List<OpenLibraryService.EditionResult> reordered = new ArrayList<>(allEditions);
+                            OpenLibraryService.EditionResult match = reordered.remove(i);
+                            reordered.add(0, match);
+                            allEditions = reordered;
+                            break;
+                        }
+                    }
+                }
                 session.setAttribute("cachedEditions", allEditions);
             }
 
@@ -643,11 +655,23 @@ public class BookController {
             (List<OpenLibraryService.EditionResult>) session.getAttribute("cachedEditions");
 
         if (allEditions == null) {
-            String preferredEditionOlid = bookRepository.findByWorkOlid(rs.getWorkOlidBeingRanked())
-                .map(Book::getEditionOlid)
-                .orElse(null);
+            Book book = bookRepository.findByWorkOlid(rs.getWorkOlidBeingRanked()).orElse(null);
+            String preferredEditionOlid = book != null ? book.getEditionOlid() : null;
             allEditions = openLibraryService.getEditionsForWork(
                 rs.getWorkOlidBeingRanked(), 50, 0, preferredEditionOlid);
+            // Move edition with matching cover to the front (same behavior as browse editions)
+            Integer coverId = book != null ? book.getCoverId() : null;
+            if (coverId != null && !allEditions.isEmpty() && !coverId.equals(allEditions.get(0).coverId())) {
+                for (int i = 1; i < allEditions.size(); i++) {
+                    if (coverId.equals(allEditions.get(i).coverId())) {
+                        List<OpenLibraryService.EditionResult> reordered = new ArrayList<>(allEditions);
+                        OpenLibraryService.EditionResult match = reordered.remove(i);
+                        reordered.add(0, match);
+                        allEditions = reordered;
+                        break;
+                    }
+                }
+            }
             session.setAttribute("cachedEditions", allEditions);
         }
 
