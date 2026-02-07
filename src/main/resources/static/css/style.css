@@ -349,10 +349,8 @@ details[open] .review-toggle::after {
   background-color: #1976D2;
   color: white;
   border: none;
-  padding: 5px 14px;
   font: inherit;
   cursor: pointer;
-  border-radius: 4px;
 }
 
 .btn-primary:hover {
