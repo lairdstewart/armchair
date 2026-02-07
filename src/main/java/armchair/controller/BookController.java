@@ -702,14 +702,9 @@ public class BookController {
             session.setAttribute("cachedEditions", allEditions);
         }
 
-        // Auto-select if only 1 edition
-        if (allEditions.size() == 1) {
+        // Auto-select if only 1 edition (skip during rankAll so user can choose rank vs want-to-read)
+        if (allEditions.size() == 1 && !rs.isRankAll()) {
             OpenLibraryService.EditionResult soleEdition = allEditions.get(0);
-            rs.setEditionOlidBeingRanked(soleEdition.editionOlid());
-            rs.setIsbn13BeingRanked(soleEdition.isbn13());
-            rs.setEditionSelected(true);
-            rs.setMode(RankingMode.CATEGORIZE);
-            rankingStateRepository.save(rs);
 
             Book book = bookService.findOrCreateBook(rs.getWorkOlidBeingRanked(),
                 soleEdition.editionOlid(), rs.getTitleBeingRanked(),
@@ -720,12 +715,31 @@ public class BookController {
             }
             bookRepository.save(book);
 
+            // If want-to-read, add directly to Want to Read
+            if (rs.isWantToRead()) {
+                session.removeAttribute("cachedEditions");
+                return addToWantToReadAndContinue(userId, rs, book);
+            }
+
+            rs.setEditionOlidBeingRanked(soleEdition.editionOlid());
+            rs.setIsbn13BeingRanked(soleEdition.isbn13());
+            rs.setEditionSelected(true);
+            rs.setMode(RankingMode.CATEGORIZE);
+            rankingStateRepository.save(rs);
+
             session.removeAttribute("cachedEditions");
             return "redirect:/rank/categorize";
         }
 
         // Skip if no editions found
         if (allEditions.isEmpty()) {
+            // If want-to-read, add directly to Want to Read with existing book
+            if (rs.isWantToRead()) {
+                Book book = bookService.findOrCreateBook(rs.getWorkOlidBeingRanked(),
+                    null, rs.getTitleBeingRanked(), rs.getAuthorBeingRanked(), null, null);
+                session.removeAttribute("cachedEditions");
+                return addToWantToReadAndContinue(userId, rs, book);
+            }
             rs.setEditionSelected(true);
             rs.setMode(RankingMode.CATEGORIZE);
             rankingStateRepository.save(rs);
@@ -1597,6 +1611,7 @@ public class BookController {
                                 @RequestParam(required = false) String isbn13,
                                 @RequestParam(required = false) String title,
                                 @RequestParam(required = false) Integer coverId,
+                                @RequestParam(required = false) String action,
                                 HttpSession session) {
         Long userId = getCurrentUserId(session);
         if (userId == null) {
@@ -1623,6 +1638,11 @@ public class BookController {
         }
         bookRepository.save(book);
 
+        // If want-to-read (from flag or action param), add to Want to Read and skip categorize
+        if (rankingState.isWantToRead() || "want-to-read".equals(action)) {
+            return addToWantToReadAndContinue(userId, rankingState, book);
+        }
+
         // Update RankingState
         rankingState.setEditionOlidBeingRanked(editionOlid);
         rankingState.setIsbn13BeingRanked(isbn13);
@@ -1633,6 +1653,23 @@ public class BookController {
         session.removeAttribute("cachedEditions");
         session.removeAttribute("editionPage");
         return "redirect:/rank/categorize";
+    }
+
+    private String addToWantToReadAndContinue(Long userId, RankingState rankingState, Book book) {
+        // Add to Want to Read list at the end
+        List<Ranking> wantToReadRankings = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(userId, Bookshelf.WANT_TO_READ, BookCategory.UNRANKED);
+        int position = wantToReadRankings.size();
+        Ranking newRanking = new Ranking(userId, book, Bookshelf.WANT_TO_READ, BookCategory.UNRANKED, position);
+        newRanking.setReview(rankingState.getReviewBeingRanked());
+        rankingRepository.save(newRanking);
+
+        boolean wasRankAll = rankingState.isRankAll();
+        rankingStateRepository.delete(rankingState);
+
+        if (wasRankAll) {
+            return startNextUnrankedBook(userId, Bookshelf.WANT_TO_READ);
+        }
+        return "redirect:/my-books?selectedBookshelf=WANT_TO_READ";
     }
 
     @PostMapping("/add-to-reading-list")
