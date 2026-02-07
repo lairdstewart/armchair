@@ -7,7 +7,9 @@ import armchair.entity.Ranking;
 import armchair.entity.RankingMode;
 import armchair.entity.RankingState;
 import armchair.entity.User;
+import armchair.service.OpenLibraryService;
 import org.junit.jupiter.api.Test;
+import org.springframework.mock.web.MockHttpSession;
 
 import java.util.List;
 
@@ -387,6 +389,78 @@ class RankingFlowTest extends BaseIntegrationTest {
 
         // Verify no ranking state left
         assertThat(rankingStateRepository.findById(user.getId())).isEmpty();
+    }
+
+    @Test
+    void markAsReadClearsEditionCache() throws Exception {
+        User user = createOAuthUser("ranker15", "oauth-rank-15");
+
+        // Add two books to want-to-read
+        Book bookA = createVerifiedBook("OL500W", "Book A", "Author A");
+        Book bookB = createVerifiedBook("OL600W", "Book B", "Author B");
+        Ranking rA = addRanking(user.getId(), bookA, Bookshelf.WANT_TO_READ, BookCategory.UNRANKED, 0);
+        Ranking rB = addRanking(user.getId(), bookB, Bookshelf.WANT_TO_READ, BookCategory.UNRANKED, 1);
+
+        MockHttpSession session = new MockHttpSession();
+
+        // Mark book A as read
+        mockMvc.perform(post("/mark-as-read")
+                        .param("bookId", String.valueOf(rA.getId()))
+                        .session(session)
+                        .with(oauthUser("oauth-rank-15")).with(csrf()))
+                .andExpect(status().is3xxRedirection());
+
+        // Simulate what /rank/edition does: cache editions in session
+        session.setAttribute("cachedEditions", List.of(
+                new OpenLibraryService.EditionResult("OL500M", "Book A Edition", null, null, null, null)));
+        session.setAttribute("editionPage", 0);
+
+        // Now mark book B as read - should clear stale cache
+        mockMvc.perform(post("/mark-as-read")
+                        .param("bookId", String.valueOf(rB.getId()))
+                        .session(session)
+                        .with(oauthUser("oauth-rank-15")).with(csrf()))
+                .andExpect(status().is3xxRedirection());
+
+        // Verify cached editions were cleared
+        assertThat(session.getAttribute("cachedEditions")).isNull();
+        assertThat(session.getAttribute("editionPage")).isNull();
+
+        // Verify the ranking state points to book B, not book A
+        RankingState state = rankingStateRepository.findById(user.getId()).orElseThrow();
+        assertThat(state.getTitleBeingRanked()).isEqualTo("Book B");
+        assertThat(state.getWorkOlidBeingRanked()).isEqualTo("OL600W");
+    }
+
+    @Test
+    void selectBookClearsEditionCache() throws Exception {
+        User user = createOAuthUser("ranker16", "oauth-rank-16");
+
+        MockHttpSession session = new MockHttpSession();
+
+        // Select book A
+        mockMvc.perform(post("/select-book")
+                        .param("workOlid", "OL700W")
+                        .param("bookName", "Book A")
+                        .param("author", "Author A")
+                        .session(session)
+                        .with(oauthUser("oauth-rank-16")).with(csrf()))
+                .andExpect(status().is3xxRedirection());
+
+        // Simulate cached editions from /rank/edition
+        session.setAttribute("cachedEditions", List.of(
+                new OpenLibraryService.EditionResult("OL700M", "Book A Edition", null, null, null, null)));
+
+        // Select book B - should clear stale cache
+        mockMvc.perform(post("/select-book")
+                        .param("workOlid", "OL800W")
+                        .param("bookName", "Book B")
+                        .param("author", "Author B")
+                        .session(session)
+                        .with(oauthUser("oauth-rank-16")).with(csrf()))
+                .andExpect(status().is3xxRedirection());
+
+        assertThat(session.getAttribute("cachedEditions")).isNull();
     }
 
     @Test

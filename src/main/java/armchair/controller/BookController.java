@@ -1141,6 +1141,10 @@ public class BookController {
         }
         rankingStateRepository.save(rankingState);
 
+        // Clear stale edition cache from any previous book
+        session.removeAttribute("cachedEditions");
+        session.removeAttribute("editionPage");
+
         // Remove the ranking from want-to-read list and close the gap
         deleteRankingAndCloseGap(userId, ranking);
 
@@ -1510,6 +1514,10 @@ public class BookController {
         // (but /select-book always has workOlid from API results)
         rankingState.setMode(RankingMode.SELECT_EDITION);
         rankingStateRepository.save(rankingState);
+
+        // Clear stale edition cache from any previous book
+        session.removeAttribute("cachedEditions");
+        session.removeAttribute("editionPage");
 
         return "redirect:/rank/edition";
     }
