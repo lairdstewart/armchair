@@ -99,13 +99,13 @@ ol.book-list li form {
 }
 
 .book-number.rerank:hover {
-  background-color: #E8F5E9;
-  border-color: #4CAF50;
+  background-color: #E0E0E0;
+  border-color: #757575;
 }
 
 .book-number.rerank:active {
-  background-color: #C8E6C9;
-  border-color: #388E3C;
+  background-color: #BDBDBD;
+  border-color: #616161;
 }
 
 .navbar {
