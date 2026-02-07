@@ -36,6 +36,7 @@ public class RankingState {
     private Integer highIndex;
 
     private boolean rankAll;
+    @Column(columnDefinition = "boolean default false")
     private boolean wantToRead;
     private Long bookIdBeingReviewed;
 
