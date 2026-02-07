@@ -8,9 +8,7 @@
     <div th:replace="~{fragments :: navbar}"></div>
     <div class="page-content">
       <h3>Editions of <span th:text="${workTitle}" th:remove="tag"></span></h3>
-      <div th:if="${workAuthor != null && !workAuthor.isBlank()}" class="book-author" style="margin-bottom: 15px;">
-        <span th:text="${workAuthor}"></span>
-      </div>
+      <button type="button" onclick="window.location.href='/search?type=books'" style="margin-bottom: 15px;">Back to Search</button>
 
       <div th:if="${editionResults != null && !editionResults.isEmpty()}">
         <div th:each="edition : ${editionResults}" class="book-entry" style="margin-bottom: 10px;">
@@ -54,7 +52,6 @@
              th:text="${'[' + (p * editionPageSize + 1) + '-' + T(java.lang.Math).min((p + 1) * editionPageSize, editionTotalCount) + ']'}" style="margin-right: 8px;"></a>
         </th:block>
       </div>
-      <p><a href="/search?type=books" class="book-action-link">[back to search]</a></p>
     </div>
   </body>
 </html>
