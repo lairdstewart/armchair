@@ -6,7 +6,7 @@
       <button type="submit" class="btn-back">&larr; back</button>
     </form>
     <h3>Add <span th:text="${rankingState.titleBeingRanked}"></span></h3>
-    <p th:if="${isRankAll}" style="margin-bottom: 15px;"><span th:text="${rankAllRemaining}"></span> unranked book<span th:if="${rankAllRemaining != 1}">s</span> remaining</p>
+    <p th:if="${isRankAll}" style="margin-bottom: 15px;"><span th:text="${rankAllRemaining}"></span> uncategorized book<span th:if="${rankAllRemaining != 1}">s</span> remaining</p>
     <form th:action="@{/categorize}" method="POST">
       <div style="margin-bottom: 15px;">
         <label><input type="radio" name="bookshelf" value="fiction" required /> Fiction</label>

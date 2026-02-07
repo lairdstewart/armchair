@@ -29,7 +29,7 @@
           </label>
           <label th:if="${hasUnranked}" style="margin-left: 15px;">
             <input type="radio" name="typeSelector" value="UNRANKED" th:checked="${selectedBookshelf == 'UNRANKED'}" onchange="showTab('UNRANKED')" />
-            Unranked
+            Uncategorized
           </label>
         </div>
 
@@ -439,7 +439,7 @@
           <!-- Unranked tab -->
           <div id="tab-UNRANKED" th:if="${hasUnranked}" th:style="${selectedBookshelf == 'UNRANKED' ? '' : 'display:none'}">
             <form th:action="@{/rank-all}" method="POST" style="margin-bottom: 15px; margin-left: 38px;">
-              <button type="submit">rank all</button>
+              <button type="submit">categorize all</button>
             </form>
             <ul class="plain-list">
               <li th:each="book : ${unrankedBooks}">

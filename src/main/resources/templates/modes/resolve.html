@@ -5,7 +5,7 @@
     <form th:action="@{/cancel-add}" method="POST" style="margin-bottom: 0;">
       <button type="submit" class="btn-back">&larr; back</button>
     </form>
-    <h3>Select the correct book to rank</h3>
+    <h3>Select the correct book to add</h3>
     <div th:each="result : ${resolveResults}" class="book-entry-row" style="margin-bottom: 10px;">
       <form th:action="@{/resolve-book}" method="POST" style="display: inline;">
         <input type="hidden" name="workOlid" th:value="${result.workOlid()}" />
