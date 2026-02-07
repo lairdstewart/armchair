@@ -1316,6 +1316,39 @@ public class BookController {
         return "redirect:/my-books";
     }
 
+    @PostMapping("/back-to-edition")
+    public String backToEdition(HttpSession session) {
+        Long userId = getCurrentUserId(session);
+        if (userId == null) {
+            return "redirect:/setup-username";
+        }
+        RankingState rs = rankingStateRepository.findById(userId).orElse(null);
+        if (rs == null || rs.getTitleBeingRanked() == null) {
+            return "redirect:/my-books";
+        }
+        rs.setMode(RankingMode.SELECT_EDITION);
+        rs.setEditionSelected(false);
+        rankingStateRepository.save(rs);
+        return "redirect:/rank/edition";
+    }
+
+    @PostMapping("/back-to-resolve")
+    public String backToResolve(HttpSession session) {
+        Long userId = getCurrentUserId(session);
+        if (userId == null) {
+            return "redirect:/setup-username";
+        }
+        RankingState rs = rankingStateRepository.findById(userId).orElse(null);
+        if (rs == null || rs.getTitleBeingRanked() == null) {
+            return "redirect:/my-books";
+        }
+        rs.setMode(RankingMode.RESOLVE);
+        rankingStateRepository.save(rs);
+        session.removeAttribute("skipResolve");
+        session.removeAttribute("cachedEditions");
+        return "redirect:/resolve";
+    }
+
     @Transactional
     @PostMapping("/resolve-book")
     public String resolveBook(@RequestParam String workOlid,
