@@ -2,6 +2,9 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <body>
   <th:block th:fragment="content">
+    <form th:action="@{/cancel-add}" method="POST" style="margin-bottom: 0;">
+      <button type="submit" class="btn-back">&larr; cancel</button>
+    </form>
     <h3>Add <span th:text="${rankingState.titleBeingRanked}"></span></h3>
     <p th:if="${isRankAll}" style="margin-bottom: 15px;"><span th:text="${rankAllRemaining}"></span> unranked book<span th:if="${rankAllRemaining != 1}">s</span> remaining</p>
     <form th:action="@{/categorize}" method="POST">
@@ -18,8 +21,7 @@
         <label for="review">Review (optional):</label><br />
         <textarea id="review" name="review" rows="4" cols="50" maxlength="5000" placeholder="Write your thoughts about this book..." th:text="${rankingState.reviewBeingRanked}"></textarea>
       </div>
-      <button type="submit" formaction="/cancel-add" formnovalidate>Cancel</button>
-      <button type="submit">Continue</button>
+      <button type="submit" class="btn-primary">Continue</button>
     </form>
   </th:block>
 </body>

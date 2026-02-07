@@ -326,3 +326,33 @@ details[open] .review-toggle::after {
 .book-action-link:hover {
   text-decoration: underline;
 }
+
+/* Back/cancel button - grey, top of page */
+.btn-back {
+  background: none;
+  border: none;
+  color: #888;
+  font: inherit;
+  cursor: pointer;
+  padding: 0;
+  margin-bottom: 8px;
+}
+
+.btn-back:hover {
+  text-decoration: underline;
+}
+
+/* Primary action button - blue, bottom of page */
+.btn-primary {
+  background-color: #1976D2;
+  color: white;
+  border: none;
+  padding: 8px 20px;
+  font: inherit;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.btn-primary:hover {
+  background-color: #1565C0;
+}

@@ -7,9 +7,9 @@
   <body>
     <div th:replace="~{fragments :: navbar}"></div>
     <div class="page-content">
+      <button type="button" onclick="window.location.href='/search?type=books'" class="btn-back">&larr; back to search</button>
       <h3>Editions of <span th:text="${workTitle}" th:remove="tag"></span></h3>
-      <button type="button" onclick="window.location.href='/search?type=books'" style="margin-bottom: 15px;">Back to Search</button>
-      <a th:if="${libraryBookshelf != null}" th:href="@{/my-books(selectedBookshelf=${libraryBookshelf})}" class="book-action-link" style="margin-left: 10px;">[view in library]</a>
+      <a th:if="${libraryBookshelf != null}" th:href="@{/my-books(selectedBookshelf=${libraryBookshelf})}" class="book-action-link">[view in library]</a>
 
       <div th:if="${editionResults != null && !editionResults.isEmpty()}">
         <div th:each="edition : ${editionResults}" class="book-entry" style="margin-bottom: 10px;">
