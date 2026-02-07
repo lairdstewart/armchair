@@ -2586,6 +2586,38 @@ public class BookController {
     }
 
     @Transactional
+    @PostMapping("/want-to-read-unranked-book")
+    public String wantToReadUnrankedBook(@RequestParam Long bookId, HttpSession session) {
+        Long userId = getCurrentUserId(session);
+        if (userId == null) {
+            return "redirect:/setup-username";
+        }
+
+        Ranking ranking = findRankingForUser(bookId, userId);
+        if (ranking == null || ranking.getBookshelf() != Bookshelf.UNRANKED) {
+            return "redirect:/my-books?selectedBookshelf=UNRANKED";
+        }
+
+        // Create RankingState flagged as want-to-read
+        RankingState rankingState = new RankingState(userId, ranking.getBook().getWorkOlid(), ranking.getBook().getTitle(), ranking.getBook().getAuthor(), null, null);
+        rankingState.setBookshelf(Bookshelf.UNRANKED);
+        rankingState.setReviewBeingRanked(ranking.getReview());
+        rankingState.setWantToRead(true);
+        boolean needsResolve = ranking.getBook().getWorkOlid() == null;
+        if (needsResolve) {
+            rankingState.setMode(RankingMode.RESOLVE);
+        } else {
+            rankingState.setMode(RankingMode.SELECT_EDITION);
+        }
+        rankingStateRepository.save(rankingState);
+
+        // Remove the ranking from unranked list and close the gap
+        deleteRankingAndCloseGap(userId, ranking);
+
+        return needsResolve ? "redirect:/resolve" : "redirect:/rank/edition";
+    }
+
+    @Transactional
     @PostMapping("/rank-all")
     public String rankAll(HttpSession session) {
         Long userId = getCurrentUserId(session);
