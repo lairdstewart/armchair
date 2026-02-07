@@ -147,13 +147,7 @@ public class BookController {
     private BookService bookService;
 
     private void closePositionGap(Long userId, Bookshelf bookshelf, BookCategory category, int removedPosition) {
-        List<Ranking> rankings = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(userId, bookshelf, category);
-        for (Ranking r : rankings) {
-            if (r.getPosition() > removedPosition) {
-                r.setPosition(r.getPosition() - 1);
-                rankingRepository.save(r);
-            }
-        }
+        rankingRepository.decrementPositionsAbove(userId, bookshelf, category, removedPosition);
     }
 
     private void deleteRankingAndCloseGap(Long userId, Ranking ranking) {
