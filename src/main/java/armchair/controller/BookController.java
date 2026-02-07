@@ -2527,8 +2527,9 @@ public class BookController {
             return "redirect:/my-books?selectedBookshelf=UNRANKED";
         }
 
-        // Create RankingState for categorization (no bookshelf/category set — enters CATEGORIZE mode)
+        // Create RankingState for categorization — set bookshelf to UNRANKED so cancel returns here
         RankingState rankingState = new RankingState(userId, ranking.getBook().getWorkOlid(), ranking.getBook().getTitle(), ranking.getBook().getAuthor(), null, null);
+        rankingState.setBookshelf(Bookshelf.UNRANKED);
         rankingState.setReviewBeingRanked(ranking.getReview());
         // Unverified books need RESOLVE first, verified books go to SELECT_EDITION
         boolean needsResolve = ranking.getBook().getWorkOlid() == null;
@@ -2566,8 +2567,9 @@ public class BookController {
 
         Ranking nextBook = unrankedBooks.get(0);
 
-        // Create RankingState for categorization
+        // Create RankingState for categorization — set bookshelf to UNRANKED so cancel returns here
         RankingState rankingState = new RankingState(userId, nextBook.getBook().getWorkOlid(), nextBook.getBook().getTitle(), nextBook.getBook().getAuthor(), null, null);
+        rankingState.setBookshelf(Bookshelf.UNRANKED);
         rankingState.setReviewBeingRanked(nextBook.getReview());
         rankingState.setRankAll(true);
         // Unverified books need RESOLVE first, verified books go to SELECT_EDITION
