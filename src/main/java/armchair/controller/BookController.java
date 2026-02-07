@@ -84,12 +84,39 @@ public class BookController {
     private static final int MAX_REVIEW_LENGTH = 5000;
     private static final int MAX_IMPORT_ROWS = 10000;
     private static String bookResultKey(OpenLibraryService.BookResult b) {
-        return b.title().toLowerCase().trim() + "\0" + b.author().toLowerCase().trim();
+        return b.workOlid();
     }
 
     private static List<OpenLibraryService.BookResult> deduplicateResults(List<OpenLibraryService.BookResult> results) {
         var seen = new java.util.LinkedHashSet<String>();
         return results.stream().filter(r -> seen.add(bookResultKey(r))).toList();
+    }
+
+    /**
+     * Combines results from structured title+author search with general query search.
+     * This handles cases where Open Library's canonical title differs from the common title
+     * (e.g., "Nineteen Eighty-Four" vs "1984"). Results are deduplicated by workOlid and
+     * sorted by edition count (descending) so the most authoritative work appears first.
+     */
+    private List<OpenLibraryService.BookResult> combinedSearch(String title, String author, int maxResults) {
+        List<OpenLibraryService.BookResult> structured =
+            openLibraryService.searchByTitleAndAuthor(title, author, maxResults);
+        List<OpenLibraryService.BookResult> general =
+            openLibraryService.searchBooks(title + " " + author, maxResults);
+
+        // Merge and deduplicate by workOlid
+        List<OpenLibraryService.BookResult> combined = new ArrayList<>(structured);
+        combined.addAll(general);
+        combined = deduplicateResults(combined);
+
+        // Sort by edition count descending so the most authoritative result is first
+        combined.sort((a, b) -> {
+            int countA = a.editionCount() != null ? a.editionCount() : 0;
+            int countB = b.editionCount() != null ? b.editionCount() : 0;
+            return Integer.compare(countB, countA);
+        });
+
+        return combined.size() > maxResults ? combined.subList(0, maxResults) : combined;
     }
 
     private static String trimReview(String review) {
@@ -341,11 +368,10 @@ public class BookController {
                 }
             } else if (skipResolve == null || "expanded".equals(skipResolve)) {
                 int maxResults = "expanded".equals(skipResolve) ? 10 : 3;
-                List<OpenLibraryService.BookResult> resolveResults = deduplicateResults(
-                    openLibraryService.searchByTitleAndAuthor(
+                List<OpenLibraryService.BookResult> resolveResults = combinedSearch(
                         rankingState.getTitleBeingRanked(),
                         rankingState.getAuthorBeingRanked(),
-                        maxResults));
+                        maxResults);
                 if (!resolveResults.isEmpty()) {
                     mode = Mode.RESOLVE;
                     model.addAttribute("resolveResults", resolveResults);
@@ -356,10 +382,10 @@ public class BookController {
                     }
                 } else if (skipResolve == null) {
                     // First attempt returned nothing — try expanded (10 results) immediately
-                    resolveResults = deduplicateResults(openLibraryService.searchByTitleAndAuthor(
+                    resolveResults = combinedSearch(
                         rankingState.getTitleBeingRanked(),
                         rankingState.getAuthorBeingRanked(),
-                        10));
+                        10);
                     if (!resolveResults.isEmpty()) {
                         mode = Mode.RESOLVE;
                         model.addAttribute("resolveResults", resolveResults);
@@ -756,13 +782,13 @@ public class BookController {
             return "index";
         }
 
-        // Auto-search mode
+        // Auto-search mode: combine structured (title+author) and general (q=) searches
+        // to handle cases where canonical title differs (e.g., "1984" vs "Nineteen Eighty-Four")
         int maxResults = "expanded".equals(skipResolve) ? 10 : 3;
-        List<OpenLibraryService.BookResult> resolveResults = deduplicateResults(
-            openLibraryService.searchByTitleAndAuthor(
+        List<OpenLibraryService.BookResult> resolveResults = combinedSearch(
                 rs.getTitleBeingRanked(),
                 rs.getAuthorBeingRanked(),
-                maxResults));
+                maxResults);
 
         if (!resolveResults.isEmpty()) {
             model.addAttribute("resolveResults", resolveResults);
@@ -775,8 +801,8 @@ public class BookController {
 
         // No results - try expanded or go to manual
         if (skipResolve == null) {
-            resolveResults = deduplicateResults(openLibraryService.searchByTitleAndAuthor(
-                rs.getTitleBeingRanked(), rs.getAuthorBeingRanked(), 10));
+            resolveResults = combinedSearch(
+                rs.getTitleBeingRanked(), rs.getAuthorBeingRanked(), 10);
             if (!resolveResults.isEmpty()) {
                 model.addAttribute("resolveResults", resolveResults);
                 session.setAttribute("skipResolve", "expanded");
