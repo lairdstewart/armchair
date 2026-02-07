@@ -586,7 +586,7 @@ public class BookController {
         }
         model.addAttribute("mode", Mode.CATEGORIZE);
 
-        return "modes/categorize";
+        return "index";
     }
 
     @GetMapping("/rank/compare")
@@ -626,7 +626,7 @@ public class BookController {
         }
 
         model.addAttribute("mode", Mode.RANK);
-        return "modes/rank";
+        return "index";
     }
 
     @GetMapping("/rank/edition")
@@ -701,7 +701,7 @@ public class BookController {
         model.addAttribute("editionPageSize", pageSize);
         model.addAttribute("mode", Mode.SELECT_EDITION);
 
-        return "modes/select-edition";
+        return "index";
     }
 
     @GetMapping("/resolve")
@@ -732,7 +732,7 @@ public class BookController {
                 }
             }
             model.addAttribute("mode", Mode.MANUAL_RESOLVE);
-            return "modes/manual-resolve";
+            return "index";
         }
 
         // Auto-search mode
@@ -749,7 +749,7 @@ public class BookController {
                 session.setAttribute("skipResolve", "expanded");
             }
             model.addAttribute("mode", Mode.RESOLVE);
-            return "modes/resolve";
+            return "index";
         }
 
         // No results - try expanded or go to manual
@@ -760,7 +760,7 @@ public class BookController {
                 model.addAttribute("resolveResults", resolveResults);
                 session.setAttribute("skipResolve", "expanded");
                 model.addAttribute("mode", Mode.RESOLVE);
-                return "modes/resolve";
+                return "index";
             }
         }
 
@@ -790,7 +790,7 @@ public class BookController {
         model.addAttribute("reviewBook", ranking);
         model.addAttribute("mode", Mode.REVIEW);
 
-        return "modes/review";
+        return "index";
     }
 
     private Mode determineMode(RankingState rankingState) {
