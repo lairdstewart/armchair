@@ -58,8 +58,6 @@ public class BookController {
         }
         public String coverUrl() {
             if (coverId != null) return "https://covers.openlibrary.org/b/id/" + coverId + "-M.jpg";
-            // Fall back to editionOlid for books added before coverId was tracked
-            if (editionOlid != null) return "https://covers.openlibrary.org/b/olid/" + editionOlid + "-M.jpg";
             return null;
         }
     }
