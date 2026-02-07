@@ -1596,6 +1596,93 @@ public class BookController {
         return redirectTo;
     }
 
+    @GetMapping("/editions/{workOlid}")
+    public String showEditions(@PathVariable String workOlid,
+                               @RequestParam(required = false) String title,
+                               @RequestParam(required = false) String author,
+                               @RequestParam(required = false, defaultValue = "0") int page,
+                               Model model, HttpSession session) {
+        addNavigationAttributes(model, "search");
+
+        // Fetch and cache editions in session
+        @SuppressWarnings("unchecked")
+        List<OpenLibraryService.EditionResult> allEditions =
+            (List<OpenLibraryService.EditionResult>) session.getAttribute("browseEditions_" + workOlid);
+
+        if (allEditions == null) {
+            allEditions = openLibraryService.getEditionsForWork(workOlid, 50, 0);
+            session.setAttribute("browseEditions_" + workOlid, allEditions);
+        }
+
+        int pageSize = 5;
+        int totalEditions = allEditions.size();
+        int totalPages = Math.max(1, (totalEditions + pageSize - 1) / pageSize);
+        int startIndex = page * pageSize;
+        int endIndex = Math.min(startIndex + pageSize, totalEditions);
+        List<OpenLibraryService.EditionResult> pageEditions =
+            startIndex < totalEditions ? allEditions.subList(startIndex, endIndex) : List.of();
+
+        model.addAttribute("workOlid", workOlid);
+        model.addAttribute("workTitle", title);
+        model.addAttribute("workAuthor", author);
+        model.addAttribute("editionResults", pageEditions);
+        model.addAttribute("editionPage", page);
+        model.addAttribute("editionTotalPages", totalPages);
+        model.addAttribute("editionTotalCount", totalEditions);
+        model.addAttribute("editionPageSize", pageSize);
+
+        return "editions";
+    }
+
+    @PostMapping("/select-book-edition")
+    public String selectBookEdition(@RequestParam String workOlid,
+                                    @RequestParam String bookName,
+                                    @RequestParam String author,
+                                    @RequestParam(required = false) String editionOlid,
+                                    @RequestParam(required = false) String isbn13,
+                                    @RequestParam(required = false) Integer coverId,
+                                    @RequestParam(required = false) String editionTitle,
+                                    HttpSession session) {
+        Long userId = getCurrentUserId(session);
+        if (userId == null) {
+            return "redirect:/setup-username";
+        }
+        restoreAbandonedBook(userId);
+
+        // Use edition title if provided, otherwise fall back to work title
+        String titleToUse = (editionTitle != null && !editionTitle.isBlank()) ? editionTitle : bookName;
+
+        // Create/update the Book with the selected edition info
+        Book book = bookService.findOrCreateBook(workOlid, editionOlid, titleToUse, author, null, coverId);
+        if (editionOlid != null) {
+            book.setEditionOlid(editionOlid);
+        }
+        if (isbn13 != null) {
+            book.setIsbn13(isbn13);
+        }
+        if (coverId != null) {
+            book.setCoverId(coverId);
+        }
+        if (editionTitle != null && !editionTitle.isBlank()) {
+            book.setTitle(editionTitle);
+        }
+        bookRepository.save(book);
+
+        // Create RankingState in CATEGORIZE mode (skip edition selection since user already chose)
+        RankingState rankingState = rankingStateRepository.findById(userId).orElse(null);
+        if (rankingState == null) {
+            rankingState = new RankingState(userId, null, null, null, null, null);
+        }
+        rankingState.setBookInfo(workOlid, titleToUse, author);
+        rankingState.setEditionOlidBeingRanked(editionOlid);
+        rankingState.setIsbn13BeingRanked(isbn13);
+        rankingState.setEditionSelected(true);
+        rankingState.setMode(RankingMode.CATEGORIZE);
+        rankingStateRepository.save(rankingState);
+
+        return "redirect:/rank/categorize";
+    }
+
     @Transactional
     @PostMapping("/categorize")
     public String categorizeBook(@RequestParam String bookshelf,
@@ -1741,7 +1828,7 @@ public class BookController {
             Map<String, UserBookRank> finalUserBooks = userBooks;
             bookResults = bookRepository.findRandom10Books().stream()
                 .filter(b -> !finalUserBooks.containsKey(b.getWorkOlid()))
-                .map(b -> new OpenLibraryService.BookResult(b.getWorkOlid(), b.getEditionOlid(), b.getTitle(), b.getAuthor(), b.getFirstPublishYear(), null))
+                .map(b -> new OpenLibraryService.BookResult(b.getWorkOlid(), b.getEditionOlid(), b.getTitle(), b.getAuthor(), b.getFirstPublishYear(), null, null))
                 .toList();
         }
         model.addAttribute("bookResults", bookResults);

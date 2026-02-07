@@ -23,7 +23,7 @@ public class OpenLibraryService {
         .build();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public record BookResult(String workOlid, String editionOlid, String title, String author, Integer firstPublishYear, Integer coverId) {
+    public record BookResult(String workOlid, String editionOlid, String title, String author, Integer firstPublishYear, Integer coverId, Integer editionCount) {
         public String bookUrl() {
             if (workOlid != null) return "https://openlibrary.org/works/" + workOlid;
             return "https://openlibrary.org/search?q=" + URLEncoder.encode(title + " " + author, StandardCharsets.UTF_8);
@@ -66,7 +66,7 @@ public class OpenLibraryService {
     private List<BookResult> doSearch(String queryParams, int maxResults) {
         try {
             String url = String.format(
-                "https://openlibrary.org/search.json?%s&lang=en&limit=%d&fields=author_name,author_key,title,cover_edition_key,cover_i,key,first_publish_year,editions,editions.title,editions.key",
+                "https://openlibrary.org/search.json?%s&lang=en&limit=%d&fields=author_name,author_key,title,cover_edition_key,cover_i,key,first_publish_year,edition_count,editions,editions.title,editions.key",
                 queryParams,
                 maxResults
             );
@@ -130,7 +130,12 @@ public class OpenLibraryService {
                     coverId = doc.get("cover_i").asInt();
                 }
 
-                results.add(new BookResult(workOlid, editionOlid, title, author, firstPublishYear, coverId));
+                Integer editionCount = null;
+                if (doc.has("edition_count") && !doc.get("edition_count").isNull()) {
+                    editionCount = doc.get("edition_count").asInt();
+                }
+
+                results.add(new BookResult(workOlid, editionOlid, title, author, firstPublishYear, coverId, editionCount));
             }
 
             return results;

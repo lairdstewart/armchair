@@ -1,0 +1,60 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <title>Armchair</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}" />
+  </head>
+  <body>
+    <div th:replace="~{fragments :: navbar}"></div>
+    <div class="page-content">
+      <h3>Editions of <span th:text="${workTitle}" th:remove="tag"></span></h3>
+      <div th:if="${workAuthor != null && !workAuthor.isBlank()}" class="book-author" style="margin-bottom: 15px;">
+        <span th:text="${workAuthor}"></span>
+      </div>
+
+      <div th:if="${editionResults != null && !editionResults.isEmpty()}">
+        <div th:each="edition : ${editionResults}" class="book-entry" style="margin-bottom: 10px;">
+          <div class="book-info">
+            <div class="book-title">
+              <a th:href="${'https://openlibrary.org/books/' + edition.editionOlid()}" target="_blank" th:text="${edition.title()}"></a>
+            </div>
+            <div th:if="${edition.publisher() != null}" class="book-author">Publisher: <span th:text="${edition.publisher()}"></span></div>
+            <div th:if="${edition.publishDate() != null}" class="book-author">Published: <span th:text="${edition.publishDate()}"></span></div>
+            <span class="book-actions">
+              <form th:action="@{/select-book-edition}" method="POST" style="display: inline;">
+                <input type="hidden" name="workOlid" th:value="${workOlid}" />
+                <input type="hidden" name="bookName" th:value="${workTitle}" />
+                <input type="hidden" name="author" th:value="${workAuthor}" />
+                <input type="hidden" name="editionOlid" th:value="${edition.editionOlid()}" />
+                <input type="hidden" name="isbn13" th:value="${edition.isbn13()}" />
+                <input type="hidden" name="coverId" th:value="${edition.coverId()}" />
+                <input type="hidden" name="editionTitle" th:value="${edition.title()}" />
+                <button type="submit" class="book-action-link">[rank]</button>
+              </form>
+              <form th:action="@{/add-to-reading-list}" method="POST" style="display: inline;">
+                <input type="hidden" name="workOlid" th:value="${workOlid}" />
+                <input type="hidden" name="bookName" th:value="${edition.title()}" />
+                <input type="hidden" name="author" th:value="${workAuthor}" />
+                <input type="hidden" name="editionOlid" th:value="${edition.editionOlid()}" />
+                <input type="hidden" name="coverId" th:value="${edition.coverId()}" />
+                <input type="hidden" name="returnUrl" th:value="${'/editions/' + workOlid + '?title=' + #strings.replace(workTitle, ' ', '+') + '&author=' + #strings.replace(workAuthor, ' ', '+') + '&page=' + editionPage}" />
+                <button type="submit" class="book-action-link">[want to read]</button>
+              </form>
+            </span>
+          </div>
+          <img th:if="${edition.coverUrl() != null}" class="book-cover" th:src="${edition.coverUrl()}" /><div th:if="${edition.coverUrl() == null}" class="book-cover-placeholder">?</div>
+        </div>
+      </div>
+      <p th:if="${editionResults == null || editionResults.isEmpty()}">No editions found.</p>
+
+      <div th:if="${editionTotalPages > 1}" style="margin-top: 15px; margin-bottom: 15px;">
+        <th:block th:each="p : ${#numbers.sequence(0, editionTotalPages - 1)}">
+          <span th:if="${p == editionPage}" th:text="${(p * editionPageSize + 1) + '-' + T(java.lang.Math).min((p + 1) * editionPageSize, editionTotalCount)}" style="font-weight: bold; margin-right: 8px;"></span>
+          <a th:if="${p != editionPage}" th:href="@{/editions/{workOlid}(workOlid=${workOlid}, title=${workTitle}, author=${workAuthor}, page=${p})}" class="book-action-link"
+             th:text="${'[' + (p * editionPageSize + 1) + '-' + T(java.lang.Math).min((p + 1) * editionPageSize, editionTotalCount) + ']'}" style="margin-right: 8px;"></a>
+        </th:block>
+      </div>
+      <p><a href="/search?type=books" class="book-action-link">[back to search]</a></p>
+    </div>
+  </body>
+</html>
