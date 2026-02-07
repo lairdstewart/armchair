@@ -43,7 +43,7 @@ class GoodreadsImportTest extends BaseIntegrationTest {
     }
 
     @Test
-    void guestWantToReadShelf() throws Exception {
+    void guestAllBooksGoToUncategorized() throws Exception {
         MockHttpSession session = guestSession();
         String csv = "Title,Author,Exclusive Shelf\n" +
                 "Dune,Frank Herbert,read\n" +
@@ -55,15 +55,7 @@ class GoodreadsImportTest extends BaseIntegrationTest {
 
         List<Ranking> all = rankingRepository.findAll();
         assertThat(all).hasSize(3);
-
-        Ranking dune = all.stream().filter(r -> r.getBook().getTitle().equals("Dune")).findFirst().orElseThrow();
-        assertThat(dune.getBookshelf()).isEqualTo(Bookshelf.UNRANKED);
-
-        Ranking neuromancer = all.stream().filter(r -> r.getBook().getTitle().equals("Neuromancer")).findFirst().orElseThrow();
-        assertThat(neuromancer.getBookshelf()).isEqualTo(Bookshelf.WANT_TO_READ);
-
-        Ranking snowCrash = all.stream().filter(r -> r.getBook().getTitle().equals("Snow Crash")).findFirst().orElseThrow();
-        assertThat(snowCrash.getBookshelf()).isEqualTo(Bookshelf.WANT_TO_READ);
+        assertThat(all).allMatch(r -> r.getBookshelf() == Bookshelf.UNRANKED);
     }
 
     @Test
@@ -188,7 +180,7 @@ class GoodreadsImportTest extends BaseIntegrationTest {
     }
 
     @Test
-    void oauthWantToReadShelf() throws Exception {
+    void oauthAllBooksGoToUncategorized() throws Exception {
         User user = createOAuthUser("testuser2", "oauth-import-2");
         String csv = "Title,Author,Exclusive Shelf\n" +
                 "Dune,Frank Herbert,read\n" +
@@ -200,12 +192,7 @@ class GoodreadsImportTest extends BaseIntegrationTest {
 
         List<Ranking> rankings = rankingRepository.findByUserId(user.getId());
         assertThat(rankings).hasSize(2);
-
-        Ranking dune = rankings.stream().filter(r -> r.getBook().getTitle().equals("Dune")).findFirst().orElseThrow();
-        assertThat(dune.getBookshelf()).isEqualTo(Bookshelf.UNRANKED);
-
-        Ranking neuromancer = rankings.stream().filter(r -> r.getBook().getTitle().equals("Neuromancer")).findFirst().orElseThrow();
-        assertThat(neuromancer.getBookshelf()).isEqualTo(Bookshelf.WANT_TO_READ);
+        assertThat(rankings).allMatch(r -> r.getBookshelf() == Bookshelf.UNRANKED);
     }
 
     @Test
