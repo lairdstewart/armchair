@@ -667,8 +667,11 @@ public class BookController {
 
             Book book = bookService.findOrCreateBook(rs.getWorkOlidBeingRanked(),
                 soleEdition.editionOlid(), rs.getTitleBeingRanked(),
-                rs.getAuthorBeingRanked(), null, null);
+                rs.getAuthorBeingRanked(), null, soleEdition.coverId());
             book.setIsbn13(soleEdition.isbn13());
+            if (soleEdition.coverId() != null) {
+                book.setCoverId(soleEdition.coverId());
+            }
             bookRepository.save(book);
 
             session.removeAttribute("cachedEditions");
@@ -1509,6 +1512,7 @@ public class BookController {
     public String selectEdition(@RequestParam String editionOlid,
                                 @RequestParam(required = false) String isbn13,
                                 @RequestParam(required = false) String title,
+                                @RequestParam(required = false) Integer coverId,
                                 HttpSession session) {
         Long userId = getCurrentUserId(session);
         if (userId == null) {
@@ -1523,9 +1527,12 @@ public class BookController {
         // Update the Book with the selected edition
         Book book = bookService.findOrCreateBook(rankingState.getWorkOlidBeingRanked(),
             editionOlid, rankingState.getTitleBeingRanked(),
-            rankingState.getAuthorBeingRanked(), null, null);
+            rankingState.getAuthorBeingRanked(), null, coverId);
         book.setEditionOlid(editionOlid);
         book.setIsbn13(isbn13);
+        if (coverId != null) {
+            book.setCoverId(coverId);
+        }
         if (title != null && !title.isBlank()) {
             book.setTitle(title);
             rankingState.setTitleBeingRanked(title);
