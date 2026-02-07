@@ -94,6 +94,20 @@ ol.book-list li form {
   color: #9E9E9E;
 }
 
+.book-number.rerank {
+  cursor: pointer;
+}
+
+.book-number.rerank:hover {
+  background-color: #E8F5E9;
+  border-color: #4CAF50;
+}
+
+.book-number.rerank:active {
+  background-color: #C8E6C9;
+  border-color: #388E3C;
+}
+
 .navbar {
   background-color: #722F37;
   padding: 5px;
