@@ -1310,11 +1310,19 @@ public class BookController {
         if (userId == null) {
             return "redirect:/setup-username";
         }
+        // Read bookshelf before deleting state so we can return to the correct tab
+        String selectedBookshelf = rankingStateRepository.findById(userId)
+                .map(rs -> rs.getBookshelf())
+                .map(Bookshelf::name)
+                .orElse(null);
         restoreAbandonedBook(userId);
         rankingStateRepository.deleteById(userId);
         // Clear search results
         session.removeAttribute("bookSearchResults");
         session.removeAttribute("skipResolve");
+        if (selectedBookshelf != null) {
+            return "redirect:/my-books?selectedBookshelf=" + selectedBookshelf;
+        }
         return "redirect:/my-books";
     }
 
