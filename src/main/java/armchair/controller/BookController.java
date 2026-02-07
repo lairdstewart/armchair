@@ -760,6 +760,11 @@ public class BookController {
         model.addAttribute("editionTotalPages", totalPages);
         model.addAttribute("editionTotalCount", totalEditions);
         model.addAttribute("editionPageSize", pageSize);
+        model.addAttribute("isRankAll", rs.isRankAll());
+        if (rs.isRankAll()) {
+            List<Ranking> remainingUnranked = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(userId, Bookshelf.UNRANKED, BookCategory.UNRANKED);
+            model.addAttribute("rankAllRemaining", remainingUnranked.size());
+        }
         model.addAttribute("mode", Mode.SELECT_EDITION);
 
         return "index";
