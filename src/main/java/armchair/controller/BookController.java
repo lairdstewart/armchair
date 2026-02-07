@@ -104,10 +104,10 @@ public class BookController {
         List<OpenLibraryService.BookResult> general =
             openLibraryService.searchBooks(title + " " + author, maxResults);
 
-        // Merge and deduplicate by workOlid
+        // Merge and deduplicate by workOlid (wrap in ArrayList since dedup returns immutable list)
         List<OpenLibraryService.BookResult> combined = new ArrayList<>(structured);
         combined.addAll(general);
-        combined = deduplicateResults(combined);
+        combined = new ArrayList<>(deduplicateResults(combined));
 
         // Sort by edition count descending so the most authoritative result is first
         combined.sort((a, b) -> {
