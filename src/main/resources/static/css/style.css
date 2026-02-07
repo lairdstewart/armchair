@@ -344,15 +344,3 @@ details[open] .review-toggle::after {
   text-decoration: underline;
 }
 
-/* Primary action button - blue, bottom of page */
-.btn-primary {
-  background-color: #1976D2;
-  color: white;
-  border: none;
-  font: inherit;
-  cursor: pointer;
-}
-
-.btn-primary:hover {
-  background-color: #1565C0;
-}
