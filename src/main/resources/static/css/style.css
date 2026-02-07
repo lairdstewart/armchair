@@ -24,6 +24,8 @@ ol, ul.plain-list {
 
 ul.plain-list li {
   margin-bottom: 4px;
+  /* Match the space taken by .book-number in ranked tabs (26px + 4px border + 8px margin) */
+  margin-left: 38px;
 }
 
 ul.plain-list li form {
