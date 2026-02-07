@@ -1645,6 +1645,15 @@ public class BookController {
         model.addAttribute("editionTotalCount", totalEditions);
         model.addAttribute("editionPageSize", pageSize);
 
+        // Check if book is already in the user's library (don't create guest for this)
+        Long userId = getExistingUserId(session);
+        if (userId != null) {
+            Ranking existing = rankingRepository.findByUserIdAndBookWorkOlid(userId, workOlid);
+            if (existing != null) {
+                model.addAttribute("libraryBookshelf", existing.getBookshelf().name());
+            }
+        }
+
         return "editions";
     }
 

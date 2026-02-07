@@ -47,8 +47,8 @@
                 <!-- Already in unranked list -->
                 <span th:if="${ubr != null && ubr.category() == 'unranked'}"
                       class="book-action-text">[unranked]</span>
-                <!-- Not in library - show browse editions link -->
-                <span th:if="${ubr == null && book.workOlid() != null}" class="book-actions">
+                <!-- Browse editions link (shown for all books with a workOlid) -->
+                <span th:if="${book.workOlid() != null}" class="book-actions">
                   <a th:href="@{/editions/{workOlid}(workOlid=${book.workOlid()}, title=${book.title()}, author=${book.author()}, coverId=${book.coverId()})}" class="book-action-link"
                      th:text="${book.editionCount() != null ? '[browse ' + book.editionCount() + ' editions]' : '[browse editions]'}"></a>
                 </span>
