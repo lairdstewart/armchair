@@ -628,7 +628,8 @@ public class BookController {
     }
 
     @GetMapping("/rank/edition")
-    public String showEditionSelection(Model model, HttpSession session) {
+    public String showEditionSelection(@RequestParam(required = false, defaultValue = "0") int page,
+                                       Model model, HttpSession session) {
         Long userId = getCurrentUserId(session);
         RankingState rs = rankingStateRepository.findById(userId).orElse(null);
 
@@ -687,11 +688,9 @@ public class BookController {
 
         // Pagination
         int pageSize = 5;
-        Integer editionPage = (Integer) session.getAttribute("editionPage");
-        if (editionPage == null) editionPage = 0;
-
         int totalEditions = allEditions.size();
         int totalPages = (totalEditions + pageSize - 1) / pageSize;
+        int editionPage = Math.max(0, Math.min(page, totalPages - 1));
         int startIndex = editionPage * pageSize;
         int endIndex = Math.min(startIndex + pageSize, totalEditions);
 
@@ -1563,12 +1562,6 @@ public class BookController {
         session.removeAttribute("cachedEditions");
         session.removeAttribute("editionPage");
         return "redirect:/rank/categorize";
-    }
-
-    @PostMapping("/edition-page")
-    public String editionPage(@RequestParam int page, HttpSession session) {
-        session.setAttribute("editionPage", page);
-        return "redirect:/rank/edition";
     }
 
     @PostMapping("/add-to-reading-list")

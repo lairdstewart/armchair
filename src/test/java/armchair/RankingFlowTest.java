@@ -13,10 +13,15 @@ import org.springframework.mock.web.MockHttpSession;
 
 import java.util.List;
 
+import java.util.ArrayList;
+
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 class RankingFlowTest extends BaseIntegrationTest {
@@ -461,6 +466,47 @@ class RankingFlowTest extends BaseIntegrationTest {
                 .andExpect(status().is3xxRedirection());
 
         assertThat(session.getAttribute("cachedEditions")).isNull();
+    }
+
+    @Test
+    void editionSelectionUsesUrlPagination() throws Exception {
+        User user = createOAuthUser("ranker17", "oauth-rank-17");
+
+        // Create 6 editions so we get 2 pages (page size = 5)
+        List<OpenLibraryService.EditionResult> editions = new ArrayList<>();
+        for (int i = 1; i <= 6; i++) {
+            editions.add(new OpenLibraryService.EditionResult(
+                    "OL" + i + "M", "Edition " + i, null, null, null, null));
+        }
+        when(openLibraryService.getEditionsForWork(eq("OL900W"), anyInt(), anyInt(), any()))
+                .thenReturn(editions);
+
+        // Set up ranking state in SELECT_EDITION mode
+        RankingState rs = new RankingState(user.getId(), "OL900W", "Test Book", "Author", null, null);
+        rs.setMode(RankingMode.SELECT_EDITION);
+        rankingStateRepository.save(rs);
+
+        MockHttpSession session = new MockHttpSession();
+
+        // Page 0 should show 5 editions
+        mockMvc.perform(get("/rank/edition")
+                        .param("page", "0")
+                        .session(session)
+                        .with(oauthUser("oauth-rank-17")))
+                .andExpect(status().isOk())
+                .andExpect(model().attribute("editionPage", 0))
+                .andExpect(model().attribute("editionTotalPages", 2));
+
+        // Page 1 should also work (shows edition 6)
+        mockMvc.perform(get("/rank/edition")
+                        .param("page", "1")
+                        .session(session)
+                        .with(oauthUser("oauth-rank-17")))
+                .andExpect(status().isOk())
+                .andExpect(model().attribute("editionPage", 1));
+
+        // No editionPage should be stored in session (URL-based, not session-based)
+        assertThat(session.getAttribute("editionPage")).isNull();
     }
 
     @Test

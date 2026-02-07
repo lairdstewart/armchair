@@ -25,10 +25,8 @@
     <div th:if="${editionTotalPages > 1}" style="margin-top: 15px;">
       <th:block th:each="page : ${#numbers.sequence(0, editionTotalPages - 1)}">
         <span th:if="${page == editionPage}" th:text="${(page * editionPageSize + 1) + '-' + T(java.lang.Math).min((page + 1) * editionPageSize, editionTotalCount)}" style="font-weight: bold; margin-right: 8px;"></span>
-        <form th:if="${page != editionPage}" th:action="@{/edition-page}" method="POST" style="display: inline;">
-          <input type="hidden" name="page" th:value="${page}" />
-          <button type="submit" class="book-action-link" th:text="${'[' + (page * editionPageSize + 1) + '-' + T(java.lang.Math).min((page + 1) * editionPageSize, editionTotalCount) + ']'}"></button>
-        </form>
+        <a th:if="${page != editionPage}" th:href="@{/rank/edition(page=${page})}" class="book-action-link"
+           th:text="${'[' + (page * editionPageSize + 1) + '-' + T(java.lang.Math).min((page + 1) * editionPageSize, editionTotalCount) + ']'}" style="margin-right: 8px;"></a>
       </th:block>
     </div>
   </th:block>
