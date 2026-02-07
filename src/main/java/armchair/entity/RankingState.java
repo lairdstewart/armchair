@@ -36,6 +36,7 @@ public class RankingState {
     private Integer highIndex;
 
     private boolean rankAll;
+    private boolean wantToRead;
     private Long bookIdBeingReviewed;
 
     @Enumerated(EnumType.STRING)
@@ -159,6 +160,14 @@ public class RankingState {
 
     public void setRankAll(boolean rankAll) {
         this.rankAll = rankAll;
+    }
+
+    public boolean isWantToRead() {
+        return wantToRead;
+    }
+
+    public void setWantToRead(boolean wantToRead) {
+        this.wantToRead = wantToRead;
     }
 
     public Long getBookIdBeingReviewed() {
