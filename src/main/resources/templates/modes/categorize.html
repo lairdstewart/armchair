@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <body>
   <th:block th:fragment="content">
-    <form th:action="@{/back-to-edition}" method="POST" style="margin-bottom: 0;">
+    <form th:action="${isRerank} ? @{/cancel-add} : @{/back-to-edition}" method="POST" style="margin-bottom: 0;">
       <button type="submit" class="btn-back">&larr; back</button>
     </form>
     <h3>Add <span th:text="${rankingState.titleBeingRanked}"></span></h3>

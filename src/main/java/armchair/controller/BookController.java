@@ -584,6 +584,7 @@ public class BookController {
 
         addNavigationAttributes(model, "list");
         model.addAttribute("rankingState", rs);
+        model.addAttribute("isRerank", rs.getOriginalPosition() != null);
         model.addAttribute("isRankAll", rs.isRankAll());
         if (rs.isRankAll()) {
             List<Ranking> unrankedBooks = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(
