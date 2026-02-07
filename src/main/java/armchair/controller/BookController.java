@@ -1602,6 +1602,7 @@ public class BookController {
                                @RequestParam(required = false) String title,
                                @RequestParam(required = false) String author,
                                @RequestParam(required = false, defaultValue = "0") int page,
+                               @RequestParam(required = false) Integer coverId,
                                Model model, HttpSession session) {
         addNavigationAttributes(model, "search");
 
@@ -1612,6 +1613,18 @@ public class BookController {
 
         if (allEditions == null) {
             allEditions = openLibraryService.getEditionsForWork(workOlid, 50, 0);
+            // Move edition with matching cover to the front
+            if (coverId != null) {
+                for (int i = 1; i < allEditions.size(); i++) {
+                    if (coverId.equals(allEditions.get(i).coverId())) {
+                        List<OpenLibraryService.EditionResult> reordered = new ArrayList<>(allEditions);
+                        OpenLibraryService.EditionResult match = reordered.remove(i);
+                        reordered.add(0, match);
+                        allEditions = reordered;
+                        break;
+                    }
+                }
+            }
             session.setAttribute("browseEditions_" + workOlid, allEditions);
         }
 
