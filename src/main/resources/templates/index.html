@@ -437,7 +437,7 @@
 
           <!-- Unranked tab -->
           <div id="tab-UNRANKED" th:if="${hasUnranked}" th:style="${selectedBookshelf == 'UNRANKED' ? '' : 'display:none'}">
-            <form th:action="@{/rank-all}" method="POST" style="margin-bottom: 15px;">
+            <form th:action="@{/rank-all}" method="POST" style="margin-bottom: 15px; margin-left: 38px;">
               <button type="submit">rank all</button>
             </form>
             <ul class="plain-list">
