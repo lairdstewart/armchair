@@ -347,7 +347,7 @@ details[open] .review-toggle::after {
   background-color: #1976D2;
   color: white;
   border: none;
-  padding: 8px 20px;
+  padding: 5px 14px;
   font: inherit;
   cursor: pointer;
   border-radius: 4px;
