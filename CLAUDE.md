@@ -48,8 +48,9 @@ the task, remove the worktree.
 You are only to make changes to the 'claude' branch. Do not touch the main or dev
 branches. Before starting a task, first merge changes from 'dev' into 'claude'
 branch as the two may have gotten out of sync. Then, create your new branch off
-of 'claude' into a worktree. Once finished with a task, merge the changes back
-into 'claude' and remove the worktree.
+of 'claude' into a worktree. Once finished with a task, switch to the 'claude'
+worktree which will always have the 'claude' branch, squash merge the feature
+branch to keep history linear, then remove the worktree.
 
 **tickets**
 
@@ -70,7 +71,7 @@ goodreads import tool.
 
  # Don't forget
 
-- Do no add features or change behavior without the user's approval
+- Do not add features or change behavior without the user's approval
 - Do not change the database schema without the user's approval
 - Respect .gitignore. Do not commit items in it.
 - You are in charge of the code. Refactor and clean it as you go.
