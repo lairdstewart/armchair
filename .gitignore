@@ -1,7 +1,11 @@
 src/main/resources/application-secret.properties
+
+worktrees/
+
 target/
 .idea/
 *.iml
+
 CLAUDE.md
 claude-todo.md
 claude-done.md

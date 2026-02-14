@@ -1,0 +1,7 @@
+While testing I'd like you to use the ephemeral port I believe you can just
+choose port zero and it will sign you on automatically for serving the Webb
+serve on when you use the chrome extension that way if I have multiple Claude
+code instances running in different work trees they can each serve up their own
+local server for testing and not interfere with one another pleaseupdate your
+memory and the Claude MD with this information and if there's any code changes
+that need to be made figure those out as well thanks
