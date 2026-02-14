@@ -1,4 +1,3 @@
-src/main/resources/application-secret.properties
 worktrees/
 target/
 .idea/
