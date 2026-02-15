@@ -18,6 +18,7 @@ import armchair.service.BookService;
 import armchair.service.OpenLibraryService;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpSession;
+import org.springframework.web.util.UriComponentsBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
@@ -615,6 +616,7 @@ public class BookController {
         addNavigationAttributes(model, "list");
         model.addAttribute("rankingState", rs);
         model.addAttribute("isRerank", rs.getOriginalPosition() != null);
+        model.addAttribute("editionSelected", rs.isEditionSelected());
         model.addAttribute("isRankAll", rs.isRankAll());
         if (rs.isRankAll()) {
             List<Ranking> unrankedBooks = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(
@@ -680,6 +682,8 @@ public class BookController {
 
         addNavigationAttributes(model, "list");
         model.addAttribute("rankingState", rs);
+        model.addAttribute("cameFromResolve",
+            "RESOLVE".equals(session.getAttribute("editionSelectionSource")));
 
         // Get cached editions from session, or fetch from API
         @SuppressWarnings("unchecked")
@@ -1385,6 +1389,7 @@ public class BookController {
         // Clear search results
         session.removeAttribute("bookSearchResults");
         session.removeAttribute("skipResolve");
+        session.removeAttribute("editionSelectionSource");
         if (selectedBookshelf != null) {
             return "redirect:/my-books?selectedBookshelf=" + selectedBookshelf;
         }
@@ -1407,6 +1412,30 @@ public class BookController {
         return "redirect:/rank/edition";
     }
 
+    @PostMapping("/back-to-editions")
+    public String backToEditions(HttpSession session) {
+        Long userId = getCurrentUserId(session);
+        if (userId == null) {
+            return "redirect:/setup-username";
+        }
+        RankingState rs = rankingStateRepository.findById(userId).orElse(null);
+        if (rs == null || rs.getWorkOlidBeingRanked() == null) {
+            return "redirect:/my-books";
+        }
+        String workOlid = rs.getWorkOlidBeingRanked();
+        String title = rs.getTitleBeingRanked();
+        String author = rs.getAuthorBeingRanked();
+        restoreAbandonedBook(userId);
+        rankingStateRepository.delete(rs);
+        session.removeAttribute("cachedEditions");
+        String url = UriComponentsBuilder.fromPath("/editions/{workOlid}")
+            .queryParam("title", title)
+            .queryParam("author", author)
+            .buildAndExpand(workOlid)
+            .toUriString();
+        return "redirect:" + url;
+    }
+
     @PostMapping("/back-to-resolve")
     public String backToResolve(HttpSession session) {
         Long userId = getCurrentUserId(session);
@@ -1421,6 +1450,7 @@ public class BookController {
         rankingStateRepository.save(rs);
         session.removeAttribute("skipResolve");
         session.removeAttribute("cachedEditions");
+        session.removeAttribute("editionSelectionSource");
         return "redirect:/resolve";
     }
 
@@ -1471,6 +1501,7 @@ public class BookController {
         rankingStateRepository.save(rankingState);
 
         session.removeAttribute("skipResolve");
+        session.setAttribute("editionSelectionSource", "RESOLVE");
         return "redirect:/rank/edition";
     }
 
@@ -1613,6 +1644,7 @@ public class BookController {
         session.removeAttribute("cachedEditions");
         session.removeAttribute("editionPage");
 
+        session.setAttribute("editionSelectionSource", "SEARCH");
         return "redirect:/rank/edition";
     }
 
@@ -1665,6 +1697,7 @@ public class BookController {
 
         session.removeAttribute("cachedEditions");
         session.removeAttribute("editionPage");
+        session.removeAttribute("editionSelectionSource");
         return "redirect:/rank/categorize";
     }
 
