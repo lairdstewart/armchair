@@ -1,8 +1,0 @@
-Authentication during testing has been somewhat of an issue because when Claude
-is using the Claude chrome extension authentication through Google doesn't work
-currently it's set up that I have local host 8080 in my Google developer portal
-so local testing can hit that and authenticate when I'm using it but that
-doesn't seem to work for Claude what I'd like to do is mock the authentication
-when testing and developing locally so that Claude you can authenticate while
-testing and using the Claude chrome extension make a plan for how we can walk
-out the service and enable it only during development thank you.
