@@ -2186,8 +2186,14 @@ public class BookController {
                         b.getTitle(), b.getAuthor(), null, b.getFirstPublishYear(), b.getCoverId()))
                 .toList();
         model.addAttribute("recs", recs);
+
+        Map<Bookshelf, Map<BookCategory, List<Ranking>>> allRankings = userId != null ? fetchAllRankingsGrouped(userId) : Map.of();
+        Map<String, UserBookRank> userBooks = userId != null ? buildUserBooksMap(allRankings) : Map.of();
+        model.addAttribute("userBooks", userBooks);
+
         return "recs";
     }
+
 
     @GetMapping("/user/{username}")
     public String viewUser(@PathVariable String username, Model model, HttpSession session) {
