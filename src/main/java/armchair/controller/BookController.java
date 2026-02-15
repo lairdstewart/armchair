@@ -13,6 +13,7 @@ import armchair.repository.FollowRepository;
 import armchair.repository.RankingRepository;
 import armchair.repository.RankingStateRepository;
 import armchair.repository.UserRepository;
+import armchair.recommendation.RecommendationAlgorithm;
 import armchair.service.BookService;
 import armchair.service.OpenLibraryService;
 import jakarta.annotation.PostConstruct;
@@ -172,6 +173,9 @@ public class BookController {
 
     @Autowired
     private BookService bookService;
+
+    @Autowired
+    private RecommendationAlgorithm recommendationAlgorithm;
 
     private void closePositionGap(Long userId, Bookshelf bookshelf, BookCategory category, int removedPosition) {
         rankingRepository.decrementPositionsAbove(userId, bookshelf, category, removedPosition);
@@ -2175,8 +2179,13 @@ public class BookController {
 
     @GetMapping("/recs")
     public String showRecs(Model model, HttpSession session) {
-        getCurrentUserId(session);
+        Long userId = getCurrentUserId(session);
         addNavigationAttributes(model, "recs");
+        List<BookInfo> recs = recommendationAlgorithm.getRecommendations(userId, 10).stream()
+                .map(b -> new BookInfo(b.getId(), b.getWorkOlid(), b.getEditionOlid(),
+                        b.getTitle(), b.getAuthor(), null, b.getFirstPublishYear(), b.getCoverId()))
+                .toList();
+        model.addAttribute("recs", recs);
         return "recs";
     }
 

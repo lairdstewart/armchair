@@ -7,7 +7,14 @@
   <body>
     <div th:replace="~{fragments :: navbar}"></div>
     <div class="page-content">
-      <p>coming soon ...</p>
+      <div th:if="${recs.isEmpty()}">
+        <p>No recommendations yet. Follow some users to get personalized recs!</p>
+      </div>
+      <div th:unless="${recs.isEmpty()}">
+        <div th:each="book : ${recs}">
+          <th:block th:replace="~{fragments :: bookDisplay(${book})}"></th:block>
+        </div>
+      </div>
     </div>
   </body>
 </html>
