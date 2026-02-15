@@ -1336,6 +1336,7 @@ public class BookController {
         return "redirect:/my-books";
     }
 
+    @SuppressWarnings("unchecked")
     @GetMapping("/search-books")
     public String showSearchBooks(Model model, HttpSession session) {
         getCurrentUserId(session);
