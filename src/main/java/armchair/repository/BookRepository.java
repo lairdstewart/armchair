@@ -14,7 +14,7 @@ import java.util.Optional;
 public interface BookRepository extends JpaRepository<Book, Long> {
     Optional<Book> findByWorkOlid(String workOlid);
 
-    @Query(value = "SELECT * FROM books WHERE work_olid IS NOT NULL ORDER BY RANDOM() LIMIT 5", nativeQuery = true)
+    @Query(value = "SELECT * FROM books WHERE work_olid IS NOT NULL AND cover_id IS NOT NULL ORDER BY RANDOM() LIMIT 5", nativeQuery = true)
     List<Book> findRandomBooks();
 
     @Query("SELECT b FROM Book b WHERE LOWER(TRIM(b.title)) = LOWER(TRIM(:title)) AND LOWER(TRIM(b.author)) = LOWER(TRIM(:author))")
