@@ -3,7 +3,7 @@
 <body>
   <th:block th:fragment="content">
     <form th:action="@{/cancel-add}" method="POST" style="margin-bottom: 0;">
-      <button type="submit" class="btn-back">&larr; back</button>
+      <button type="submit" class="btn-back">back</button>
     </form>
     <h3>Search for <span th:text="${rankingState.titleBeingRanked}"></span> in Open Library's database</h3>
     <p>Try searching with or without the author, or with a shorter version of the title.</p>
