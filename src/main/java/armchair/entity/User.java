@@ -18,7 +18,9 @@ public class User {
     @Column(unique = true)
     private String username;
 
-    private String oauthSubject; // Google's unique user ID from OpenID
+    private String oauthSubject; // Provider's unique user ID (Google sub, GitHub id)
+
+    private String oauthProvider; // "google" or "github"
 
     private Long signupNumber; // Which number signup this user was (1, 2, 3, ...)
 
@@ -39,6 +41,12 @@ public class User {
     public User(String username, String oauthSubject) {
         this.username = username;
         this.oauthSubject = oauthSubject;
+    }
+
+    public User(String username, String oauthSubject, String oauthProvider) {
+        this.username = username;
+        this.oauthSubject = oauthSubject;
+        this.oauthProvider = oauthProvider;
     }
 
     public Long getId() {
@@ -63,6 +71,14 @@ public class User {
 
     public void setOauthSubject(String oauthSubject) {
         this.oauthSubject = oauthSubject;
+    }
+
+    public String getOauthProvider() {
+        return oauthProvider;
+    }
+
+    public void setOauthProvider(String oauthProvider) {
+        this.oauthProvider = oauthProvider;
     }
 
     public Long getSignupNumber() {

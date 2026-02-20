@@ -11,6 +11,7 @@ import java.util.Optional;
 public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByUsername(String username);
     Optional<User> findByOauthSubject(String oauthSubject);
+    Optional<User> findByOauthSubjectAndOauthProvider(String oauthSubject, String oauthProvider);
     boolean existsByUsername(String username);
     List<User> findByIsGuest(boolean isGuest);
     long countByIsGuest(boolean isGuest);

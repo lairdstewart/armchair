@@ -21,8 +21,15 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Map;
+
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
+import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
+import org.springframework.security.oauth2.core.user.OAuth2User;
+
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.oauth2Login;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -52,11 +59,15 @@ public abstract class BaseIntegrationTest {
     protected FollowRepository followRepository;
 
     /**
-     * Create an OAuth user in the DB and return it.
-     * Use with oauth2Login().attributes(a -> a.put("sub", user.getOauthSubject()))
+     * Create an OAuth user in the DB and return it (defaults to Google provider).
+     * Use with oauthUser(subject) or oauthUser(subject, provider).
      */
     protected User createOAuthUser(String username, String oauthSubject) {
-        User user = new User(username, oauthSubject);
+        return createOAuthUser(username, oauthSubject, "google");
+    }
+
+    protected User createOAuthUser(String username, String oauthSubject, String provider) {
+        User user = new User(username, oauthSubject, provider);
         user.setGuest(false);
         return userRepository.save(user);
     }
@@ -100,9 +111,30 @@ public abstract class BaseIntegrationTest {
     }
 
     /**
-     * Helper to get oauth2Login post-processor for a given OAuth subject.
+     * Helper to get oauth2Login post-processor for a given OAuth subject (defaults to Google).
      */
     protected static org.springframework.test.web.servlet.request.RequestPostProcessor oauthUser(String oauthSubject) {
-        return oauth2Login().attributes(attrs -> attrs.put("sub", oauthSubject));
+        return oauthUser(oauthSubject, "google");
+    }
+
+    protected static org.springframework.test.web.servlet.request.RequestPostProcessor oauthUser(String oauthSubject, String provider) {
+        Map<String, Object> attributes;
+        String nameAttributeKey;
+        if ("github".equals(provider)) {
+            attributes = Map.of("id", Integer.parseInt(oauthSubject), "login", "testuser");
+            nameAttributeKey = "login";
+        } else {
+            attributes = Map.of("sub", oauthSubject);
+            nameAttributeKey = "sub";
+        }
+        OAuth2User oauth2User = new DefaultOAuth2User(
+            java.util.List.of(new SimpleGrantedAuthority("ROLE_USER")),
+            attributes,
+            nameAttributeKey
+        );
+        OAuth2AuthenticationToken token = new OAuth2AuthenticationToken(
+            oauth2User, oauth2User.getAuthorities(), provider
+        );
+        return authentication(token);
     }
 }

@@ -24,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -257,28 +258,39 @@ public class BookController {
         }
     }
 
-    private String getOauthSubject() {
+    record OAuthIdentity(String subject, String provider) {}
+
+    private OAuthIdentity getOAuthIdentity() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null && authentication.isAuthenticated()
-                && authentication.getPrincipal() instanceof OAuth2User) {
-            OAuth2User oauth2User = (OAuth2User) authentication.getPrincipal();
-            return oauth2User.getAttribute("sub"); // OpenID "sub" claim is the unique user ID
+        if (authentication instanceof OAuth2AuthenticationToken oauthToken) {
+            OAuth2User oauth2User = oauthToken.getPrincipal();
+            String provider = oauthToken.getAuthorizedClientRegistrationId();
+            String subject;
+            if ("github".equals(provider)) {
+                Object id = oauth2User.getAttribute("id");
+                subject = id != null ? id.toString() : null;
+            } else {
+                subject = oauth2User.getAttribute("sub");
+            }
+            if (subject != null) {
+                return new OAuthIdentity(subject, provider);
+            }
         }
         return null;
     }
 
     private void addNavigationAttributes(Model model, String currentPage) {
-        boolean isLoggedIn = getOauthSubject() != null;
+        boolean isLoggedIn = getOAuthIdentity() != null;
         model.addAttribute("isLoggedIn", isLoggedIn);
         model.addAttribute("currentPage", currentPage);
     }
 
     private Long getCurrentUserId(HttpSession session) {
-        String oauthSubject = getOauthSubject();
+        OAuthIdentity identity = getOAuthIdentity();
 
-        if (oauthSubject != null) {
-            // Find user by their OAuth subject
-            User user = userRepository.findByOauthSubject(oauthSubject).orElse(null);
+        if (identity != null) {
+            // Find user by their OAuth subject + provider
+            User user = userRepository.findByOauthSubjectAndOauthProvider(identity.subject(), identity.provider()).orElse(null);
             if (user != null) {
                 // Migrate guest data if returning user was browsing as guest
                 Long guestUserId = (Long) session.getAttribute(SESSION_GUEST_USER_ID);
@@ -314,6 +326,12 @@ public class BookController {
         getCurrentUserId(session); // Ensure guest user exists and update activity
         addNavigationAttributes(model, "about");
         return "welcome";
+    }
+
+    @GetMapping("/login")
+    public String showLogin(Model model) {
+        addNavigationAttributes(model, "login");
+        return "login";
     }
 
     @PostMapping("/my-books")
@@ -1914,9 +1932,9 @@ public class BookController {
     }
 
     private Long getExistingUserId(HttpSession session) {
-        String oauthSubject = getOauthSubject();
-        if (oauthSubject != null) {
-            User user = userRepository.findByOauthSubject(oauthSubject).orElse(null);
+        OAuthIdentity identity = getOAuthIdentity();
+        if (identity != null) {
+            User user = userRepository.findByOauthSubjectAndOauthProvider(identity.subject(), identity.provider()).orElse(null);
             if (user != null) return user.getId();
             return null;
         }
@@ -1938,7 +1956,7 @@ public class BookController {
         model.addAttribute("query", query);
 
         Long currentUserId = getExistingUserId(session);
-        boolean isLoggedIn = getOauthSubject() != null && currentUserId != null;
+        boolean isLoggedIn = getOAuthIdentity() != null && currentUserId != null;
         User currentUser = isLoggedIn ? userRepository.findById(currentUserId).orElse(null) : null;
         boolean isRealUser = currentUser != null && !currentUser.isGuest();
 
@@ -2237,8 +2255,9 @@ public class BookController {
     @GetMapping("/my-profile")
     public String showProfile(Model model, HttpSession session) {
         // If user is authenticated via OAuth but hasn't set up username, send them to setup
-        if (getOauthSubject() != null) {
-            User existingUser = userRepository.findByOauthSubject(getOauthSubject()).orElse(null);
+        OAuthIdentity identity = getOAuthIdentity();
+        if (identity != null) {
+            User existingUser = userRepository.findByOauthSubjectAndOauthProvider(identity.subject(), identity.provider()).orElse(null);
             if (existingUser == null) {
                 // OAuth user without username - redirect to setup
                 return "redirect:/setup-username";
@@ -2276,8 +2295,7 @@ public class BookController {
 
     @PostMapping("/follow")
     public String followUser(@RequestParam Long userId, @RequestParam(required = false) String returnUrl, HttpSession session) {
-        String oauthSubject = getOauthSubject();
-        if (oauthSubject == null) {
+        if (getOAuthIdentity() == null) {
             return "redirect:/search?type=profiles";
         }
 
@@ -2309,8 +2327,7 @@ public class BookController {
 
     @PostMapping("/unfollow")
     public String unfollowUser(@RequestParam Long userId, @RequestParam(required = false) String returnUrl, HttpSession session) {
-        String oauthSubject = getOauthSubject();
-        if (oauthSubject == null) {
+        if (getOAuthIdentity() == null) {
             return "redirect:/search?type=profiles";
         }
 
@@ -2329,12 +2346,12 @@ public class BookController {
 
     @PostMapping("/toggle-publish-lists")
     public String togglePublishLists(HttpSession session) {
-        String oauthSubject = getOauthSubject();
-        if (oauthSubject == null) {
+        OAuthIdentity identity = getOAuthIdentity();
+        if (identity == null) {
             return "redirect:/";
         }
 
-        User user = userRepository.findByOauthSubject(oauthSubject).orElse(null);
+        User user = userRepository.findByOauthSubjectAndOauthProvider(identity.subject(), identity.provider()).orElse(null);
         if (user == null || user.isGuest()) {
             return "redirect:/";
         }
@@ -2348,12 +2365,12 @@ public class BookController {
     @GetMapping("/setup-username")
     public String showUsernameSetup(Model model) {
         // Only allow access if user is authenticated but doesn't have a username yet
-        String oauthSubject = getOauthSubject();
-        if (oauthSubject == null) {
+        OAuthIdentity identity = getOAuthIdentity();
+        if (identity == null) {
             return "redirect:/";
         }
 
-        User existingUser = userRepository.findByOauthSubject(oauthSubject).orElse(null);
+        User existingUser = userRepository.findByOauthSubjectAndOauthProvider(identity.subject(), identity.provider()).orElse(null);
         if (existingUser != null) {
             // User already has username, redirect to list
             return "redirect:/my-books";
@@ -2365,8 +2382,8 @@ public class BookController {
 
     @PostMapping("/setup-username")
     public String submitUsername(@RequestParam String username, Model model, HttpSession session) {
-        String oauthSubject = getOauthSubject();
-        if (oauthSubject == null) {
+        OAuthIdentity identity = getOAuthIdentity();
+        if (identity == null) {
             return "redirect:/";
         }
 
@@ -2382,8 +2399,8 @@ public class BookController {
         }
         username = username.trim();
 
-        // Create user with chosen username and OAuth subject
-        User newUser = new User(username, oauthSubject);
+        // Create user with chosen username, OAuth subject, and provider
+        User newUser = new User(username, identity.subject(), identity.provider());
         newUser.setGuest(false);
 
         // Set signup tracking - count real users (exclude guests and curated lists)
@@ -2412,11 +2429,11 @@ public class BookController {
 
     @GetMapping("/change-username")
     public String showChangeUsername(Model model, HttpSession session) {
-        String oauthSubject = getOauthSubject();
-        if (oauthSubject == null) {
+        OAuthIdentity identity = getOAuthIdentity();
+        if (identity == null) {
             return "redirect:/";
         }
-        User user = userRepository.findByOauthSubject(oauthSubject).orElse(null);
+        User user = userRepository.findByOauthSubjectAndOauthProvider(identity.subject(), identity.provider()).orElse(null);
         if (user == null || user.isGuest()) {
             return "redirect:/";
         }
@@ -2427,11 +2444,11 @@ public class BookController {
 
     @PostMapping("/change-username")
     public String changeUsername(@RequestParam String username, Model model, HttpSession session) {
-        String oauthSubject = getOauthSubject();
-        if (oauthSubject == null) {
+        OAuthIdentity identity = getOAuthIdentity();
+        if (identity == null) {
             return "redirect:/";
         }
-        User user = userRepository.findByOauthSubject(oauthSubject).orElse(null);
+        User user = userRepository.findByOauthSubjectAndOauthProvider(identity.subject(), identity.provider()).orElse(null);
         if (user == null || user.isGuest()) {
             return "redirect:/";
         }
@@ -2723,12 +2740,12 @@ public class BookController {
     @Transactional
     @PostMapping("/delete-profile")
     public String deleteProfile(HttpSession session) {
-        String oauthSubject = getOauthSubject();
-        if (oauthSubject == null) {
+        OAuthIdentity identity = getOAuthIdentity();
+        if (identity == null) {
             return "redirect:/";
         }
 
-        User user = userRepository.findByOauthSubject(oauthSubject).orElse(null);
+        User user = userRepository.findByOauthSubjectAndOauthProvider(identity.subject(), identity.provider()).orElse(null);
         if (user == null || user.isGuest()) {
             return "redirect:/";
         }

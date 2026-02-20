@@ -1,0 +1,18 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <title>Login - Armchair</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}" />
+  </head>
+  <body>
+    <div th:replace="~{fragments :: navbar}"></div>
+    <div class="page-content">
+      <h3>Login</h3>
+      <p>Choose a sign-in method:</p>
+      <ul>
+        <li><a href="/oauth2/authorization/google">Sign in with Google</a></li>
+        <li><a href="/oauth2/authorization/github">Sign in with GitHub</a></li>
+      </ul>
+    </div>
+  </body>
+</html>

@@ -49,13 +49,15 @@ public class SecurityConfig {
 
     private OAuth2AuthorizationRequest customizeAuthorizationRequest(
             OAuth2AuthorizationRequest authorizationRequest) {
-        Map<String, Object> additionalParameters = new HashMap<>(authorizationRequest.getAdditionalParameters());
-        // Force Google to show account selection screen
-        additionalParameters.put("prompt", "select_account");
-
-        return OAuth2AuthorizationRequest.from(authorizationRequest)
-            .additionalParameters(additionalParameters)
-            .build();
+        // Only add prompt=select_account for Google (not applicable to GitHub)
+        if (authorizationRequest.getAuthorizationUri().contains("accounts.google.com")) {
+            Map<String, Object> additionalParameters = new HashMap<>(authorizationRequest.getAdditionalParameters());
+            additionalParameters.put("prompt", "select_account");
+            return OAuth2AuthorizationRequest.from(authorizationRequest)
+                .additionalParameters(additionalParameters)
+                .build();
+        }
+        return authorizationRequest;
     }
 
     @Bean
@@ -66,6 +68,7 @@ public class SecurityConfig {
                 .anyRequest().authenticated()
             )
             .oauth2Login(oauth2 -> oauth2
+                .loginPage("/login")
                 .defaultSuccessUrl("/my-profile", true)
                 .authorizationEndpoint(authorization -> authorization
                     .authorizationRequestResolver(customAuthorizationRequestResolver())

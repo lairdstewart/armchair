@@ -24,15 +24,16 @@ public class DevDataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        if (userRepository.findByOauthSubject("dev-user-subject").isEmpty()) {
+        if (userRepository.findByOauthSubjectAndOauthProvider("dev-user-subject", "google").isEmpty()) {
             // Check if a user with username "dev" already exists (e.g. from a previous run)
             User existing = userRepository.findByUsername("dev").orElse(null);
             if (existing != null) {
                 existing.setOauthSubject("dev-user-subject");
+                existing.setOauthProvider("google");
                 userRepository.save(existing);
                 log.info("Dev mode: linked existing 'dev' user to dev-user-subject");
             } else {
-                User devUser = new User("dev", "dev-user-subject");
+                User devUser = new User("dev", "dev-user-subject", "google");
                 devUser.setSignupDate(LocalDateTime.now());
                 devUser.setSignupNumber(0L);
                 userRepository.save(devUser);
