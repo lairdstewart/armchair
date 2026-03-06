@@ -10,12 +10,14 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestRedirectFilter;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
@@ -34,7 +36,7 @@ public class DevSecurityConfig {
                 .requestMatchers("/**").permitAll()
                 .anyRequest().authenticated()
             )
-            .addFilterBefore(new MockAuthFilter(), UsernamePasswordAuthenticationFilter.class)
+            .addFilterBefore(new MockAuthFilter(), OAuth2AuthorizationRequestRedirectFilter.class)
             .logout(logout -> logout
                 .logoutSuccessUrl("/")
                 .invalidateHttpSession(true)
@@ -48,29 +50,47 @@ public class DevSecurityConfig {
 
     static class MockAuthFilter extends OncePerRequestFilter {
 
+        private final HttpSessionSecurityContextRepository sessionRepo =
+            new HttpSessionSecurityContextRepository();
+
         @Override
         protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
                                         FilterChain filterChain) throws ServletException, IOException {
-            if (SecurityContextHolder.getContext().getAuthentication() == null
-                    || !SecurityContextHolder.getContext().getAuthentication().isAuthenticated()
-                    || "anonymousUser".equals(SecurityContextHolder.getContext().getAuthentication().getPrincipal())) {
+            String path = request.getRequestURI();
 
-                OAuth2User oauth2User = new DefaultOAuth2User(
-                    List.of(new SimpleGrantedAuthority("ROLE_USER")),
+            if ("/oauth2/authorization/google".equals(path)) {
+                mockLogin(request, response,
                     Map.of("sub", "dev-user-subject", "name", "Dev User"),
-                    "sub"
-                );
+                    "sub", "google");
+                response.sendRedirect("/my-profile");
+                return;
+            }
 
-                OAuth2AuthenticationToken authToken = new OAuth2AuthenticationToken(
-                    oauth2User,
-                    oauth2User.getAuthorities(),
-                    "google"
-                );
-
-                SecurityContextHolder.getContext().setAuthentication(authToken);
+            if ("/oauth2/authorization/github".equals(path)) {
+                mockLogin(request, response,
+                    Map.of("id", 12345, "login", "dev-github", "name", "Dev GitHub User"),
+                    "login", "github");
+                response.sendRedirect("/my-profile");
+                return;
             }
 
             filterChain.doFilter(request, response);
+        }
+
+        private void mockLogin(HttpServletRequest request, HttpServletResponse response,
+                               Map<String, Object> attributes, String nameKey, String provider) {
+            OAuth2User oauth2User = new DefaultOAuth2User(
+                List.of(new SimpleGrantedAuthority("ROLE_USER")),
+                attributes,
+                nameKey
+            );
+            OAuth2AuthenticationToken authToken = new OAuth2AuthenticationToken(
+                oauth2User, oauth2User.getAuthorities(), provider
+            );
+            SecurityContext context = SecurityContextHolder.createEmptyContext();
+            context.setAuthentication(authToken);
+            SecurityContextHolder.setContext(context);
+            sessionRepo.saveContext(context, request, response);
         }
     }
 }

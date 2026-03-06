@@ -40,6 +40,20 @@ public class DevDataInitializer implements CommandLineRunner {
                 log.info("Dev mode: created dev user");
             }
         }
-        log.info("Dev mode: auto-authenticated as user 'dev'");
+        if (userRepository.findByOauthSubjectAndOauthProvider("12345", "github").isEmpty()) {
+            User existing = userRepository.findByUsername("dev-github").orElse(null);
+            if (existing != null) {
+                existing.setOauthSubject("12345");
+                existing.setOauthProvider("github");
+                userRepository.save(existing);
+                log.info("Dev mode: linked existing 'dev-github' user to github subject 12345");
+            } else {
+                User devGithubUser = new User("dev-github", "12345", "github");
+                devGithubUser.setSignupDate(LocalDateTime.now());
+                devGithubUser.setSignupNumber(1L);
+                userRepository.save(devGithubUser);
+                log.info("Dev mode: created dev-github user");
+            }
+        }
     }
 }
