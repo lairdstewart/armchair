@@ -329,6 +329,29 @@ details[open] .review-toggle::after {
   text-decoration: underline;
 }
 
+/* Login page */
+.login-buttons {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.login-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  margin-bottom: 10px;
+  border: 1px solid #ccc;
+  text-decoration: none;
+  color: black;
+  background-color: white;
+}
+
+.login-btn:hover {
+  background-color: #f0f0f0;
+}
+
 /* Back/cancel button - grey, top of page */
 .btn-back {
   background: none;
