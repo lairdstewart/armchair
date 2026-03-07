@@ -150,14 +150,6 @@ ol.book-list li form {
   cursor: pointer;
   padding: 0;
   display: inline-block;
-  vertical-align: baseline;
-}
-
-.navbar form {
-  display: inline;
-  margin: 0;
-  padding: 0;
-  vertical-align: baseline;
 }
 
 .navbar-link-button::after {
