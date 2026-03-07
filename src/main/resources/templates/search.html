@@ -154,7 +154,7 @@
             <a th:href="@{/user/{username}(username=${user.username})}" th:text="${user.username}"></a>
           </div>
         </div>
-        <p th:if="${curatedResults == null || curatedResults.isEmpty()}"><em>No curated lists available.</em></p>
+        <p th:if="${query != null && !query.isBlank() && (curatedResults == null || curatedResults.isEmpty())}"><em>No results found.</em></p>
         <div th:if="${curatedTotalPages != null && curatedTotalPages > 1}" style="margin-top: 15px;">
           <th:block th:each="p : ${#numbers.sequence(0, curatedTotalPages - 1)}">
             <span th:if="${p == curatedPage}" th:text="${(p * pageSize + 1) + '-' + T(java.lang.Math).min((p + 1) * pageSize, curatedTotalCount)}" style="font-weight: bold; margin-right: 8px;"></span>
