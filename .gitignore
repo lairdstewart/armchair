@@ -1,9 +1,2 @@
-worktrees/
 target/
-.idea/
-*.iml
-logs/
-.classpath
-.project
-.settings/
 .env
