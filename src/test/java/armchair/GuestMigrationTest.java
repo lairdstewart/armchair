@@ -42,6 +42,9 @@ class GuestMigrationTest extends BaseIntegrationTest {
         assertThat(rankingRepository.findByUserId(oauthUser.getId())).hasSize(2);
         assertThat(rankingRepository.findByUserId(guestUserId)).isEmpty();
         assertThat(userRepository.findById(guestUserId)).isEmpty();
+
+        // Verify session cleanup: guestUserId removed from session
+        assertThat(session.getAttribute("guestUserId")).isNull();
     }
 
     @Test
@@ -97,6 +100,36 @@ class GuestMigrationTest extends BaseIntegrationTest {
         List<Ranking> rankings = rankingRepository.findByUserId(oauthUser.getId());
         assertThat(rankings).hasSize(1);
         assertThat(rankings.get(0).getReview()).isEqualTo("My favorite book");
+    }
+
+    @Test
+    void sessionCleanupAfterMigration() throws Exception {
+        MockHttpSession session = guestSession();
+        mockMvc.perform(get("/my-books").session(session)).andExpect(status().isOk());
+
+        Long guestUserId = (Long) session.getAttribute("guestUserId");
+        assertThat(guestUserId).isNotNull();
+
+        Book dune = createVerifiedBook("OL123W", "Dune", "Frank Herbert");
+        addRanking(guestUserId, dune, Bookshelf.FICTION, BookCategory.LIKED, 0);
+
+        User oauthUser = createOAuthUser("migrator4", "oauth-migrate-4");
+
+        mockMvc.perform(get("/my-books").session(session)
+                        .with(oauthUser("oauth-migrate-4")))
+                .andExpect(status().isOk());
+
+        // Verify session no longer holds guest user ID
+        assertThat(session.getAttribute("guestUserId")).isNull();
+
+        // Verify guest user record is deleted from DB
+        assertThat(userRepository.findById(guestUserId)).isEmpty();
+
+        // Subsequent requests should use OAuth user, not create a new guest
+        mockMvc.perform(get("/my-books").session(session)
+                        .with(oauthUser("oauth-migrate-4")))
+                .andExpect(status().isOk());
+        assertThat(rankingRepository.findByUserId(oauthUser.getId())).hasSize(1);
     }
 
     @Test
