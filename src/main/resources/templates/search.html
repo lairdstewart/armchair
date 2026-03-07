@@ -10,11 +10,11 @@
     <div class="page-content">
       <form th:action="@{/search}" method="GET" style="margin-bottom: 20px;">
         <div style="margin-bottom: 15px;">
-          <label><input type="radio" name="type" value="books" th:checked="${searchType == 'books'}" onchange="showSearchTab('books')" /> Books</label>
-          <label style="margin-left: 15px;"><input type="radio" name="type" value="curated" th:checked="${searchType == 'curated'}" onchange="showSearchTab('curated')" /> Curated Lists</label>
-          <label style="margin-left: 15px;"><input type="radio" name="type" value="profiles" th:checked="${searchType == 'profiles'}" onchange="showSearchTab('profiles')" /> Profiles</label>
-          <label style="margin-left: 15px;"><input type="radio" name="type" value="following" th:checked="${searchType == 'following'}" onchange="showSearchTab('following')" /> Following</label>
-          <label style="margin-left: 15px;"><input type="radio" name="type" value="followers" th:checked="${searchType == 'followers'}" onchange="showSearchTab('followers')" /> Followers</label>
+          <label><input type="radio" name="type" value="books" th:checked="${searchType == 'books'}" onchange="showSearchTab(this)" /> Books</label>
+          <label style="margin-left: 15px;"><input type="radio" name="type" value="curated" th:checked="${searchType == 'curated'}" onchange="showSearchTab(this)" /> Curated Lists</label>
+          <label style="margin-left: 15px;"><input type="radio" name="type" value="profiles" th:checked="${searchType == 'profiles'}" onchange="showSearchTab(this)" /> Profiles</label>
+          <label style="margin-left: 15px;"><input type="radio" name="type" value="following" th:checked="${searchType == 'following'}" onchange="showSearchTab(this)" /> Following</label>
+          <label style="margin-left: 15px;"><input type="radio" name="type" value="followers" th:checked="${searchType == 'followers'}" onchange="showSearchTab(this)" /> Followers</label>
         </div>
         <span id="search-bar" th:style="${searchType == 'following' || searchType == 'followers' ? 'display:none' : ''}">
           <input type="text" name="query" id="searchQuery" th:placeholder="${searchType == 'books' ? 'Search books...' : (searchType == 'profiles' ? 'Search profiles...' : 'Search curated lists...')}"
@@ -164,19 +164,9 @@
       </div>
     </div>
     <script>
-    function showSearchTab(type) {
-      document.querySelectorAll('[id^="stab-"]').forEach(function(el) { el.style.display = 'none'; });
-      var tab = document.getElementById('stab-' + type);
-      if (tab) tab.style.display = '';
-      var searchBar = document.getElementById('search-bar');
-      var queryInput = document.getElementById('searchQuery');
-      if (type === 'following' || type === 'followers') {
-        searchBar.style.display = 'none';
-      } else {
-        searchBar.style.display = '';
-        queryInput.placeholder = type === 'books' ? 'Search books...' : (type === 'profiles' ? 'Search profiles...' : 'Search curated lists...');
-      }
-      queryInput.value = '';
+    function showSearchTab(radio) {
+      document.getElementById('searchQuery').value = '';
+      radio.form.submit();
     }
     </script>
   </body>

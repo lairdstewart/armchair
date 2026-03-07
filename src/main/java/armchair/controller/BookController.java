@@ -2220,14 +2220,6 @@ public class BookController {
         return new ProfileDisplayWithFollow(user.getUsername(), formatBookStats(grouped), user.getId(), isFollowing);
     }
 
-    @GetMapping("/curated-lists")
-    public String showCurated(Model model, HttpSession session) {
-        getCurrentUserId(session);
-        addNavigationAttributes(model, "curated");
-        List<User> curatedUsers = userRepository.findByIsCurated(true);
-        model.addAttribute("curatedUsers", curatedUsers);
-        return "curated";
-    }
 
     private static final int MIN_RANKED_BOOKS_FOR_RECS = 10;
     private static final List<BookCategory> RANKED_CATEGORIES = List.of(BookCategory.LIKED, BookCategory.OK, BookCategory.DISLIKED);
@@ -2285,7 +2277,7 @@ public class BookController {
         }
 
         // Keep the appropriate nav button selected based on user type
-        addNavigationAttributes(model, user.isCurated() ? "curated" : "explore");
+        addNavigationAttributes(model, "search");
 
         Map<Bookshelf, Map<BookCategory, List<Ranking>>> viewedUserRankings = fetchAllRankingsGrouped(user.getId());
         BookLists fictionBooks = getBookLists(Bookshelf.FICTION, viewedUserRankings);
