@@ -126,6 +126,16 @@ ol.book-list li form {
 .navbar-link {
   color: white;
   text-decoration: none;
+  display: inline-block;
+}
+
+.navbar-link::after {
+  content: attr(data-text);
+  font-weight: bold;
+  visibility: hidden;
+  display: block;
+  height: 0;
+  overflow: hidden;
 }
 
 .navbar-link:hover {
@@ -139,6 +149,16 @@ ol.book-list li form {
   font: inherit;
   cursor: pointer;
   padding: 0;
+  display: inline-block;
+}
+
+.navbar-link-button::after {
+  content: attr(data-text);
+  font-weight: bold;
+  visibility: hidden;
+  display: block;
+  height: 0;
+  overflow: hidden;
 }
 
 .navbar-link-button:hover {
