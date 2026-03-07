@@ -2233,11 +2233,16 @@ public class BookController {
     public String showRecs(Model model, HttpSession session) {
         Long userId = getCurrentUserId(session);
         addNavigationAttributes(model, "recs");
-        List<BookInfo> recs = recommendationAlgorithm.getRecommendations(userId, 10).stream()
+        List<BookInfo> fictionRecs = recommendationAlgorithm.getFictionRecommendations(userId, 10).stream()
                 .map(b -> new BookInfo(b.getId(), b.getWorkOlid(), b.getEditionOlid(),
                         b.getTitle(), b.getAuthor(), null, b.getFirstPublishYear(), b.getCoverId()))
                 .toList();
-        model.addAttribute("recs", recs);
+        List<BookInfo> nonfictionRecs = recommendationAlgorithm.getNonfictionRecommendations(userId, 10).stream()
+                .map(b -> new BookInfo(b.getId(), b.getWorkOlid(), b.getEditionOlid(),
+                        b.getTitle(), b.getAuthor(), null, b.getFirstPublishYear(), b.getCoverId()))
+                .toList();
+        model.addAttribute("fictionRecs", fictionRecs);
+        model.addAttribute("nonfictionRecs", nonfictionRecs);
 
         Map<Bookshelf, Map<BookCategory, List<Ranking>>> allRankings = userId != null ? fetchAllRankingsGrouped(userId) : Map.of();
         Map<String, UserBookRank> userBooks = userId != null ? buildUserBooksMap(allRankings) : Map.of();

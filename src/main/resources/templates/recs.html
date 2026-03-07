@@ -8,34 +8,86 @@
   <body>
     <div th:replace="~{fragments :: navbar}"></div>
     <div class="page-content">
-      <div th:if="${recs.isEmpty()}">
-        <p>No recommendations yet. Follow some users to get personalized recs!</p>
+      <div style="margin-bottom: 15px;">
+        <label>
+          <input type="radio" name="typeSelector" value="FICTION" checked onchange="showTab('FICTION')" />
+          Fiction
+        </label>
+        <label style="margin-left: 15px;">
+          <input type="radio" name="typeSelector" value="NONFICTION" onchange="showTab('NONFICTION')" />
+          Non-Fiction
+        </label>
       </div>
-      <div th:unless="${recs.isEmpty()}">
-        <ol class="book-list">
-          <li th:each="book, iter : ${recs}">
-            <span class="book-number liked" th:text="${iter.index + 1}"></span>
-            <div class="book-entry">
-              <div class="book-info">
-                <div class="book-title">
-                  <a th:if="${book.bookUrl() != null}" th:href="${book.bookUrl()}" th:text="${book.title()}" target="_blank"></a>
-                  <span th:if="${book.bookUrl() == null}" th:text="${book.title()}"></span>
+
+      <div id="tab-FICTION">
+        <div th:if="${fictionRecs.isEmpty()}">
+          <p>No fiction recommendations yet.</p>
+        </div>
+        <div th:unless="${fictionRecs.isEmpty()}">
+          <ol class="book-list">
+            <li th:each="book, iter : ${fictionRecs}">
+              <span class="book-number liked" th:text="${iter.index + 1}"></span>
+              <div class="book-entry">
+                <div class="book-info">
+                  <div class="book-title">
+                    <a th:if="${book.bookUrl() != null}" th:href="${book.bookUrl()}" th:text="${book.title()}" target="_blank"></a>
+                    <span th:if="${book.bookUrl() == null}" th:text="${book.title()}"></span>
+                  </div>
+                  <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author"><span th:text="${book.author()}"></span><span th:if="${book.firstPublishYear() != null}" th:text="${' (' + book.firstPublishYear() + ')'}"></span></div>
+                  <form th:if="${book.workOlid() != null && !userBooks.containsKey(book.workOlid())}" th:action="@{/add-to-reading-list}" method="POST" style="display: inline; margin-left: 0.5em;">
+                    <input type="hidden" name="workOlid" th:value="${book.workOlid()}" />
+                    <input type="hidden" name="bookName" th:value="${book.title()}" />
+                    <input type="hidden" name="author" th:value="${book.author()}" />
+                    <input type="hidden" name="editionOlid" th:value="${book.editionOlid()}" />
+                    <input type="hidden" name="returnUrl" value="/recs" />
+                    <button type="submit" class="book-action-link">[want to read]</button>
+                  </form>
                 </div>
-                <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author"><span th:text="${book.author()}"></span><span th:if="${book.firstPublishYear() != null}" th:text="${' (' + book.firstPublishYear() + ')'}"></span></div>
-                <form th:if="${book.workOlid() != null && !userBooks.containsKey(book.workOlid())}" th:action="@{/add-to-reading-list}" method="POST" style="display: inline; margin-left: 0.5em;">
-                  <input type="hidden" name="workOlid" th:value="${book.workOlid()}" />
-                  <input type="hidden" name="bookName" th:value="${book.title()}" />
-                  <input type="hidden" name="author" th:value="${book.author()}" />
-                  <input type="hidden" name="editionOlid" th:value="${book.editionOlid()}" />
-                  <input type="hidden" name="returnUrl" value="/recs" />
-                  <button type="submit" class="book-action-link">[want to read]</button>
-                </form>
+                <img th:if="${book.coverUrl() != null}" class="book-cover" th:src="${book.coverUrl()}" /><div th:if="${book.coverUrl() == null}" class="book-cover-placeholder">?</div>
               </div>
-              <img th:if="${book.coverUrl() != null}" class="book-cover" th:src="${book.coverUrl()}" /><div th:if="${book.coverUrl() == null}" class="book-cover-placeholder">?</div>
-            </div>
-          </li>
-        </ol>
+            </li>
+          </ol>
+        </div>
+      </div>
+
+      <div id="tab-NONFICTION" style="display: none;">
+        <div th:if="${nonfictionRecs.isEmpty()}">
+          <p>No nonfiction recommendations yet.</p>
+        </div>
+        <div th:unless="${nonfictionRecs.isEmpty()}">
+          <ol class="book-list">
+            <li th:each="book, iter : ${nonfictionRecs}">
+              <span class="book-number liked" th:text="${iter.index + 1}"></span>
+              <div class="book-entry">
+                <div class="book-info">
+                  <div class="book-title">
+                    <a th:if="${book.bookUrl() != null}" th:href="${book.bookUrl()}" th:text="${book.title()}" target="_blank"></a>
+                    <span th:if="${book.bookUrl() == null}" th:text="${book.title()}"></span>
+                  </div>
+                  <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author"><span th:text="${book.author()}"></span><span th:if="${book.firstPublishYear() != null}" th:text="${' (' + book.firstPublishYear() + ')'}"></span></div>
+                  <form th:if="${book.workOlid() != null && !userBooks.containsKey(book.workOlid())}" th:action="@{/add-to-reading-list}" method="POST" style="display: inline; margin-left: 0.5em;">
+                    <input type="hidden" name="workOlid" th:value="${book.workOlid()}" />
+                    <input type="hidden" name="bookName" th:value="${book.title()}" />
+                    <input type="hidden" name="author" th:value="${book.author()}" />
+                    <input type="hidden" name="editionOlid" th:value="${book.editionOlid()}" />
+                    <input type="hidden" name="returnUrl" value="/recs" />
+                    <button type="submit" class="book-action-link">[want to read]</button>
+                  </form>
+                </div>
+                <img th:if="${book.coverUrl() != null}" class="book-cover" th:src="${book.coverUrl()}" /><div th:if="${book.coverUrl() == null}" class="book-cover-placeholder">?</div>
+              </div>
+            </li>
+          </ol>
+        </div>
       </div>
     </div>
+
+    <script>
+    function showTab(type) {
+      document.querySelectorAll('[id^="tab-"]').forEach(function(el) { el.style.display = 'none'; });
+      var tab = document.getElementById('tab-' + type);
+      if (tab) tab.style.display = '';
+    }
+    </script>
   </body>
 </html>
