@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <body>
   <th:block th:fragment="content">
-    <form th:action="@{/back-to-resolve}" method="POST" style="margin-bottom: 0;">
+    <form th:action="${cameFromResolve} ? @{/back-to-resolve} : @{/cancel-add}" method="POST" style="margin-bottom: 0;">
       <button type="submit" class="btn-back">back</button>
     </form>
     <h3>Select the correct edition to add</h3>
