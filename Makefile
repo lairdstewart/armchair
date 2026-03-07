@@ -4,13 +4,13 @@ check-env:
 	@test -f $(ENV_FILE) || (echo "Error: $(ENV_FILE) not found. Copy .env.example to ../.env and fill in values." && exit 1)
 
 run: check-env
-	set -a && . $(ENV_FILE) && set +a && mvn spring-boot:run -Dspring-boot.run.arguments="--server.port=8080"
+	set -a && . $(ENV_FILE) && set +a && ./mvnw spring-boot:run -Dspring-boot.run.arguments="--server.port=8080"
 
 run-no-auth: check-env
-	set -a && . $(ENV_FILE) && set +a && mvn spring-boot:run -Dspring-boot.run.arguments="--server.port=0 --spring.profiles.active=dev"
+	set -a && . $(ENV_FILE) && set +a && ./mvnw spring-boot:run -Dspring-boot.run.arguments="--server.port=0 --spring.profiles.active=dev"
 
 compile:
-	mvn compile -q
+	./mvnw compile -q
 
 docker-build:
 	docker build -t armchair .
