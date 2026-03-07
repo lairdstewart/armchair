@@ -20,10 +20,13 @@
       </div>
 
       <div id="tab-FICTION">
-        <div th:if="${fictionRecs.isEmpty()}">
+        <div th:if="${fictionRankedCount < minRankedBooks}">
+          <p><em th:text="'Rank ' + ${minRankedBooks} + ' Fiction books to get recommendations'"></em></p>
+        </div>
+        <div th:if="${fictionRankedCount >= minRankedBooks && fictionRecs.isEmpty()}">
           <p>No fiction recommendations yet.</p>
         </div>
-        <div th:unless="${fictionRecs.isEmpty()}">
+        <div th:if="${fictionRankedCount >= minRankedBooks && !fictionRecs.isEmpty()}">
           <ol class="book-list">
             <li th:each="book, iter : ${fictionRecs}">
               <span class="book-number liked" th:text="${iter.index + 1}"></span>
@@ -51,10 +54,13 @@
       </div>
 
       <div id="tab-NONFICTION" style="display: none;">
-        <div th:if="${nonfictionRecs.isEmpty()}">
+        <div th:if="${nonfictionRankedCount < minRankedBooks}">
+          <p><em th:text="'Rank ' + ${minRankedBooks} + ' Non-Fiction books to get recommendations'"></em></p>
+        </div>
+        <div th:if="${nonfictionRankedCount >= minRankedBooks && nonfictionRecs.isEmpty()}">
           <p>No nonfiction recommendations yet.</p>
         </div>
-        <div th:unless="${nonfictionRecs.isEmpty()}">
+        <div th:if="${nonfictionRankedCount >= minRankedBooks && !nonfictionRecs.isEmpty()}">
           <ol class="book-list">
             <li th:each="book, iter : ${nonfictionRecs}">
               <span class="book-number liked" th:text="${iter.index + 1}"></span>

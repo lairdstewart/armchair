@@ -2229,20 +2229,38 @@ public class BookController {
         return "curated";
     }
 
+    private static final int MIN_RANKED_BOOKS_FOR_RECS = 10;
+    private static final List<BookCategory> RANKED_CATEGORIES = List.of(BookCategory.LIKED, BookCategory.OK, BookCategory.DISLIKED);
+
     @GetMapping("/recs")
     public String showRecs(Model model, HttpSession session) {
         Long userId = getCurrentUserId(session);
         addNavigationAttributes(model, "recs");
-        List<BookInfo> fictionRecs = recommendationAlgorithm.getFictionRecommendations(userId, 10).stream()
-                .map(b -> new BookInfo(b.getId(), b.getWorkOlid(), b.getEditionOlid(),
-                        b.getTitle(), b.getAuthor(), null, b.getFirstPublishYear(), b.getCoverId()))
-                .toList();
-        List<BookInfo> nonfictionRecs = recommendationAlgorithm.getNonfictionRecommendations(userId, 10).stream()
-                .map(b -> new BookInfo(b.getId(), b.getWorkOlid(), b.getEditionOlid(),
-                        b.getTitle(), b.getAuthor(), null, b.getFirstPublishYear(), b.getCoverId()))
-                .toList();
+
+        long fictionRankedCount = userId != null
+                ? rankingRepository.countByUserIdAndBookshelfAndCategoryIn(userId, Bookshelf.FICTION, RANKED_CATEGORIES) : 0;
+        long nonfictionRankedCount = userId != null
+                ? rankingRepository.countByUserIdAndBookshelfAndCategoryIn(userId, Bookshelf.NONFICTION, RANKED_CATEGORIES) : 0;
+
+        List<BookInfo> fictionRecs = List.of();
+        if (fictionRankedCount >= MIN_RANKED_BOOKS_FOR_RECS) {
+            fictionRecs = recommendationAlgorithm.getFictionRecommendations(userId, 10).stream()
+                    .map(b -> new BookInfo(b.getId(), b.getWorkOlid(), b.getEditionOlid(),
+                            b.getTitle(), b.getAuthor(), null, b.getFirstPublishYear(), b.getCoverId()))
+                    .toList();
+        }
+        List<BookInfo> nonfictionRecs = List.of();
+        if (nonfictionRankedCount >= MIN_RANKED_BOOKS_FOR_RECS) {
+            nonfictionRecs = recommendationAlgorithm.getNonfictionRecommendations(userId, 10).stream()
+                    .map(b -> new BookInfo(b.getId(), b.getWorkOlid(), b.getEditionOlid(),
+                            b.getTitle(), b.getAuthor(), null, b.getFirstPublishYear(), b.getCoverId()))
+                    .toList();
+        }
         model.addAttribute("fictionRecs", fictionRecs);
         model.addAttribute("nonfictionRecs", nonfictionRecs);
+        model.addAttribute("fictionRankedCount", fictionRankedCount);
+        model.addAttribute("nonfictionRankedCount", nonfictionRankedCount);
+        model.addAttribute("minRankedBooks", MIN_RANKED_BOOKS_FOR_RECS);
 
         Map<Bookshelf, Map<BookCategory, List<Ranking>>> allRankings = userId != null ? fetchAllRankingsGrouped(userId) : Map.of();
         Map<String, UserBookRank> userBooks = userId != null ? buildUserBooksMap(allRankings) : Map.of();

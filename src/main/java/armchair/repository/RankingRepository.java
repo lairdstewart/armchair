@@ -25,6 +25,8 @@ public interface RankingRepository extends JpaRepository<Ranking, Long> {
     @Query("UPDATE Ranking r SET r.position = r.position - 1 WHERE r.userId = :userId AND r.bookshelf = :bookshelf AND r.category = :category AND r.position > :removedPosition")
     void decrementPositionsAbove(@Param("userId") Long userId, @Param("bookshelf") Bookshelf bookshelf, @Param("category") BookCategory category, @Param("removedPosition") int removedPosition);
 
+    long countByUserIdAndBookshelfAndCategoryIn(Long userId, Bookshelf bookshelf, List<BookCategory> categories);
+
     @Query("SELECT DISTINCT r.userId FROM Ranking r")
     List<Long> findDistinctUserIds();
 
