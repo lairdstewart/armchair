@@ -29,7 +29,7 @@
           <span th:text="${' ' + profile.stats()}"></span>
         </div>
       </div>
-      <p th:if="${recentProfiles.isEmpty()}">No profiles yet.</p>
+      <p th:if="${recentProfiles.isEmpty()}"><em>No profiles yet.</em></p>
       <p th:text="${'... ' + moreProfilesCount + ' more profiles'}"></p>
     </div>
     </div>

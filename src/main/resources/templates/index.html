@@ -35,7 +35,7 @@
 
           <!-- Fiction tab -->
           <div id="tab-FICTION" th:style="${selectedBookshelf == 'FICTION' ? '' : 'display:none'}">
-            <p th:if="${!hasFiction}">Add books via the search tab or <a th:if="${isLoggedIn}" href="/import-goodreads">import from Goodreads</a><a th:unless="${isLoggedIn}" href="#" onclick="alert('Log in to Armchair to import books from Goodreads'); return false;">import from Goodreads</a>.</p>
+            <p th:if="${!hasFiction}"><em>Add books via the search tab or <a th:if="${isLoggedIn}" href="/import-goodreads">import from Goodreads</a><a th:unless="${isLoggedIn}" href="#" onclick="alert('Log in to Armchair to import books from Goodreads'); return false;">import from Goodreads</a>.</em></p>
             <div th:if="${hasFiction}">
             <ol class="book-list">
               <li th:each="book, iter : ${fictionBooks.liked()}">
@@ -221,7 +221,7 @@
 
           <!-- Non-Fiction tab -->
           <div id="tab-NONFICTION" th:style="${selectedBookshelf == 'NONFICTION' ? '' : 'display:none'}">
-            <p th:if="${!hasNonfiction}">Add books via the search tab or <a th:if="${isLoggedIn}" href="/import-goodreads">import from Goodreads</a><a th:unless="${isLoggedIn}" href="#" onclick="alert('Log in to Armchair to import books from Goodreads'); return false;">import from Goodreads</a>.</p>
+            <p th:if="${!hasNonfiction}"><em>Add books via the search tab or <a th:if="${isLoggedIn}" href="/import-goodreads">import from Goodreads</a><a th:unless="${isLoggedIn}" href="#" onclick="alert('Log in to Armchair to import books from Goodreads'); return false;">import from Goodreads</a>.</em></p>
             <div th:if="${hasNonfiction}">
             <ol class="book-list">
               <li th:each="book, iter : ${nonfictionBooks.liked()}">
@@ -407,7 +407,7 @@
 
           <!-- Want to Read tab -->
           <div id="tab-WANT_TO_READ" th:style="${selectedBookshelf == 'WANT_TO_READ' ? '' : 'display:none'}">
-            <p th:if="${!hasWantToRead}">Add books via the search tab or <a th:if="${isLoggedIn}" href="/import-goodreads">import from Goodreads</a><a th:unless="${isLoggedIn}" href="#" onclick="alert('Log in to Armchair to import books from Goodreads'); return false;">import from Goodreads</a>.</p>
+            <p th:if="${!hasWantToRead}"><em>Add books via the search tab or <a th:if="${isLoggedIn}" href="/import-goodreads">import from Goodreads</a><a th:unless="${isLoggedIn}" href="#" onclick="alert('Log in to Armchair to import books from Goodreads'); return false;">import from Goodreads</a>.</em></p>
             <div th:if="${hasWantToRead}">
             <ul class="plain-list">
               <li th:each="book, iter : ${wantToReadBooks}">

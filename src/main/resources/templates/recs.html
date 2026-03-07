@@ -24,7 +24,7 @@
           <p><em th:text="'Rank ' + ${minRankedBooks} + ' Fiction books to get recommendations'"></em></p>
         </div>
         <div th:if="${fictionRankedCount >= minRankedBooks && fictionRecs.isEmpty()}">
-          <p>No fiction recommendations yet.</p>
+          <p><em>No fiction recommendations yet.</em></p>
         </div>
         <div th:if="${fictionRankedCount >= minRankedBooks && !fictionRecs.isEmpty()}">
           <ol class="book-list">
@@ -58,7 +58,7 @@
           <p><em th:text="'Rank ' + ${minRankedBooks} + ' Non-Fiction books to get recommendations'"></em></p>
         </div>
         <div th:if="${nonfictionRankedCount >= minRankedBooks && nonfictionRecs.isEmpty()}">
-          <p>No nonfiction recommendations yet.</p>
+          <p><em>No nonfiction recommendations yet.</em></p>
         </div>
         <div th:if="${nonfictionRankedCount >= minRankedBooks && !nonfictionRecs.isEmpty()}">
           <ol class="book-list">

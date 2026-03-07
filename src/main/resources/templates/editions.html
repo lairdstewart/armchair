@@ -45,7 +45,7 @@
           <img th:if="${edition.coverUrl() != null}" class="book-cover" th:src="${edition.coverUrl()}" /><div th:if="${edition.coverUrl() == null}" class="book-cover-placeholder">?</div>
         </div>
       </div>
-      <p th:if="${editionResults == null || editionResults.isEmpty()}">No editions found.</p>
+      <p th:if="${editionResults == null || editionResults.isEmpty()}"><em>No editions found.</em></p>
 
       <div th:if="${editionTotalPages > 1}" style="margin-top: 15px; margin-bottom: 15px;">
         <th:block th:each="p : ${#numbers.sequence(0, editionTotalPages - 1)}">

@@ -58,8 +58,8 @@
             </div>
           </li>
         </ol>
-        <p th:if="${query == null || query.isBlank()}">... 40 million more books</p>
-        <p th:if="${query != null && !query.isBlank() && (bookResults == null || bookResults.isEmpty())}">No results found.</p>
+        <p th:if="${query == null || query.isBlank()}"><em>... 40 million more books</em></p>
+        <p th:if="${query != null && !query.isBlank() && (bookResults == null || bookResults.isEmpty())}"><em>No results found.</em></p>
       </div>
 
       <!-- Profiles results -->
@@ -84,7 +84,7 @@
             </form>
           </div>
         </div>
-        <p th:if="${profileSearchResults == null || profileSearchResults.isEmpty()}">No profiles found.</p>
+        <p th:if="${profileSearchResults == null || profileSearchResults.isEmpty()}"><em>No profiles found.</em></p>
         <div th:if="${profilesTotalPages != null && profilesTotalPages > 1}" style="margin-top: 15px;">
           <th:block th:each="p : ${#numbers.sequence(0, profilesTotalPages - 1)}">
             <span th:if="${p == profilesPage}" th:text="${(p * pageSize + 1) + '-' + T(java.lang.Math).min((p + 1) * pageSize, profilesTotalCount)}" style="font-weight: bold; margin-right: 8px;"></span>
@@ -107,7 +107,7 @@
             </form>
           </div>
         </div>
-        <p th:if="${followingResults == null || followingResults.isEmpty()}">You're not following anyone yet.</p>
+        <p th:if="${followingResults == null || followingResults.isEmpty()}"><em>You're not following anyone yet.</em></p>
         <div th:if="${followingTotalPages != null && followingTotalPages > 1}" style="margin-top: 15px;">
           <th:block th:each="p : ${#numbers.sequence(0, followingTotalPages - 1)}">
             <span th:if="${p == followingPage}" th:text="${(p * pageSize + 1) + '-' + T(java.lang.Math).min((p + 1) * pageSize, followingTotalCount)}" style="font-weight: bold; margin-right: 8px;"></span>
@@ -138,7 +138,7 @@
             </form>
           </div>
         </div>
-        <p th:if="${followerResults == null || followerResults.isEmpty()}">You don't have any followers yet.</p>
+        <p th:if="${followerResults == null || followerResults.isEmpty()}"><em>You don't have any followers yet.</em></p>
         <div th:if="${followersTotalPages != null && followersTotalPages > 1}" style="margin-top: 15px;">
           <th:block th:each="p : ${#numbers.sequence(0, followersTotalPages - 1)}">
             <span th:if="${p == followersPage}" th:text="${(p * pageSize + 1) + '-' + T(java.lang.Math).min((p + 1) * pageSize, followersTotalCount)}" style="font-weight: bold; margin-right: 8px;"></span>
@@ -154,7 +154,7 @@
             <a th:href="@{/user/{username}(username=${user.username})}" th:text="${user.username}"></a>
           </div>
         </div>
-        <p th:if="${curatedResults == null || curatedResults.isEmpty()}">No curated lists available.</p>
+        <p th:if="${curatedResults == null || curatedResults.isEmpty()}"><em>No curated lists available.</em></p>
         <div th:if="${curatedTotalPages != null && curatedTotalPages > 1}" style="margin-top: 15px;">
           <th:block th:each="p : ${#numbers.sequence(0, curatedTotalPages - 1)}">
             <span th:if="${p == curatedPage}" th:text="${(p * pageSize + 1) + '-' + T(java.lang.Math).min((p + 1) * pageSize, curatedTotalCount)}" style="font-weight: bold; margin-right: 8px;"></span>
