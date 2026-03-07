@@ -111,6 +111,17 @@ public abstract class BaseIntegrationTest {
     }
 
     /**
+     * Create filler ranked books so a user meets the MIN_RANKED_BOOKS_FOR_RECS threshold.
+     */
+    protected void addFillerRankings(Long userId, Bookshelf bookshelf, int count) {
+        for (int i = 0; i < count; i++) {
+            Book book = createVerifiedBook("OL_FILLER_" + userId + "_" + bookshelf + "_" + i + "W",
+                    "Filler Book " + i, "Filler Author " + i);
+            addRanking(userId, book, bookshelf, BookCategory.LIKED, i);
+        }
+    }
+
+    /**
      * Helper to get oauth2Login post-processor for a given OAuth subject (defaults to Google).
      */
     protected static org.springframework.test.web.servlet.request.RequestPostProcessor oauthUser(String oauthSubject) {

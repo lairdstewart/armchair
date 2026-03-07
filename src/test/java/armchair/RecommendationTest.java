@@ -24,8 +24,10 @@ class RecommendationTest extends BaseIntegrationTest {
 
     @Test
     void recsShowsFictionBooksFromAnyUser() throws Exception {
-        createOAuthUser("rec2", "oauth-rec-2");
+        User me = createOAuthUser("rec2", "oauth-rec-2");
         User other = createOAuthUser("rec3", "oauth-rec-3");
+
+        addFillerRankings(me.getId(), Bookshelf.FICTION, 10);
 
         Book otherBook = createVerifiedBook("OL200W", "Great Book", "Good Author");
         addRanking(other.getId(), otherBook, Bookshelf.FICTION, BookCategory.LIKED, 0);
@@ -52,8 +54,11 @@ class RecommendationTest extends BaseIntegrationTest {
 
     @Test
     void recsKeepsFictionAndNonfictionSeparate() throws Exception {
-        createOAuthUser("rec6", "oauth-rec-6");
+        User me = createOAuthUser("rec6", "oauth-rec-6");
         User other = createOAuthUser("rec7", "oauth-rec-7");
+
+        addFillerRankings(me.getId(), Bookshelf.FICTION, 10);
+        addFillerRankings(me.getId(), Bookshelf.NONFICTION, 10);
 
         Book fictionBook = createVerifiedBook("OL400W", "Fiction Only", "Author A");
         Book nonfictionBook = createVerifiedBook("OL500W", "Nonfiction Only", "Author B");
