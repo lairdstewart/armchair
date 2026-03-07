@@ -12,6 +12,10 @@ run-no-auth: check-env
 compile:
 	./mvnw compile -q
 
+import-lists: check-env
+	@test -n "$(FILE)" || (echo "Error: FILE is required. Usage: make import-lists FILE=/path/to/file.json" && exit 1)
+	set -a && . $(ENV_FILE) && set +a && ./mvnw exec:java -Dexec.mainClass="armchair.tool.CuratedListImporter" -Dexec.args="$(FILE)"
+
 docker-build:
 	docker build -t armchair .
 
