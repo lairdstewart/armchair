@@ -1,0 +1,667 @@
+package armchair;
+
+import armchair.entity.Book;
+import armchair.entity.BookCategory;
+import armchair.entity.Bookshelf;
+import armchair.entity.Ranking;
+import armchair.entity.RankingMode;
+import armchair.entity.RankingState;
+import armchair.entity.User;
+import org.junit.jupiter.api.Test;
+import org.springframework.mock.web.MockHttpSession;
+
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+class WorkflowFlowTest extends BaseIntegrationTest {
+
+    // ── Re-rank workflow ──
+
+    @Test
+    void rerankFlow() throws Exception {
+        User user = createOAuthUser("wf1", "oauth-wf-1");
+
+        Book bookA = createVerifiedBook("OL1W", "Book A", "Author A");
+        Book bookB = createVerifiedBook("OL2W", "Book B", "Author B");
+        Book bookC = createVerifiedBook("OL3W", "Book C", "Author C");
+        addRanking(user.getId(), bookA, Bookshelf.FICTION, BookCategory.LIKED, 0);
+        Ranking rB = addRanking(user.getId(), bookB, Bookshelf.FICTION, BookCategory.LIKED, 1);
+        addRanking(user.getId(), bookC, Bookshelf.FICTION, BookCategory.LIKED, 2);
+
+        // Step 1: start-rerank creates RE_RANK state
+        mockMvc.perform(post("/start-rerank")
+                        .param("bookshelf", "fiction")
+                        .with(oauthUser("oauth-wf-1")).with(csrf()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/my-books"));
+
+        RankingState state = rankingStateRepository.findById(user.getId()).orElseThrow();
+        assertThat(state.getMode()).isEqualTo(RankingMode.RE_RANK);
+        assertThat(state.getBookshelf()).isEqualTo(Bookshelf.FICTION);
+
+        // Step 2: select-rerank-book removes book and stores info
+        mockMvc.perform(post("/select-rerank-book")
+                        .param("bookId", String.valueOf(rB.getId()))
+                        .with(oauthUser("oauth-wf-1")).with(csrf()))
+                .andExpect(status().is3xxRedirection());
+
+        // Book B removed, gap closed
+        List<Ranking> liked = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(
+                user.getId(), Bookshelf.FICTION, BookCategory.LIKED);
+        assertThat(liked).hasSize(2);
+        assertThat(liked.get(0).getBook().getTitle()).isEqualTo("Book A");
+        assertThat(liked.get(0).getPosition()).isEqualTo(0);
+        assertThat(liked.get(1).getBook().getTitle()).isEqualTo("Book C");
+        assertThat(liked.get(1).getPosition()).isEqualTo(1);
+
+        // State has book info for re-ranking
+        state = rankingStateRepository.findById(user.getId()).orElseThrow();
+        assertThat(state.getTitleBeingRanked()).isEqualTo("Book B");
+        assertThat(state.getWorkOlidBeingRanked()).isEqualTo("OL2W");
+    }
+
+    @Test
+    void rerankThenCategorizeAndRank() throws Exception {
+        User user = createOAuthUser("wf2", "oauth-wf-2");
+
+        Book bookA = createVerifiedBook("OL1W", "Book A", "Author A");
+        Book bookB = createVerifiedBook("OL2W", "Book B", "Author B");
+        Book bookC = createVerifiedBook("OL3W", "Book C", "Author C");
+        addRanking(user.getId(), bookA, Bookshelf.FICTION, BookCategory.LIKED, 0);
+        Ranking rB = addRanking(user.getId(), bookB, Bookshelf.FICTION, BookCategory.LIKED, 1);
+        addRanking(user.getId(), bookC, Bookshelf.FICTION, BookCategory.LIKED, 2);
+
+        // Start rerank flow
+        mockMvc.perform(post("/start-rerank")
+                        .param("bookshelf", "fiction")
+                        .with(oauthUser("oauth-wf-2")).with(csrf()))
+                .andExpect(status().is3xxRedirection());
+
+        mockMvc.perform(post("/select-rerank-book")
+                        .param("bookId", String.valueOf(rB.getId()))
+                        .with(oauthUser("oauth-wf-2")).with(csrf()))
+                .andExpect(status().is3xxRedirection());
+
+        // Now categorize Book B into nonfiction/ok (different shelf)
+        mockMvc.perform(post("/categorize")
+                        .param("bookshelf", "nonfiction")
+                        .param("category", "ok")
+                        .with(oauthUser("oauth-wf-2")).with(csrf()))
+                .andExpect(status().is3xxRedirection());
+
+        // Book B is now in nonfiction/ok
+        List<Ranking> nfOk = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(
+                user.getId(), Bookshelf.NONFICTION, BookCategory.OK);
+        assertThat(nfOk).hasSize(1);
+        assertThat(nfOk.get(0).getBook().getTitle()).isEqualTo("Book B");
+
+        // Fiction/liked should have A and C
+        List<Ranking> ficLiked = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(
+                user.getId(), Bookshelf.FICTION, BookCategory.LIKED);
+        assertThat(ficLiked).hasSize(2);
+
+        assertThat(rankingStateRepository.findById(user.getId())).isEmpty();
+    }
+
+    @Test
+    void selectRerankBookWithoutStateRedirects() throws Exception {
+        User user = createOAuthUser("wf3", "oauth-wf-3");
+
+        Book book = createVerifiedBook("OL1W", "Book A", "Author A");
+        Ranking r = addRanking(user.getId(), book, Bookshelf.FICTION, BookCategory.LIKED, 0);
+
+        // No ranking state → should redirect without removing
+        mockMvc.perform(post("/select-rerank-book")
+                        .param("bookId", String.valueOf(r.getId()))
+                        .with(oauthUser("oauth-wf-3")).with(csrf()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/my-books"));
+
+        // Book should still be there
+        assertThat(rankingRepository.findById(r.getId())).isPresent();
+    }
+
+    // ── Remove workflow ──
+
+    @Test
+    void removeFlow() throws Exception {
+        User user = createOAuthUser("wf4", "oauth-wf-4");
+
+        Book bookA = createVerifiedBook("OL1W", "Book A", "Author A");
+        Book bookB = createVerifiedBook("OL2W", "Book B", "Author B");
+        Book bookC = createVerifiedBook("OL3W", "Book C", "Author C");
+        addRanking(user.getId(), bookA, Bookshelf.FICTION, BookCategory.LIKED, 0);
+        Ranking rB = addRanking(user.getId(), bookB, Bookshelf.FICTION, BookCategory.LIKED, 1);
+        addRanking(user.getId(), bookC, Bookshelf.FICTION, BookCategory.LIKED, 2);
+
+        // Step 1: start-remove
+        mockMvc.perform(post("/start-remove")
+                        .param("bookshelf", "fiction")
+                        .with(oauthUser("oauth-wf-4")).with(csrf()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/my-books"));
+
+        RankingState state = rankingStateRepository.findById(user.getId()).orElseThrow();
+        assertThat(state.getMode()).isEqualTo(RankingMode.REMOVE);
+        assertThat(state.getBookshelf()).isEqualTo(Bookshelf.FICTION);
+
+        // Step 2: select-remove-book
+        mockMvc.perform(post("/select-remove-book")
+                        .param("bookId", String.valueOf(rB.getId()))
+                        .with(oauthUser("oauth-wf-4")).with(csrf()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/my-books"));
+
+        // Book B removed, gap closed
+        List<Ranking> liked = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(
+                user.getId(), Bookshelf.FICTION, BookCategory.LIKED);
+        assertThat(liked).hasSize(2);
+        assertThat(liked.get(0).getBook().getTitle()).isEqualTo("Book A");
+        assertThat(liked.get(0).getPosition()).isEqualTo(0);
+        assertThat(liked.get(1).getBook().getTitle()).isEqualTo("Book C");
+        assertThat(liked.get(1).getPosition()).isEqualTo(1);
+
+        // State cleared
+        assertThat(rankingStateRepository.findById(user.getId())).isEmpty();
+    }
+
+    @Test
+    void selectRemoveBookWithoutStateRedirects() throws Exception {
+        User user = createOAuthUser("wf5", "oauth-wf-5");
+
+        Book book = createVerifiedBook("OL1W", "Book A", "Author A");
+        Ranking r = addRanking(user.getId(), book, Bookshelf.FICTION, BookCategory.LIKED, 0);
+
+        // No REMOVE state → should redirect without removing
+        mockMvc.perform(post("/select-remove-book")
+                        .param("bookId", String.valueOf(r.getId()))
+                        .with(oauthUser("oauth-wf-5")).with(csrf()))
+                .andExpect(status().is3xxRedirection());
+
+        assertThat(rankingRepository.findById(r.getId())).isPresent();
+    }
+
+    // ── Remove want-to-read workflow ──
+
+    @Test
+    void removeWantToReadFlow() throws Exception {
+        User user = createOAuthUser("wf6", "oauth-wf-6");
+
+        Book bookA = createVerifiedBook("OL1W", "Book A", "Author A");
+        Book bookB = createVerifiedBook("OL2W", "Book B", "Author B");
+        Ranking rA = addRanking(user.getId(), bookA, Bookshelf.WANT_TO_READ, BookCategory.UNRANKED, 0);
+        addRanking(user.getId(), bookB, Bookshelf.WANT_TO_READ, BookCategory.UNRANKED, 1);
+
+        // Step 1: start-remove-wtr
+        mockMvc.perform(post("/start-remove-wtr")
+                        .with(oauthUser("oauth-wf-6")).with(csrf()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/my-books?selectedBookshelf=WANT_TO_READ"));
+
+        RankingState state = rankingStateRepository.findById(user.getId()).orElseThrow();
+        assertThat(state.getMode()).isEqualTo(RankingMode.REMOVE);
+        assertThat(state.getBookshelf()).isEqualTo(Bookshelf.WANT_TO_READ);
+
+        // Step 2: select-remove-wtr-book
+        mockMvc.perform(post("/select-remove-wtr-book")
+                        .param("bookId", String.valueOf(rA.getId()))
+                        .with(oauthUser("oauth-wf-6")).with(csrf()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/my-books?selectedBookshelf=WANT_TO_READ"));
+
+        // Book A removed, Book B shifted
+        List<Ranking> wtr = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(
+                user.getId(), Bookshelf.WANT_TO_READ, BookCategory.UNRANKED);
+        assertThat(wtr).hasSize(1);
+        assertThat(wtr.get(0).getBook().getTitle()).isEqualTo("Book B");
+        assertThat(wtr.get(0).getPosition()).isEqualTo(0);
+
+        assertThat(rankingStateRepository.findById(user.getId())).isEmpty();
+    }
+
+    @Test
+    void selectRemoveWtrBookRejectsNonWtrBook() throws Exception {
+        User user = createOAuthUser("wf7", "oauth-wf-7");
+
+        // Book is in fiction, not want-to-read
+        Book book = createVerifiedBook("OL1W", "Book A", "Author A");
+        Ranking r = addRanking(user.getId(), book, Bookshelf.FICTION, BookCategory.LIKED, 0);
+
+        // Set up REMOVE state for want-to-read
+        RankingState rs = new RankingState(user.getId(), null, null, null, Bookshelf.WANT_TO_READ, BookCategory.UNRANKED);
+        rs.setMode(RankingMode.REMOVE);
+        rankingStateRepository.save(rs);
+
+        // Try to remove a fiction book via WTR endpoint → should reject
+        mockMvc.perform(post("/select-remove-wtr-book")
+                        .param("bookId", String.valueOf(r.getId()))
+                        .with(oauthUser("oauth-wf-7")).with(csrf()))
+                .andExpect(status().is3xxRedirection());
+
+        // Book should still exist
+        assertThat(rankingRepository.findById(r.getId())).isPresent();
+    }
+
+    // ── Review workflow ──
+
+    @Test
+    void reviewFlow() throws Exception {
+        User user = createOAuthUser("wf8", "oauth-wf-8");
+
+        Book book = createVerifiedBook("OL1W", "Dune", "Frank Herbert");
+        Ranking ranking = addRanking(user.getId(), book, Bookshelf.FICTION, BookCategory.LIKED, 0);
+
+        // Step 1: start-review
+        mockMvc.perform(post("/start-review")
+                        .param("bookshelf", "fiction")
+                        .with(oauthUser("oauth-wf-8")).with(csrf()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/my-books"));
+
+        RankingState state = rankingStateRepository.findById(user.getId()).orElseThrow();
+        assertThat(state.getMode()).isEqualTo(RankingMode.REVIEW);
+        assertThat(state.getBookshelf()).isEqualTo(Bookshelf.FICTION);
+
+        // Step 2: select-review-book
+        mockMvc.perform(post("/select-review-book")
+                        .param("bookId", String.valueOf(ranking.getId()))
+                        .with(oauthUser("oauth-wf-8")).with(csrf()))
+                .andExpect(status().is3xxRedirection());
+
+        state = rankingStateRepository.findById(user.getId()).orElseThrow();
+        assertThat(state.getBookIdBeingReviewed()).isEqualTo(ranking.getId());
+
+        // Step 3: save-review
+        mockMvc.perform(post("/save-review")
+                        .param("review", "An epic masterpiece")
+                        .with(oauthUser("oauth-wf-8")).with(csrf()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/my-books"));
+
+        Ranking updated = rankingRepository.findById(ranking.getId()).orElseThrow();
+        assertThat(updated.getReview()).isEqualTo("An epic masterpiece");
+        assertThat(rankingStateRepository.findById(user.getId())).isEmpty();
+    }
+
+    @Test
+    void reviewFlowClearExistingReview() throws Exception {
+        User user = createOAuthUser("wf9", "oauth-wf-9");
+
+        Book book = createVerifiedBook("OL1W", "Dune", "Frank Herbert");
+        Ranking ranking = addRankingWithReview(user.getId(), book, Bookshelf.FICTION, BookCategory.LIKED, 0, "Old review");
+
+        // Start review via start-review + select
+        mockMvc.perform(post("/start-review")
+                        .param("bookshelf", "fiction")
+                        .with(oauthUser("oauth-wf-9")).with(csrf()));
+
+        mockMvc.perform(post("/select-review-book")
+                        .param("bookId", String.valueOf(ranking.getId()))
+                        .with(oauthUser("oauth-wf-9")).with(csrf()));
+
+        // Save with empty review to clear it
+        mockMvc.perform(post("/save-review")
+                        .param("review", "")
+                        .with(oauthUser("oauth-wf-9")).with(csrf()))
+                .andExpect(status().is3xxRedirection());
+
+        Ranking updated = rankingRepository.findById(ranking.getId()).orElseThrow();
+        assertThat(updated.getReview()).isNull();
+    }
+
+    @Test
+    void selectReviewBookWithoutStateRedirects() throws Exception {
+        User user = createOAuthUser("wf10", "oauth-wf-10");
+
+        Book book = createVerifiedBook("OL1W", "Dune", "Frank Herbert");
+        Ranking ranking = addRanking(user.getId(), book, Bookshelf.FICTION, BookCategory.LIKED, 0);
+
+        // No REVIEW state → should just redirect
+        mockMvc.perform(post("/select-review-book")
+                        .param("bookId", String.valueOf(ranking.getId()))
+                        .with(oauthUser("oauth-wf-10")).with(csrf()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/my-books"));
+    }
+
+    // ── Unranked book workflows ──
+
+    @Test
+    void rankUnrankedVerifiedBook() throws Exception {
+        User user = createOAuthUser("wf11", "oauth-wf-11");
+
+        Book book = createVerifiedBook("OL1W", "Dune", "Frank Herbert");
+        Ranking ranking = addRanking(user.getId(), book, Bookshelf.UNRANKED, BookCategory.UNRANKED, 0);
+
+        mockMvc.perform(post("/rank-unranked-book")
+                        .param("bookId", String.valueOf(ranking.getId()))
+                        .with(oauthUser("oauth-wf-11")).with(csrf()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/rank/edition"));
+
+        // Book removed from unranked
+        List<Ranking> unranked = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(
+                user.getId(), Bookshelf.UNRANKED, BookCategory.UNRANKED);
+        assertThat(unranked).isEmpty();
+
+        // State set up for edition selection
+        RankingState state = rankingStateRepository.findById(user.getId()).orElseThrow();
+        assertThat(state.getMode()).isEqualTo(RankingMode.SELECT_EDITION);
+        assertThat(state.getTitleBeingRanked()).isEqualTo("Dune");
+        assertThat(state.getBookshelf()).isEqualTo(Bookshelf.UNRANKED);
+    }
+
+    @Test
+    void rankUnrankedUnverifiedBook() throws Exception {
+        User user = createOAuthUser("wf12", "oauth-wf-12");
+
+        Book book = createUnverifiedBook("Mystery Book", "Unknown Author");
+        Ranking ranking = addRanking(user.getId(), book, Bookshelf.UNRANKED, BookCategory.UNRANKED, 0);
+
+        mockMvc.perform(post("/rank-unranked-book")
+                        .param("bookId", String.valueOf(ranking.getId()))
+                        .with(oauthUser("oauth-wf-12")).with(csrf()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/resolve"));
+
+        RankingState state = rankingStateRepository.findById(user.getId()).orElseThrow();
+        assertThat(state.getMode()).isEqualTo(RankingMode.RESOLVE);
+        assertThat(state.getTitleBeingRanked()).isEqualTo("Mystery Book");
+    }
+
+    @Test
+    void rankUnrankedBookPreservesReview() throws Exception {
+        User user = createOAuthUser("wf13", "oauth-wf-13");
+
+        Book book = createVerifiedBook("OL1W", "Dune", "Frank Herbert");
+        Ranking ranking = addRankingWithReview(user.getId(), book, Bookshelf.UNRANKED, BookCategory.UNRANKED, 0, "Imported review");
+
+        mockMvc.perform(post("/rank-unranked-book")
+                        .param("bookId", String.valueOf(ranking.getId()))
+                        .with(oauthUser("oauth-wf-13")).with(csrf()))
+                .andExpect(status().is3xxRedirection());
+
+        RankingState state = rankingStateRepository.findById(user.getId()).orElseThrow();
+        assertThat(state.getReviewBeingRanked()).isEqualTo("Imported review");
+    }
+
+    @Test
+    void rankUnrankedBookRejectsNonUnranked() throws Exception {
+        User user = createOAuthUser("wf14", "oauth-wf-14");
+
+        Book book = createVerifiedBook("OL1W", "Dune", "Frank Herbert");
+        Ranking ranking = addRanking(user.getId(), book, Bookshelf.FICTION, BookCategory.LIKED, 0);
+
+        mockMvc.perform(post("/rank-unranked-book")
+                        .param("bookId", String.valueOf(ranking.getId()))
+                        .with(oauthUser("oauth-wf-14")).with(csrf()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/my-books?selectedBookshelf=UNRANKED"));
+
+        // Book should still be in fiction
+        assertThat(rankingRepository.findById(ranking.getId())).isPresent();
+    }
+
+    @Test
+    void wantToReadUnrankedVerifiedBook() throws Exception {
+        User user = createOAuthUser("wf15", "oauth-wf-15");
+
+        Book book = createVerifiedBook("OL1W", "Dune", "Frank Herbert");
+        Ranking ranking = addRanking(user.getId(), book, Bookshelf.UNRANKED, BookCategory.UNRANKED, 0);
+
+        mockMvc.perform(post("/want-to-read-unranked-book")
+                        .param("bookId", String.valueOf(ranking.getId()))
+                        .with(oauthUser("oauth-wf-15")).with(csrf()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/rank/edition"));
+
+        RankingState state = rankingStateRepository.findById(user.getId()).orElseThrow();
+        assertThat(state.getMode()).isEqualTo(RankingMode.SELECT_EDITION);
+        assertThat(state.isWantToRead()).isTrue();
+        assertThat(state.getBookshelf()).isEqualTo(Bookshelf.UNRANKED);
+
+        // Removed from unranked
+        assertThat(rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(
+                user.getId(), Bookshelf.UNRANKED, BookCategory.UNRANKED)).isEmpty();
+    }
+
+    @Test
+    void wantToReadUnrankedUnverifiedBook() throws Exception {
+        User user = createOAuthUser("wf16", "oauth-wf-16");
+
+        Book book = createUnverifiedBook("Mystery Book", "Unknown Author");
+        Ranking ranking = addRanking(user.getId(), book, Bookshelf.UNRANKED, BookCategory.UNRANKED, 0);
+
+        mockMvc.perform(post("/want-to-read-unranked-book")
+                        .param("bookId", String.valueOf(ranking.getId()))
+                        .with(oauthUser("oauth-wf-16")).with(csrf()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/resolve"));
+
+        RankingState state = rankingStateRepository.findById(user.getId()).orElseThrow();
+        assertThat(state.getMode()).isEqualTo(RankingMode.RESOLVE);
+        assertThat(state.isWantToRead()).isTrue();
+    }
+
+    // ── Rank all workflow ──
+
+    @Test
+    void rankAllStartsFirstUnrankedBook() throws Exception {
+        User user = createOAuthUser("wf17", "oauth-wf-17");
+
+        Book bookA = createVerifiedBook("OL1W", "Book A", "Author A");
+        Book bookB = createVerifiedBook("OL2W", "Book B", "Author B");
+        addRanking(user.getId(), bookA, Bookshelf.UNRANKED, BookCategory.UNRANKED, 0);
+        addRanking(user.getId(), bookB, Bookshelf.UNRANKED, BookCategory.UNRANKED, 1);
+
+        mockMvc.perform(post("/rank-all")
+                        .with(oauthUser("oauth-wf-17")).with(csrf()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/rank/edition"));
+
+        // First book removed from unranked
+        List<Ranking> unranked = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(
+                user.getId(), Bookshelf.UNRANKED, BookCategory.UNRANKED);
+        assertThat(unranked).hasSize(1);
+        assertThat(unranked.get(0).getBook().getTitle()).isEqualTo("Book B");
+
+        // State has rankAll flag
+        RankingState state = rankingStateRepository.findById(user.getId()).orElseThrow();
+        assertThat(state.isRankAll()).isTrue();
+        assertThat(state.getTitleBeingRanked()).isEqualTo("Book A");
+    }
+
+    @Test
+    void rankAllWithNoUnrankedBooksRedirects() throws Exception {
+        User user = createOAuthUser("wf18", "oauth-wf-18");
+
+        // No unranked books
+        mockMvc.perform(post("/rank-all")
+                        .with(oauthUser("oauth-wf-18")).with(csrf()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/my-books?selectedBookshelf=FICTION"));
+    }
+
+    @Test
+    void rankAllWithUnverifiedBookGoesToResolve() throws Exception {
+        User user = createOAuthUser("wf19", "oauth-wf-19");
+
+        Book book = createUnverifiedBook("Mystery Book", "Unknown");
+        addRanking(user.getId(), book, Bookshelf.UNRANKED, BookCategory.UNRANKED, 0);
+
+        mockMvc.perform(post("/rank-all")
+                        .with(oauthUser("oauth-wf-19")).with(csrf()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/resolve"));
+
+        RankingState state = rankingStateRepository.findById(user.getId()).orElseThrow();
+        assertThat(state.isRankAll()).isTrue();
+        assertThat(state.getMode()).isEqualTo(RankingMode.RESOLVE);
+    }
+
+    // ── Navigation-back endpoints ──
+
+    @Test
+    void backToEditionChangesMode() throws Exception {
+        User user = createOAuthUser("wf20", "oauth-wf-20");
+
+        RankingState rs = new RankingState(user.getId(), "OL1W", "Dune", "Frank Herbert", null, null);
+        rs.setMode(RankingMode.CATEGORIZE);
+        rs.setEditionSelected(true);
+        rankingStateRepository.save(rs);
+
+        mockMvc.perform(post("/back-to-edition")
+                        .with(oauthUser("oauth-wf-20")).with(csrf()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/rank/edition"));
+
+        RankingState updated = rankingStateRepository.findById(user.getId()).orElseThrow();
+        assertThat(updated.getMode()).isEqualTo(RankingMode.SELECT_EDITION);
+        assertThat(updated.isEditionSelected()).isFalse();
+    }
+
+    @Test
+    void backToEditionWithoutStateRedirects() throws Exception {
+        User user = createOAuthUser("wf21", "oauth-wf-21");
+
+        mockMvc.perform(post("/back-to-edition")
+                        .with(oauthUser("oauth-wf-21")).with(csrf()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/my-books"));
+    }
+
+    @Test
+    void backToEditionsRedirectsToEditionsPage() throws Exception {
+        User user = createOAuthUser("wf22", "oauth-wf-22");
+
+        RankingState rs = new RankingState(user.getId(), "OL1W", "Dune", "Frank Herbert", null, null);
+        rs.setMode(RankingMode.SELECT_EDITION);
+        rankingStateRepository.save(rs);
+
+        MockHttpSession session = new MockHttpSession();
+        session.setAttribute("cachedEditions", List.of());
+
+        mockMvc.perform(post("/back-to-editions")
+                        .session(session)
+                        .with(oauthUser("oauth-wf-22")).with(csrf()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/editions/OL1W?title=Dune&author=Frank Herbert"));
+
+        // State and cache cleared
+        assertThat(rankingStateRepository.findById(user.getId())).isEmpty();
+        assertThat(session.getAttribute("cachedEditions")).isNull();
+    }
+
+    @Test
+    void backToEditionsWithoutStateRedirects() throws Exception {
+        User user = createOAuthUser("wf23", "oauth-wf-23");
+
+        mockMvc.perform(post("/back-to-editions")
+                        .with(oauthUser("oauth-wf-23")).with(csrf()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/my-books"));
+    }
+
+    @Test
+    void backToResolveChangesMode() throws Exception {
+        User user = createOAuthUser("wf24", "oauth-wf-24");
+
+        RankingState rs = new RankingState(user.getId(), "OL1W", "Dune", "Frank Herbert", null, null);
+        rs.setMode(RankingMode.SELECT_EDITION);
+        rankingStateRepository.save(rs);
+
+        MockHttpSession session = new MockHttpSession();
+        session.setAttribute("skipResolve", "expanded");
+        session.setAttribute("cachedEditions", List.of());
+        session.setAttribute("editionSelectionSource", "RESOLVE");
+
+        mockMvc.perform(post("/back-to-resolve")
+                        .session(session)
+                        .with(oauthUser("oauth-wf-24")).with(csrf()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/resolve"));
+
+        RankingState updated = rankingStateRepository.findById(user.getId()).orElseThrow();
+        assertThat(updated.getMode()).isEqualTo(RankingMode.RESOLVE);
+
+        // Session attributes cleared
+        assertThat(session.getAttribute("skipResolve")).isNull();
+        assertThat(session.getAttribute("cachedEditions")).isNull();
+        assertThat(session.getAttribute("editionSelectionSource")).isNull();
+    }
+
+    @Test
+    void backToResolveWithoutStateRedirects() throws Exception {
+        User user = createOAuthUser("wf25", "oauth-wf-25");
+
+        mockMvc.perform(post("/back-to-resolve")
+                        .with(oauthUser("oauth-wf-25")).with(csrf()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/my-books"));
+    }
+
+    // ── Edge cases ──
+
+    @Test
+    void startRerankRestoresAbandonedBook() throws Exception {
+        User user = createOAuthUser("wf26", "oauth-wf-26");
+
+        Book bookA = createVerifiedBook("OL1W", "Book A", "Author A");
+        Book bookB = createVerifiedBook("OL2W", "Book B", "Author B");
+        addRanking(user.getId(), bookA, Bookshelf.FICTION, BookCategory.LIKED, 0);
+        Ranking rB = addRanking(user.getId(), bookB, Bookshelf.FICTION, BookCategory.LIKED, 1);
+
+        // Start a rerank and select a book (removes it)
+        mockMvc.perform(post("/start-rerank")
+                        .param("bookshelf", "fiction")
+                        .with(oauthUser("oauth-wf-26")).with(csrf()));
+        mockMvc.perform(post("/select-rerank-book")
+                        .param("bookId", String.valueOf(rB.getId()))
+                        .with(oauthUser("oauth-wf-26")).with(csrf()));
+
+        // Verify B was removed
+        assertThat(rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(
+                user.getId(), Bookshelf.FICTION, BookCategory.LIKED)).hasSize(1);
+
+        // Start a new rerank — should restore the abandoned book first
+        mockMvc.perform(post("/start-rerank")
+                        .param("bookshelf", "fiction")
+                        .with(oauthUser("oauth-wf-26")).with(csrf()));
+
+        // The state should now be fresh RE_RANK, no book info
+        RankingState state = rankingStateRepository.findById(user.getId()).orElseThrow();
+        assertThat(state.getMode()).isEqualTo(RankingMode.RE_RANK);
+        assertThat(state.getTitleBeingRanked()).isNull();
+    }
+
+    @Test
+    void startRemoveInvalidBookshelfRedirects() throws Exception {
+        User user = createOAuthUser("wf27", "oauth-wf-27");
+
+        mockMvc.perform(post("/start-remove")
+                        .param("bookshelf", "invalid_shelf")
+                        .with(oauthUser("oauth-wf-27")).with(csrf()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/my-books"));
+
+        assertThat(rankingStateRepository.findById(user.getId())).isEmpty();
+    }
+
+    @Test
+    void startRerankInvalidBookshelfRedirects() throws Exception {
+        User user = createOAuthUser("wf28", "oauth-wf-28");
+
+        mockMvc.perform(post("/start-rerank")
+                        .param("bookshelf", "invalid_shelf")
+                        .with(oauthUser("oauth-wf-28")).with(csrf()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/my-books"));
+
+        assertThat(rankingStateRepository.findById(user.getId())).isEmpty();
+    }
+}
