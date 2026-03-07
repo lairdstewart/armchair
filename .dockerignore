@@ -1,9 +1,8 @@
-worktrees/
 target/
 .idea/
 *.iml
 logs/
+.git
 .classpath
 .project
 .settings/
-.env
