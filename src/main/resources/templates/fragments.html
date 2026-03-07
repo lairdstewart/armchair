@@ -7,9 +7,8 @@
         <span class="navbar-separator">|</span>
         <a href="/search" class="navbar-link" data-text="Search" th:style="${currentPage == 'search' ? 'font-weight: bold;' : ''}">Search</a>
         <span class="navbar-separator">|</span>
-        <form th:action="@{/my-books}" method="POST" style="display: inline">
-          <button type="submit" class="navbar-link-button" data-text="Library" th:style="${currentPage == 'list' ? 'font-weight: bold;' : ''}">Library</button>
-        </form>
+        <form id="library-form" th:action="@{/my-books}" method="POST" style="display: none"></form>
+        <a href="#" onclick="document.getElementById('library-form').submit(); return false;" class="navbar-link" data-text="Library" th:style="${currentPage == 'list' ? 'font-weight: bold;' : ''}">Library</a>
         <span class="navbar-separator">|</span>
         <a href="/recs" class="navbar-link" data-text="Recs" th:style="${currentPage == 'recs' ? 'font-weight: bold;' : ''}">Recs</a>
       </div>

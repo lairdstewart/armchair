@@ -120,7 +120,8 @@ ol.book-list li form {
 }
 
 .navbar-left, .navbar-right {
-  display: inline;
+  display: inline-flex;
+  align-items: center;
 }
 
 .navbar-link {
@@ -139,29 +140,6 @@ ol.book-list li form {
 }
 
 .navbar-link:hover {
-  text-decoration: underline;
-}
-
-.navbar-link-button {
-  background: none;
-  border: none;
-  color: white;
-  font: inherit;
-  cursor: pointer;
-  padding: 0;
-  display: inline-block;
-}
-
-.navbar-link-button::after {
-  content: attr(data-text);
-  font-weight: bold;
-  visibility: hidden;
-  display: block;
-  height: 0;
-  overflow: hidden;
-}
-
-.navbar-link-button:hover {
   text-decoration: underline;
 }
 
