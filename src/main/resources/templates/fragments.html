@@ -7,7 +7,7 @@
         <span class="navbar-separator">|</span>
         <a href="/search" class="navbar-link" data-text="Search" th:style="${currentPage == 'search' ? 'font-weight: bold;' : ''}">Search</a>
         <span class="navbar-separator">|</span>
-        <form th:action="@{/my-books}" method="POST" style="display: inline">
+        <form th:action="@{/my-books}" method="POST">
           <button type="submit" class="navbar-link-button" data-text="Library" th:style="${currentPage == 'list' ? 'font-weight: bold;' : ''}">Library</button>
         </form>
         <span class="navbar-separator">|</span>
