@@ -450,7 +450,7 @@ class CuratedListImporterTest {
         verify(rankingRepo).save(rankingCaptor.capture());
 
         Ranking saved = rankingCaptor.getValue();
-        assertThat(saved.getUserId()).isEqualTo(1L);
+        assertThat(saved.getUser().getId()).isEqualTo(1L);
         assertThat(saved.getBookshelf()).isEqualTo(Bookshelf.FICTION);
         assertThat(saved.getCategory()).isEqualTo(BookCategory.LIKED);
         assertThat(saved.getPosition()).isEqualTo(0);
@@ -580,7 +580,9 @@ class CuratedListImporterTest {
                 new JsonBook("Dune", "Frank Herbert", "", Bookshelf.FICTION, BookCategory.LIKED, 1)
         );
 
-        CuratedListImporter.importJsonBooks(1L, books, bookService, rankingRepo, openLibraryService);
+        User user = new User();
+        user.setId(1L);
+        CuratedListImporter.importJsonBooks(user, books, bookService, rankingRepo, openLibraryService);
 
         verify(bookService).findOrCreateBook("OL123W", "OL456M", "Dune (OL)", "Frank Herbert (OL)", 1965, null);
     }
@@ -599,7 +601,9 @@ class CuratedListImporterTest {
                 new JsonBook("Dune", "Frank Herbert", "", Bookshelf.FICTION, BookCategory.LIKED, 1)
         );
 
-        CuratedListImporter.importJsonBooks(1L, books, bookService, rankingRepo, openLibraryService);
+        User user = new User();
+        user.setId(1L);
+        CuratedListImporter.importJsonBooks(user, books, bookService, rankingRepo, openLibraryService);
 
         verify(bookService).findOrCreateBook(null, null, "Dune", "Frank Herbert", null, null);
     }

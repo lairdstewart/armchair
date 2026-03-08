@@ -5,6 +5,7 @@ import armchair.entity.BookCategory;
 import armchair.entity.Bookshelf;
 import armchair.entity.Follow;
 import armchair.entity.Ranking;
+import armchair.entity.User;
 import armchair.repository.BookRepository;
 import armchair.repository.FollowRepository;
 import armchair.repository.RankingRepository;
@@ -43,7 +44,7 @@ class FollowersLikedAlgorithmTest {
     @Test
     void recommendsBooksFromFollowedUsers() {
         Book book = makeBook(10L, "Good Book");
-        Follow follow = new Follow(USER_ID, FOLLOWED_ID_1);
+        Follow follow = new Follow(userWithId(USER_ID), userWithId(FOLLOWED_ID_1));
 
         when(followRepository.findByFollowerId(USER_ID)).thenReturn(List.of(follow));
         when(rankingRepository.findBookIdsByUserId(USER_ID)).thenReturn(List.of());
@@ -60,7 +61,7 @@ class FollowersLikedAlgorithmTest {
     void excludesBooksUserAlreadyRanked() {
         Book alreadyRanked = makeBook(10L, "Already Read");
         Book notRanked = makeBook(11L, "New Book");
-        Follow follow = new Follow(USER_ID, FOLLOWED_ID_1);
+        Follow follow = new Follow(userWithId(USER_ID), userWithId(FOLLOWED_ID_1));
 
         when(followRepository.findByFollowerId(USER_ID)).thenReturn(List.of(follow));
         when(rankingRepository.findBookIdsByUserId(USER_ID)).thenReturn(List.of(10L));
@@ -91,7 +92,7 @@ class FollowersLikedAlgorithmTest {
     @Test
     void fallsBackToRandomBooksWhenFollowedUsersHaveNoLikedBooks() {
         Book randomBook = makeBook(10L, "Random Book");
-        Follow follow = new Follow(USER_ID, FOLLOWED_ID_1);
+        Follow follow = new Follow(userWithId(USER_ID), userWithId(FOLLOWED_ID_1));
 
         when(followRepository.findByFollowerId(USER_ID)).thenReturn(List.of(follow));
         when(rankingRepository.findBookIdsByUserId(USER_ID)).thenReturn(List.of());
@@ -108,8 +109,8 @@ class FollowersLikedAlgorithmTest {
     @Test
     void deduplicatesAcrossMultipleFollowedUsers() {
         Book sharedBook = makeBook(10L, "Shared Book");
-        Follow follow1 = new Follow(USER_ID, FOLLOWED_ID_1);
-        Follow follow2 = new Follow(USER_ID, FOLLOWED_ID_2);
+        Follow follow1 = new Follow(userWithId(USER_ID), userWithId(FOLLOWED_ID_1));
+        Follow follow2 = new Follow(userWithId(USER_ID), userWithId(FOLLOWED_ID_2));
 
         when(followRepository.findByFollowerId(USER_ID)).thenReturn(List.of(follow1, follow2));
         when(rankingRepository.findBookIdsByUserId(USER_ID)).thenReturn(List.of());
@@ -128,7 +129,7 @@ class FollowersLikedAlgorithmTest {
     @Test
     void onlyRecommendsLikedBooks() {
         Book likedBook = makeBook(10L, "Liked");
-        Follow follow = new Follow(USER_ID, FOLLOWED_ID_1);
+        Follow follow = new Follow(userWithId(USER_ID), userWithId(FOLLOWED_ID_1));
 
         when(followRepository.findByFollowerId(USER_ID)).thenReturn(List.of(follow));
         when(rankingRepository.findBookIdsByUserId(USER_ID)).thenReturn(List.of());
@@ -145,7 +146,7 @@ class FollowersLikedAlgorithmTest {
     @Test
     void filtersByBookshelf() {
         Book fictionBook = makeBook(10L, "Fiction");
-        Follow follow = new Follow(USER_ID, FOLLOWED_ID_1);
+        Follow follow = new Follow(userWithId(USER_ID), userWithId(FOLLOWED_ID_1));
 
         when(followRepository.findByFollowerId(USER_ID)).thenReturn(List.of(follow));
         when(rankingRepository.findBookIdsByUserId(USER_ID)).thenReturn(List.of());
@@ -161,7 +162,7 @@ class FollowersLikedAlgorithmTest {
     @Test
     void nonfictionRecommendationsFilterCorrectly() {
         Book nonfictionBook = makeBook(10L, "Nonfiction");
-        Follow follow = new Follow(USER_ID, FOLLOWED_ID_1);
+        Follow follow = new Follow(userWithId(USER_ID), userWithId(FOLLOWED_ID_1));
 
         when(followRepository.findByFollowerId(USER_ID)).thenReturn(List.of(follow));
         when(rankingRepository.findBookIdsByUserId(USER_ID)).thenReturn(List.of());
@@ -179,7 +180,7 @@ class FollowersLikedAlgorithmTest {
         Book book1 = makeBook(10L, "Book 1");
         Book book2 = makeBook(11L, "Book 2");
         Book book3 = makeBook(12L, "Book 3");
-        Follow follow = new Follow(USER_ID, FOLLOWED_ID_1);
+        Follow follow = new Follow(userWithId(USER_ID), userWithId(FOLLOWED_ID_1));
 
         when(followRepository.findByFollowerId(USER_ID)).thenReturn(List.of(follow));
         when(rankingRepository.findBookIdsByUserId(USER_ID)).thenReturn(List.of());
@@ -200,7 +201,7 @@ class FollowersLikedAlgorithmTest {
     void fallsBackWhenAllFollowedBookAlreadyRanked() {
         Book book = makeBook(10L, "Already Have");
         Book randomBook = makeBook(11L, "Random");
-        Follow follow = new Follow(USER_ID, FOLLOWED_ID_1);
+        Follow follow = new Follow(userWithId(USER_ID), userWithId(FOLLOWED_ID_1));
 
         when(followRepository.findByFollowerId(USER_ID)).thenReturn(List.of(follow));
         when(rankingRepository.findBookIdsByUserId(USER_ID)).thenReturn(List.of(10L));
@@ -212,6 +213,12 @@ class FollowersLikedAlgorithmTest {
         List<Book> recs = algorithm.getFictionRecommendations(USER_ID, 10);
 
         assertThat(recs).containsExactly(randomBook);
+    }
+
+    private static User userWithId(Long id) {
+        User user = new User();
+        user.setId(id);
+        return user;
     }
 
     private static Book makeBook(Long id, String title) {

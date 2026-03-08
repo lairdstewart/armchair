@@ -197,15 +197,15 @@ public class CuratedListImporter {
         fictionRanked.sort(Comparator.comparingInt(JsonBook::rank));
         nonfictionRanked.sort(Comparator.comparingInt(JsonBook::rank));
 
-        importJsonBooks(user.getId(), fictionRanked, bookService, rankingRepository, openLibraryService);
-        importJsonBooks(user.getId(), fictionUnranked, bookService, rankingRepository, openLibraryService);
-        importJsonBooks(user.getId(), nonfictionRanked, bookService, rankingRepository, openLibraryService);
-        importJsonBooks(user.getId(), nonfictionUnranked, bookService, rankingRepository, openLibraryService);
+        importJsonBooks(user, fictionRanked, bookService, rankingRepository, openLibraryService);
+        importJsonBooks(user, fictionUnranked, bookService, rankingRepository, openLibraryService);
+        importJsonBooks(user, nonfictionRanked, bookService, rankingRepository, openLibraryService);
+        importJsonBooks(user, nonfictionUnranked, bookService, rankingRepository, openLibraryService);
 
         log.info("Finished importing: {}", username);
     }
 
-    static void importJsonBooks(Long userId, List<JsonBook> books,
+    static void importJsonBooks(User user, List<JsonBook> books,
                                         BookService bookService,
                                         RankingRepository rankingRepository, OpenLibraryService openLibraryService) {
         int position = 0;
@@ -234,7 +234,7 @@ public class CuratedListImporter {
 
             Book book = bookService.findOrCreateBook(workOlid, editionOlid, title, author, firstPublishYear, null);
 
-            Ranking ranking = new Ranking(userId, book, jb.bookshelf(), jb.category(), position);
+            Ranking ranking = new Ranking(user, book, jb.bookshelf(), jb.category(), position);
             if (jb.review() != null && !jb.review().isEmpty()) {
                 ranking.setReview(jb.review());
             }

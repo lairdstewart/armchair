@@ -77,8 +77,9 @@ public class UserService {
 
     @Transactional
     public void migrateGuestDataToUser(Long guestUserId, Long newUserId) {
+        User newUser = userRepository.getReferenceById(newUserId);
         for (Ranking ranking : rankingRepository.findByUserId(guestUserId)) {
-            ranking.setUserId(newUserId);
+            ranking.setUser(newUser);
             rankingRepository.save(ranking);
         }
 

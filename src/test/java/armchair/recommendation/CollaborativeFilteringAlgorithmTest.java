@@ -46,7 +46,9 @@ class CollaborativeFilteringAlgorithmTest {
     }
 
     private static Ranking ranking(Long userId, Book book, Bookshelf bookshelf, BookCategory category, int position) {
-        return new Ranking(userId, book, bookshelf, category, position);
+        User user = new User();
+        user.setId(userId);
+        return new Ranking(user, book, bookshelf, category, position);
     }
 
     // --- computeSimilarity tests ---

@@ -1,9 +1,12 @@
 package armchair.entity;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 
@@ -14,16 +17,21 @@ public class Follow {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Long followerId;  // The user who is following
-    private Long followedId;  // The user being followed
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "follower_id")
+    private User follower;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "followed_id")
+    private User followed;
 
     private LocalDateTime followedAt;
 
     public Follow() {}
 
-    public Follow(Long followerId, Long followedId) {
-        this.followerId = followerId;
-        this.followedId = followedId;
+    public Follow(User follower, User followed) {
+        this.follower = follower;
+        this.followed = followed;
         this.followedAt = LocalDateTime.now();
     }
 
@@ -35,20 +43,20 @@ public class Follow {
         this.id = id;
     }
 
-    public Long getFollowerId() {
-        return followerId;
+    public User getFollower() {
+        return follower;
     }
 
-    public void setFollowerId(Long followerId) {
-        this.followerId = followerId;
+    public void setFollower(User follower) {
+        this.follower = follower;
     }
 
-    public Long getFollowedId() {
-        return followedId;
+    public User getFollowed() {
+        return followed;
     }
 
-    public void setFollowedId(Long followedId) {
-        this.followedId = followedId;
+    public void setFollowed(User followed) {
+        this.followed = followed;
     }
 
     public LocalDateTime getFollowedAt() {

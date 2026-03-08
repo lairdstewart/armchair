@@ -4,8 +4,10 @@ import armchair.entity.BookCategory;
 import armchair.entity.Bookshelf;
 import armchair.entity.Book;
 import armchair.entity.Ranking;
+import armchair.entity.User;
 import armchair.repository.BookRepository;
 import armchair.repository.RankingRepository;
+import armchair.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,6 +44,9 @@ public class ImportExportService {
     @Autowired
     private BookRepository bookRepository;
 
+    @Autowired
+    private UserRepository userRepository;
+
     public record ImportResult(int imported, int skipped, int failed) {}
 
     @Transactional
@@ -68,6 +73,8 @@ public class ImportExportService {
             if (titleIndex == -1 || authorIndex == -1) {
                 return new ImportResult(0, 0, 0);
             }
+
+            User userRef = userRepository.getReferenceById(userId);
 
             Set<String> existingBookKeys = rankingRepository.findByUserId(userId).stream()
                 .map(r -> r.getBook().getTitle().toLowerCase().trim() + "\0" + r.getBook().getAuthor().toLowerCase().trim())
@@ -114,7 +121,7 @@ public class ImportExportService {
                         skipped++;
                     } else {
                         String trimmedReview = trimReview(review);
-                        Ranking newRanking = new Ranking(userId, book, Bookshelf.UNRANKED, BookCategory.UNRANKED, nextUnrankedPosition);
+                        Ranking newRanking = new Ranking(userRef, book, Bookshelf.UNRANKED, BookCategory.UNRANKED, nextUnrankedPosition);
                         nextUnrankedPosition++;
                         newRanking.setReview(trimmedReview);
                         rankingRepository.save(newRanking);

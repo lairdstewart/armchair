@@ -19,7 +19,9 @@ public class Ranking {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Long userId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "book_id")
@@ -39,8 +41,8 @@ public class Ranking {
 
     public Ranking() {}
 
-    public Ranking(Long userId, Book book, Bookshelf bookshelf, BookCategory category, Integer position) {
-        this.userId = userId;
+    public Ranking(User user, Book book, Bookshelf bookshelf, BookCategory category, Integer position) {
+        this.user = user;
         this.book = book;
         this.bookshelf = bookshelf;
         this.category = category;
@@ -55,12 +57,12 @@ public class Ranking {
         this.id = id;
     }
 
-    public Long getUserId() {
-        return userId;
+    public User getUser() {
+        return user;
     }
 
-    public void setUserId(Long userId) {
-        this.userId = userId;
+    public void setUser(User user) {
+        this.user = user;
     }
 
     public Book getBook() {

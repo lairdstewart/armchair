@@ -41,7 +41,7 @@ public class FollowersLikedAlgorithm implements RecommendationAlgorithm {
 
     private List<Book> getRecommendationsForBookshelf(Long userId, Bookshelf bookshelf, int limit) {
         List<Long> followedUserIds = followRepository.findByFollowerId(userId).stream()
-                .map(Follow::getFollowedId)
+                .map(f -> f.getFollowed().getId())
                 .toList();
 
         if (!followedUserIds.isEmpty()) {

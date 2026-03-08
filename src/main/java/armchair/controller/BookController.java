@@ -694,7 +694,7 @@ public class BookController {
         }
 
         Ranking ranking = rankingRepository.findById(rankingId).orElse(null);
-        if (ranking == null || !ranking.getUserId().equals(userId)) {
+        if (ranking == null || !ranking.getUser().getId().equals(userId)) {
             return "redirect:/my-books";
         }
 
@@ -1072,7 +1072,7 @@ public class BookController {
         }
 
         Ranking ranking = rankingRepository.findById(rankingState.getBookIdBeingReviewed()).orElse(null);
-        if (ranking != null && ranking.getUserId().equals(userId)) {
+        if (ranking != null && ranking.getUser().getId().equals(userId)) {
             String trimmedReview = trimReview(review);
             ranking.setReview(trimmedReview);
             rankingRepository.save(ranking);
@@ -1411,7 +1411,8 @@ public class BookController {
     private Ranking createWantToReadRanking(Long userId, Book book) {
         List<Ranking> wantToReadRankings = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(userId, Bookshelf.WANT_TO_READ, BookCategory.UNRANKED);
         int position = wantToReadRankings.size();
-        Ranking newRanking = new Ranking(userId, book, Bookshelf.WANT_TO_READ, BookCategory.UNRANKED, position);
+        User userRef = userRepository.getReferenceById(userId);
+        Ranking newRanking = new Ranking(userRef, book, Bookshelf.WANT_TO_READ, BookCategory.UNRANKED, position);
         return rankingRepository.save(newRanking);
     }
 
@@ -1580,7 +1581,8 @@ public class BookController {
         if (currentList.isEmpty()) {
             boolean wasRankAll = rankingState.isRankAll();
             Book book = bookService.findOrCreateBook(workOlid, null, bookName, author, null, null);
-            Ranking newRanking = new Ranking(userId, book, bookshelfEnum, bookCategory, 0);
+            User userRef = userRepository.getReferenceById(userId);
+            Ranking newRanking = new Ranking(userRef, book, bookshelfEnum, bookCategory, 0);
             newRanking.setReview(trimmedReview);
             rankingRepository.save(newRanking);
             rankingStateRepository.deleteById(userId);
@@ -1699,10 +1701,9 @@ public class BookController {
 
         // --- Following tab ---
         if ("following".equals(type) && isRealUser) {
-            List<Follow> follows = followRepository.findByFollowerId(currentUserId);
+            List<Follow> follows = followRepository.findByFollowerIdWithFollowed(currentUserId);
             List<ProfileDisplayWithFollow> allFollowing = follows.stream()
-                .map(f -> userRepository.findById(f.getFollowedId()).orElse(null))
-                .filter(u -> u != null)
+                .map(Follow::getFollowed)
                 .map(u -> userService.createProfileDisplayWithFollow(u, currentUserId))
                 .toList();
             PaginationResult<ProfileDisplayWithFollow> followingPagination = PaginationResult.of(allFollowing, page, pageSize);
@@ -1716,10 +1717,9 @@ public class BookController {
 
         // --- Followers tab ---
         if ("followers".equals(type) && isRealUser) {
-            List<Follow> followers = followRepository.findByFollowedId(currentUserId);
+            List<Follow> followers = followRepository.findByFollowedIdWithFollower(currentUserId);
             List<ProfileDisplayWithFollow> allFollowers = followers.stream()
-                .map(f -> userRepository.findById(f.getFollowerId()).orElse(null))
-                .filter(u -> u != null)
+                .map(Follow::getFollower)
                 .map(u -> userService.createProfileDisplayWithFollow(u, currentUserId))
                 .toList();
             PaginationResult<ProfileDisplayWithFollow> followersPagination = PaginationResult.of(allFollowers, page, pageSize);
@@ -1916,7 +1916,7 @@ public class BookController {
         }
 
         if (!followRepository.existsByFollowerIdAndFollowedId(currentUserId, userId)) {
-            Follow follow = new Follow(currentUserId, userId);
+            Follow follow = new Follow(currentUser, targetUser);
             followRepository.save(follow);
         }
 

@@ -8,9 +8,11 @@ import armchair.entity.BookCategory;
 import armchair.entity.Bookshelf;
 import armchair.entity.Ranking;
 import armchair.entity.RankingState;
+import armchair.entity.User;
 import armchair.repository.BookRepository;
 import armchair.repository.RankingRepository;
 import armchair.repository.RankingStateRepository;
+import armchair.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,6 +38,9 @@ public class RankingService {
     @Autowired
     private BookService bookService;
 
+    @Autowired
+    private UserRepository userRepository;
+
     public void closePositionGap(Long userId, Bookshelf bookshelf, BookCategory category, int removedPosition) {
         rankingRepository.decrementPositionsAbove(userId, bookshelf, category, removedPosition);
     }
@@ -48,7 +53,7 @@ public class RankingService {
 
     public Ranking findRankingForUser(Long bookId, Long userId) {
         Ranking ranking = rankingRepository.findById(bookId).orElse(null);
-        if (ranking == null || !ranking.getUserId().equals(userId)) {
+        if (ranking == null || !ranking.getUser().getId().equals(userId)) {
             return null;
         }
         return ranking;
@@ -62,6 +67,7 @@ public class RankingService {
             null, state.getTitleBeingRanked(), state.getAuthorBeingRanked(), null, null);
 
         if (!rankingRepository.existsByUserIdAndBookId(userId, book.getId())) {
+            User userRef = userRepository.getReferenceById(userId);
             if (state.getOriginalCategory() != null && state.getOriginalPosition() != null) {
                 Bookshelf bookshelf = state.getBookshelf();
                 BookCategory category = state.getOriginalCategory();
@@ -75,13 +81,13 @@ public class RankingService {
                     }
                 }
 
-                Ranking restored = new Ranking(userId, book, bookshelf, category, position);
+                Ranking restored = new Ranking(userRef, book, bookshelf, category, position);
                 restored.setReview(state.getReviewBeingRanked());
                 rankingRepository.save(restored);
             } else {
                 List<Ranking> unranked = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(
                     userId, Bookshelf.UNRANKED, BookCategory.UNRANKED);
-                Ranking restored = new Ranking(userId, book, Bookshelf.UNRANKED, BookCategory.UNRANKED, unranked.size());
+                Ranking restored = new Ranking(userRef, book, Bookshelf.UNRANKED, BookCategory.UNRANKED, unranked.size());
                 restored.setReview(state.getReviewBeingRanked());
                 rankingRepository.save(restored);
             }
@@ -101,7 +107,8 @@ public class RankingService {
         }
 
         Book book = bookService.findOrCreateBook(workOlid, null, title, author, null, null);
-        Ranking newRanking = new Ranking(userId, book, bookshelf, category, position);
+        User userRef = userRepository.getReferenceById(userId);
+        Ranking newRanking = new Ranking(userRef, book, bookshelf, category, position);
         newRanking.setReview(review);
         rankingRepository.save(newRanking);
     }

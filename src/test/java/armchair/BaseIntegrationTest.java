@@ -98,14 +98,16 @@ public abstract class BaseIntegrationTest {
      * Add a ranking for a user+book at the given bookshelf/category/position.
      */
     protected Ranking addRanking(Long userId, Book book, Bookshelf bookshelf, BookCategory category, int position) {
-        return rankingRepository.save(new Ranking(userId, book, bookshelf, category, position));
+        User userRef = userRepository.getReferenceById(userId);
+        return rankingRepository.save(new Ranking(userRef, book, bookshelf, category, position));
     }
 
     /**
      * Add a ranking with a review.
      */
     protected Ranking addRankingWithReview(Long userId, Book book, Bookshelf bookshelf, BookCategory category, int position, String review) {
-        Ranking ranking = new Ranking(userId, book, bookshelf, category, position);
+        User userRef = userRepository.getReferenceById(userId);
+        Ranking ranking = new Ranking(userRef, book, bookshelf, category, position);
         ranking.setReview(review);
         return rankingRepository.save(ranking);
     }

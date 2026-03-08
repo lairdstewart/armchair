@@ -132,7 +132,7 @@ class ProfileSocialTest extends BaseIntegrationTest {
     void unfollowUser() throws Exception {
         User follower = createOAuthUser("unfollower1", "oauth-unfollower-1");
         User target = createOAuthUser("target3", "oauth-target-3");
-        followRepository.save(new Follow(follower.getId(), target.getId()));
+        followRepository.save(new Follow(follower, target));
 
         mockMvc.perform(post("/unfollow")
                         .param("userId", String.valueOf(target.getId()))
@@ -266,8 +266,8 @@ class ProfileSocialTest extends BaseIntegrationTest {
     void deleteProfileCleansUpFollows() throws Exception {
         User user = createOAuthUser("delfollow", "oauth-del-2");
         User other = createOAuthUser("other", "oauth-other-1");
-        followRepository.save(new Follow(user.getId(), other.getId()));
-        followRepository.save(new Follow(other.getId(), user.getId()));
+        followRepository.save(new Follow(user, other));
+        followRepository.save(new Follow(other, user));
 
         mockMvc.perform(post("/delete-profile")
                         .with(oauthUser("oauth-del-2")).with(csrf()))

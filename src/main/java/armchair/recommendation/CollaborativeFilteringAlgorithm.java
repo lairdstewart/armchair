@@ -68,7 +68,7 @@ public class CollaborativeFilteringAlgorithm implements RecommendationAlgorithm 
         // Batch-fetch all rankings for this bookshelf, grouped by user
         List<Ranking> allRankings = rankingRepository.findByBookshelfOrderByUserIdAscPositionAsc(bookshelf);
         Map<Long, List<Ranking>> rankingsByUser = allRankings.stream()
-                .collect(Collectors.groupingBy(Ranking::getUserId));
+                .collect(Collectors.groupingBy(r -> r.getUser().getId()));
 
         // Check if we have any overlap with anyone
         boolean hasAnyOverlap = false;
