@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -11,6 +12,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,10 +20,16 @@ import java.util.List;
 public class OpenLibraryService {
     private static final Logger log = LoggerFactory.getLogger(OpenLibraryService.class);
 
-    private final RestTemplate restTemplate = new RestTemplateBuilder()
-        .defaultHeader("User-Agent", "Armchair (armchair@lairdstewart.com)")
-        .build();
+    private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper = new ObjectMapper();
+
+    public OpenLibraryService(RestTemplateBuilder restTemplateBuilder) {
+        this.restTemplate = restTemplateBuilder
+            .defaultHeader("User-Agent", "Armchair (armchair@lairdstewart.com)")
+            .setConnectTimeout(Duration.ofSeconds(5))
+            .setReadTimeout(Duration.ofSeconds(10))
+            .build();
+    }
 
     public record BookResult(String workOlid, String editionOlid, String title, String author, Integer firstPublishYear, Integer coverId, Integer editionCount) {
         public String bookUrl() {
@@ -139,6 +147,8 @@ public class OpenLibraryService {
             }
 
             return results;
+        } catch (ResourceAccessException e) {
+            throw e;
         } catch (Exception e) {
             log.error("Error searching Open Library: {}", e.getMessage());
             return List.of();
@@ -297,6 +307,8 @@ public class OpenLibraryService {
             }
 
             return results;
+        } catch (ResourceAccessException e) {
+            throw e;
         } catch (Exception e) {
             log.error("Error fetching editions for work {}: {}", workOlid, e.getMessage());
             return List.of();

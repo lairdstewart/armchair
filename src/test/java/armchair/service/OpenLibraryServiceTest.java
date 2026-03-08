@@ -4,7 +4,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
@@ -12,6 +14,7 @@ import java.net.URI;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -24,7 +27,7 @@ class OpenLibraryServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new OpenLibraryService();
+        service = new OpenLibraryService(new RestTemplateBuilder());
         restTemplate = mock(RestTemplate.class);
         ReflectionTestUtils.setField(service, "restTemplate", restTemplate);
     }
@@ -153,6 +156,15 @@ class OpenLibraryServiceTest {
                 .thenThrow(new RestClientException("Connection timeout"));
 
             assertThat(service.searchBooks("test", 3)).isEmpty();
+        }
+
+        @Test
+        void rethrowsResourceAccessException() {
+            when(restTemplate.getForObject(any(URI.class), eq(String.class)))
+                .thenThrow(new ResourceAccessException("Read timed out"));
+
+            assertThatThrownBy(() -> service.searchBooks("test", 3))
+                .isInstanceOf(ResourceAccessException.class);
         }
 
         @Test
@@ -412,6 +424,15 @@ class OpenLibraryServiceTest {
                 .thenThrow(new RestClientException("timeout"));
 
             assertThat(service.getEditionsForWork("OL1W", 10, 0)).isEmpty();
+        }
+
+        @Test
+        void rethrowsResourceAccessException() {
+            when(restTemplate.getForObject(any(URI.class), eq(String.class)))
+                .thenThrow(new ResourceAccessException("Read timed out"));
+
+            assertThatThrownBy(() -> service.getEditionsForWork("OL1W", 10, 0))
+                .isInstanceOf(ResourceAccessException.class);
         }
 
         @Test
