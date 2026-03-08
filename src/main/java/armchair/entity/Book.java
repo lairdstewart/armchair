@@ -14,6 +14,7 @@ public class Book {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(unique = true)
     private String workOlid;
     private String editionOlid;
     private String isbn13;

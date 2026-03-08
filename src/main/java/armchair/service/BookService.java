@@ -4,7 +4,9 @@ import armchair.entity.Book;
 import armchair.repository.BookRepository;
 import armchair.repository.RankingRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -21,6 +23,7 @@ public class BookService {
      * Finds an existing book or creates a new one. Deduplicates by workOlid first,
      * then falls back to case-insensitive title+author match for unverified books.
      */
+    @Transactional
     public Book findOrCreateBook(String workOlid, String editionOlid, String title, String author, Integer firstPublishYear, Integer coverId) {
         // Look up by workOlid
         if (workOlid != null) {
@@ -54,8 +57,18 @@ public class BookService {
             }
         }
 
-        // No match — create new Book
-        return bookRepository.save(new Book(workOlid, editionOlid, title, author, firstPublishYear, coverId));
+        // No match — create new Book. If a concurrent insert wins the race,
+        // the unique constraint on workOlid catches it and we retry the lookup.
+        try {
+            return bookRepository.save(new Book(workOlid, editionOlid, title, author, firstPublishYear, coverId));
+        } catch (DataIntegrityViolationException e) {
+            if (workOlid != null) {
+                return bookRepository.findByWorkOlid(workOlid)
+                        .orElseThrow(() -> new IllegalStateException(
+                                "Duplicate workOlid constraint violated but book not found: " + workOlid, e));
+            }
+            throw e;
+        }
     }
 
     public void deleteIfOrphaned(Long bookId) {

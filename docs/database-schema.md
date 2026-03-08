@@ -31,7 +31,7 @@ Deduplicated book metadata shared across all users.
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
 | id | BIGINT | PK, auto-generated | |
-| work_olid | VARCHAR | | Open Library work ID (e.g., "OL123W"). Primary dedup key. |
+| work_olid | VARCHAR | UNIQUE | Open Library work ID (e.g., "OL123W"). Primary dedup key. |
 | edition_olid | VARCHAR | | Open Library edition ID (e.g., "OL456M") |
 | isbn13 | VARCHAR | | ISBN-13 if known |
 | cover_id | INTEGER | | Open Library cover image ID (from `cover_i` in Search API) |
