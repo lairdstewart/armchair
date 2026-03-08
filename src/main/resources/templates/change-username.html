@@ -7,6 +7,7 @@
   <body>
     <div th:replace="~{fragments :: navbar}"></div>
     <div class="page-content">
+    <a href="/my-profile" class="btn-back" style="margin-bottom: 0;">cancel</a>
     <h2>Change Username</h2>
 
     <form th:action="@{/change-username}" method="POST">
@@ -25,7 +26,6 @@
       <br>
       <div th:if="${error}" style="color: red; margin-bottom: 10px;" th:text="${error}"></div>
       <button type="submit">Save</button>
-      <a href="/my-profile" style="margin-left: 10px;">Cancel</a>
     </form>
     </div>
   </body>
