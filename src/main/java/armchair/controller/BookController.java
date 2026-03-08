@@ -73,6 +73,30 @@ public class BookController {
     private static final String SESSION_GUEST_USER_ID = "guestUserId";
     private static final int MAX_REVIEW_LENGTH = 5000;
 
+    private record PaginationResult<T>(List<T> pageItems, int page, int totalPages, int totalCount) {
+        static <T> PaginationResult<T> of(List<T> allItems, int page, int pageSize) {
+            int total = allItems.size();
+            int pages = Math.max(1, (total + pageSize - 1) / pageSize);
+            int safePage = Math.max(0, Math.min(page, pages - 1));
+            int start = safePage * pageSize;
+            int end = Math.min(start + pageSize, total);
+            List<T> items = start < total ? allItems.subList(start, end) : List.of();
+            return new PaginationResult<>(items, safePage, pages, total);
+        }
+    }
+
+    private static <T> List<T> moveMatchingToFront(List<T> items, java.util.function.Predicate<T> matcher) {
+        for (int i = 1; i < items.size(); i++) {
+            if (matcher.test(items.get(i))) {
+                List<T> reordered = new ArrayList<>(items);
+                T match = reordered.remove(i);
+                reordered.add(0, match);
+                return reordered;
+            }
+        }
+        return items;
+    }
+
     private static String trimReview(String review) {
         if (review == null || review.isBlank()) return null;
         String trimmed = review.trim();
@@ -296,15 +320,7 @@ public class BookController {
                     rankingState.getWorkOlidBeingRanked(), 50, 0, preferredEditionOlid);
                 Integer editionCoverId = editionBook != null ? editionBook.getCoverId() : null;
                 if (editionCoverId != null && !allEditions.isEmpty() && !editionCoverId.equals(allEditions.get(0).coverId())) {
-                    for (int i = 1; i < allEditions.size(); i++) {
-                        if (editionCoverId.equals(allEditions.get(i).coverId())) {
-                            List<OpenLibraryService.EditionResult> reordered = new ArrayList<>(allEditions);
-                            OpenLibraryService.EditionResult match = reordered.remove(i);
-                            reordered.add(0, match);
-                            allEditions = reordered;
-                            break;
-                        }
-                    }
+                    allEditions = moveMatchingToFront(allEditions, e -> editionCoverId.equals(e.coverId()));
                 }
                 session.setAttribute("cachedEditions", allEditions);
             }
@@ -335,22 +351,16 @@ public class BookController {
                 return "redirect:/my-books";
             }
 
-            int pageSize = 5;
             Integer editionPage = (Integer) session.getAttribute("editionPage");
             if (editionPage == null) editionPage = 0;
 
-            int totalEditions = allEditions.size();
-            int totalPages = (totalEditions + pageSize - 1) / pageSize;
-            int startIndex = editionPage * pageSize;
-            int endIndex = Math.min(startIndex + pageSize, totalEditions);
+            PaginationResult<OpenLibraryService.EditionResult> editionPagination = PaginationResult.of(allEditions, editionPage, 5);
 
-            List<OpenLibraryService.EditionResult> pageEditions = allEditions.subList(startIndex, endIndex);
-
-            model.addAttribute("editionResults", pageEditions);
-            model.addAttribute("editionPage", editionPage);
-            model.addAttribute("editionTotalPages", totalPages);
-            model.addAttribute("editionTotalCount", totalEditions);
-            model.addAttribute("editionPageSize", pageSize);
+            model.addAttribute("editionResults", editionPagination.pageItems());
+            model.addAttribute("editionPage", editionPagination.page());
+            model.addAttribute("editionTotalPages", editionPagination.totalPages());
+            model.addAttribute("editionTotalCount", editionPagination.totalCount());
+            model.addAttribute("editionPageSize", 5);
         }
 
         String userName = null;
@@ -550,15 +560,7 @@ public class BookController {
                 rs.getWorkOlidBeingRanked(), 50, 0, preferredEditionOlid);
             Integer coverId = book != null ? book.getCoverId() : null;
             if (coverId != null && !allEditions.isEmpty() && !coverId.equals(allEditions.get(0).coverId())) {
-                for (int i = 1; i < allEditions.size(); i++) {
-                    if (coverId.equals(allEditions.get(i).coverId())) {
-                        List<OpenLibraryService.EditionResult> reordered = new ArrayList<>(allEditions);
-                        OpenLibraryService.EditionResult match = reordered.remove(i);
-                        reordered.add(0, match);
-                        allEditions = reordered;
-                        break;
-                    }
-                }
+                allEditions = moveMatchingToFront(allEditions, e -> coverId.equals(e.coverId()));
             }
             session.setAttribute("cachedEditions", allEditions);
         }
@@ -604,18 +606,13 @@ public class BookController {
             return "redirect:/rank/categorize";
         }
 
-        int pageSize = 5;
-        int totalEditions = allEditions.size();
-        int totalPages = (totalEditions + pageSize - 1) / pageSize;
-        int editionPage = Math.max(0, Math.min(page, totalPages - 1));
-        int startIndex = editionPage * pageSize;
-        int endIndex = Math.min(startIndex + pageSize, totalEditions);
+        PaginationResult<OpenLibraryService.EditionResult> editionPagination = PaginationResult.of(allEditions, page, 5);
 
-        model.addAttribute("editionResults", allEditions.subList(startIndex, endIndex));
-        model.addAttribute("editionPage", editionPage);
-        model.addAttribute("editionTotalPages", totalPages);
-        model.addAttribute("editionTotalCount", totalEditions);
-        model.addAttribute("editionPageSize", pageSize);
+        model.addAttribute("editionResults", editionPagination.pageItems());
+        model.addAttribute("editionPage", editionPagination.page());
+        model.addAttribute("editionTotalPages", editionPagination.totalPages());
+        model.addAttribute("editionTotalCount", editionPagination.totalCount());
+        model.addAttribute("editionPageSize", 5);
         model.addAttribute("isRankAll", rs.isRankAll());
         if (rs.isRankAll()) {
             List<Ranking> remainingUnranked = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(userId, Bookshelf.UNRANKED, BookCategory.UNRANKED);
@@ -1411,10 +1408,15 @@ public class BookController {
         return "redirect:/rank/categorize";
     }
 
-    private String addToWantToReadAndContinue(Long userId, RankingState rankingState, Book book) {
+    private Ranking createWantToReadRanking(Long userId, Book book) {
         List<Ranking> wantToReadRankings = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(userId, Bookshelf.WANT_TO_READ, BookCategory.UNRANKED);
         int position = wantToReadRankings.size();
         Ranking newRanking = new Ranking(userId, book, Bookshelf.WANT_TO_READ, BookCategory.UNRANKED, position);
+        return rankingRepository.save(newRanking);
+    }
+
+    private String addToWantToReadAndContinue(Long userId, RankingState rankingState, Book book) {
+        Ranking newRanking = createWantToReadRanking(userId, book);
         newRanking.setReview(rankingState.getReviewBeingRanked());
         rankingRepository.save(newRanking);
 
@@ -1449,10 +1451,7 @@ public class BookController {
             return redirectTo;
         }
 
-        List<Ranking> wantToReadRankings = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(userId, Bookshelf.WANT_TO_READ, BookCategory.UNRANKED);
-        int position = wantToReadRankings.size();
-        Ranking newRanking = new Ranking(userId, book, Bookshelf.WANT_TO_READ, BookCategory.UNRANKED, position);
-        rankingRepository.save(newRanking);
+        createWantToReadRanking(userId, book);
 
         return redirectTo;
     }
@@ -1473,35 +1472,21 @@ public class BookController {
         if (allEditions == null) {
             allEditions = openLibraryService.getEditionsForWork(workOlid, 50, 0);
             if (coverId != null) {
-                for (int i = 1; i < allEditions.size(); i++) {
-                    if (coverId.equals(allEditions.get(i).coverId())) {
-                        List<OpenLibraryService.EditionResult> reordered = new ArrayList<>(allEditions);
-                        OpenLibraryService.EditionResult match = reordered.remove(i);
-                        reordered.add(0, match);
-                        allEditions = reordered;
-                        break;
-                    }
-                }
+                allEditions = moveMatchingToFront(allEditions, e -> coverId.equals(e.coverId()));
             }
             session.setAttribute("browseEditions_" + workOlid, allEditions);
         }
 
-        int pageSize = 5;
-        int totalEditions = allEditions.size();
-        int totalPages = Math.max(1, (totalEditions + pageSize - 1) / pageSize);
-        int startIndex = page * pageSize;
-        int endIndex = Math.min(startIndex + pageSize, totalEditions);
-        List<OpenLibraryService.EditionResult> pageEditions =
-            startIndex < totalEditions ? allEditions.subList(startIndex, endIndex) : List.of();
+        PaginationResult<OpenLibraryService.EditionResult> editionPagination = PaginationResult.of(allEditions, page, 5);
 
         model.addAttribute("workOlid", workOlid);
         model.addAttribute("workTitle", title);
         model.addAttribute("workAuthor", author);
-        model.addAttribute("editionResults", pageEditions);
-        model.addAttribute("editionPage", page);
-        model.addAttribute("editionTotalPages", totalPages);
-        model.addAttribute("editionTotalCount", totalEditions);
-        model.addAttribute("editionPageSize", pageSize);
+        model.addAttribute("editionResults", editionPagination.pageItems());
+        model.addAttribute("editionPage", editionPagination.page());
+        model.addAttribute("editionTotalPages", editionPagination.totalPages());
+        model.addAttribute("editionTotalCount", editionPagination.totalCount());
+        model.addAttribute("editionPageSize", 5);
 
         Long userId = getExistingUserId(session);
         if (userId != null) {
@@ -1702,16 +1687,12 @@ public class BookController {
                     allProfiles = userRepository.findByIsGuestFalseAndIsCuratedFalseAndPublishListsTrueOrderBySignupDateDesc();
                 }
             }
-            int totalItems = allProfiles.size();
-            int totalPages = (totalItems + pageSize - 1) / pageSize;
-            int startIndex = page * pageSize;
-            int endIndex = Math.min(startIndex + pageSize, totalItems);
-            List<User> pageProfiles = startIndex < totalItems ? allProfiles.subList(startIndex, endIndex) : List.of();
-            model.addAttribute("profileSearchResults", pageProfiles.stream()
+            PaginationResult<User> profilePagination = PaginationResult.of(allProfiles, page, pageSize);
+            model.addAttribute("profileSearchResults", profilePagination.pageItems().stream()
                 .map(u -> userService.createProfileDisplayWithFollow(u, isRealUser ? currentUserId : null)).toList());
-            model.addAttribute("profilesPage", page);
-            model.addAttribute("profilesTotalPages", totalPages);
-            model.addAttribute("profilesTotalCount", totalItems);
+            model.addAttribute("profilesPage", profilePagination.page());
+            model.addAttribute("profilesTotalPages", profilePagination.totalPages());
+            model.addAttribute("profilesTotalCount", profilePagination.totalCount());
         } else {
             model.addAttribute("profileSearchResults", List.of());
         }
@@ -1724,15 +1705,11 @@ public class BookController {
                 .filter(u -> u != null)
                 .map(u -> userService.createProfileDisplayWithFollow(u, currentUserId))
                 .toList();
-            int totalItems = allFollowing.size();
-            int totalPages = (totalItems + pageSize - 1) / pageSize;
-            int startIndex = page * pageSize;
-            int endIndex = Math.min(startIndex + pageSize, totalItems);
-            List<ProfileDisplayWithFollow> pageFollowing = startIndex < totalItems ? allFollowing.subList(startIndex, endIndex) : List.of();
-            model.addAttribute("followingResults", pageFollowing);
-            model.addAttribute("followingPage", page);
-            model.addAttribute("followingTotalPages", totalPages);
-            model.addAttribute("followingTotalCount", totalItems);
+            PaginationResult<ProfileDisplayWithFollow> followingPagination = PaginationResult.of(allFollowing, page, pageSize);
+            model.addAttribute("followingResults", followingPagination.pageItems());
+            model.addAttribute("followingPage", followingPagination.page());
+            model.addAttribute("followingTotalPages", followingPagination.totalPages());
+            model.addAttribute("followingTotalCount", followingPagination.totalCount());
         } else {
             model.addAttribute("followingResults", List.of());
         }
@@ -1745,15 +1722,11 @@ public class BookController {
                 .filter(u -> u != null)
                 .map(u -> userService.createProfileDisplayWithFollow(u, currentUserId))
                 .toList();
-            int totalItems = allFollowers.size();
-            int totalPages = (totalItems + pageSize - 1) / pageSize;
-            int startIndex = page * pageSize;
-            int endIndex = Math.min(startIndex + pageSize, totalItems);
-            List<ProfileDisplayWithFollow> pageFollowers = startIndex < totalItems ? allFollowers.subList(startIndex, endIndex) : List.of();
-            model.addAttribute("followerResults", pageFollowers);
-            model.addAttribute("followersPage", page);
-            model.addAttribute("followersTotalPages", totalPages);
-            model.addAttribute("followersTotalCount", totalItems);
+            PaginationResult<ProfileDisplayWithFollow> followersPagination = PaginationResult.of(allFollowers, page, pageSize);
+            model.addAttribute("followerResults", followersPagination.pageItems());
+            model.addAttribute("followersPage", followersPagination.page());
+            model.addAttribute("followersTotalPages", followersPagination.totalPages());
+            model.addAttribute("followersTotalCount", followersPagination.totalCount());
         } else {
             model.addAttribute("followerResults", List.of());
         }
@@ -1766,15 +1739,11 @@ public class BookController {
             } else {
                 allCurated = userRepository.findByIsCurated(true);
             }
-            int totalItems = allCurated.size();
-            int totalPages = (totalItems + pageSize - 1) / pageSize;
-            int startIndex = page * pageSize;
-            int endIndex = Math.min(startIndex + pageSize, totalItems);
-            List<User> pageCurated = startIndex < totalItems ? allCurated.subList(startIndex, endIndex) : List.of();
-            model.addAttribute("curatedResults", pageCurated);
-            model.addAttribute("curatedPage", page);
-            model.addAttribute("curatedTotalPages", totalPages);
-            model.addAttribute("curatedTotalCount", totalItems);
+            PaginationResult<User> curatedPagination = PaginationResult.of(allCurated, page, pageSize);
+            model.addAttribute("curatedResults", curatedPagination.pageItems());
+            model.addAttribute("curatedPage", curatedPagination.page());
+            model.addAttribute("curatedTotalPages", curatedPagination.totalPages());
+            model.addAttribute("curatedTotalCount", curatedPagination.totalCount());
         } else {
             model.addAttribute("curatedResults", List.of());
         }
