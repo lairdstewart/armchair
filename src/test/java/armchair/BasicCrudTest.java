@@ -189,4 +189,11 @@ class BasicCrudTest extends BaseIntegrationTest {
                         .with(oauthUser("oauth-crud-recs")))
                 .andExpect(status().isOk());
     }
+
+    @Test
+    void recsRedirectsToLoginWhenUnauthenticated() throws Exception {
+        mockMvc.perform(get("/recs"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/login"));
+    }
 }

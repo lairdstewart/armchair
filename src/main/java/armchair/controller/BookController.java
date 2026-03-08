@@ -1790,13 +1790,14 @@ public class BookController {
 
     @GetMapping("/recs")
     public String showRecs(Model model, HttpSession session) {
+        if (getOAuthIdentity() == null) {
+            return "redirect:/login";
+        }
         Long userId = getCurrentUserId();
         addNavigationAttributes(model, "recs");
 
-        long fictionRankedCount = userId != null
-                ? rankingRepository.countByUserIdAndBookshelfAndCategoryIn(userId, Bookshelf.FICTION, RANKED_CATEGORIES) : 0;
-        long nonfictionRankedCount = userId != null
-                ? rankingRepository.countByUserIdAndBookshelfAndCategoryIn(userId, Bookshelf.NONFICTION, RANKED_CATEGORIES) : 0;
+        long fictionRankedCount = rankingRepository.countByUserIdAndBookshelfAndCategoryIn(userId, Bookshelf.FICTION, RANKED_CATEGORIES);
+        long nonfictionRankedCount = rankingRepository.countByUserIdAndBookshelfAndCategoryIn(userId, Bookshelf.NONFICTION, RANKED_CATEGORIES);
 
         List<BookInfo> fictionRecs = List.of();
         if (fictionRankedCount >= MIN_RANKED_BOOKS_FOR_RECS) {
@@ -1818,8 +1819,8 @@ public class BookController {
         model.addAttribute("nonfictionRankedCount", nonfictionRankedCount);
         model.addAttribute("minRankedBooks", MIN_RANKED_BOOKS_FOR_RECS);
 
-        Map<Bookshelf, Map<BookCategory, List<Ranking>>> allRankings = userId != null ? rankingService.fetchAllRankingsGrouped(userId) : Map.of();
-        Map<String, UserBookRank> userBooks = userId != null ? rankingService.buildUserBooksMap(allRankings) : Map.of();
+        Map<Bookshelf, Map<BookCategory, List<Ranking>>> allRankings = rankingService.fetchAllRankingsGrouped(userId);
+        Map<String, UserBookRank> userBooks = rankingService.buildUserBooksMap(allRankings);
         model.addAttribute("userBooks", userBooks);
 
         return "recs";
