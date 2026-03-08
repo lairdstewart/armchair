@@ -1471,7 +1471,9 @@ public class BookController {
                                    HttpSession session) {
         Long userId = getCurrentUserId(session);
         if (userId == null) {
-            return "redirect:/setup-username";
+            String redirect = isSafeRedirectUrl(returnUrl) ? returnUrl : "/";
+            session.setAttribute("POST_LOGIN_REDIRECT", redirect);
+            return "redirect:/login";
         }
 
         String redirectTo = isSafeRedirectUrl(returnUrl) ? "redirect:" + returnUrl : "redirect:/search?type=books";

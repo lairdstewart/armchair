@@ -62,7 +62,7 @@ public class DevSecurityConfig {
                 mockLogin(request, response,
                     Map.of("sub", "dev-user-subject", "name", "Dev User"),
                     "sub", "google");
-                response.sendRedirect("/my-profile");
+                response.sendRedirect(consumePostLoginRedirect(request));
                 return;
             }
 
@@ -70,11 +70,20 @@ public class DevSecurityConfig {
                 mockLogin(request, response,
                     Map.of("id", 12345, "login", "dev-github", "name", "Dev GitHub User"),
                     "login", "github");
-                response.sendRedirect("/my-profile");
+                response.sendRedirect(consumePostLoginRedirect(request));
                 return;
             }
 
             filterChain.doFilter(request, response);
+        }
+
+        private String consumePostLoginRedirect(HttpServletRequest request) {
+            Object redirect = request.getSession().getAttribute("POST_LOGIN_REDIRECT");
+            if (redirect instanceof String url && url.startsWith("/") && !url.contains("://") && !url.contains("//")) {
+                request.getSession().removeAttribute("POST_LOGIN_REDIRECT");
+                return url;
+            }
+            return "/my-profile";
         }
 
         private void mockLogin(HttpServletRequest request, HttpServletResponse response,

@@ -10,6 +10,8 @@ import org.springframework.security.oauth2.client.web.DefaultOAuth2Authorization
 import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestResolver;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -61,6 +63,19 @@ public class SecurityConfig {
     }
 
     @Bean
+    public AuthenticationSuccessHandler postLoginRedirectHandler() {
+        return (request, response, authentication) -> {
+            Object redirect = request.getSession().getAttribute("POST_LOGIN_REDIRECT");
+            String targetUrl = "/my-profile";
+            if (redirect instanceof String url && url.startsWith("/") && !url.contains("://") && !url.contains("//")) {
+                targetUrl = url;
+                request.getSession().removeAttribute("POST_LOGIN_REDIRECT");
+            }
+            new SimpleUrlAuthenticationSuccessHandler(targetUrl).onAuthenticationSuccess(request, response, authentication);
+        };
+    }
+
+    @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .authorizeHttpRequests(auth -> auth
@@ -69,7 +84,7 @@ public class SecurityConfig {
             )
             .oauth2Login(oauth2 -> oauth2
                 .loginPage("/login")
-                .defaultSuccessUrl("/my-profile", true)
+                .successHandler(postLoginRedirectHandler())
                 .authorizationEndpoint(authorization -> authorization
                     .authorizationRequestResolver(customAuthorizationRequestResolver())
                 )
