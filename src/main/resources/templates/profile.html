@@ -21,7 +21,8 @@
           <input type="checkbox" th:checked="${publishLists}" onchange="this.form.submit()" />
           Publish my lists
         </label>
-        <span>(visible in search)</span>
+        <span th:if="${publishLists}">(public profile: <a th:href="@{/user/{u}(u=${username})}" th:text="${username}"></a>)</span>
+        <span th:unless="${publishLists}">(visible in search)</span>
       </form>
     </div>
 
