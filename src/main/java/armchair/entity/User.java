@@ -26,8 +26,6 @@ public class User {
 
     private LocalDateTime signupDate; // When the user signed up
 
-    private boolean isGuest; // True if this is a temporary guest user
-
     private boolean isCurated = false; // True if this is a curated/imported list (e.g., NYT Best Books)
 
     private boolean publishLists = false; // True if user wants their lists visible in Explore Profiles
@@ -95,14 +93,6 @@ public class User {
 
     public void setSignupDate(LocalDateTime signupDate) {
         this.signupDate = signupDate;
-    }
-
-    public boolean isGuest() {
-        return isGuest;
-    }
-
-    public void setGuest(boolean guest) {
-        isGuest = guest;
     }
 
     public boolean isCurated() {

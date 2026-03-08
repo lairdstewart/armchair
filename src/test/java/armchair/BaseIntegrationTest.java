@@ -64,16 +64,7 @@ public abstract class BaseIntegrationTest {
 
     protected User createOAuthUser(String username, String oauthSubject, String provider) {
         User user = new User(username, oauthSubject, provider);
-        user.setGuest(false);
         return userRepository.save(user);
-    }
-
-    /**
-     * Create a guest session. The first request using this session will
-     * trigger guest user creation via getCurrentUserId().
-     */
-    protected MockHttpSession guestSession() {
-        return new MockHttpSession();
     }
 
     protected static RankingState getRankingState(MockHttpSession session) {

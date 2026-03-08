@@ -70,17 +70,20 @@ class BookDeduplicationTest extends BaseIntegrationTest {
 
     @Test
     void titleAuthorFallbackForUnverifiedBooks() throws Exception {
-        MockHttpSession session = guestSession();
+        MockHttpSession session = new MockHttpSession();
+        User user = createOAuthUser("dedup4", "oauth-dedup-4");
         String csv = "Title,Author\nDune,Frank Herbert\n";
         MockMultipartFile file = new MockMultipartFile("file", "g.csv", "text/csv",
                 csv.getBytes(StandardCharsets.UTF_8));
 
-        mockMvc.perform(multipart("/import-goodreads").file(file).session(session).with(csrf()))
+        mockMvc.perform(multipart("/import-goodreads").file(file).session(session)
+                        .with(oauthUser("oauth-dedup-4")).with(csrf()))
                 .andExpect(status().is3xxRedirection());
 
         long bookCount = bookRepository.count();
 
-        mockMvc.perform(multipart("/import-goodreads").file(file).session(session).with(csrf()))
+        mockMvc.perform(multipart("/import-goodreads").file(file).session(session)
+                        .with(oauthUser("oauth-dedup-4")).with(csrf()))
                 .andExpect(status().is3xxRedirection());
 
         assertThat(bookRepository.count()).isEqualTo(bookCount);
@@ -88,20 +91,21 @@ class BookDeduplicationTest extends BaseIntegrationTest {
 
     @Test
     void titleAuthorMatchIsCaseInsensitive() throws Exception {
-        MockHttpSession session = guestSession();
+        MockHttpSession session = new MockHttpSession();
+        User user = createOAuthUser("dedup5", "oauth-dedup-5");
         String csv1 = "Title,Author\nDune,Frank Herbert\n";
         String csv2 = "Title,Author\ndune,frank herbert\n";
 
         mockMvc.perform(multipart("/import-goodreads")
                         .file(new MockMultipartFile("file", "g.csv", "text/csv", csv1.getBytes(StandardCharsets.UTF_8)))
-                        .session(session).with(csrf()))
+                        .session(session).with(oauthUser("oauth-dedup-5")).with(csrf()))
                 .andExpect(status().is3xxRedirection());
 
         long bookCount = bookRepository.count();
 
         mockMvc.perform(multipart("/import-goodreads")
                         .file(new MockMultipartFile("file", "g.csv", "text/csv", csv2.getBytes(StandardCharsets.UTF_8)))
-                        .session(session).with(csrf()))
+                        .session(session).with(oauthUser("oauth-dedup-5")).with(csrf()))
                 .andExpect(status().is3xxRedirection());
 
         assertThat(bookRepository.count()).isEqualTo(bookCount);

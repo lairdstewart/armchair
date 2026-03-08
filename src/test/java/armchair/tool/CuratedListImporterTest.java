@@ -396,7 +396,6 @@ class CuratedListImporterTest {
         User savedUser = userCaptor.getValue();
         assertThat(savedUser.getUsername()).isEqualTo("Test List");
         assertThat(savedUser.isCurated()).isTrue();
-        assertThat(savedUser.isGuest()).isFalse();
     }
 
     @Test

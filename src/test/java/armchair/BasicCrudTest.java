@@ -82,15 +82,14 @@ class BasicCrudTest extends BaseIntegrationTest {
     }
 
     @Test
-    void exportCsvGuest() throws Exception {
-        MockHttpSession session = guestSession();
-        mockMvc.perform(get("/my-books").session(session)).andExpect(status().isOk());
+    void exportCsvOAuthUser() throws Exception {
+        User user = createOAuthUser("crud-export", "oauth-crud-export");
 
-        Long guestUserId = (Long) session.getAttribute("guestUserId");
         Book dune = createVerifiedBook("OL100W", "Dune", "Frank Herbert");
-        addRanking(guestUserId, dune, Bookshelf.FICTION, BookCategory.LIKED, 0);
+        addRanking(user.getId(), dune, Bookshelf.FICTION, BookCategory.LIKED, 0);
 
-        mockMvc.perform(get("/export-csv").session(session))
+        mockMvc.perform(get("/export-csv")
+                        .with(oauthUser("oauth-crud-export")))
                 .andExpect(status().isOk())
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Dune")));
     }
@@ -177,15 +176,17 @@ class BasicCrudTest extends BaseIntegrationTest {
 
     @Test
     void myBooksPageLoads() throws Exception {
-        MockHttpSession session = guestSession();
-        mockMvc.perform(get("/my-books").session(session))
+        createOAuthUser("crud-mybooks", "oauth-crud-mybooks");
+        mockMvc.perform(get("/my-books")
+                        .with(oauthUser("oauth-crud-mybooks")))
                 .andExpect(status().isOk());
     }
 
     @Test
     void recsPageLoads() throws Exception {
-        MockHttpSession session = guestSession();
-        mockMvc.perform(get("/recs").session(session))
+        createOAuthUser("crud-recs", "oauth-crud-recs");
+        mockMvc.perform(get("/recs")
+                        .with(oauthUser("oauth-crud-recs")))
                 .andExpect(status().isOk());
     }
 }

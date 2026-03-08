@@ -20,7 +20,6 @@ User accounts (both OAuth and guest).
 | oauth_subject | VARCHAR | | Google's unique user ID (OpenID "sub" claim) |
 | signup_number | BIGINT | | Which number signup (1, 2, 3...) |
 | signup_date | TIMESTAMP | | When user signed up |
-| is_guest | BOOLEAN | | True for temporary guest users |
 | is_curated | BOOLEAN | default false | True for curated/imported lists (e.g., NYT Best Books) |
 | publish_lists | BOOLEAN | default false | True if user's lists are visible in Explore |
 

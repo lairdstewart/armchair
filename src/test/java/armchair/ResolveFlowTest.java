@@ -34,11 +34,11 @@ class ResolveFlowTest extends BaseIntegrationTest {
 
     @Test
     void autoResolveSuccess() throws Exception {
-        MockHttpSession session = guestSession();
-        mockMvc.perform(get("/my-books").session(session)).andExpect(status().isOk());
-        Long guestUserId = (Long) session.getAttribute("guestUserId");
+        MockHttpSession session = new MockHttpSession();
+        User user = createOAuthUser("resolve1", "oauth-resolve1");
+        Long userId = user.getId();
 
-        setupUnverifiedBookForRanking(session, guestUserId, "Dune", "Frank Herbert");
+        setupUnverifiedBookForRanking(session, userId, "Dune", "Frank Herbert");
 
         when(openLibraryService.searchByTitleAndAuthor(eq("Dune"), eq("Frank Herbert"), eq(3)))
                 .thenReturn(List.of(
@@ -46,7 +46,7 @@ class ResolveFlowTest extends BaseIntegrationTest {
                         new OpenLibraryService.BookResult("OL456W", "OL456M", "Dune Messiah", "Frank Herbert", 1969, 12346, null)
                 ));
 
-        mockMvc.perform(get("/my-books").session(session))
+        mockMvc.perform(get("/my-books").session(session).with(oauthUser("oauth-resolve1")))
                 .andExpect(status().isOk())
                 .andExpect(model().attributeExists("resolveResults"));
 
@@ -55,7 +55,7 @@ class ResolveFlowTest extends BaseIntegrationTest {
                         .param("title", "Dune")
                         .param("author", "Frank Herbert")
                         .param("editionOlid", "OL123M")
-                        .session(session).with(csrf()))
+                        .session(session).with(oauthUser("oauth-resolve1")).with(csrf()))
                 .andExpect(status().is3xxRedirection());
 
         RankingState state = getRankingState(session);
@@ -66,11 +66,11 @@ class ResolveFlowTest extends BaseIntegrationTest {
 
     @Test
     void expandTo10Results() throws Exception {
-        MockHttpSession session = guestSession();
-        mockMvc.perform(get("/my-books").session(session)).andExpect(status().isOk());
-        Long guestUserId = (Long) session.getAttribute("guestUserId");
+        MockHttpSession session = new MockHttpSession();
+        User user = createOAuthUser("resolve2", "oauth-resolve2");
+        Long userId = user.getId();
 
-        setupUnverifiedBookForRanking(session, guestUserId, "Dune", "Frank Herbert");
+        setupUnverifiedBookForRanking(session, userId, "Dune", "Frank Herbert");
 
         when(openLibraryService.searchByTitleAndAuthor(eq("Dune"), eq("Frank Herbert"), eq(3)))
                 .thenReturn(List.of(
@@ -79,11 +79,11 @@ class ResolveFlowTest extends BaseIntegrationTest {
                         new OpenLibraryService.BookResult("OL333W", null, "Still Wrong", "Third", 2002, null, null)
                 ));
 
-        mockMvc.perform(get("/my-books").session(session))
+        mockMvc.perform(get("/my-books").session(session).with(oauthUser("oauth-resolve2")))
                 .andExpect(status().isOk())
                 .andExpect(model().attributeExists("resolveResults"));
 
-        mockMvc.perform(post("/skip-resolve").session(session).with(csrf()))
+        mockMvc.perform(post("/skip-resolve").session(session).with(oauthUser("oauth-resolve2")).with(csrf()))
                 .andExpect(status().is3xxRedirection());
 
         when(openLibraryService.searchByTitleAndAuthor(eq("Dune"), eq("Frank Herbert"), eq(10)))
@@ -91,18 +91,18 @@ class ResolveFlowTest extends BaseIntegrationTest {
                         new OpenLibraryService.BookResult("OL123W", "OL123M", "Dune", "Frank Herbert", 1965, 12345, null)
                 ));
 
-        mockMvc.perform(get("/my-books").session(session))
+        mockMvc.perform(get("/my-books").session(session).with(oauthUser("oauth-resolve2")))
                 .andExpect(status().isOk())
                 .andExpect(model().attributeExists("resolveResults"));
     }
 
     @Test
     void manualSearchFallback() throws Exception {
-        MockHttpSession session = guestSession();
-        mockMvc.perform(get("/my-books").session(session)).andExpect(status().isOk());
-        Long guestUserId = (Long) session.getAttribute("guestUserId");
+        MockHttpSession session = new MockHttpSession();
+        User user = createOAuthUser("resolve3", "oauth-resolve3");
+        Long userId = user.getId();
 
-        setupUnverifiedBookForRanking(session, guestUserId, "Dune", "Frank Herbert");
+        setupUnverifiedBookForRanking(session, userId, "Dune", "Frank Herbert");
 
         when(openLibraryService.searchByTitleAndAuthor(eq("Dune"), eq("Frank Herbert"), eq(3)))
                 .thenReturn(List.of(
@@ -114,55 +114,55 @@ class ResolveFlowTest extends BaseIntegrationTest {
                 ));
 
         // First visit — show initial results (which are < 3, so skipResolve goes to "expanded")
-        mockMvc.perform(get("/my-books").session(session))
+        mockMvc.perform(get("/my-books").session(session).with(oauthUser("oauth-resolve3")))
                 .andExpect(status().isOk());
 
         // Skip expanded results → goes to manual
-        mockMvc.perform(post("/skip-resolve").session(session).with(csrf()))
+        mockMvc.perform(post("/skip-resolve").session(session).with(oauthUser("oauth-resolve3")).with(csrf()))
                 .andExpect(status().is3xxRedirection());
 
         // Now should be in MANUAL_RESOLVE mode
-        mockMvc.perform(get("/my-books").session(session))
+        mockMvc.perform(get("/my-books").session(session).with(oauthUser("oauth-resolve3")))
                 .andExpect(status().isOk());
     }
 
     @Test
     void noResultsBothStagesGoesToManual() throws Exception {
-        MockHttpSession session = guestSession();
-        mockMvc.perform(get("/my-books").session(session)).andExpect(status().isOk());
-        Long guestUserId = (Long) session.getAttribute("guestUserId");
+        MockHttpSession session = new MockHttpSession();
+        User user = createOAuthUser("resolve4", "oauth-resolve4");
+        Long userId = user.getId();
 
-        setupUnverifiedBookForRanking(session, guestUserId, "Obscure Book", "Unknown Author");
+        setupUnverifiedBookForRanking(session, userId, "Obscure Book", "Unknown Author");
 
         when(openLibraryService.searchByTitleAndAuthor(eq("Obscure Book"), eq("Unknown Author"), anyInt()))
                 .thenReturn(List.of());
 
         // First attempt empty, tries expanded, also empty → redirect to manual
-        mockMvc.perform(get("/my-books").session(session))
+        mockMvc.perform(get("/my-books").session(session).with(oauthUser("oauth-resolve4")))
                 .andExpect(status().is3xxRedirection());
 
         // Should redirect to manual resolve mode
-        mockMvc.perform(get("/my-books").session(session))
+        mockMvc.perform(get("/my-books").session(session).with(oauthUser("oauth-resolve4")))
                 .andExpect(status().isOk());
     }
 
     @Test
     void duplicateDuringResolve() throws Exception {
-        MockHttpSession session = guestSession();
-        mockMvc.perform(get("/my-books").session(session)).andExpect(status().isOk());
-        Long guestUserId = (Long) session.getAttribute("guestUserId");
+        MockHttpSession session = new MockHttpSession();
+        User user = createOAuthUser("resolve5", "oauth-resolve5");
+        Long userId = user.getId();
 
         Book existingBook = createVerifiedBook("OL123W", "Dune", "Frank Herbert");
-        addRanking(guestUserId, existingBook, Bookshelf.FICTION, BookCategory.LIKED, 0);
+        addRanking(userId, existingBook, Bookshelf.FICTION, BookCategory.LIKED, 0);
 
-        setupUnverifiedBookForRanking(session, guestUserId, "Dune Import", "F. Herbert");
+        setupUnverifiedBookForRanking(session, userId, "Dune Import", "F. Herbert");
 
         when(openLibraryService.searchByTitleAndAuthor(eq("Dune Import"), eq("F. Herbert"), eq(3)))
                 .thenReturn(List.of(
                         new OpenLibraryService.BookResult("OL123W", "OL123M", "Dune", "Frank Herbert", 1965, 12345, null)
                 ));
 
-        mockMvc.perform(get("/my-books").session(session))
+        mockMvc.perform(get("/my-books").session(session).with(oauthUser("oauth-resolve5")))
                 .andExpect(status().isOk());
 
         mockMvc.perform(post("/resolve-book")
@@ -170,7 +170,7 @@ class ResolveFlowTest extends BaseIntegrationTest {
                         .param("title", "Dune")
                         .param("author", "Frank Herbert")
                         .param("editionOlid", "OL123M")
-                        .session(session).with(csrf()))
+                        .session(session).with(oauthUser("oauth-resolve5")).with(csrf()))
                 .andExpect(status().is3xxRedirection());
 
         assertThat(session.getAttribute("duplicateResolveTitle")).isEqualTo("Dune");
@@ -178,13 +178,13 @@ class ResolveFlowTest extends BaseIntegrationTest {
 
     @Test
     void abandonResolveShowsWarning() throws Exception {
-        MockHttpSession session = guestSession();
-        mockMvc.perform(get("/my-books").session(session)).andExpect(status().isOk());
-        Long guestUserId = (Long) session.getAttribute("guestUserId");
+        MockHttpSession session = new MockHttpSession();
+        User user = createOAuthUser("resolve6", "oauth-resolve6");
+        Long userId = user.getId();
 
-        setupUnverifiedBookForRanking(session, guestUserId, "Unknown Book", "Unknown Author");
+        setupUnverifiedBookForRanking(session, userId, "Unknown Book", "Unknown Author");
 
-        mockMvc.perform(post("/abandon-resolve").session(session).with(csrf()))
+        mockMvc.perform(post("/abandon-resolve").session(session).with(oauthUser("oauth-resolve6")).with(csrf()))
                 .andExpect(status().is3xxRedirection());
 
         assertThat(getRankingState(session)).isNull();
@@ -193,18 +193,18 @@ class ResolveFlowTest extends BaseIntegrationTest {
 
     @Test
     void resolveBookSavesFirstPublishYear() throws Exception {
-        MockHttpSession session = guestSession();
-        mockMvc.perform(get("/my-books").session(session)).andExpect(status().isOk());
-        Long guestUserId = (Long) session.getAttribute("guestUserId");
+        MockHttpSession session = new MockHttpSession();
+        User user = createOAuthUser("resolve7", "oauth-resolve7");
+        Long userId = user.getId();
 
-        setupUnverifiedBookForRanking(session, guestUserId, "Dune Import", "F. Herbert");
+        setupUnverifiedBookForRanking(session, userId, "Dune Import", "F. Herbert");
 
         when(openLibraryService.searchByTitleAndAuthor(eq("Dune Import"), eq("F. Herbert"), eq(3)))
                 .thenReturn(List.of(
                         new OpenLibraryService.BookResult("OL123W", "OL123M", "Dune", "Frank Herbert", 1965, 12345, null)
                 ));
 
-        mockMvc.perform(get("/my-books").session(session))
+        mockMvc.perform(get("/my-books").session(session).with(oauthUser("oauth-resolve7")))
                 .andExpect(status().isOk());
 
         mockMvc.perform(post("/resolve-book")
@@ -213,7 +213,7 @@ class ResolveFlowTest extends BaseIntegrationTest {
                         .param("author", "Frank Herbert")
                         .param("editionOlid", "OL123M")
                         .param("firstPublishYear", "1965")
-                        .session(session).with(csrf()))
+                        .session(session).with(oauthUser("oauth-resolve7")).with(csrf()))
                 .andExpect(status().is3xxRedirection());
 
         Book book = bookRepository.findByWorkOlid("OL123W").orElseThrow();
@@ -222,18 +222,18 @@ class ResolveFlowTest extends BaseIntegrationTest {
 
     @Test
     void resolveBookSavesCoverId() throws Exception {
-        MockHttpSession session = guestSession();
-        mockMvc.perform(get("/my-books").session(session)).andExpect(status().isOk());
-        Long guestUserId = (Long) session.getAttribute("guestUserId");
+        MockHttpSession session = new MockHttpSession();
+        User user = createOAuthUser("resolve8", "oauth-resolve8");
+        Long userId = user.getId();
 
-        setupUnverifiedBookForRanking(session, guestUserId, "Dune Import", "F. Herbert");
+        setupUnverifiedBookForRanking(session, userId, "Dune Import", "F. Herbert");
 
         when(openLibraryService.searchByTitleAndAuthor(eq("Dune Import"), eq("F. Herbert"), eq(3)))
                 .thenReturn(List.of(
                         new OpenLibraryService.BookResult("OL123W", "OL123M", "Dune", "Frank Herbert", 1965, 12345, null)
                 ));
 
-        mockMvc.perform(get("/my-books").session(session))
+        mockMvc.perform(get("/my-books").session(session).with(oauthUser("oauth-resolve8")))
                 .andExpect(status().isOk());
 
         mockMvc.perform(post("/resolve-book")
@@ -243,7 +243,7 @@ class ResolveFlowTest extends BaseIntegrationTest {
                         .param("editionOlid", "OL123M")
                         .param("firstPublishYear", "1965")
                         .param("coverId", "12345")
-                        .session(session).with(csrf()))
+                        .session(session).with(oauthUser("oauth-resolve8")).with(csrf()))
                 .andExpect(status().is3xxRedirection());
 
         Book book = bookRepository.findByWorkOlid("OL123W").orElseThrow();
@@ -252,11 +252,11 @@ class ResolveFlowTest extends BaseIntegrationTest {
 
     @Test
     void resolveFlowsContinuesToEditionSelection() throws Exception {
-        MockHttpSession session = guestSession();
-        mockMvc.perform(get("/my-books").session(session)).andExpect(status().isOk());
-        Long guestUserId = (Long) session.getAttribute("guestUserId");
+        MockHttpSession session = new MockHttpSession();
+        User user = createOAuthUser("resolve9", "oauth-resolve9");
+        Long userId = user.getId();
 
-        setupUnverifiedBookForRanking(session, guestUserId, "Dune", "Frank Herbert");
+        setupUnverifiedBookForRanking(session, userId, "Dune", "Frank Herbert");
 
         when(openLibraryService.searchByTitleAndAuthor(eq("Dune"), eq("Frank Herbert"), eq(3)))
                 .thenReturn(List.of(
@@ -264,7 +264,7 @@ class ResolveFlowTest extends BaseIntegrationTest {
                 ));
 
         // First visit shows RESOLVE mode
-        mockMvc.perform(get("/my-books").session(session))
+        mockMvc.perform(get("/my-books").session(session).with(oauthUser("oauth-resolve9")))
                 .andExpect(status().isOk())
                 .andExpect(model().attributeExists("resolveResults"));
 
@@ -275,7 +275,7 @@ class ResolveFlowTest extends BaseIntegrationTest {
                         .param("author", "Frank Herbert")
                         .param("editionOlid", "OL123M")
                         .param("firstPublishYear", "1965")
-                        .session(session).with(csrf()))
+                        .session(session).with(oauthUser("oauth-resolve9")).with(csrf()))
                 .andExpect(status().is3xxRedirection());
 
         // Verify RankingState has workOlid but edition NOT selected
@@ -291,7 +291,7 @@ class ResolveFlowTest extends BaseIntegrationTest {
                 ));
 
         // Visit /rank/edition to show SELECT_EDITION mode
-        mockMvc.perform(get("/rank/edition").session(session))
+        mockMvc.perform(get("/rank/edition").session(session).with(oauthUser("oauth-resolve9")))
                 .andExpect(status().isOk())
                 .andExpect(model().attributeExists("editionResults"));
     }

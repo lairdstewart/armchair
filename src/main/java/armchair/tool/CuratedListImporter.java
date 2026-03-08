@@ -175,7 +175,6 @@ public class CuratedListImporter {
         } else {
             user = new User(username);
             user.setCurated(true);
-            user.setGuest(false);
             userRepository.save(user);
             log.info("Importing curated list: {}", username);
         }

@@ -24,7 +24,6 @@ import armchair.service.OpenLibraryService;
 import armchair.service.RankingService;
 import armchair.service.SearchService;
 import armchair.service.UserService;
-import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.slf4j.Logger;
@@ -69,7 +68,6 @@ public class BookController {
         DUPLICATE_RESOLVE;
     }
 
-    private static final String SESSION_GUEST_USER_ID = "guestUserId";
     private static final String SESSION_BOOK_SEARCH_RESULTS = "bookSearchResults";
     private static final String SESSION_BOOK_SEARCH_QUERY = "bookSearchQuery";
     private static final String SESSION_SKIP_RESOLVE = "skipResolve";
@@ -181,11 +179,6 @@ public class BookController {
         session.removeAttribute(SESSION_RANKING_STATE);
     }
 
-    @PostConstruct
-    public void init() {
-        userService.cleanupGuests();
-    }
-
     record OAuthIdentity(String subject, String provider) {}
 
     private OAuthIdentity getOAuthIdentity() {
@@ -213,39 +206,15 @@ public class BookController {
         model.addAttribute("currentPage", currentPage);
     }
 
-    private Long getCurrentUserId(HttpSession session) {
+    private Long getCurrentUserId() {
         OAuthIdentity identity = getOAuthIdentity();
-
-        if (identity != null) {
-            User user = userRepository.findByOauthSubjectAndOauthProvider(identity.subject(), identity.provider()).orElse(null);
-            if (user != null) {
-                Long guestUserId = (Long) session.getAttribute(SESSION_GUEST_USER_ID);
-                if (guestUserId != null && !guestUserId.equals(user.getId())) {
-                    userService.migrateGuestDataToUser(guestUserId, user.getId());
-                    session.removeAttribute(SESSION_GUEST_USER_ID);
-                }
-                return user.getId();
-            }
-        }
-
-        Long guestUserId = (Long) session.getAttribute(SESSION_GUEST_USER_ID);
-        if (guestUserId != null) {
-            User guest = userRepository.findById(guestUserId).orElse(null);
-            if (guest != null) {
-                return guestUserId;
-            }
-        }
-
-        User newGuest = new User("guest-" + java.util.UUID.randomUUID());
-        newGuest.setGuest(true);
-        userRepository.save(newGuest);
-        session.setAttribute(SESSION_GUEST_USER_ID, newGuest.getId());
-        return newGuest.getId();
+        if (identity == null) return null;
+        return userRepository.findByOauthSubjectAndOauthProvider(identity.subject(), identity.provider())
+            .map(User::getId).orElse(null);
     }
 
     @GetMapping("/")
-    public String showWelcome(Model model, HttpSession session) {
-        getCurrentUserId(session);
+    public String showWelcome(Model model) {
         addNavigationAttributes(model, "about");
         return "welcome";
     }
@@ -258,7 +227,7 @@ public class BookController {
 
     @PostMapping("/my-books")
     public String goToMyBooks(HttpSession session) {
-        Long userId = getCurrentUserId(session);
+        Long userId = getCurrentUserId();
         if (userId != null) {
             rankingService.restoreAbandonedBook(userId, getRankingState(session));
             clearRankingState(session);
@@ -271,7 +240,10 @@ public class BookController {
 
     @GetMapping("/my-books")
     public String showPage(Model model, HttpSession session, @RequestParam(required = false) String selectedBookshelf, @RequestParam(required = false) String resolveQuery) {
-        Long userId = getCurrentUserId(session);
+        Long userId = getCurrentUserId();
+        if (userId == null) {
+            return "redirect:/login";
+        }
 
         addNavigationAttributes(model, "list");
 
@@ -397,7 +369,7 @@ public class BookController {
 
         String userName = null;
         User user = userRepository.findById(userId).orElse(null);
-        if (user != null && !user.isGuest()) {
+        if (user != null) {
             userName = user.getUsername();
         }
         model.addAttribute("userName", userName);
@@ -506,7 +478,10 @@ public class BookController {
 
     @GetMapping("/rank/categorize")
     public String showCategorize(Model model, HttpSession session) {
-        Long userId = getCurrentUserId(session);
+        Long userId = getCurrentUserId();
+        if (userId == null) {
+            return "redirect:/login";
+        }
         RankingState rs = getRankingState(session);
 
         if (rs == null || rs.getMode() != RankingMode.CATEGORIZE) {
@@ -530,7 +505,10 @@ public class BookController {
 
     @GetMapping("/rank/compare")
     public String showRankCompare(Model model, HttpSession session) {
-        Long userId = getCurrentUserId(session);
+        Long userId = getCurrentUserId();
+        if (userId == null) {
+            return "redirect:/login";
+        }
         RankingState rs = getRankingState(session);
 
         if (rs == null || rs.getMode() != RankingMode.RANK) {
@@ -569,7 +547,10 @@ public class BookController {
     @GetMapping("/rank/edition")
     public String showEditionSelection(@RequestParam(required = false, defaultValue = "0") int page,
                                        Model model, HttpSession session) {
-        Long userId = getCurrentUserId(session);
+        Long userId = getCurrentUserId();
+        if (userId == null) {
+            return "redirect:/login";
+        }
         RankingState rs = getRankingState(session);
 
         if (rs == null || rs.getMode() != RankingMode.SELECT_EDITION) {
@@ -658,7 +639,10 @@ public class BookController {
     @GetMapping("/resolve")
     public String showResolve(Model model, HttpSession session,
                               @RequestParam(required = false) String resolveQuery) {
-        Long userId = getCurrentUserId(session);
+        Long userId = getCurrentUserId();
+        if (userId == null) {
+            return "redirect:/login";
+        }
         RankingState rs = getRankingState(session);
 
         if (rs == null || rs.getMode() != RankingMode.RESOLVE) {
@@ -717,7 +701,10 @@ public class BookController {
 
     @GetMapping("/review/{rankingId}")
     public String showReview(@PathVariable Long rankingId, Model model, HttpSession session) {
-        Long userId = getCurrentUserId(session);
+        Long userId = getCurrentUserId();
+        if (userId == null) {
+            return "redirect:/login";
+        }
         RankingState rs = getRankingState(session);
 
         if (rs == null || rs.getMode() != RankingMode.REVIEW ||
@@ -762,9 +749,9 @@ public class BookController {
     @Transactional
     @PostMapping("/choose")
     public String chooseBook(@RequestParam String choice, HttpSession session) {
-        Long userId = getCurrentUserId(session);
+        Long userId = getCurrentUserId();
         if (userId == null) {
-            return "redirect:/setup-username";
+            return "redirect:/login";
         }
         RankingState rankingState = getRankingState(session);
         if (rankingState == null) {
@@ -809,9 +796,9 @@ public class BookController {
 
     @PostMapping("/start-rerank")
     public String startRerank(@RequestParam String bookshelf, HttpSession session) {
-        Long userId = getCurrentUserId(session);
+        Long userId = getCurrentUserId();
         if (userId == null) {
-            return "redirect:/setup-username";
+            return "redirect:/login";
         }
         Bookshelf bookshlf;
         try {
@@ -829,9 +816,9 @@ public class BookController {
     @Transactional
     @PostMapping("/select-rerank-book")
     public String selectRerankBook(@RequestParam Long bookId, HttpSession session) {
-        Long userId = getCurrentUserId(session);
+        Long userId = getCurrentUserId();
         if (userId == null) {
-            return "redirect:/setup-username";
+            return "redirect:/login";
         }
 
         Ranking ranking = rankingService.findRankingForUser(bookId, userId);
@@ -854,9 +841,9 @@ public class BookController {
 
     @PostMapping("/start-remove")
     public String startRemove(@RequestParam String bookshelf, HttpSession session) {
-        Long userId = getCurrentUserId(session);
+        Long userId = getCurrentUserId();
         if (userId == null) {
-            return "redirect:/setup-username";
+            return "redirect:/login";
         }
         Bookshelf bookshlf;
         try {
@@ -873,9 +860,9 @@ public class BookController {
 
     @PostMapping("/start-remove-wtr")
     public String startRemoveWantToRead(HttpSession session) {
-        Long userId = getCurrentUserId(session);
+        Long userId = getCurrentUserId();
         if (userId == null) {
-            return "redirect:/setup-username";
+            return "redirect:/login";
         }
         rankingService.restoreAbandonedBook(userId, getRankingState(session));
         RankingState rankingState = new RankingState(null, null, null, Bookshelf.WANT_TO_READ, BookCategory.UNRANKED);
@@ -887,9 +874,9 @@ public class BookController {
     @Transactional
     @PostMapping("/select-remove-wtr-book")
     public String selectRemoveWantToReadBook(@RequestParam Long bookId, HttpSession session) {
-        Long userId = getCurrentUserId(session);
+        Long userId = getCurrentUserId();
         if (userId == null) {
-            return "redirect:/setup-username";
+            return "redirect:/login";
         }
 
         Ranking ranking = rankingService.findRankingForUser(bookId, userId);
@@ -912,9 +899,9 @@ public class BookController {
 
     @PostMapping("/direct-review")
     public String directReview(@RequestParam Long bookId, HttpSession session) {
-        Long userId = getCurrentUserId(session);
+        Long userId = getCurrentUserId();
         if (userId == null) {
-            return "redirect:/setup-username";
+            return "redirect:/login";
         }
 
         Ranking ranking = rankingService.findRankingForUser(bookId, userId);
@@ -934,9 +921,9 @@ public class BookController {
     @Transactional
     @PostMapping("/direct-rerank")
     public String directRerank(@RequestParam Long bookId, HttpSession session) {
-        Long userId = getCurrentUserId(session);
+        Long userId = getCurrentUserId();
         if (userId == null) {
-            return "redirect:/setup-username";
+            return "redirect:/login";
         }
 
         Ranking ranking = rankingService.findRankingForUser(bookId, userId);
@@ -960,9 +947,9 @@ public class BookController {
     @Transactional
     @PostMapping("/direct-remove")
     public String directRemove(@RequestParam Long bookId, HttpSession session) {
-        Long userId = getCurrentUserId(session);
+        Long userId = getCurrentUserId();
         if (userId == null) {
-            return "redirect:/setup-username";
+            return "redirect:/login";
         }
 
         Ranking ranking = rankingService.findRankingForUser(bookId, userId);
@@ -979,9 +966,9 @@ public class BookController {
     @Transactional
     @PostMapping("/mark-as-read")
     public String markAsRead(@RequestParam Long bookId, HttpSession session) {
-        Long userId = getCurrentUserId(session);
+        Long userId = getCurrentUserId();
         if (userId == null) {
-            return "redirect:/setup-username";
+            return "redirect:/login";
         }
 
         Ranking ranking = rankingService.findRankingForUser(bookId, userId);
@@ -1009,9 +996,9 @@ public class BookController {
     @Transactional
     @PostMapping("/remove-from-reading-list")
     public String removeFromReadingList(@RequestParam Long bookId, HttpSession session) {
-        Long userId = getCurrentUserId(session);
+        Long userId = getCurrentUserId();
         if (userId == null) {
-            return "redirect:/setup-username";
+            return "redirect:/login";
         }
 
         Ranking ranking = rankingService.findRankingForUser(bookId, userId);
@@ -1027,9 +1014,9 @@ public class BookController {
     @Transactional
     @PostMapping("/select-remove-book")
     public String selectRemoveBook(@RequestParam Long bookId, HttpSession session) {
-        Long userId = getCurrentUserId(session);
+        Long userId = getCurrentUserId();
         if (userId == null) {
-            return "redirect:/setup-username";
+            return "redirect:/login";
         }
 
         Ranking ranking = rankingService.findRankingForUser(bookId, userId);
@@ -1052,9 +1039,9 @@ public class BookController {
 
     @PostMapping("/start-review")
     public String startReview(@RequestParam String bookshelf, HttpSession session) {
-        Long userId = getCurrentUserId(session);
+        Long userId = getCurrentUserId();
         if (userId == null) {
-            return "redirect:/setup-username";
+            return "redirect:/login";
         }
         Bookshelf bookshlf;
         try {
@@ -1070,9 +1057,9 @@ public class BookController {
 
     @PostMapping("/select-review-book")
     public String selectReviewBook(@RequestParam Long bookId, HttpSession session) {
-        Long userId = getCurrentUserId(session);
+        Long userId = getCurrentUserId();
         if (userId == null) {
-            return "redirect:/setup-username";
+            return "redirect:/login";
         }
 
         Ranking ranking = rankingService.findRankingForUser(bookId, userId);
@@ -1093,9 +1080,9 @@ public class BookController {
 
     @PostMapping("/save-review")
     public String saveReview(@RequestParam(required = false) String review, HttpSession session) {
-        Long userId = getCurrentUserId(session);
+        Long userId = getCurrentUserId();
         if (userId == null) {
-            return "redirect:/setup-username";
+            return "redirect:/login";
         }
 
         RankingState rankingState = getRankingState(session);
@@ -1119,7 +1106,6 @@ public class BookController {
     @SuppressWarnings("unchecked")
     @GetMapping("/search-books")
     public String showSearchBooks(Model model, HttpSession session) {
-        getCurrentUserId(session);
         addNavigationAttributes(model, "search-books");
 
         List<OpenLibraryService.BookResult> searchResults =
@@ -1132,9 +1118,9 @@ public class BookController {
 
     @PostMapping("/search-books")
     public String searchBooks(@RequestParam String query, HttpSession session) {
-        Long userId = getCurrentUserId(session);
+        Long userId = getCurrentUserId();
         if (userId == null) {
-            return "redirect:/setup-username";
+            return "redirect:/login";
         }
 
         List<OpenLibraryService.BookResult> results = openLibraryService.searchBooks(query);
@@ -1151,9 +1137,9 @@ public class BookController {
 
     @PostMapping("/cancel-add")
     public String cancelAdd(HttpSession session) {
-        Long userId = getCurrentUserId(session);
+        Long userId = getCurrentUserId();
         if (userId == null) {
-            return "redirect:/setup-username";
+            return "redirect:/login";
         }
         RankingState rs = getRankingState(session);
         String selectedBookshelf = rs != null && rs.getBookshelf() != null ? rs.getBookshelf().name() : null;
@@ -1170,9 +1156,9 @@ public class BookController {
 
     @PostMapping("/back-to-edition")
     public String backToEdition(HttpSession session) {
-        Long userId = getCurrentUserId(session);
+        Long userId = getCurrentUserId();
         if (userId == null) {
-            return "redirect:/setup-username";
+            return "redirect:/login";
         }
         RankingState rs = getRankingState(session);
         if (rs == null || rs.getTitleBeingRanked() == null) {
@@ -1186,9 +1172,9 @@ public class BookController {
 
     @PostMapping("/back-to-editions")
     public String backToEditions(HttpSession session) {
-        Long userId = getCurrentUserId(session);
+        Long userId = getCurrentUserId();
         if (userId == null) {
-            return "redirect:/setup-username";
+            return "redirect:/login";
         }
         RankingState rs = getRankingState(session);
         if (rs == null || rs.getWorkOlidBeingRanked() == null) {
@@ -1210,9 +1196,9 @@ public class BookController {
 
     @PostMapping("/back-to-resolve")
     public String backToResolve(HttpSession session) {
-        Long userId = getCurrentUserId(session);
+        Long userId = getCurrentUserId();
         if (userId == null) {
-            return "redirect:/setup-username";
+            return "redirect:/login";
         }
         RankingState rs = getRankingState(session);
         if (rs == null || rs.getTitleBeingRanked() == null) {
@@ -1235,9 +1221,9 @@ public class BookController {
                               @RequestParam(required = false) Integer firstPublishYear,
                               @RequestParam(required = false) Integer coverId,
                               HttpSession session) {
-        Long userId = getCurrentUserId(session);
+        Long userId = getCurrentUserId();
         if (userId == null) {
-            return "redirect:/setup-username";
+            return "redirect:/login";
         }
         RankingState rankingState = getRankingState(session);
         if (rankingState == null || rankingState.getTitleBeingRanked() == null) {
@@ -1286,7 +1272,6 @@ public class BookController {
 
     @PostMapping("/abandon-resolve")
     public String abandonResolve(HttpSession session) {
-        Long userId = getCurrentUserId(session);
         RankingState rs = getRankingState(session);
         String title = "unknown book";
         if (rs != null) {
@@ -1302,9 +1287,9 @@ public class BookController {
     @Transactional
     @PostMapping("/skip-duplicate-resolve")
     public String skipDuplicateResolve(HttpSession session) {
-        Long userId = getCurrentUserId(session);
+        Long userId = getCurrentUserId();
         if (userId == null) {
-            return "redirect:/setup-username";
+            return "redirect:/login";
         }
 
         Long unverifiedBookId = (Long) session.getAttribute(SESSION_DUPLICATE_RESOLVE_BOOK_ID);
@@ -1323,9 +1308,9 @@ public class BookController {
     @Transactional
     @PostMapping("/rerank-duplicate-resolve")
     public String rerankDuplicateResolve(HttpSession session) {
-        Long userId = getCurrentUserId(session);
+        Long userId = getCurrentUserId();
         if (userId == null) {
-            return "redirect:/setup-username";
+            return "redirect:/login";
         }
 
         Long unverifiedBookId = (Long) session.getAttribute(SESSION_DUPLICATE_RESOLVE_BOOK_ID);
@@ -1365,9 +1350,9 @@ public class BookController {
                              @RequestParam(required = false) Integer firstPublishYear,
                              @RequestParam(required = false) Integer coverId,
                              HttpSession session) {
-        Long userId = getCurrentUserId(session);
+        Long userId = getCurrentUserId();
         if (userId == null) {
-            return "redirect:/setup-username";
+            return "redirect:/login";
         }
         rankingService.restoreAbandonedBook(userId, getRankingState(session));
         RankingState rankingState = getRankingState(session);
@@ -1396,9 +1381,9 @@ public class BookController {
                                 @RequestParam(required = false) Integer coverId,
                                 @RequestParam(required = false) String action,
                                 HttpSession session) {
-        Long userId = getCurrentUserId(session);
+        Long userId = getCurrentUserId();
         if (userId == null) {
-            return "redirect:/setup-username";
+            return "redirect:/login";
         }
 
         RankingState rankingState = getRankingState(session);
@@ -1469,7 +1454,7 @@ public class BookController {
                                    @RequestParam(required = false) Integer coverId,
                                    @RequestParam(required = false) String returnUrl,
                                    HttpSession session) {
-        Long userId = getCurrentUserId(session);
+        Long userId = getCurrentUserId();
         if (userId == null) {
             String redirect = isSafeRedirectUrl(returnUrl) ? returnUrl : "/";
             session.setAttribute("POST_LOGIN_REDIRECT", redirect);
@@ -1521,7 +1506,7 @@ public class BookController {
         model.addAttribute("editionTotalCount", editionPagination.totalCount());
         model.addAttribute("editionPageSize", EDITION_PAGE_SIZE);
 
-        Long userId = getExistingUserId(session);
+        Long userId = getCurrentUserId();
         if (userId != null) {
             Ranking existing = rankingRepository.findByUserIdAndBookWorkOlid(userId, workOlid);
             if (existing != null) {
@@ -1541,9 +1526,9 @@ public class BookController {
                                     @RequestParam(required = false) Integer coverId,
                                     @RequestParam(required = false) String editionTitle,
                                     HttpSession session) {
-        Long userId = getCurrentUserId(session);
+        Long userId = getCurrentUserId();
         if (userId == null) {
-            return "redirect:/setup-username";
+            return "redirect:/login";
         }
         rankingService.restoreAbandonedBook(userId, getRankingState(session));
 
@@ -1584,9 +1569,9 @@ public class BookController {
                                   @RequestParam String category,
                                   @RequestParam(required = false) String review,
                                   HttpSession session) {
-        Long userId = getCurrentUserId(session);
+        Long userId = getCurrentUserId();
         if (userId == null) {
-            return "redirect:/setup-username";
+            return "redirect:/login";
         }
         RankingState rankingState = getRankingState(session);
         if (rankingState == null || rankingState.getTitleBeingRanked() == null) {
@@ -1644,7 +1629,7 @@ public class BookController {
 
     @GetMapping("/export-csv")
     public ResponseEntity<String> exportCsv(HttpSession session) {
-        Long userId = getCurrentUserId(session);
+        Long userId = getCurrentUserId();
         if (userId == null) {
             return ResponseEntity.badRequest().build();
         }
@@ -1661,20 +1646,6 @@ public class BookController {
             .body(csv);
     }
 
-    private Long getExistingUserId(HttpSession session) {
-        OAuthIdentity identity = getOAuthIdentity();
-        if (identity != null) {
-            User user = userRepository.findByOauthSubjectAndOauthProvider(identity.subject(), identity.provider()).orElse(null);
-            if (user != null) return user.getId();
-            return null;
-        }
-        Long guestId = (Long) session.getAttribute(SESSION_GUEST_USER_ID);
-        if (guestId != null) {
-            User guest = userRepository.findById(guestId).orElse(null);
-            if (guest != null) return guestId;
-        }
-        return null;
-    }
 
     @GetMapping("/search")
     public String showUnifiedSearch(@RequestParam(required = false, defaultValue = "books") String type,
@@ -1685,10 +1656,10 @@ public class BookController {
         model.addAttribute("searchType", type);
         model.addAttribute("query", query);
 
-        Long currentUserId = getExistingUserId(session);
+        Long currentUserId = getCurrentUserId();
         boolean isLoggedIn = getOAuthIdentity() != null && currentUserId != null;
         User currentUser = isLoggedIn ? userRepository.findById(currentUserId).orElse(null) : null;
-        boolean isRealUser = currentUser != null && !currentUser.isGuest();
+        boolean isRealUser = currentUser != null;
 
         // --- Books tab ---
         Map<Bookshelf, Map<BookCategory, List<Ranking>>> allRankings = currentUserId != null ? rankingService.fetchAllRankingsGrouped(currentUserId) : Map.of();
@@ -1789,7 +1760,6 @@ public class BookController {
 
     @GetMapping("/search-profiles")
     public String showExplore(@RequestParam(required = false) String query, Model model, HttpSession session) {
-        getCurrentUserId(session);
         addNavigationAttributes(model, "search");
         model.addAttribute("query", query);
 
@@ -1818,7 +1788,7 @@ public class BookController {
 
     @GetMapping("/recs")
     public String showRecs(Model model, HttpSession session) {
-        Long userId = getCurrentUserId(session);
+        Long userId = getCurrentUserId();
         addNavigationAttributes(model, "recs");
 
         long fictionRankedCount = userId != null
@@ -1855,8 +1825,6 @@ public class BookController {
 
     @GetMapping("/user/{username}")
     public String viewUser(@PathVariable String username, Model model, HttpSession session) {
-        getCurrentUserId(session);
-
         User user = userRepository.findByUsername(username).orElse(null);
         if (user == null) {
             return "redirect:/";
@@ -1874,7 +1842,7 @@ public class BookController {
         boolean hasFiction = !fictionBooks.liked().isEmpty() || !fictionBooks.ok().isEmpty() || !fictionBooks.disliked().isEmpty() || !fictionBooks.unranked().isEmpty();
         boolean hasNonfiction = !nonfictionBooks.liked().isEmpty() || !nonfictionBooks.ok().isEmpty() || !nonfictionBooks.disliked().isEmpty() || !nonfictionBooks.unranked().isEmpty();
 
-        Long currentUserId = getCurrentUserId(session);
+        Long currentUserId = getCurrentUserId();
         Map<Bookshelf, Map<BookCategory, List<Ranking>>> currentUserRankings = currentUserId != null ? rankingService.fetchAllRankingsGrouped(currentUserId) : Map.of();
         Map<String, UserBookRank> userBooks = currentUserId != null ? rankingService.buildUserBooksMap(currentUserRankings) : Map.of();
 
@@ -1899,13 +1867,13 @@ public class BookController {
             }
         }
 
-        Long userId = getCurrentUserId(session);
+        Long userId = getCurrentUserId();
         if (userId == null) {
             return "redirect:/";
         }
 
         User user = userRepository.findById(userId).orElse(null);
-        if (user == null || user.isGuest()) {
+        if (user == null) {
             return "redirect:/";
         }
 
@@ -1932,9 +1900,9 @@ public class BookController {
             return "redirect:/search?type=profiles";
         }
 
-        Long currentUserId = getCurrentUserId(session);
+        Long currentUserId = getCurrentUserId();
         User currentUser = currentUserId != null ? userRepository.findById(currentUserId).orElse(null) : null;
-        if (currentUser == null || currentUser.isGuest()) {
+        if (currentUser == null) {
             return "redirect:/search?type=profiles";
         }
 
@@ -1961,9 +1929,9 @@ public class BookController {
             return "redirect:/search?type=profiles";
         }
 
-        Long currentUserId = getCurrentUserId(session);
+        Long currentUserId = getCurrentUserId();
         User currentUser = currentUserId != null ? userRepository.findById(currentUserId).orElse(null) : null;
-        if (currentUser == null || currentUser.isGuest()) {
+        if (currentUser == null) {
             return "redirect:/search?type=profiles";
         }
 
@@ -1981,7 +1949,7 @@ public class BookController {
         }
 
         User user = userRepository.findByOauthSubjectAndOauthProvider(identity.subject(), identity.provider()).orElse(null);
-        if (user == null || user.isGuest()) {
+        if (user == null) {
             return "redirect:/";
         }
 
@@ -2027,9 +1995,8 @@ public class BookController {
         username = username.trim();
 
         User newUser = new User(username, identity.subject(), identity.provider());
-        newUser.setGuest(false);
 
-        long realUserCount = userRepository.countByIsGuestAndIsCurated(false, false);
+        long realUserCount = userRepository.countByIsCurated(false);
         newUser.setSignupNumber(realUserCount + 1);
         newUser.setSignupDate(LocalDateTime.now());
 
@@ -2039,12 +2006,6 @@ public class BookController {
             model.addAttribute("error", "Username already taken");
             model.addAttribute("username", username);
             return "setup-username";
-        }
-
-        Long guestUserId = (Long) session.getAttribute(SESSION_GUEST_USER_ID);
-        if (guestUserId != null) {
-            userService.migrateGuestDataToUser(guestUserId, newUser.getId());
-            session.removeAttribute(SESSION_GUEST_USER_ID);
         }
 
         return "redirect:/my-profile";
@@ -2057,7 +2018,7 @@ public class BookController {
             return "redirect:/";
         }
         User user = userRepository.findByOauthSubjectAndOauthProvider(identity.subject(), identity.provider()).orElse(null);
-        if (user == null || user.isGuest()) {
+        if (user == null) {
             return "redirect:/";
         }
         addNavigationAttributes(model, "profile");
@@ -2072,7 +2033,7 @@ public class BookController {
             return "redirect:/";
         }
         User user = userRepository.findByOauthSubjectAndOauthProvider(identity.subject(), identity.provider()).orElse(null);
-        if (user == null || user.isGuest()) {
+        if (user == null) {
             return "redirect:/";
         }
 
@@ -2107,7 +2068,6 @@ public class BookController {
                                        @RequestParam(required = false) Integer imported,
                                        @RequestParam(required = false) Integer skipped,
                                        @RequestParam(required = false) Integer failed) {
-        Long userId = getCurrentUserId(session);
         addNavigationAttributes(model, "profile");
         if (imported != null) {
             String message = "Successfully imported " + imported + " books";
@@ -2124,7 +2084,10 @@ public class BookController {
 
     @PostMapping("/import-goodreads")
     public String importGoodreads(@RequestParam("file") MultipartFile file, HttpSession session) {
-        Long userId = getCurrentUserId(session);
+        Long userId = getCurrentUserId();
+        if (userId == null) {
+            return "redirect:/login";
+        }
 
         try {
             ImportExportService.ImportResult result = importExportService.importGoodreads(file.getInputStream(), userId);
@@ -2138,9 +2101,9 @@ public class BookController {
     @Transactional
     @PostMapping("/rank-unranked-book")
     public String rankUnrankedBook(@RequestParam Long bookId, HttpSession session) {
-        Long userId = getCurrentUserId(session);
+        Long userId = getCurrentUserId();
         if (userId == null) {
-            return "redirect:/setup-username";
+            return "redirect:/login";
         }
 
         Ranking ranking = rankingService.findRankingForUser(bookId, userId);
@@ -2167,9 +2130,9 @@ public class BookController {
     @Transactional
     @PostMapping("/want-to-read-unranked-book")
     public String wantToReadUnrankedBook(@RequestParam Long bookId, HttpSession session) {
-        Long userId = getCurrentUserId(session);
+        Long userId = getCurrentUserId();
         if (userId == null) {
-            return "redirect:/setup-username";
+            return "redirect:/login";
         }
 
         Ranking ranking = rankingService.findRankingForUser(bookId, userId);
@@ -2197,9 +2160,9 @@ public class BookController {
     @Transactional
     @PostMapping("/rank-all")
     public String rankAll(HttpSession session) {
-        Long userId = getCurrentUserId(session);
+        Long userId = getCurrentUserId();
         if (userId == null) {
-            return "redirect:/setup-username";
+            return "redirect:/login";
         }
 
         return startNextUnrankedBook(userId, null, session);
@@ -2240,7 +2203,7 @@ public class BookController {
         }
 
         User user = userRepository.findByOauthSubjectAndOauthProvider(identity.subject(), identity.provider()).orElse(null);
-        if (user == null || user.isGuest()) {
+        if (user == null) {
             return "redirect:/";
         }
 

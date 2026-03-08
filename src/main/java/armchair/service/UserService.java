@@ -72,22 +72,6 @@ public class UserService {
     }
 
     @Transactional
-    public void migrateGuestDataToUser(Long guestUserId, Long newUserId) {
-        User newUser = userRepository.getReferenceById(newUserId);
-        for (Ranking ranking : rankingRepository.findByUserId(guestUserId)) {
-            ranking.setUser(newUser);
-            rankingRepository.save(ranking);
-        }
-
-        // RankingState lives in HttpSession, which persists across login — no migration needed
-
-        User guestUser = userRepository.findById(guestUserId).orElse(null);
-        if (guestUser != null && guestUser.isGuest()) {
-            userRepository.delete(guestUser);
-        }
-    }
-
-    @Transactional
     public void deleteUserAndData(User user) {
         Long userId = user.getId();
         rankingRepository.deleteByUserId(userId);
@@ -96,15 +80,4 @@ public class UserService {
         userRepository.delete(user);
     }
 
-    @Transactional
-    public void cleanupGuests() {
-        List<User> guests = userRepository.findByIsGuest(true);
-        for (User guest : guests) {
-            rankingRepository.deleteByUserId(guest.getId());
-            userRepository.delete(guest);
-        }
-        if (!guests.isEmpty()) {
-            log.info("Cleaned up {} guest users on startup", guests.size());
-        }
-    }
 }
