@@ -314,6 +314,13 @@ details[open] .review-toggle::after {
 .book-actions {
 }
 
+.book-actions > form + form::before,
+.book-actions > .review-toggle + form::before {
+  content: "|";
+  color: #888;
+  margin: 0 0.3em;
+}
+
 .book-action-link {
   background: none;
   border: none;

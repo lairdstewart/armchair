@@ -35,7 +35,7 @@
       </div>
     </th:block>
 
-    <!-- Categorize all flow: [rank] and [want to read] per edition -->
+    <!-- Categorize all flow: rank and want to read per edition -->
     <th:block th:if="${isRankAll}">
       <div th:each="edition : ${editionResults}" style="margin-bottom: 10px;">
         <div class="book-entry">
@@ -56,7 +56,7 @@
                 <input type="hidden" name="title" th:value="${edition.title()}" />
                 <input type="hidden" name="coverId" th:value="${edition.coverId()}" />
                 <input type="hidden" name="action" value="rank" />
-                <button type="submit" class="book-action-link">[rank]</button>
+                <button type="submit" class="book-action-link">rank</button>
               </form>
               <form th:action="@{/select-edition}" method="POST" style="display: inline;">
                 <input type="hidden" name="editionOlid" th:value="${edition.editionOlid()}" />
@@ -64,7 +64,7 @@
                 <input type="hidden" name="title" th:value="${edition.title()}" />
                 <input type="hidden" name="coverId" th:value="${edition.coverId()}" />
                 <input type="hidden" name="action" value="want-to-read" />
-                <button type="submit" class="book-action-link">[want to read]</button>
+                <button type="submit" class="book-action-link">want to read</button>
               </form>
             </span>
           </div>
@@ -77,7 +77,7 @@
       <th:block th:each="page : ${#numbers.sequence(0, editionTotalPages - 1)}">
         <span th:if="${page == editionPage}" th:text="${(page * editionPageSize + 1) + '-' + T(java.lang.Math).min((page + 1) * editionPageSize, editionTotalCount)}" style="font-weight: bold; margin-right: 8px;"></span>
         <a th:if="${page != editionPage}" th:href="@{/rank/edition(page=${page})}" class="book-action-link"
-           th:text="${'[' + (page * editionPageSize + 1) + '-' + T(java.lang.Math).min((page + 1) * editionPageSize, editionTotalCount) + ']'}" style="margin-right: 8px;"></a>
+           th:text="${(page * editionPageSize + 1) + '-' + T(java.lang.Math).min((page + 1) * editionPageSize, editionTotalCount)}" style="margin-right: 8px;"></a>
       </th:block>
     </div>
   </th:block>

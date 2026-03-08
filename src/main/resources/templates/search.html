@@ -36,22 +36,22 @@
                 <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author"><span th:text="${book.author()}"></span><span th:if="${book.firstPublishYear() != null}" th:text="${' (' + book.firstPublishYear() + ')'}"></span></div>
                 <!-- Already ranked -->
                 <span th:if="${ubr != null && ubr.category() != 'want_to_read' && ubr.category() != 'unranked'}"
-                      class="book-action-text" th:text="${'[#' + ubr.rank() + ']'}"></span>
-                <!-- Already bookmarked - show [rank] link and static [want to read] -->
+                      class="book-action-text" th:text="${'#' + ubr.rank()}"></span>
+                <!-- Already bookmarked - show rank link and static want to read -->
                 <span th:if="${ubr != null && ubr.category() == 'want_to_read'}">
                   <form th:action="@{/mark-as-read}" method="POST" style="display: inline;">
                     <input type="hidden" name="bookId" th:value="${ubr.rankingId()}" />
-                    <button type="submit" class="book-action-link">[rank]</button>
+                    <button type="submit" class="book-action-link">rank</button>
                   </form>
-                  <span class="book-action-text">[want to read]</span>
+                  <span class="book-action-text">want to read</span>
                 </span>
                 <!-- Already in unranked list -->
                 <span th:if="${ubr != null && ubr.category() == 'unranked'}"
-                      class="book-action-text">[uncategorized]</span>
+                      class="book-action-text">uncategorized</span>
                 <!-- Browse editions link (shown for all books with a workOlid) -->
                 <span th:if="${book.workOlid() != null}" class="book-actions">
                   <a th:href="@{/editions/{workOlid}(workOlid=${book.workOlid()}, title=${book.title()}, author=${book.author()}, coverId=${book.coverId()})}" class="book-action-link"
-                     th:text="${book.editionCount() != null ? '[browse ' + book.editionCount() + ' editions]' : '[browse editions]'}"></a>
+                     th:text="${book.editionCount() != null ? 'browse ' + book.editionCount() + ' editions' : 'browse editions'}"></a>
                 </span>
               </div>
               <img th:if="${book.coverUrl() != null}" class="book-cover" loading="lazy" th:src="${book.coverUrl()}" /><div th:if="${book.coverUrl() == null}" class="book-cover-placeholder">?</div>
@@ -71,16 +71,16 @@
             <form th:if="${canFollow && !profile.isFollowing() && userHasPublished}" th:action="@{/follow}" method="POST" style="display: inline;" class="book-actions">
               <input type="hidden" name="userId" th:value="${profile.userId()}" />
               <input type="hidden" name="returnUrl" th:value="${'/search?type=profiles' + (query != null ? '&query=' + query : '')}" />
-              <button type="submit" class="book-action-link">[follow]</button>
+              <button type="submit" class="book-action-link">follow</button>
             </form>
             <span th:if="${canFollow && !profile.isFollowing() && !userHasPublished}" class="book-actions">
-              <button type="button" class="book-action-link" onclick="alert('You must publish your lists before you can follow other users. Go to your Profile to enable this.');">[follow]</button>
+              <button type="button" class="book-action-link" onclick="alert('You must publish your lists before you can follow other users. Go to your Profile to enable this.');">follow</button>
             </span>
             <form th:if="${canFollow && profile.isFollowing()}" th:action="@{/unfollow}" method="POST" style="display: inline;" class="book-actions"
                   onsubmit="return confirm('Are you sure you want to unfollow this user?');">
               <input type="hidden" name="userId" th:value="${profile.userId()}" />
               <input type="hidden" name="returnUrl" th:value="${'/search?type=profiles' + (query != null ? '&query=' + query : '')}" />
-              <button type="submit" class="book-action-link">[unfollow]</button>
+              <button type="submit" class="book-action-link">unfollow</button>
             </form>
           </div>
         </div>
@@ -88,7 +88,7 @@
         <div th:if="${profilesTotalPages != null && profilesTotalPages > 1}" style="margin-top: 15px;">
           <th:block th:each="p : ${#numbers.sequence(0, profilesTotalPages - 1)}">
             <span th:if="${p == profilesPage}" th:text="${(p * pageSize + 1) + '-' + T(java.lang.Math).min((p + 1) * pageSize, profilesTotalCount)}" style="font-weight: bold; margin-right: 8px;"></span>
-            <a th:if="${p != profilesPage}" th:href="@{/search(type='profiles', query=${query}, page=${p})}" class="book-action-link" th:text="${'[' + (p * pageSize + 1) + '-' + T(java.lang.Math).min((p + 1) * pageSize, profilesTotalCount) + ']'}" style="margin-right: 8px;"></a>
+            <a th:if="${p != profilesPage}" th:href="@{/search(type='profiles', query=${query}, page=${p})}" class="book-action-link" th:text="${(p * pageSize + 1) + '-' + T(java.lang.Math).min((p + 1) * pageSize, profilesTotalCount)}" style="margin-right: 8px;"></a>
           </th:block>
         </div>
       </div>
@@ -103,7 +103,7 @@
                   onsubmit="return confirm('Are you sure you want to unfollow this user?');">
               <input type="hidden" name="userId" th:value="${profile.userId()}" />
               <input type="hidden" name="returnUrl" value="/search?type=following" />
-              <button type="submit" class="book-action-link">[unfollow]</button>
+              <button type="submit" class="book-action-link">unfollow</button>
             </form>
           </div>
         </div>
@@ -111,7 +111,7 @@
         <div th:if="${followingTotalPages != null && followingTotalPages > 1}" style="margin-top: 15px;">
           <th:block th:each="p : ${#numbers.sequence(0, followingTotalPages - 1)}">
             <span th:if="${p == followingPage}" th:text="${(p * pageSize + 1) + '-' + T(java.lang.Math).min((p + 1) * pageSize, followingTotalCount)}" style="font-weight: bold; margin-right: 8px;"></span>
-            <a th:if="${p != followingPage}" th:href="@{/search(type='following', page=${p})}" class="book-action-link" th:text="${'[' + (p * pageSize + 1) + '-' + T(java.lang.Math).min((p + 1) * pageSize, followingTotalCount) + ']'}" style="margin-right: 8px;"></a>
+            <a th:if="${p != followingPage}" th:href="@{/search(type='following', page=${p})}" class="book-action-link" th:text="${(p * pageSize + 1) + '-' + T(java.lang.Math).min((p + 1) * pageSize, followingTotalCount)}" style="margin-right: 8px;"></a>
           </th:block>
         </div>
       </div>
@@ -125,16 +125,16 @@
             <form th:if="${canFollow && !profile.isFollowing() && userHasPublished}" th:action="@{/follow}" method="POST" style="display: inline;" class="book-actions">
               <input type="hidden" name="userId" th:value="${profile.userId()}" />
               <input type="hidden" name="returnUrl" value="/search?type=followers" />
-              <button type="submit" class="book-action-link">[follow]</button>
+              <button type="submit" class="book-action-link">follow</button>
             </form>
             <span th:if="${canFollow && !profile.isFollowing() && !userHasPublished}" class="book-actions">
-              <button type="button" class="book-action-link" onclick="alert('You must publish your lists before you can follow other users. Go to your Profile to enable this.');">[follow]</button>
+              <button type="button" class="book-action-link" onclick="alert('You must publish your lists before you can follow other users. Go to your Profile to enable this.');">follow</button>
             </span>
             <form th:if="${canFollow && profile.isFollowing()}" th:action="@{/unfollow}" method="POST" style="display: inline;" class="book-actions"
                   onsubmit="return confirm('Are you sure you want to unfollow this user?');">
               <input type="hidden" name="userId" th:value="${profile.userId()}" />
               <input type="hidden" name="returnUrl" value="/search?type=followers" />
-              <button type="submit" class="book-action-link">[unfollow]</button>
+              <button type="submit" class="book-action-link">unfollow</button>
             </form>
           </div>
         </div>
@@ -142,7 +142,7 @@
         <div th:if="${followersTotalPages != null && followersTotalPages > 1}" style="margin-top: 15px;">
           <th:block th:each="p : ${#numbers.sequence(0, followersTotalPages - 1)}">
             <span th:if="${p == followersPage}" th:text="${(p * pageSize + 1) + '-' + T(java.lang.Math).min((p + 1) * pageSize, followersTotalCount)}" style="font-weight: bold; margin-right: 8px;"></span>
-            <a th:if="${p != followersPage}" th:href="@{/search(type='followers', page=${p})}" class="book-action-link" th:text="${'[' + (p * pageSize + 1) + '-' + T(java.lang.Math).min((p + 1) * pageSize, followersTotalCount) + ']'}" style="margin-right: 8px;"></a>
+            <a th:if="${p != followersPage}" th:href="@{/search(type='followers', page=${p})}" class="book-action-link" th:text="${(p * pageSize + 1) + '-' + T(java.lang.Math).min((p + 1) * pageSize, followersTotalCount)}" style="margin-right: 8px;"></a>
           </th:block>
         </div>
       </div>
@@ -158,7 +158,7 @@
         <div th:if="${curatedTotalPages != null && curatedTotalPages > 1}" style="margin-top: 15px;">
           <th:block th:each="p : ${#numbers.sequence(0, curatedTotalPages - 1)}">
             <span th:if="${p == curatedPage}" th:text="${(p * pageSize + 1) + '-' + T(java.lang.Math).min((p + 1) * pageSize, curatedTotalCount)}" style="font-weight: bold; margin-right: 8px;"></span>
-            <a th:if="${p != curatedPage}" th:href="@{/search(type='curated', query=${query}, page=${p})}" class="book-action-link" th:text="${'[' + (p * pageSize + 1) + '-' + T(java.lang.Math).min((p + 1) * pageSize, curatedTotalCount) + ']'}" style="margin-right: 8px;"></a>
+            <a th:if="${p != curatedPage}" th:href="@{/search(type='curated', query=${query}, page=${p})}" class="book-action-link" th:text="${(p * pageSize + 1) + '-' + T(java.lang.Math).min((p + 1) * pageSize, curatedTotalCount)}" style="margin-right: 8px;"></a>
           </th:block>
         </div>
       </div>

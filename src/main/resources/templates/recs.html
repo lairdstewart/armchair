@@ -43,7 +43,7 @@
                     <input type="hidden" name="author" th:value="${book.author()}" />
                     <input type="hidden" name="editionOlid" th:value="${book.editionOlid()}" />
                     <input type="hidden" name="returnUrl" value="/recs" />
-                    <button type="submit" class="book-action-link">[want to read]</button>
+                    <button type="submit" class="book-action-link">want to read</button>
                   </form>
                 </div>
                 <img th:if="${book.coverUrl() != null}" class="book-cover" loading="lazy" th:src="${book.coverUrl()}" /><div th:if="${book.coverUrl() == null}" class="book-cover-placeholder">?</div>
@@ -77,7 +77,7 @@
                     <input type="hidden" name="author" th:value="${book.author()}" />
                     <input type="hidden" name="editionOlid" th:value="${book.editionOlid()}" />
                     <input type="hidden" name="returnUrl" value="/recs" />
-                    <button type="submit" class="book-action-link">[want to read]</button>
+                    <button type="submit" class="book-action-link">want to read</button>
                   </form>
                 </div>
                 <img th:if="${book.coverUrl() != null}" class="book-cover" loading="lazy" th:src="${book.coverUrl()}" /><div th:if="${book.coverUrl() == null}" class="book-cover-placeholder">?</div>

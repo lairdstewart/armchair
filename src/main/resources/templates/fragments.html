@@ -65,15 +65,15 @@
             <span class="book-actions">
               <form th:action="@{/direct-review}" method="POST" style="display: inline;">
                 <input type="hidden" name="bookId" th:value="${book.id()}" />
-                <button type="submit" class="book-action-link">[review]</button>
+                <button type="submit" class="book-action-link">review</button>
               </form>
               <form th:action="@{/direct-rerank}" method="POST" style="display: inline;">
                 <input type="hidden" name="bookId" th:value="${book.id()}" />
-                <button type="submit" class="book-action-link">[re-rank]</button>
+                <button type="submit" class="book-action-link">re-rank</button>
               </form>
               <form th:action="@{/direct-remove}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to remove this book?');">
                 <input type="hidden" name="bookId" th:value="${book.id()}" />
-                <button type="submit" class="book-action-link">[remove]</button>
+                <button type="submit" class="book-action-link">remove</button>
               </form>
             </span>
           </div>
@@ -97,15 +97,15 @@
                 <span class="review-toggle"></span>
                 <form th:action="@{/direct-review}" method="POST" style="display: inline;">
                   <input type="hidden" name="bookId" th:value="${book.id()}" />
-                  <button type="submit" class="book-action-link">[review]</button>
+                  <button type="submit" class="book-action-link">review</button>
                 </form>
                 <form th:action="@{/direct-rerank}" method="POST" style="display: inline;">
                   <input type="hidden" name="bookId" th:value="${book.id()}" />
-                  <button type="submit" class="book-action-link">[re-rank]</button>
+                  <button type="submit" class="book-action-link">re-rank</button>
                 </form>
                 <form th:action="@{/direct-remove}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to remove this book?');">
                   <input type="hidden" name="bookId" th:value="${book.id()}" />
-                  <button type="submit" class="book-action-link">[remove]</button>
+                  <button type="submit" class="book-action-link">remove</button>
                 </form>
               </span>
             </div>

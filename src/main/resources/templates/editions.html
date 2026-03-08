@@ -10,7 +10,7 @@
     <div class="page-content">
       <button type="button" onclick="window.location.href='/search?type=books'" class="btn-back">back to search</button>
       <h3>Editions of <span th:text="${workTitle}" th:remove="tag"></span></h3>
-      <a th:if="${libraryBookshelf != null}" th:href="@{/my-books(selectedBookshelf=${libraryBookshelf})}" class="book-action-link">[view in library]</a>
+      <a th:if="${libraryBookshelf != null}" th:href="@{/my-books(selectedBookshelf=${libraryBookshelf})}" class="book-action-link">view in library</a>
 
       <div th:if="${editionResults != null && !editionResults.isEmpty()}">
         <div th:each="edition : ${editionResults}" class="book-entry" style="margin-bottom: 10px;">
@@ -29,7 +29,7 @@
                 <input type="hidden" name="isbn13" th:value="${edition.isbn13()}" />
                 <input type="hidden" name="coverId" th:value="${edition.coverId()}" />
                 <input type="hidden" name="editionTitle" th:value="${edition.title()}" />
-                <button type="submit" class="book-action-link">[rank]</button>
+                <button type="submit" class="book-action-link">rank</button>
               </form>
               <form th:action="@{/add-to-reading-list}" method="POST" style="display: inline;">
                 <input type="hidden" name="workOlid" th:value="${workOlid}" />
@@ -38,7 +38,7 @@
                 <input type="hidden" name="editionOlid" th:value="${edition.editionOlid()}" />
                 <input type="hidden" name="coverId" th:value="${edition.coverId()}" />
                 <input type="hidden" name="returnUrl" th:value="${'/editions/' + workOlid + '?title=' + #strings.replace(workTitle, ' ', '+') + '&author=' + #strings.replace(workAuthor, ' ', '+') + '&page=' + editionPage}" />
-                <button type="submit" class="book-action-link">[want to read]</button>
+                <button type="submit" class="book-action-link">want to read</button>
               </form>
             </span>
           </div>
@@ -51,7 +51,7 @@
         <th:block th:each="p : ${#numbers.sequence(0, editionTotalPages - 1)}">
           <span th:if="${p == editionPage}" th:text="${(p * editionPageSize + 1) + '-' + T(java.lang.Math).min((p + 1) * editionPageSize, editionTotalCount)}" style="font-weight: bold; margin-right: 8px;"></span>
           <a th:if="${p != editionPage}" th:href="@{/editions/{workOlid}(workOlid=${workOlid}, title=${workTitle}, author=${workAuthor}, page=${p})}" class="book-action-link"
-             th:text="${'[' + (p * editionPageSize + 1) + '-' + T(java.lang.Math).min((p + 1) * editionPageSize, editionTotalCount) + ']'}" style="margin-right: 8px;"></a>
+             th:text="${(p * editionPageSize + 1) + '-' + T(java.lang.Math).min((p + 1) * editionPageSize, editionTotalCount)}" style="margin-right: 8px;"></a>
         </th:block>
       </div>
     </div>
