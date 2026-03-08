@@ -1,0 +1,61 @@
+{
+  "username": "Test Curated List",
+  "books": [
+    {
+      "rank": "1",
+      "title": "The Red and the Black",
+      "author": "Stendhal",
+      "category": "fiction",
+      "review": "Best translation is the one by Robert M. Adams."
+    },
+    {
+      "rank": "2",
+      "title": "Moby-Dick",
+      "author": "Melville",
+      "category": "fiction",
+      "review": ""
+    },
+    {
+      "rank": "3",
+      "title": "A Little Life",
+      "author": "Hanya Yanagihara",
+      "category": "fiction",
+      "review": "Operatically harrowing but no one could deny its power."
+    },
+    {
+      "rank": "1",
+      "title": "The Theory of Moral Sentiments",
+      "author": "Smith",
+      "category": "non-fiction",
+      "review": ""
+    },
+    {
+      "rank": "2",
+      "title": "In Praise of Commercial Culture",
+      "author": "Cowen",
+      "category": "non-fiction",
+      "review": "A compelling defense of market-driven art."
+    },
+    {
+      "rank": "",
+      "title": "Cryptonomicon",
+      "author": "Stephenson",
+      "category": "fiction",
+      "review": "A lot of science wrapped in a thrilling story."
+    },
+    {
+      "rank": "",
+      "title": "The Korean War",
+      "author": "Cumings",
+      "category": "non-fiction",
+      "review": ""
+    },
+    {
+      "rank": "",
+      "title": "The House of Mirth",
+      "author": "Wharton",
+      "category": "fiction",
+      "review": ""
+    }
+  ]
+}
