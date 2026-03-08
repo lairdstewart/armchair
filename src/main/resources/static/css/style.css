@@ -290,12 +290,17 @@ input:checked + .slider:before {
   text-decoration: none;
 }
 
-.review-toggle::after {
-  content: "▸ review";
+.review-toggle::before {
+  content: "▸";
+  display: inline-block;
+  width: 0.6em;
+  text-align: center;
 }
-
-details[open] .review-toggle::after {
-  content: "▾ review";
+details[open] .review-toggle::before {
+  content: "▾";
+}
+.review-toggle::after {
+  content: "review";
 }
 
 .review-text {
