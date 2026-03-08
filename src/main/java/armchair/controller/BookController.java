@@ -404,6 +404,8 @@ public class BookController {
 
         model.addAttribute("fictionBooks", fictionBooks);
         model.addAttribute("nonfictionBooks", nonfictionBooks);
+        model.addAttribute("fictionRankedBooks", fictionBooks.toRankedList());
+        model.addAttribute("nonfictionRankedBooks", nonfictionBooks.toRankedList());
         model.addAttribute("wantToReadBooks", wantToReadBooks);
         model.addAttribute("unrankedBooks", unrankedBooks);
         model.addAttribute("hasFiction", hasFiction);
@@ -1847,8 +1849,8 @@ public class BookController {
         Map<String, UserBookRank> userBooks = currentUserId != null ? rankingService.buildUserBooksMap(currentUserRankings) : Map.of();
 
         model.addAttribute("viewUsername", user.getUsername());
-        model.addAttribute("fictionBooks", fictionBooks);
-        model.addAttribute("nonfictionBooks", nonfictionBooks);
+        model.addAttribute("fictionRankedBooks", fictionBooks.toRankedList());
+        model.addAttribute("nonfictionRankedBooks", nonfictionBooks.toRankedList());
         model.addAttribute("hasFiction", hasFiction);
         model.addAttribute("hasNonfiction", hasNonfiction);
         model.addAttribute("isCurated", user.isCurated());
