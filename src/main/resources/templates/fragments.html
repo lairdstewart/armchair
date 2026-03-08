@@ -38,7 +38,7 @@
             <span th:if="${book.firstPublishYear() != null}" th:text="${' (' + book.firstPublishYear() + ')'}"></span>
           </div>
         </div>
-        <img th:if="${book.coverUrl() != null}" class="book-cover" th:src="${book.coverUrl()}" />
+        <img th:if="${book.coverUrl() != null}" class="book-cover" loading="lazy" th:src="${book.coverUrl()}" />
         <div th:if="${book.coverUrl() == null}" class="book-cover-placeholder">?</div>
       </div>
     </th:block>
@@ -77,7 +77,7 @@
               </form>
             </span>
           </div>
-          <img th:if="${book.coverUrl() != null}" class="book-cover" th:src="${book.coverUrl()}" />
+          <img th:if="${book.coverUrl() != null}" class="book-cover" loading="lazy" th:src="${book.coverUrl()}" />
           <div th:if="${book.coverUrl() == null}" class="book-cover-placeholder">?</div>
         </div>
       </span>
@@ -109,7 +109,7 @@
                 </form>
               </span>
             </div>
-            <img th:if="${book.coverUrl() != null}" class="book-cover" th:src="${book.coverUrl()}" />
+            <img th:if="${book.coverUrl() != null}" class="book-cover" loading="lazy" th:src="${book.coverUrl()}" />
             <div th:if="${book.coverUrl() == null}" class="book-cover-placeholder">?</div>
           </div>
         </summary>
@@ -132,7 +132,7 @@
                   </div>
                   <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author"><span th:text="${book.author()}"></span><span th:if="${book.firstPublishYear() != null}" th:text="${' (' + book.firstPublishYear() + ')'}"></span></div>
                 </div>
-                <img th:if="${book.coverUrl() != null}" class="book-cover" th:src="${book.coverUrl()}" /><div th:if="${book.coverUrl() == null}" class="book-cover-placeholder">?</div>
+                <img th:if="${book.coverUrl() != null}" class="book-cover" loading="lazy" th:src="${book.coverUrl()}" /><div th:if="${book.coverUrl() == null}" class="book-cover-placeholder">?</div>
               </div>
             </span>
             <details th:if="${book.review() != null}" class="book-review">
@@ -146,7 +146,7 @@
                     <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author"><span th:text="${book.author()}"></span><span th:if="${book.firstPublishYear() != null}" th:text="${' (' + book.firstPublishYear() + ')'}"></span></div>
                     <span class="review-toggle"></span>
                   </div>
-                  <img th:if="${book.coverUrl() != null}" class="book-cover" th:src="${book.coverUrl()}" /><div th:if="${book.coverUrl() == null}" class="book-cover-placeholder">?</div>
+                  <img th:if="${book.coverUrl() != null}" class="book-cover" loading="lazy" th:src="${book.coverUrl()}" /><div th:if="${book.coverUrl() == null}" class="book-cover-placeholder">?</div>
                 </div>
               </summary>
               <div class="review-text" th:text="${book.review()}"></div>
@@ -163,7 +163,7 @@
                   </div>
                   <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author"><span th:text="${book.author()}"></span><span th:if="${book.firstPublishYear() != null}" th:text="${' (' + book.firstPublishYear() + ')'}"></span></div>
                 </div>
-                <img th:if="${book.coverUrl() != null}" class="book-cover" th:src="${book.coverUrl()}" /><div th:if="${book.coverUrl() == null}" class="book-cover-placeholder">?</div>
+                <img th:if="${book.coverUrl() != null}" class="book-cover" loading="lazy" th:src="${book.coverUrl()}" /><div th:if="${book.coverUrl() == null}" class="book-cover-placeholder">?</div>
               </div>
             </span>
             <details th:if="${book.review() != null}" class="book-review">
@@ -177,7 +177,7 @@
                     <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author"><span th:text="${book.author()}"></span><span th:if="${book.firstPublishYear() != null}" th:text="${' (' + book.firstPublishYear() + ')'}"></span></div>
                     <span class="review-toggle"></span>
                   </div>
-                  <img th:if="${book.coverUrl() != null}" class="book-cover" th:src="${book.coverUrl()}" /><div th:if="${book.coverUrl() == null}" class="book-cover-placeholder">?</div>
+                  <img th:if="${book.coverUrl() != null}" class="book-cover" loading="lazy" th:src="${book.coverUrl()}" /><div th:if="${book.coverUrl() == null}" class="book-cover-placeholder">?</div>
                 </div>
               </summary>
               <div class="review-text" th:text="${book.review()}"></div>
@@ -194,7 +194,7 @@
                   </div>
                   <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author"><span th:text="${book.author()}"></span><span th:if="${book.firstPublishYear() != null}" th:text="${' (' + book.firstPublishYear() + ')'}"></span></div>
                 </div>
-                <img th:if="${book.coverUrl() != null}" class="book-cover" th:src="${book.coverUrl()}" /><div th:if="${book.coverUrl() == null}" class="book-cover-placeholder">?</div>
+                <img th:if="${book.coverUrl() != null}" class="book-cover" loading="lazy" th:src="${book.coverUrl()}" /><div th:if="${book.coverUrl() == null}" class="book-cover-placeholder">?</div>
               </div>
             </span>
             <details th:if="${book.review() != null}" class="book-review">
@@ -208,7 +208,7 @@
                     <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author"><span th:text="${book.author()}"></span><span th:if="${book.firstPublishYear() != null}" th:text="${' (' + book.firstPublishYear() + ')'}"></span></div>
                     <span class="review-toggle"></span>
                   </div>
-                  <img th:if="${book.coverUrl() != null}" class="book-cover" th:src="${book.coverUrl()}" /><div th:if="${book.coverUrl() == null}" class="book-cover-placeholder">?</div>
+                  <img th:if="${book.coverUrl() != null}" class="book-cover" loading="lazy" th:src="${book.coverUrl()}" /><div th:if="${book.coverUrl() == null}" class="book-cover-placeholder">?</div>
                 </div>
               </summary>
               <div class="review-text" th:text="${book.review()}"></div>
@@ -225,7 +225,7 @@
                   </div>
                   <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author"><span th:text="${book.author()}"></span><span th:if="${book.firstPublishYear() != null}" th:text="${' (' + book.firstPublishYear() + ')'}"></span></div>
                 </div>
-                <img th:if="${book.coverUrl() != null}" class="book-cover" th:src="${book.coverUrl()}" /><div th:if="${book.coverUrl() == null}" class="book-cover-placeholder">?</div>
+                <img th:if="${book.coverUrl() != null}" class="book-cover" loading="lazy" th:src="${book.coverUrl()}" /><div th:if="${book.coverUrl() == null}" class="book-cover-placeholder">?</div>
               </div>
             </span>
             <details th:if="${book.review() != null}" class="book-review">
@@ -239,7 +239,7 @@
                     <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author"><span th:text="${book.author()}"></span><span th:if="${book.firstPublishYear() != null}" th:text="${' (' + book.firstPublishYear() + ')'}"></span></div>
                     <span class="review-toggle"></span>
                   </div>
-                  <img th:if="${book.coverUrl() != null}" class="book-cover" th:src="${book.coverUrl()}" /><div th:if="${book.coverUrl() == null}" class="book-cover-placeholder">?</div>
+                  <img th:if="${book.coverUrl() != null}" class="book-cover" loading="lazy" th:src="${book.coverUrl()}" /><div th:if="${book.coverUrl() == null}" class="book-cover-placeholder">?</div>
                 </div>
               </summary>
               <div class="review-text" th:text="${book.review()}"></div>
@@ -262,7 +262,7 @@
                   </div>
                   <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author"><span th:text="${book.author()}"></span><span th:if="${book.firstPublishYear() != null}" th:text="${' (' + book.firstPublishYear() + ')'}"></span></div>
                 </div>
-                <img th:if="${book.coverUrl() != null}" class="book-cover" th:src="${book.coverUrl()}" /><div th:if="${book.coverUrl() == null}" class="book-cover-placeholder">?</div>
+                <img th:if="${book.coverUrl() != null}" class="book-cover" loading="lazy" th:src="${book.coverUrl()}" /><div th:if="${book.coverUrl() == null}" class="book-cover-placeholder">?</div>
               </div>
             </span>
             <details th:if="${book.review() != null}" class="book-review">
@@ -276,7 +276,7 @@
                     <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author"><span th:text="${book.author()}"></span><span th:if="${book.firstPublishYear() != null}" th:text="${' (' + book.firstPublishYear() + ')'}"></span></div>
                     <span class="review-toggle"></span>
                   </div>
-                  <img th:if="${book.coverUrl() != null}" class="book-cover" th:src="${book.coverUrl()}" /><div th:if="${book.coverUrl() == null}" class="book-cover-placeholder">?</div>
+                  <img th:if="${book.coverUrl() != null}" class="book-cover" loading="lazy" th:src="${book.coverUrl()}" /><div th:if="${book.coverUrl() == null}" class="book-cover-placeholder">?</div>
                 </div>
               </summary>
               <div class="review-text" th:text="${book.review()}"></div>
@@ -293,7 +293,7 @@
                   </div>
                   <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author"><span th:text="${book.author()}"></span><span th:if="${book.firstPublishYear() != null}" th:text="${' (' + book.firstPublishYear() + ')'}"></span></div>
                 </div>
-                <img th:if="${book.coverUrl() != null}" class="book-cover" th:src="${book.coverUrl()}" /><div th:if="${book.coverUrl() == null}" class="book-cover-placeholder">?</div>
+                <img th:if="${book.coverUrl() != null}" class="book-cover" loading="lazy" th:src="${book.coverUrl()}" /><div th:if="${book.coverUrl() == null}" class="book-cover-placeholder">?</div>
               </div>
             </span>
             <details th:if="${book.review() != null}" class="book-review">
@@ -307,7 +307,7 @@
                     <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author"><span th:text="${book.author()}"></span><span th:if="${book.firstPublishYear() != null}" th:text="${' (' + book.firstPublishYear() + ')'}"></span></div>
                     <span class="review-toggle"></span>
                   </div>
-                  <img th:if="${book.coverUrl() != null}" class="book-cover" th:src="${book.coverUrl()}" /><div th:if="${book.coverUrl() == null}" class="book-cover-placeholder">?</div>
+                  <img th:if="${book.coverUrl() != null}" class="book-cover" loading="lazy" th:src="${book.coverUrl()}" /><div th:if="${book.coverUrl() == null}" class="book-cover-placeholder">?</div>
                 </div>
               </summary>
               <div class="review-text" th:text="${book.review()}"></div>
@@ -324,7 +324,7 @@
                   </div>
                   <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author"><span th:text="${book.author()}"></span><span th:if="${book.firstPublishYear() != null}" th:text="${' (' + book.firstPublishYear() + ')'}"></span></div>
                 </div>
-                <img th:if="${book.coverUrl() != null}" class="book-cover" th:src="${book.coverUrl()}" /><div th:if="${book.coverUrl() == null}" class="book-cover-placeholder">?</div>
+                <img th:if="${book.coverUrl() != null}" class="book-cover" loading="lazy" th:src="${book.coverUrl()}" /><div th:if="${book.coverUrl() == null}" class="book-cover-placeholder">?</div>
               </div>
             </span>
             <details th:if="${book.review() != null}" class="book-review">
@@ -338,7 +338,7 @@
                     <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author"><span th:text="${book.author()}"></span><span th:if="${book.firstPublishYear() != null}" th:text="${' (' + book.firstPublishYear() + ')'}"></span></div>
                     <span class="review-toggle"></span>
                   </div>
-                  <img th:if="${book.coverUrl() != null}" class="book-cover" th:src="${book.coverUrl()}" /><div th:if="${book.coverUrl() == null}" class="book-cover-placeholder">?</div>
+                  <img th:if="${book.coverUrl() != null}" class="book-cover" loading="lazy" th:src="${book.coverUrl()}" /><div th:if="${book.coverUrl() == null}" class="book-cover-placeholder">?</div>
                 </div>
               </summary>
               <div class="review-text" th:text="${book.review()}"></div>
@@ -355,7 +355,7 @@
                   </div>
                   <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author"><span th:text="${book.author()}"></span><span th:if="${book.firstPublishYear() != null}" th:text="${' (' + book.firstPublishYear() + ')'}"></span></div>
                 </div>
-                <img th:if="${book.coverUrl() != null}" class="book-cover" th:src="${book.coverUrl()}" /><div th:if="${book.coverUrl() == null}" class="book-cover-placeholder">?</div>
+                <img th:if="${book.coverUrl() != null}" class="book-cover" loading="lazy" th:src="${book.coverUrl()}" /><div th:if="${book.coverUrl() == null}" class="book-cover-placeholder">?</div>
               </div>
             </span>
             <details th:if="${book.review() != null}" class="book-review">
@@ -369,7 +369,7 @@
                     <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author"><span th:text="${book.author()}"></span><span th:if="${book.firstPublishYear() != null}" th:text="${' (' + book.firstPublishYear() + ')'}"></span></div>
                     <span class="review-toggle"></span>
                   </div>
-                  <img th:if="${book.coverUrl() != null}" class="book-cover" th:src="${book.coverUrl()}" /><div th:if="${book.coverUrl() == null}" class="book-cover-placeholder">?</div>
+                  <img th:if="${book.coverUrl() != null}" class="book-cover" loading="lazy" th:src="${book.coverUrl()}" /><div th:if="${book.coverUrl() == null}" class="book-cover-placeholder">?</div>
                 </div>
               </summary>
               <div class="review-text" th:text="${book.review()}"></div>

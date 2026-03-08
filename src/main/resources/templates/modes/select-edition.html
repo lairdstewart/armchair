@@ -30,7 +30,7 @@
               <span th:if="${edition.publishDate() != null}" th:text="${edition.publishDate()}"></span>
             </div>
           </div>
-          <img th:if="${edition.coverUrl() != null}" class="book-cover" th:src="${edition.coverUrl()}" /><div th:if="${edition.coverUrl() == null}" class="book-cover-placeholder">?</div>
+          <img th:if="${edition.coverUrl() != null}" class="book-cover" loading="lazy" th:src="${edition.coverUrl()}" /><div th:if="${edition.coverUrl() == null}" class="book-cover-placeholder">?</div>
         </div>
       </div>
     </th:block>
@@ -68,7 +68,7 @@
               </form>
             </span>
           </div>
-          <img th:if="${edition.coverUrl() != null}" class="book-cover" th:src="${edition.coverUrl()}" /><div th:if="${edition.coverUrl() == null}" class="book-cover-placeholder">?</div>
+          <img th:if="${edition.coverUrl() != null}" class="book-cover" loading="lazy" th:src="${edition.coverUrl()}" /><div th:if="${edition.coverUrl() == null}" class="book-cover-placeholder">?</div>
         </div>
       </div>
     </th:block>

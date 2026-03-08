@@ -32,7 +32,7 @@
             </div>
             <div th:if="${result.author() != null && !result.author().isBlank()}" class="book-author" th:text="${result.author()}"></div>
           </div>
-          <img th:if="${result.coverUrl() != null}" class="book-cover" th:src="${result.coverUrl()}" /><div th:if="${result.coverUrl() == null}" class="book-cover-placeholder">?</div>
+          <img th:if="${result.coverUrl() != null}" class="book-cover" loading="lazy" th:src="${result.coverUrl()}" /><div th:if="${result.coverUrl() == null}" class="book-cover-placeholder">?</div>
         </div>
       </div>
     </div>

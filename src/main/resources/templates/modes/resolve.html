@@ -27,7 +27,7 @@
           </div>
           <div th:if="${result.editionCount() != null && result.editionCount() > 0}" class="book-author" th:text="${result.editionCount() + ' edition' + (result.editionCount() != 1 ? 's' : '')}"></div>
         </div>
-        <img th:if="${result.coverUrl() != null}" class="book-cover" th:src="${result.coverUrl()}" /><div th:if="${result.coverUrl() == null}" class="book-cover-placeholder">?</div>
+        <img th:if="${result.coverUrl() != null}" class="book-cover" loading="lazy" th:src="${result.coverUrl()}" /><div th:if="${result.coverUrl() == null}" class="book-cover-placeholder">?</div>
       </div>
     </div>
     <form th:action="@{/skip-resolve}" method="POST" style="margin-top: 15px;">

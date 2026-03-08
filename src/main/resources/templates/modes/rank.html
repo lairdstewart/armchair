@@ -17,7 +17,7 @@
             </div>
             <div th:if="${rankingState.authorBeingRanked != null && !rankingState.authorBeingRanked.isBlank()}" class="book-author" th:text="${rankingState.authorBeingRanked}"></div>
           </div>
-          <img th:if="${rankingBookCoverId != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/id/' + rankingBookCoverId + '-M.jpg'}" /><div th:if="${rankingBookCoverId == null}" class="book-cover-placeholder">?</div>
+          <img th:if="${rankingBookCoverId != null}" class="book-cover" loading="lazy" th:src="${'https://covers.openlibrary.org/b/id/' + rankingBookCoverId + '-M.jpg'}" /><div th:if="${rankingBookCoverId == null}" class="book-cover-placeholder">?</div>
         </div>
       </div>
       <div class="book-entry-row">
@@ -30,7 +30,7 @@
             </div>
             <div th:if="${comparisonBookAuthor != null && !comparisonBookAuthor.isBlank()}" class="book-author" th:text="${comparisonBookAuthor}"></div>
           </div>
-          <img th:if="${comparisonBookCoverId != null}" class="book-cover" th:src="${'https://covers.openlibrary.org/b/id/' + comparisonBookCoverId + '-M.jpg'}" /><div th:if="${comparisonBookCoverId == null}" class="book-cover-placeholder">?</div>
+          <img th:if="${comparisonBookCoverId != null}" class="book-cover" loading="lazy" th:src="${'https://covers.openlibrary.org/b/id/' + comparisonBookCoverId + '-M.jpg'}" /><div th:if="${comparisonBookCoverId == null}" class="book-cover-placeholder">?</div>
         </div>
       </div>
     </form>
