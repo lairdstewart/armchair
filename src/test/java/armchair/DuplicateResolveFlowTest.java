@@ -27,13 +27,13 @@ class DuplicateResolveFlowTest extends BaseIntegrationTest {
         return (Long) session.getAttribute("guestUserId");
     }
 
-    private void setupUnverifiedBookForRanking(Long userId, String title, String author) {
+    private void setupUnverifiedBookForRanking(MockHttpSession session, Long userId, String title, String author) {
         Book unverified = createUnverifiedBook(title, author);
         addRanking(userId, unverified, Bookshelf.UNRANKED, BookCategory.UNRANKED, 0);
 
-        RankingState state = new RankingState(userId, null, title, author, null, null, 0, 0, 0);
+        RankingState state = new RankingState(null, title, author, null, null, 0, 0, 0);
         state.setMode(RankingMode.RESOLVE);
-        rankingStateRepository.save(state);
+        setRankingState(session, state);
     }
 
     private void triggerDuplicateDetection(MockHttpSession session, Long userId, String existingWorkOlid,
@@ -41,7 +41,7 @@ class DuplicateResolveFlowTest extends BaseIntegrationTest {
         Book existingBook = createVerifiedBook(existingWorkOlid, "Dune", "Frank Herbert");
         addRanking(userId, existingBook, Bookshelf.FICTION, BookCategory.LIKED, 0);
 
-        setupUnverifiedBookForRanking(userId, unverifiedTitle, unverifiedAuthor);
+        setupUnverifiedBookForRanking(session, userId, unverifiedTitle, unverifiedAuthor);
 
         when(openLibraryService.searchByTitleAndAuthor(eq(unverifiedTitle), eq(unverifiedAuthor), eq(3)))
                 .thenReturn(List.of(
@@ -77,7 +77,7 @@ class DuplicateResolveFlowTest extends BaseIntegrationTest {
                 .andExpect(redirectedUrl("/my-books"));
 
         // Ranking state should be deleted
-        assertThat(rankingStateRepository.findById(userId)).isEmpty();
+        assertThat(getRankingState(session)).isNull();
 
         // Duplicate session attributes should be cleared
         assertThat(session.getAttribute("duplicateResolveTitle")).isNull();
@@ -110,7 +110,7 @@ class DuplicateResolveFlowTest extends BaseIntegrationTest {
                 .andExpect(redirectedUrl("/rank/categorize"));
 
         // RankingState should be set to CATEGORIZE for the existing book
-        RankingState state = rankingStateRepository.findById(userId).orElse(null);
+        RankingState state = getRankingState(session);
         assertThat(state).isNotNull();
         assertThat(state.getMode()).isEqualTo(RankingMode.CATEGORIZE);
         assertThat(state.getWorkOlidBeingRanked()).isEqualTo("OL123W");
@@ -135,7 +135,7 @@ class DuplicateResolveFlowTest extends BaseIntegrationTest {
         Book existingBook = createVerifiedBook("OL123W", "Dune", "Frank Herbert");
         addRankingWithReview(userId, existingBook, Bookshelf.FICTION, BookCategory.LIKED, 0, "A masterpiece of science fiction");
 
-        setupUnverifiedBookForRanking(userId, "Dune Import", "F. Herbert");
+        setupUnverifiedBookForRanking(session, userId, "Dune Import", "F. Herbert");
 
         when(openLibraryService.searchByTitleAndAuthor(eq("Dune Import"), eq("F. Herbert"), eq(3)))
                 .thenReturn(List.of(
@@ -156,7 +156,7 @@ class DuplicateResolveFlowTest extends BaseIntegrationTest {
                 .andExpect(status().is3xxRedirection());
 
         // Review should be preserved in the new ranking state
-        RankingState state = rankingStateRepository.findById(userId).orElse(null);
+        RankingState state = getRankingState(session);
         assertThat(state).isNotNull();
         assertThat(state.getReviewBeingRanked()).isEqualTo("A masterpiece of science fiction");
     }
@@ -174,7 +174,7 @@ class DuplicateResolveFlowTest extends BaseIntegrationTest {
         addRanking(userId, book1, Bookshelf.FICTION, BookCategory.LIKED, 1);
         addRanking(userId, book2, Bookshelf.FICTION, BookCategory.LIKED, 2);
 
-        setupUnverifiedBookForRanking(userId, "Dune Import", "F. Herbert");
+        setupUnverifiedBookForRanking(session, userId, "Dune Import", "F. Herbert");
 
         when(openLibraryService.searchByTitleAndAuthor(eq("Dune Import"), eq("F. Herbert"), eq(3)))
                 .thenReturn(List.of(
@@ -209,7 +209,7 @@ class DuplicateResolveFlowTest extends BaseIntegrationTest {
         MockHttpSession session = guestSession();
         Long userId = setupGuestUser(session);
 
-        setupUnverifiedBookForRanking(userId, "Some Book", "Some Author");
+        setupUnverifiedBookForRanking(session, userId, "Some Book", "Some Author");
 
         // Manually set session attributes with a nonexistent workOlid
         session.setAttribute("duplicateResolveBookId", -999L);
@@ -221,7 +221,7 @@ class DuplicateResolveFlowTest extends BaseIntegrationTest {
                 .andExpect(redirectedUrl("/my-books"));
 
         // Should clean up ranking state since the existing ranking wasn't found
-        assertThat(rankingStateRepository.findById(userId)).isEmpty();
+        assertThat(getRankingState(session)).isNull();
     }
 
     @Test
@@ -229,7 +229,7 @@ class DuplicateResolveFlowTest extends BaseIntegrationTest {
         MockHttpSession session = guestSession();
         Long userId = setupGuestUser(session);
 
-        setupUnverifiedBookForRanking(userId, "Some Book", "Some Author");
+        setupUnverifiedBookForRanking(session, userId, "Some Book", "Some Author");
 
         // Set duplicate session attributes but with null bookId
         session.setAttribute("duplicateResolveTitle", "Some Title");
@@ -241,7 +241,7 @@ class DuplicateResolveFlowTest extends BaseIntegrationTest {
                 .andExpect(redirectedUrl("/my-books"));
 
         // Ranking state should still be deleted
-        assertThat(rankingStateRepository.findById(userId)).isEmpty();
+        assertThat(getRankingState(session)).isNull();
         // Session attributes should be cleared
         assertThat(session.getAttribute("duplicateResolveTitle")).isNull();
     }
@@ -265,15 +265,15 @@ class DuplicateResolveFlowTest extends BaseIntegrationTest {
         MockHttpSession session = guestSession();
         Long userId = setupGuestUser(session);
 
-        setupUnverifiedBookForRanking(userId, "First Book", "First Author");
+        setupUnverifiedBookForRanking(session, userId, "First Book", "First Author");
 
         mockMvc.perform(post("/abandon-resolve").session(session).with(csrf()))
                 .andExpect(status().is3xxRedirection());
 
-        assertThat(rankingStateRepository.findById(userId)).isEmpty();
+        assertThat(getRankingState(session)).isNull();
 
         // Start a new resolve flow with a different book
-        setupUnverifiedBookForRanking(userId, "Second Book", "Second Author");
+        setupUnverifiedBookForRanking(session, userId, "Second Book", "Second Author");
 
         when(openLibraryService.searchByTitleAndAuthor(eq("Second Book"), eq("Second Author"), eq(3)))
                 .thenReturn(List.of(
@@ -292,7 +292,7 @@ class DuplicateResolveFlowTest extends BaseIntegrationTest {
                         .session(session).with(csrf()))
                 .andExpect(status().is3xxRedirection());
 
-        RankingState state = rankingStateRepository.findById(userId).orElse(null);
+        RankingState state = getRankingState(session);
         assertThat(state).isNotNull();
         assertThat(state.getWorkOlidBeingRanked()).isEqualTo("OL999W");
         assertThat(state.getMode()).isEqualTo(RankingMode.SELECT_EDITION);
@@ -303,7 +303,7 @@ class DuplicateResolveFlowTest extends BaseIntegrationTest {
         MockHttpSession session = guestSession();
         Long userId = setupGuestUser(session);
 
-        setupUnverifiedBookForRanking(userId, "Dune", "Frank Herbert");
+        setupUnverifiedBookForRanking(session, userId, "Dune", "Frank Herbert");
 
         // Initial state: skipResolve is null
         assertThat(session.getAttribute("skipResolve")).isNull();
@@ -331,7 +331,7 @@ class DuplicateResolveFlowTest extends BaseIntegrationTest {
         assertThat(session.getAttribute("duplicateResolveBookId")).isNotNull();
 
         // RankingState should still exist (not deleted until user chooses skip or rerank)
-        assertThat(rankingStateRepository.findById(userId)).isPresent();
+        assertThat(getRankingState(session)).isNotNull();
 
         // skipResolve should be cleared
         assertThat(session.getAttribute("skipResolve")).isNull();
@@ -351,7 +351,7 @@ class DuplicateResolveFlowTest extends BaseIntegrationTest {
         addRanking(userId2, sharedBook, Bookshelf.FICTION, BookCategory.LIKED, 0);
 
         // User 1 has an unverified duplicate
-        setupUnverifiedBookForRanking(userId1, "Dune Import", "F. Herbert");
+        setupUnverifiedBookForRanking(session1, userId1, "Dune Import", "F. Herbert");
 
         when(openLibraryService.searchByTitleAndAuthor(eq("Dune Import"), eq("F. Herbert"), eq(3)))
                 .thenReturn(List.of(

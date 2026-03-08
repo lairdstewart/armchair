@@ -189,6 +189,7 @@ class SearchAndEditionsTest extends BaseIntegrationTest {
     @Test
     void selectBookEditionCreatesBookAndRankingState() throws Exception {
         User user = createOAuthUser("sbe1", "oauth-sbe-1");
+        MockHttpSession session = new MockHttpSession();
 
         mockMvc.perform(post("/select-book-edition")
                         .param("workOlid", "OL400W")
@@ -197,11 +198,12 @@ class SearchAndEditionsTest extends BaseIntegrationTest {
                         .param("editionOlid", "OL400M")
                         .param("isbn13", "9780441172719")
                         .param("coverId", "12345")
+                        .session(session)
                         .with(oauthUser("oauth-sbe-1")).with(csrf()))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/rank/categorize"));
 
-        RankingState rs = rankingStateRepository.findById(user.getId()).orElseThrow();
+        RankingState rs = getRankingState(session);
         assertThat(rs.getWorkOlidBeingRanked()).isEqualTo("OL400W");
         assertThat(rs.getTitleBeingRanked()).isEqualTo("Dune");
         assertThat(rs.getAuthorBeingRanked()).isEqualTo("Frank Herbert");
@@ -214,16 +216,18 @@ class SearchAndEditionsTest extends BaseIntegrationTest {
     @Test
     void selectBookEditionUsesEditionTitle() throws Exception {
         User user = createOAuthUser("sbe2", "oauth-sbe-2");
+        MockHttpSession session = new MockHttpSession();
 
         mockMvc.perform(post("/select-book-edition")
                         .param("workOlid", "OL500W")
                         .param("bookName", "Original Title")
                         .param("author", "Author")
                         .param("editionTitle", "Special Edition Title")
+                        .session(session)
                         .with(oauthUser("oauth-sbe-2")).with(csrf()))
                 .andExpect(status().is3xxRedirection());
 
-        RankingState rs = rankingStateRepository.findById(user.getId()).orElseThrow();
+        RankingState rs = getRankingState(session);
         assertThat(rs.getTitleBeingRanked()).isEqualTo("Special Edition Title");
 
         // Book should also have the edition title
@@ -234,6 +238,7 @@ class SearchAndEditionsTest extends BaseIntegrationTest {
     @Test
     void selectBookEditionFullFlowToCategorize() throws Exception {
         User user = createOAuthUser("sbe3", "oauth-sbe-3");
+        MockHttpSession session = new MockHttpSession();
 
         // Select edition from browse page
         mockMvc.perform(post("/select-book-edition")
@@ -241,6 +246,7 @@ class SearchAndEditionsTest extends BaseIntegrationTest {
                         .param("bookName", "Test Book")
                         .param("author", "Test Author")
                         .param("editionOlid", "OL600M")
+                        .session(session)
                         .with(oauthUser("oauth-sbe-3")).with(csrf()))
                 .andExpect(status().is3xxRedirection());
 
@@ -248,6 +254,7 @@ class SearchAndEditionsTest extends BaseIntegrationTest {
         mockMvc.perform(post("/categorize")
                         .param("bookshelf", "fiction")
                         .param("category", "liked")
+                        .session(session)
                         .with(oauthUser("oauth-sbe-3")).with(csrf()))
                 .andExpect(status().is3xxRedirection());
 
@@ -272,12 +279,13 @@ class SearchAndEditionsTest extends BaseIntegrationTest {
     @Test
     void categorizeRedirectsWhenWrongMode() throws Exception {
         User user = createOAuthUser("cat2", "oauth-cat-2");
+        MockHttpSession session = new MockHttpSession();
 
-        RankingState rs = new RankingState(user.getId(), "OL1W", "Book", "Author", null, null);
+        RankingState rs = new RankingState("OL1W", "Book", "Author", null, null);
         rs.setMode(RankingMode.RANK);
-        rankingStateRepository.save(rs);
+        setRankingState(session, rs);
 
-        mockMvc.perform(get("/rank/categorize").with(oauthUser("oauth-cat-2")))
+        mockMvc.perform(get("/rank/categorize").session(session).with(oauthUser("oauth-cat-2")))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/my-books"));
     }
@@ -285,12 +293,13 @@ class SearchAndEditionsTest extends BaseIntegrationTest {
     @Test
     void categorizeShowsPageInCorrectMode() throws Exception {
         User user = createOAuthUser("cat3", "oauth-cat-3");
+        MockHttpSession session = new MockHttpSession();
 
-        RankingState rs = new RankingState(user.getId(), "OL1W", "Dune", "Frank Herbert", null, null);
+        RankingState rs = new RankingState("OL1W", "Dune", "Frank Herbert", null, null);
         rs.setMode(RankingMode.CATEGORIZE);
-        rankingStateRepository.save(rs);
+        setRankingState(session, rs);
 
-        mockMvc.perform(get("/rank/categorize").with(oauthUser("oauth-cat-3")))
+        mockMvc.perform(get("/rank/categorize").session(session).with(oauthUser("oauth-cat-3")))
                 .andExpect(status().isOk())
                 .andExpect(model().attributeExists("rankingState"))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Dune")));
@@ -310,12 +319,13 @@ class SearchAndEditionsTest extends BaseIntegrationTest {
     @Test
     void compareRedirectsWhenWrongMode() throws Exception {
         User user = createOAuthUser("cmp2", "oauth-cmp-2");
+        MockHttpSession session = new MockHttpSession();
 
-        RankingState rs = new RankingState(user.getId(), "OL1W", "Book", "Author", null, null);
+        RankingState rs = new RankingState("OL1W", "Book", "Author", null, null);
         rs.setMode(RankingMode.CATEGORIZE);
-        rankingStateRepository.save(rs);
+        setRankingState(session, rs);
 
-        mockMvc.perform(get("/rank/compare").with(oauthUser("oauth-cmp-2")))
+        mockMvc.perform(get("/rank/compare").session(session).with(oauthUser("oauth-cmp-2")))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/my-books"));
     }
@@ -323,16 +333,17 @@ class SearchAndEditionsTest extends BaseIntegrationTest {
     @Test
     void compareShowsComparisonBooks() throws Exception {
         User user = createOAuthUser("cmp3", "oauth-cmp-3");
+        MockHttpSession session = new MockHttpSession();
 
         var existingBook = createVerifiedBook("OL10W", "Existing Book", "Author A");
         addRanking(user.getId(), existingBook, Bookshelf.FICTION, BookCategory.LIKED, 0);
 
-        RankingState rs = new RankingState(user.getId(), "OL11W", "New Book", "Author B",
+        RankingState rs = new RankingState("OL11W", "New Book", "Author B",
                 Bookshelf.FICTION, BookCategory.LIKED, 0, 0, 0);
         rs.setMode(RankingMode.RANK);
-        rankingStateRepository.save(rs);
+        setRankingState(session, rs);
 
-        mockMvc.perform(get("/rank/compare").with(oauthUser("oauth-cmp-3")))
+        mockMvc.perform(get("/rank/compare").session(session).with(oauthUser("oauth-cmp-3")))
                 .andExpect(status().isOk())
                 .andExpect(model().attribute("comparisonBookTitle", "Existing Book"))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("New Book")));
@@ -341,14 +352,15 @@ class SearchAndEditionsTest extends BaseIntegrationTest {
     @Test
     void compareRedirectsWhenIndexOutOfBounds() throws Exception {
         User user = createOAuthUser("cmp4", "oauth-cmp-4");
+        MockHttpSession session = new MockHttpSession();
 
         // No books in the list but compareToIndex = 0
-        RankingState rs = new RankingState(user.getId(), "OL1W", "Book", "Author",
+        RankingState rs = new RankingState("OL1W", "Book", "Author",
                 Bookshelf.FICTION, BookCategory.LIKED, 0, 0, 0);
         rs.setMode(RankingMode.RANK);
-        rankingStateRepository.save(rs);
+        setRankingState(session, rs);
 
-        mockMvc.perform(get("/rank/compare").with(oauthUser("oauth-cmp-4")))
+        mockMvc.perform(get("/rank/compare").session(session).with(oauthUser("oauth-cmp-4")))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/my-books"));
     }

@@ -23,13 +23,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 class ResolveFlowTest extends BaseIntegrationTest {
 
-    private void setupUnverifiedBookForRanking(Long userId, String title, String author) {
+    private void setupUnverifiedBookForRanking(MockHttpSession session, Long userId, String title, String author) {
         Book unverified = createUnverifiedBook(title, author);
         addRanking(userId, unverified, Bookshelf.UNRANKED, BookCategory.UNRANKED, 0);
 
-        RankingState state = new RankingState(userId, null, title, author, null, null, 0, 0, 0);
+        RankingState state = new RankingState(null, title, author, null, null, 0, 0, 0);
         state.setMode(RankingMode.RESOLVE);
-        rankingStateRepository.save(state);
+        setRankingState(session, state);
     }
 
     @Test
@@ -38,7 +38,7 @@ class ResolveFlowTest extends BaseIntegrationTest {
         mockMvc.perform(get("/my-books").session(session)).andExpect(status().isOk());
         Long guestUserId = (Long) session.getAttribute("guestUserId");
 
-        setupUnverifiedBookForRanking(guestUserId, "Dune", "Frank Herbert");
+        setupUnverifiedBookForRanking(session, guestUserId, "Dune", "Frank Herbert");
 
         when(openLibraryService.searchByTitleAndAuthor(eq("Dune"), eq("Frank Herbert"), eq(3)))
                 .thenReturn(List.of(
@@ -58,7 +58,7 @@ class ResolveFlowTest extends BaseIntegrationTest {
                         .session(session).with(csrf()))
                 .andExpect(status().is3xxRedirection());
 
-        RankingState state = rankingStateRepository.findById(guestUserId).orElse(null);
+        RankingState state = getRankingState(session);
         assertThat(state).isNotNull();
         assertThat(state.getWorkOlidBeingRanked()).isEqualTo("OL123W");
         assertThat(state.getTitleBeingRanked()).isEqualTo("Dune");
@@ -70,7 +70,7 @@ class ResolveFlowTest extends BaseIntegrationTest {
         mockMvc.perform(get("/my-books").session(session)).andExpect(status().isOk());
         Long guestUserId = (Long) session.getAttribute("guestUserId");
 
-        setupUnverifiedBookForRanking(guestUserId, "Dune", "Frank Herbert");
+        setupUnverifiedBookForRanking(session, guestUserId, "Dune", "Frank Herbert");
 
         when(openLibraryService.searchByTitleAndAuthor(eq("Dune"), eq("Frank Herbert"), eq(3)))
                 .thenReturn(List.of(
@@ -102,7 +102,7 @@ class ResolveFlowTest extends BaseIntegrationTest {
         mockMvc.perform(get("/my-books").session(session)).andExpect(status().isOk());
         Long guestUserId = (Long) session.getAttribute("guestUserId");
 
-        setupUnverifiedBookForRanking(guestUserId, "Dune", "Frank Herbert");
+        setupUnverifiedBookForRanking(session, guestUserId, "Dune", "Frank Herbert");
 
         when(openLibraryService.searchByTitleAndAuthor(eq("Dune"), eq("Frank Herbert"), eq(3)))
                 .thenReturn(List.of(
@@ -132,7 +132,7 @@ class ResolveFlowTest extends BaseIntegrationTest {
         mockMvc.perform(get("/my-books").session(session)).andExpect(status().isOk());
         Long guestUserId = (Long) session.getAttribute("guestUserId");
 
-        setupUnverifiedBookForRanking(guestUserId, "Obscure Book", "Unknown Author");
+        setupUnverifiedBookForRanking(session, guestUserId, "Obscure Book", "Unknown Author");
 
         when(openLibraryService.searchByTitleAndAuthor(eq("Obscure Book"), eq("Unknown Author"), anyInt()))
                 .thenReturn(List.of());
@@ -155,7 +155,7 @@ class ResolveFlowTest extends BaseIntegrationTest {
         Book existingBook = createVerifiedBook("OL123W", "Dune", "Frank Herbert");
         addRanking(guestUserId, existingBook, Bookshelf.FICTION, BookCategory.LIKED, 0);
 
-        setupUnverifiedBookForRanking(guestUserId, "Dune Import", "F. Herbert");
+        setupUnverifiedBookForRanking(session, guestUserId, "Dune Import", "F. Herbert");
 
         when(openLibraryService.searchByTitleAndAuthor(eq("Dune Import"), eq("F. Herbert"), eq(3)))
                 .thenReturn(List.of(
@@ -182,12 +182,12 @@ class ResolveFlowTest extends BaseIntegrationTest {
         mockMvc.perform(get("/my-books").session(session)).andExpect(status().isOk());
         Long guestUserId = (Long) session.getAttribute("guestUserId");
 
-        setupUnverifiedBookForRanking(guestUserId, "Unknown Book", "Unknown Author");
+        setupUnverifiedBookForRanking(session, guestUserId, "Unknown Book", "Unknown Author");
 
         mockMvc.perform(post("/abandon-resolve").session(session).with(csrf()))
                 .andExpect(status().is3xxRedirection());
 
-        assertThat(rankingStateRepository.findById(guestUserId)).isEmpty();
+        assertThat(getRankingState(session)).isNull();
         assertThat(session.getAttribute("resolveWarning")).isEqualTo("Unknown Book");
     }
 
@@ -197,7 +197,7 @@ class ResolveFlowTest extends BaseIntegrationTest {
         mockMvc.perform(get("/my-books").session(session)).andExpect(status().isOk());
         Long guestUserId = (Long) session.getAttribute("guestUserId");
 
-        setupUnverifiedBookForRanking(guestUserId, "Dune Import", "F. Herbert");
+        setupUnverifiedBookForRanking(session, guestUserId, "Dune Import", "F. Herbert");
 
         when(openLibraryService.searchByTitleAndAuthor(eq("Dune Import"), eq("F. Herbert"), eq(3)))
                 .thenReturn(List.of(
@@ -226,7 +226,7 @@ class ResolveFlowTest extends BaseIntegrationTest {
         mockMvc.perform(get("/my-books").session(session)).andExpect(status().isOk());
         Long guestUserId = (Long) session.getAttribute("guestUserId");
 
-        setupUnverifiedBookForRanking(guestUserId, "Dune Import", "F. Herbert");
+        setupUnverifiedBookForRanking(session, guestUserId, "Dune Import", "F. Herbert");
 
         when(openLibraryService.searchByTitleAndAuthor(eq("Dune Import"), eq("F. Herbert"), eq(3)))
                 .thenReturn(List.of(
@@ -256,7 +256,7 @@ class ResolveFlowTest extends BaseIntegrationTest {
         mockMvc.perform(get("/my-books").session(session)).andExpect(status().isOk());
         Long guestUserId = (Long) session.getAttribute("guestUserId");
 
-        setupUnverifiedBookForRanking(guestUserId, "Dune", "Frank Herbert");
+        setupUnverifiedBookForRanking(session, guestUserId, "Dune", "Frank Herbert");
 
         when(openLibraryService.searchByTitleAndAuthor(eq("Dune"), eq("Frank Herbert"), eq(3)))
                 .thenReturn(List.of(
@@ -279,7 +279,7 @@ class ResolveFlowTest extends BaseIntegrationTest {
                 .andExpect(status().is3xxRedirection());
 
         // Verify RankingState has workOlid but edition NOT selected
-        RankingState state = rankingStateRepository.findById(guestUserId).orElseThrow();
+        RankingState state = getRankingState(session);
         assertThat(state.getWorkOlidBeingRanked()).isEqualTo("OL123W");
         assertThat(state.isEditionSelected()).isFalse();
 

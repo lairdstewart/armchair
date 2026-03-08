@@ -9,7 +9,6 @@ import armchair.entity.User;
 import armchair.repository.BookRepository;
 import armchair.repository.FollowRepository;
 import armchair.repository.RankingRepository;
-import armchair.repository.RankingStateRepository;
 import armchair.repository.UserRepository;
 import armchair.service.OpenLibraryService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,9 +49,6 @@ public abstract class BaseIntegrationTest {
     protected RankingRepository rankingRepository;
 
     @Autowired
-    protected RankingStateRepository rankingStateRepository;
-
-    @Autowired
     protected UserRepository userRepository;
 
     @Autowired
@@ -78,6 +74,14 @@ public abstract class BaseIntegrationTest {
      */
     protected MockHttpSession guestSession() {
         return new MockHttpSession();
+    }
+
+    protected static RankingState getRankingState(MockHttpSession session) {
+        return (RankingState) session.getAttribute("rankingState");
+    }
+
+    protected static void setRankingState(MockHttpSession session, RankingState state) {
+        session.setAttribute("rankingState", state);
     }
 
     /**

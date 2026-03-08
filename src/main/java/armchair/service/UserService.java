@@ -5,11 +5,9 @@ import armchair.dto.ProfileDisplayWithFollow;
 import armchair.entity.BookCategory;
 import armchair.entity.Bookshelf;
 import armchair.entity.Ranking;
-import armchair.entity.RankingState;
 import armchair.entity.User;
 import armchair.repository.FollowRepository;
 import armchair.repository.RankingRepository;
-import armchair.repository.RankingStateRepository;
 import armchair.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,9 +34,6 @@ public class UserService {
 
     @Autowired
     private RankingRepository rankingRepository;
-
-    @Autowired
-    private RankingStateRepository rankingStateRepository;
 
     @Autowired
     private RankingService rankingService;
@@ -84,28 +79,7 @@ public class UserService {
             rankingRepository.save(ranking);
         }
 
-        RankingState guestRankingState = rankingStateRepository.findById(guestUserId).orElse(null);
-        if (guestRankingState != null) {
-            rankingStateRepository.deleteById(guestUserId);
-            RankingState newRankingState = new RankingState(
-                newUserId,
-                guestRankingState.getWorkOlidBeingRanked(),
-                guestRankingState.getTitleBeingRanked(),
-                guestRankingState.getAuthorBeingRanked(),
-                guestRankingState.getBookshelf(),
-                guestRankingState.getCategory(),
-                guestRankingState.getCompareToIndex(),
-                guestRankingState.getLowIndex(),
-                guestRankingState.getHighIndex()
-            );
-            newRankingState.setReviewBeingRanked(guestRankingState.getReviewBeingRanked());
-            newRankingState.setMode(guestRankingState.getMode());
-            newRankingState.setRankAll(guestRankingState.isRankAll());
-            newRankingState.setBookIdBeingReviewed(guestRankingState.getBookIdBeingReviewed());
-            newRankingState.setOriginalCategory(guestRankingState.getOriginalCategory());
-            newRankingState.setOriginalPosition(guestRankingState.getOriginalPosition());
-            rankingStateRepository.save(newRankingState);
-        }
+        // RankingState lives in HttpSession, which persists across login — no migration needed
 
         User guestUser = userRepository.findById(guestUserId).orElse(null);
         if (guestUser != null && guestUser.isGuest()) {
@@ -117,7 +91,6 @@ public class UserService {
     public void deleteUserAndData(User user) {
         Long userId = user.getId();
         rankingRepository.deleteByUserId(userId);
-        rankingStateRepository.deleteById(userId);
         followRepository.findByFollowerId(userId).forEach(followRepository::delete);
         followRepository.findByFollowedId(userId).forEach(followRepository::delete);
         userRepository.delete(user);
@@ -128,7 +101,6 @@ public class UserService {
         List<User> guests = userRepository.findByIsGuest(true);
         for (User guest : guests) {
             rankingRepository.deleteByUserId(guest.getId());
-            rankingStateRepository.deleteById(guest.getId());
             userRepository.delete(guest);
         }
         if (!guests.isEmpty()) {

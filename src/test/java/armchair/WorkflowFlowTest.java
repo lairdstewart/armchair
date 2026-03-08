@@ -25,6 +25,7 @@ class WorkflowFlowTest extends BaseIntegrationTest {
     @Test
     void rerankFlow() throws Exception {
         User user = createOAuthUser("wf1", "oauth-wf-1");
+        MockHttpSession session = new MockHttpSession();
 
         Book bookA = createVerifiedBook("OL1W", "Book A", "Author A");
         Book bookB = createVerifiedBook("OL2W", "Book B", "Author B");
@@ -36,17 +37,19 @@ class WorkflowFlowTest extends BaseIntegrationTest {
         // Step 1: start-rerank creates RE_RANK state
         mockMvc.perform(post("/start-rerank")
                         .param("bookshelf", "fiction")
+                        .session(session)
                         .with(oauthUser("oauth-wf-1")).with(csrf()))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/my-books"));
 
-        RankingState state = rankingStateRepository.findById(user.getId()).orElseThrow();
+        RankingState state = getRankingState(session);
         assertThat(state.getMode()).isEqualTo(RankingMode.RE_RANK);
         assertThat(state.getBookshelf()).isEqualTo(Bookshelf.FICTION);
 
         // Step 2: select-rerank-book removes book and stores info
         mockMvc.perform(post("/select-rerank-book")
                         .param("bookId", String.valueOf(rB.getId()))
+                        .session(session)
                         .with(oauthUser("oauth-wf-1")).with(csrf()))
                 .andExpect(status().is3xxRedirection());
 
@@ -60,7 +63,7 @@ class WorkflowFlowTest extends BaseIntegrationTest {
         assertThat(liked.get(1).getPosition()).isEqualTo(1);
 
         // State has book info for re-ranking
-        state = rankingStateRepository.findById(user.getId()).orElseThrow();
+        state = getRankingState(session);
         assertThat(state.getTitleBeingRanked()).isEqualTo("Book B");
         assertThat(state.getWorkOlidBeingRanked()).isEqualTo("OL2W");
     }
@@ -68,6 +71,7 @@ class WorkflowFlowTest extends BaseIntegrationTest {
     @Test
     void rerankThenCategorizeAndRank() throws Exception {
         User user = createOAuthUser("wf2", "oauth-wf-2");
+        MockHttpSession session = new MockHttpSession();
 
         Book bookA = createVerifiedBook("OL1W", "Book A", "Author A");
         Book bookB = createVerifiedBook("OL2W", "Book B", "Author B");
@@ -79,11 +83,13 @@ class WorkflowFlowTest extends BaseIntegrationTest {
         // Start rerank flow
         mockMvc.perform(post("/start-rerank")
                         .param("bookshelf", "fiction")
+                        .session(session)
                         .with(oauthUser("oauth-wf-2")).with(csrf()))
                 .andExpect(status().is3xxRedirection());
 
         mockMvc.perform(post("/select-rerank-book")
                         .param("bookId", String.valueOf(rB.getId()))
+                        .session(session)
                         .with(oauthUser("oauth-wf-2")).with(csrf()))
                 .andExpect(status().is3xxRedirection());
 
@@ -91,6 +97,7 @@ class WorkflowFlowTest extends BaseIntegrationTest {
         mockMvc.perform(post("/categorize")
                         .param("bookshelf", "nonfiction")
                         .param("category", "ok")
+                        .session(session)
                         .with(oauthUser("oauth-wf-2")).with(csrf()))
                 .andExpect(status().is3xxRedirection());
 
@@ -105,7 +112,7 @@ class WorkflowFlowTest extends BaseIntegrationTest {
                 user.getId(), Bookshelf.FICTION, BookCategory.LIKED);
         assertThat(ficLiked).hasSize(2);
 
-        assertThat(rankingStateRepository.findById(user.getId())).isEmpty();
+        assertThat(getRankingState(session)).isNull();
     }
 
     @Test
@@ -131,6 +138,7 @@ class WorkflowFlowTest extends BaseIntegrationTest {
     @Test
     void removeFlow() throws Exception {
         User user = createOAuthUser("wf4", "oauth-wf-4");
+        MockHttpSession session = new MockHttpSession();
 
         Book bookA = createVerifiedBook("OL1W", "Book A", "Author A");
         Book bookB = createVerifiedBook("OL2W", "Book B", "Author B");
@@ -142,17 +150,19 @@ class WorkflowFlowTest extends BaseIntegrationTest {
         // Step 1: start-remove
         mockMvc.perform(post("/start-remove")
                         .param("bookshelf", "fiction")
+                        .session(session)
                         .with(oauthUser("oauth-wf-4")).with(csrf()))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/my-books"));
 
-        RankingState state = rankingStateRepository.findById(user.getId()).orElseThrow();
+        RankingState state = getRankingState(session);
         assertThat(state.getMode()).isEqualTo(RankingMode.REMOVE);
         assertThat(state.getBookshelf()).isEqualTo(Bookshelf.FICTION);
 
         // Step 2: select-remove-book
         mockMvc.perform(post("/select-remove-book")
                         .param("bookId", String.valueOf(rB.getId()))
+                        .session(session)
                         .with(oauthUser("oauth-wf-4")).with(csrf()))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/my-books"));
@@ -167,7 +177,7 @@ class WorkflowFlowTest extends BaseIntegrationTest {
         assertThat(liked.get(1).getPosition()).isEqualTo(1);
 
         // State cleared
-        assertThat(rankingStateRepository.findById(user.getId())).isEmpty();
+        assertThat(getRankingState(session)).isNull();
     }
 
     @Test
@@ -191,6 +201,7 @@ class WorkflowFlowTest extends BaseIntegrationTest {
     @Test
     void removeWantToReadFlow() throws Exception {
         User user = createOAuthUser("wf6", "oauth-wf-6");
+        MockHttpSession session = new MockHttpSession();
 
         Book bookA = createVerifiedBook("OL1W", "Book A", "Author A");
         Book bookB = createVerifiedBook("OL2W", "Book B", "Author B");
@@ -199,17 +210,19 @@ class WorkflowFlowTest extends BaseIntegrationTest {
 
         // Step 1: start-remove-wtr
         mockMvc.perform(post("/start-remove-wtr")
+                        .session(session)
                         .with(oauthUser("oauth-wf-6")).with(csrf()))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/my-books?selectedBookshelf=WANT_TO_READ"));
 
-        RankingState state = rankingStateRepository.findById(user.getId()).orElseThrow();
+        RankingState state = getRankingState(session);
         assertThat(state.getMode()).isEqualTo(RankingMode.REMOVE);
         assertThat(state.getBookshelf()).isEqualTo(Bookshelf.WANT_TO_READ);
 
         // Step 2: select-remove-wtr-book
         mockMvc.perform(post("/select-remove-wtr-book")
                         .param("bookId", String.valueOf(rA.getId()))
+                        .session(session)
                         .with(oauthUser("oauth-wf-6")).with(csrf()))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/my-books?selectedBookshelf=WANT_TO_READ"));
@@ -221,25 +234,27 @@ class WorkflowFlowTest extends BaseIntegrationTest {
         assertThat(wtr.get(0).getBook().getTitle()).isEqualTo("Book B");
         assertThat(wtr.get(0).getPosition()).isEqualTo(0);
 
-        assertThat(rankingStateRepository.findById(user.getId())).isEmpty();
+        assertThat(getRankingState(session)).isNull();
     }
 
     @Test
     void selectRemoveWtrBookRejectsNonWtrBook() throws Exception {
         User user = createOAuthUser("wf7", "oauth-wf-7");
+        MockHttpSession session = new MockHttpSession();
 
         // Book is in fiction, not want-to-read
         Book book = createVerifiedBook("OL1W", "Book A", "Author A");
         Ranking r = addRanking(user.getId(), book, Bookshelf.FICTION, BookCategory.LIKED, 0);
 
         // Set up REMOVE state for want-to-read
-        RankingState rs = new RankingState(user.getId(), null, null, null, Bookshelf.WANT_TO_READ, BookCategory.UNRANKED);
+        RankingState rs = new RankingState(null, null, null, Bookshelf.WANT_TO_READ, BookCategory.UNRANKED);
         rs.setMode(RankingMode.REMOVE);
-        rankingStateRepository.save(rs);
+        setRankingState(session, rs);
 
         // Try to remove a fiction book via WTR endpoint → should reject
         mockMvc.perform(post("/select-remove-wtr-book")
                         .param("bookId", String.valueOf(r.getId()))
+                        .session(session)
                         .with(oauthUser("oauth-wf-7")).with(csrf()))
                 .andExpect(status().is3xxRedirection());
 
@@ -252,6 +267,7 @@ class WorkflowFlowTest extends BaseIntegrationTest {
     @Test
     void reviewFlow() throws Exception {
         User user = createOAuthUser("wf8", "oauth-wf-8");
+        MockHttpSession session = new MockHttpSession();
 
         Book book = createVerifiedBook("OL1W", "Dune", "Frank Herbert");
         Ranking ranking = addRanking(user.getId(), book, Bookshelf.FICTION, BookCategory.LIKED, 0);
@@ -259,38 +275,42 @@ class WorkflowFlowTest extends BaseIntegrationTest {
         // Step 1: start-review
         mockMvc.perform(post("/start-review")
                         .param("bookshelf", "fiction")
+                        .session(session)
                         .with(oauthUser("oauth-wf-8")).with(csrf()))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/my-books"));
 
-        RankingState state = rankingStateRepository.findById(user.getId()).orElseThrow();
+        RankingState state = getRankingState(session);
         assertThat(state.getMode()).isEqualTo(RankingMode.REVIEW);
         assertThat(state.getBookshelf()).isEqualTo(Bookshelf.FICTION);
 
         // Step 2: select-review-book
         mockMvc.perform(post("/select-review-book")
                         .param("bookId", String.valueOf(ranking.getId()))
+                        .session(session)
                         .with(oauthUser("oauth-wf-8")).with(csrf()))
                 .andExpect(status().is3xxRedirection());
 
-        state = rankingStateRepository.findById(user.getId()).orElseThrow();
+        state = getRankingState(session);
         assertThat(state.getBookIdBeingReviewed()).isEqualTo(ranking.getId());
 
         // Step 3: save-review
         mockMvc.perform(post("/save-review")
                         .param("review", "An epic masterpiece")
+                        .session(session)
                         .with(oauthUser("oauth-wf-8")).with(csrf()))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/my-books"));
 
         Ranking updated = rankingRepository.findById(ranking.getId()).orElseThrow();
         assertThat(updated.getReview()).isEqualTo("An epic masterpiece");
-        assertThat(rankingStateRepository.findById(user.getId())).isEmpty();
+        assertThat(getRankingState(session)).isNull();
     }
 
     @Test
     void reviewFlowClearExistingReview() throws Exception {
         User user = createOAuthUser("wf9", "oauth-wf-9");
+        MockHttpSession session = new MockHttpSession();
 
         Book book = createVerifiedBook("OL1W", "Dune", "Frank Herbert");
         Ranking ranking = addRankingWithReview(user.getId(), book, Bookshelf.FICTION, BookCategory.LIKED, 0, "Old review");
@@ -298,15 +318,18 @@ class WorkflowFlowTest extends BaseIntegrationTest {
         // Start review via start-review + select
         mockMvc.perform(post("/start-review")
                         .param("bookshelf", "fiction")
+                        .session(session)
                         .with(oauthUser("oauth-wf-9")).with(csrf()));
 
         mockMvc.perform(post("/select-review-book")
                         .param("bookId", String.valueOf(ranking.getId()))
+                        .session(session)
                         .with(oauthUser("oauth-wf-9")).with(csrf()));
 
         // Save with empty review to clear it
         mockMvc.perform(post("/save-review")
                         .param("review", "")
+                        .session(session)
                         .with(oauthUser("oauth-wf-9")).with(csrf()))
                 .andExpect(status().is3xxRedirection());
 
@@ -334,12 +357,14 @@ class WorkflowFlowTest extends BaseIntegrationTest {
     @Test
     void rankUnrankedVerifiedBook() throws Exception {
         User user = createOAuthUser("wf11", "oauth-wf-11");
+        MockHttpSession session = new MockHttpSession();
 
         Book book = createVerifiedBook("OL1W", "Dune", "Frank Herbert");
         Ranking ranking = addRanking(user.getId(), book, Bookshelf.UNRANKED, BookCategory.UNRANKED, 0);
 
         mockMvc.perform(post("/rank-unranked-book")
                         .param("bookId", String.valueOf(ranking.getId()))
+                        .session(session)
                         .with(oauthUser("oauth-wf-11")).with(csrf()))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/rank/edition"));
@@ -350,7 +375,7 @@ class WorkflowFlowTest extends BaseIntegrationTest {
         assertThat(unranked).isEmpty();
 
         // State set up for edition selection
-        RankingState state = rankingStateRepository.findById(user.getId()).orElseThrow();
+        RankingState state = getRankingState(session);
         assertThat(state.getMode()).isEqualTo(RankingMode.SELECT_EDITION);
         assertThat(state.getTitleBeingRanked()).isEqualTo("Dune");
         assertThat(state.getBookshelf()).isEqualTo(Bookshelf.UNRANKED);
@@ -359,17 +384,19 @@ class WorkflowFlowTest extends BaseIntegrationTest {
     @Test
     void rankUnrankedUnverifiedBook() throws Exception {
         User user = createOAuthUser("wf12", "oauth-wf-12");
+        MockHttpSession session = new MockHttpSession();
 
         Book book = createUnverifiedBook("Mystery Book", "Unknown Author");
         Ranking ranking = addRanking(user.getId(), book, Bookshelf.UNRANKED, BookCategory.UNRANKED, 0);
 
         mockMvc.perform(post("/rank-unranked-book")
                         .param("bookId", String.valueOf(ranking.getId()))
+                        .session(session)
                         .with(oauthUser("oauth-wf-12")).with(csrf()))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/resolve"));
 
-        RankingState state = rankingStateRepository.findById(user.getId()).orElseThrow();
+        RankingState state = getRankingState(session);
         assertThat(state.getMode()).isEqualTo(RankingMode.RESOLVE);
         assertThat(state.getTitleBeingRanked()).isEqualTo("Mystery Book");
     }
@@ -377,16 +404,18 @@ class WorkflowFlowTest extends BaseIntegrationTest {
     @Test
     void rankUnrankedBookPreservesReview() throws Exception {
         User user = createOAuthUser("wf13", "oauth-wf-13");
+        MockHttpSession session = new MockHttpSession();
 
         Book book = createVerifiedBook("OL1W", "Dune", "Frank Herbert");
         Ranking ranking = addRankingWithReview(user.getId(), book, Bookshelf.UNRANKED, BookCategory.UNRANKED, 0, "Imported review");
 
         mockMvc.perform(post("/rank-unranked-book")
                         .param("bookId", String.valueOf(ranking.getId()))
+                        .session(session)
                         .with(oauthUser("oauth-wf-13")).with(csrf()))
                 .andExpect(status().is3xxRedirection());
 
-        RankingState state = rankingStateRepository.findById(user.getId()).orElseThrow();
+        RankingState state = getRankingState(session);
         assertThat(state.getReviewBeingRanked()).isEqualTo("Imported review");
     }
 
@@ -410,17 +439,19 @@ class WorkflowFlowTest extends BaseIntegrationTest {
     @Test
     void wantToReadUnrankedVerifiedBook() throws Exception {
         User user = createOAuthUser("wf15", "oauth-wf-15");
+        MockHttpSession session = new MockHttpSession();
 
         Book book = createVerifiedBook("OL1W", "Dune", "Frank Herbert");
         Ranking ranking = addRanking(user.getId(), book, Bookshelf.UNRANKED, BookCategory.UNRANKED, 0);
 
         mockMvc.perform(post("/want-to-read-unranked-book")
                         .param("bookId", String.valueOf(ranking.getId()))
+                        .session(session)
                         .with(oauthUser("oauth-wf-15")).with(csrf()))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/rank/edition"));
 
-        RankingState state = rankingStateRepository.findById(user.getId()).orElseThrow();
+        RankingState state = getRankingState(session);
         assertThat(state.getMode()).isEqualTo(RankingMode.SELECT_EDITION);
         assertThat(state.isWantToRead()).isTrue();
         assertThat(state.getBookshelf()).isEqualTo(Bookshelf.UNRANKED);
@@ -433,17 +464,19 @@ class WorkflowFlowTest extends BaseIntegrationTest {
     @Test
     void wantToReadUnrankedUnverifiedBook() throws Exception {
         User user = createOAuthUser("wf16", "oauth-wf-16");
+        MockHttpSession session = new MockHttpSession();
 
         Book book = createUnverifiedBook("Mystery Book", "Unknown Author");
         Ranking ranking = addRanking(user.getId(), book, Bookshelf.UNRANKED, BookCategory.UNRANKED, 0);
 
         mockMvc.perform(post("/want-to-read-unranked-book")
                         .param("bookId", String.valueOf(ranking.getId()))
+                        .session(session)
                         .with(oauthUser("oauth-wf-16")).with(csrf()))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/resolve"));
 
-        RankingState state = rankingStateRepository.findById(user.getId()).orElseThrow();
+        RankingState state = getRankingState(session);
         assertThat(state.getMode()).isEqualTo(RankingMode.RESOLVE);
         assertThat(state.isWantToRead()).isTrue();
     }
@@ -453,6 +486,7 @@ class WorkflowFlowTest extends BaseIntegrationTest {
     @Test
     void rankAllStartsFirstUnrankedBook() throws Exception {
         User user = createOAuthUser("wf17", "oauth-wf-17");
+        MockHttpSession session = new MockHttpSession();
 
         Book bookA = createVerifiedBook("OL1W", "Book A", "Author A");
         Book bookB = createVerifiedBook("OL2W", "Book B", "Author B");
@@ -460,6 +494,7 @@ class WorkflowFlowTest extends BaseIntegrationTest {
         addRanking(user.getId(), bookB, Bookshelf.UNRANKED, BookCategory.UNRANKED, 1);
 
         mockMvc.perform(post("/rank-all")
+                        .session(session)
                         .with(oauthUser("oauth-wf-17")).with(csrf()))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/rank/edition"));
@@ -471,7 +506,7 @@ class WorkflowFlowTest extends BaseIntegrationTest {
         assertThat(unranked.get(0).getBook().getTitle()).isEqualTo("Book B");
 
         // State has rankAll flag
-        RankingState state = rankingStateRepository.findById(user.getId()).orElseThrow();
+        RankingState state = getRankingState(session);
         assertThat(state.isRankAll()).isTrue();
         assertThat(state.getTitleBeingRanked()).isEqualTo("Book A");
     }
@@ -490,16 +525,18 @@ class WorkflowFlowTest extends BaseIntegrationTest {
     @Test
     void rankAllWithUnverifiedBookGoesToResolve() throws Exception {
         User user = createOAuthUser("wf19", "oauth-wf-19");
+        MockHttpSession session = new MockHttpSession();
 
         Book book = createUnverifiedBook("Mystery Book", "Unknown");
         addRanking(user.getId(), book, Bookshelf.UNRANKED, BookCategory.UNRANKED, 0);
 
         mockMvc.perform(post("/rank-all")
+                        .session(session)
                         .with(oauthUser("oauth-wf-19")).with(csrf()))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/resolve"));
 
-        RankingState state = rankingStateRepository.findById(user.getId()).orElseThrow();
+        RankingState state = getRankingState(session);
         assertThat(state.isRankAll()).isTrue();
         assertThat(state.getMode()).isEqualTo(RankingMode.RESOLVE);
     }
@@ -509,18 +546,20 @@ class WorkflowFlowTest extends BaseIntegrationTest {
     @Test
     void backToEditionChangesMode() throws Exception {
         User user = createOAuthUser("wf20", "oauth-wf-20");
+        MockHttpSession session = new MockHttpSession();
 
-        RankingState rs = new RankingState(user.getId(), "OL1W", "Dune", "Frank Herbert", null, null);
+        RankingState rs = new RankingState("OL1W", "Dune", "Frank Herbert", null, null);
         rs.setMode(RankingMode.CATEGORIZE);
         rs.setEditionSelected(true);
-        rankingStateRepository.save(rs);
+        setRankingState(session, rs);
 
         mockMvc.perform(post("/back-to-edition")
+                        .session(session)
                         .with(oauthUser("oauth-wf-20")).with(csrf()))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/rank/edition"));
 
-        RankingState updated = rankingStateRepository.findById(user.getId()).orElseThrow();
+        RankingState updated = getRankingState(session);
         assertThat(updated.getMode()).isEqualTo(RankingMode.SELECT_EDITION);
         assertThat(updated.isEditionSelected()).isFalse();
     }
@@ -539,11 +578,11 @@ class WorkflowFlowTest extends BaseIntegrationTest {
     void backToEditionsRedirectsToEditionsPage() throws Exception {
         User user = createOAuthUser("wf22", "oauth-wf-22");
 
-        RankingState rs = new RankingState(user.getId(), "OL1W", "Dune", "Frank Herbert", null, null);
+        RankingState rs = new RankingState("OL1W", "Dune", "Frank Herbert", null, null);
         rs.setMode(RankingMode.SELECT_EDITION);
-        rankingStateRepository.save(rs);
 
         MockHttpSession session = new MockHttpSession();
+        setRankingState(session, rs);
         session.setAttribute("cachedEditions", List.of());
 
         mockMvc.perform(post("/back-to-editions")
@@ -553,7 +592,7 @@ class WorkflowFlowTest extends BaseIntegrationTest {
                 .andExpect(redirectedUrl("/editions/OL1W?title=Dune&author=Frank Herbert"));
 
         // State and cache cleared
-        assertThat(rankingStateRepository.findById(user.getId())).isEmpty();
+        assertThat(getRankingState(session)).isNull();
         assertThat(session.getAttribute("cachedEditions")).isNull();
     }
 
@@ -571,11 +610,11 @@ class WorkflowFlowTest extends BaseIntegrationTest {
     void backToResolveChangesMode() throws Exception {
         User user = createOAuthUser("wf24", "oauth-wf-24");
 
-        RankingState rs = new RankingState(user.getId(), "OL1W", "Dune", "Frank Herbert", null, null);
+        RankingState rs = new RankingState("OL1W", "Dune", "Frank Herbert", null, null);
         rs.setMode(RankingMode.SELECT_EDITION);
-        rankingStateRepository.save(rs);
 
         MockHttpSession session = new MockHttpSession();
+        setRankingState(session, rs);
         session.setAttribute("skipResolve", "expanded");
         session.setAttribute("cachedEditions", List.of());
         session.setAttribute("editionSelectionSource", "RESOLVE");
@@ -586,7 +625,7 @@ class WorkflowFlowTest extends BaseIntegrationTest {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/resolve"));
 
-        RankingState updated = rankingStateRepository.findById(user.getId()).orElseThrow();
+        RankingState updated = getRankingState(session);
         assertThat(updated.getMode()).isEqualTo(RankingMode.RESOLVE);
 
         // Session attributes cleared
@@ -610,6 +649,7 @@ class WorkflowFlowTest extends BaseIntegrationTest {
     @Test
     void startRerankRestoresAbandonedBook() throws Exception {
         User user = createOAuthUser("wf26", "oauth-wf-26");
+        MockHttpSession session = new MockHttpSession();
 
         Book bookA = createVerifiedBook("OL1W", "Book A", "Author A");
         Book bookB = createVerifiedBook("OL2W", "Book B", "Author B");
@@ -619,9 +659,11 @@ class WorkflowFlowTest extends BaseIntegrationTest {
         // Start a rerank and select a book (removes it)
         mockMvc.perform(post("/start-rerank")
                         .param("bookshelf", "fiction")
+                        .session(session)
                         .with(oauthUser("oauth-wf-26")).with(csrf()));
         mockMvc.perform(post("/select-rerank-book")
                         .param("bookId", String.valueOf(rB.getId()))
+                        .session(session)
                         .with(oauthUser("oauth-wf-26")).with(csrf()));
 
         // Verify B was removed
@@ -631,10 +673,11 @@ class WorkflowFlowTest extends BaseIntegrationTest {
         // Start a new rerank — should restore the abandoned book first
         mockMvc.perform(post("/start-rerank")
                         .param("bookshelf", "fiction")
+                        .session(session)
                         .with(oauthUser("oauth-wf-26")).with(csrf()));
 
         // The state should now be fresh RE_RANK, no book info
-        RankingState state = rankingStateRepository.findById(user.getId()).orElseThrow();
+        RankingState state = getRankingState(session);
         assertThat(state.getMode()).isEqualTo(RankingMode.RE_RANK);
         assertThat(state.getTitleBeingRanked()).isNull();
     }
@@ -642,26 +685,30 @@ class WorkflowFlowTest extends BaseIntegrationTest {
     @Test
     void startRemoveInvalidBookshelfRedirects() throws Exception {
         User user = createOAuthUser("wf27", "oauth-wf-27");
+        MockHttpSession session = new MockHttpSession();
 
         mockMvc.perform(post("/start-remove")
                         .param("bookshelf", "invalid_shelf")
+                        .session(session)
                         .with(oauthUser("oauth-wf-27")).with(csrf()))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/my-books"));
 
-        assertThat(rankingStateRepository.findById(user.getId())).isEmpty();
+        assertThat(getRankingState(session)).isNull();
     }
 
     @Test
     void startRerankInvalidBookshelfRedirects() throws Exception {
         User user = createOAuthUser("wf28", "oauth-wf-28");
+        MockHttpSession session = new MockHttpSession();
 
         mockMvc.perform(post("/start-rerank")
                         .param("bookshelf", "invalid_shelf")
+                        .session(session)
                         .with(oauthUser("oauth-wf-28")).with(csrf()))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/my-books"));
 
-        assertThat(rankingStateRepository.findById(user.getId())).isEmpty();
+        assertThat(getRankingState(session)).isNull();
     }
 }

@@ -58,32 +58,15 @@ User-specific book rankings. One row per user-book relationship.
 | position | INTEGER | | Rank within bookshelf+category (0 = best) |
 | review | VARCHAR(5000) | | User's review text |
 
-### ranking_state
+### ranking_state (REMOVED)
 
-Tracks in-progress ranking/review operations. At most one row per user.
+**This table is no longer used.** Ranking state was moved from the database to
+`HttpSession` to avoid unnecessary DB writes for ephemeral UI interaction state.
+The `ranking_state` table can be manually dropped from production:
 
-| Column | Type | Constraints | Description |
-|--------|------|-------------|-------------|
-| user_id | BIGINT | PK | FK -> users |
-| work_olid_being_ranked | VARCHAR | | |
-| edition_olid_being_ranked | VARCHAR | | |
-| isbn13_being_ranked | VARCHAR | | |
-| edition_selected | BOOLEAN | | Whether user has selected an edition |
-| title_being_ranked | VARCHAR(1000) | | |
-| author_being_ranked | VARCHAR(1000) | | |
-| review_being_ranked | VARCHAR(5000) | | |
-| bookshelf | ENUM | | Target bookshelf |
-| category | ENUM | | Target category |
-| compare_to_index | INTEGER | | Binary search: current comparison index |
-| low_index | INTEGER | | Binary search: low bound |
-| high_index | INTEGER | | Binary search: high bound |
-| re_rank | BOOLEAN | | True if re-ranking existing book |
-| remove | BOOLEAN | | True if removing book |
-| review | BOOLEAN | | True if editing review |
-| rank_all | BOOLEAN | | True if in "rank all unranked" mode |
-| book_id_being_reviewed | BIGINT | | FK -> books (for review mode) |
-| original_category | ENUM | | For re-rank restoration |
-| original_position | INTEGER | | For re-rank restoration |
+```sql
+DROP TABLE IF EXISTS ranking_state;
+```
 
 ### follows
 
@@ -115,7 +98,6 @@ User follow relationships.
 ```
 users 1--* rankings (user_id)
 books 1--* rankings (book_id)
-users 1--1 ranking_state (user_id)
 users 1--* follows (follower_id)
 users 1--* follows (followed_id)
 ```

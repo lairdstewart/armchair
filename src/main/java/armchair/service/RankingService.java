@@ -9,9 +9,7 @@ import armchair.entity.Bookshelf;
 import armchair.entity.Ranking;
 import armchair.entity.RankingState;
 import armchair.entity.User;
-import armchair.repository.BookRepository;
 import armchair.repository.RankingRepository;
-import armchair.repository.RankingStateRepository;
 import armchair.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -28,12 +26,6 @@ public class RankingService {
 
     @Autowired
     private RankingRepository rankingRepository;
-
-    @Autowired
-    private RankingStateRepository rankingStateRepository;
-
-    @Autowired
-    private BookRepository bookRepository;
 
     @Autowired
     private BookService bookService;
@@ -59,8 +51,7 @@ public class RankingService {
         return ranking;
     }
 
-    public void restoreAbandonedBook(Long userId) {
-        RankingState state = rankingStateRepository.findById(userId).orElse(null);
+    public void restoreAbandonedBook(Long userId, RankingState state) {
         if (state == null || state.getTitleBeingRanked() == null) return;
 
         Book book = bookService.findOrCreateBook(state.getWorkOlidBeingRanked(),

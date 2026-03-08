@@ -1,34 +1,19 @@
 package armchair.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import java.io.Serializable;
 
-@Entity
-@Table(name = "ranking_state")
-public class RankingState {
-    @Id
-    private Long userId;
+public class RankingState implements Serializable {
+    private static final long serialVersionUID = 1L;
 
     private String workOlidBeingRanked;
     private String editionOlidBeingRanked;
     private String isbn13BeingRanked;
     private boolean editionSelected;
-    @Column(length = 1000)
     private String titleBeingRanked;
-    @Column(length = 1000)
     private String authorBeingRanked;
-    @Column(length = 5000)
     private String reviewBeingRanked;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "bookshelf")
     private Bookshelf bookshelf;
-
-    @Enumerated(EnumType.STRING)
     private BookCategory category;
 
     private Integer compareToIndex;
@@ -36,29 +21,25 @@ public class RankingState {
     private Integer highIndex;
 
     private boolean rankAll;
-    @Column(columnDefinition = "boolean default false")
     private boolean wantToRead;
     private Long bookIdBeingReviewed;
 
-    @Enumerated(EnumType.STRING)
     private RankingMode mode;
 
     // For re-rank restoration: store original position so abandoned re-ranks can be restored
-    @Enumerated(EnumType.STRING)
     private BookCategory originalCategory;
     private Integer originalPosition;
 
     public RankingState() {}
 
-    public RankingState(Long userId, String workOlidBeingRanked, String titleBeingRanked, String authorBeingRanked,
+    public RankingState(String workOlidBeingRanked, String titleBeingRanked, String authorBeingRanked,
                         Bookshelf bookshelf, BookCategory category) {
-        this(userId, workOlidBeingRanked, titleBeingRanked, authorBeingRanked, bookshelf, category, 0, 0, 0);
+        this(workOlidBeingRanked, titleBeingRanked, authorBeingRanked, bookshelf, category, 0, 0, 0);
     }
 
-    public RankingState(Long userId, String workOlidBeingRanked, String titleBeingRanked, String authorBeingRanked,
+    public RankingState(String workOlidBeingRanked, String titleBeingRanked, String authorBeingRanked,
                         Bookshelf bookshelf, BookCategory category, Integer compareToIndex, Integer lowIndex,
                         Integer highIndex) {
-        this.userId = userId;
         this.workOlidBeingRanked = workOlidBeingRanked;
         this.titleBeingRanked = titleBeingRanked;
         this.authorBeingRanked = authorBeingRanked;
@@ -67,14 +48,6 @@ public class RankingState {
         this.compareToIndex = compareToIndex;
         this.lowIndex = lowIndex;
         this.highIndex = highIndex;
-    }
-
-    public Long getUserId() {
-        return userId;
-    }
-
-    public void setUserId(Long userId) {
-        this.userId = userId;
     }
 
     public String getWorkOlidBeingRanked() {

@@ -16,7 +16,6 @@ import armchair.entity.User;
 import armchair.repository.BookRepository;
 import armchair.repository.FollowRepository;
 import armchair.repository.RankingRepository;
-import armchair.repository.RankingStateRepository;
 import armchair.repository.UserRepository;
 import armchair.recommendation.RecommendationAlgorithm;
 import armchair.service.BookService;
@@ -82,6 +81,7 @@ public class BookController {
     private static final String SESSION_DUPLICATE_RESOLVE_BOOK_ID = "duplicateResolveBookId";
     private static final String SESSION_EDITION_SELECTION_SOURCE = "editionSelectionSource";
     private static final String SESSION_BROWSE_EDITIONS_PREFIX = "browseEditions_";
+    private static final String SESSION_RANKING_STATE = "rankingState";
 
     private static final String SKIP_RESOLVE_EXPANDED = "expanded";
     private static final String SKIP_RESOLVE_MANUAL = "manual";
@@ -140,9 +140,6 @@ public class BookController {
     private RankingRepository rankingRepository;
 
     @Autowired
-    private RankingStateRepository rankingStateRepository;
-
-    @Autowired
     private FollowRepository followRepository;
 
     @Autowired
@@ -170,6 +167,18 @@ public class BookController {
         session.removeAttribute(SESSION_DUPLICATE_RESOLVE_TITLE);
         session.removeAttribute(SESSION_DUPLICATE_RESOLVE_WORK_OLID);
         session.removeAttribute(SESSION_DUPLICATE_RESOLVE_BOOK_ID);
+    }
+
+    private static RankingState getRankingState(HttpSession session) {
+        return (RankingState) session.getAttribute(SESSION_RANKING_STATE);
+    }
+
+    private static void saveRankingState(HttpSession session, RankingState state) {
+        session.setAttribute(SESSION_RANKING_STATE, state);
+    }
+
+    private static void clearRankingState(HttpSession session) {
+        session.removeAttribute(SESSION_RANKING_STATE);
     }
 
     @PostConstruct
@@ -251,8 +260,8 @@ public class BookController {
     public String goToMyBooks(HttpSession session) {
         Long userId = getCurrentUserId(session);
         if (userId != null) {
-            rankingService.restoreAbandonedBook(userId);
-            rankingStateRepository.deleteById(userId);
+            rankingService.restoreAbandonedBook(userId, getRankingState(session));
+            clearRankingState(session);
             session.removeAttribute(SESSION_BOOK_SEARCH_RESULTS);
             session.removeAttribute(SESSION_SKIP_RESOLVE);
             clearDuplicateResolveSession(session);
@@ -272,7 +281,7 @@ public class BookController {
             session.removeAttribute(SESSION_RESOLVE_WARNING);
         }
 
-        RankingState rankingState = rankingStateRepository.findById(userId).orElse(null);
+        RankingState rankingState = getRankingState(session);
 
         Mode mode = determineMode(rankingState);
 
@@ -354,7 +363,7 @@ public class BookController {
                 rankingState.setIsbn13BeingRanked(soleEdition.isbn13());
                 rankingState.setEditionSelected(true);
                 rankingState.setMode(RankingMode.CATEGORIZE);
-                rankingStateRepository.save(rankingState);
+                saveRankingState(session, rankingState);
 
                 Book book = bookService.findOrCreateBook(rankingState.getWorkOlidBeingRanked(),
                     soleEdition.editionOlid(), rankingState.getTitleBeingRanked(),
@@ -369,7 +378,7 @@ public class BookController {
             if (allEditions.isEmpty()) {
                 rankingState.setEditionSelected(true);
                 rankingState.setMode(RankingMode.CATEGORIZE);
-                rankingStateRepository.save(rankingState);
+                saveRankingState(session, rankingState);
                 session.removeAttribute(SESSION_CACHED_EDITIONS);
                 return "redirect:/my-books";
             }
@@ -498,7 +507,7 @@ public class BookController {
     @GetMapping("/rank/categorize")
     public String showCategorize(Model model, HttpSession session) {
         Long userId = getCurrentUserId(session);
-        RankingState rs = rankingStateRepository.findById(userId).orElse(null);
+        RankingState rs = getRankingState(session);
 
         if (rs == null || rs.getMode() != RankingMode.CATEGORIZE) {
             return "redirect:/my-books";
@@ -522,7 +531,7 @@ public class BookController {
     @GetMapping("/rank/compare")
     public String showRankCompare(Model model, HttpSession session) {
         Long userId = getCurrentUserId(session);
-        RankingState rs = rankingStateRepository.findById(userId).orElse(null);
+        RankingState rs = getRankingState(session);
 
         if (rs == null || rs.getMode() != RankingMode.RANK) {
             return "redirect:/my-books";
@@ -561,7 +570,7 @@ public class BookController {
     public String showEditionSelection(@RequestParam(required = false, defaultValue = "0") int page,
                                        Model model, HttpSession session) {
         Long userId = getCurrentUserId(session);
-        RankingState rs = rankingStateRepository.findById(userId).orElse(null);
+        RankingState rs = getRankingState(session);
 
         if (rs == null || rs.getMode() != RankingMode.SELECT_EDITION) {
             return "redirect:/my-books";
@@ -602,14 +611,14 @@ public class BookController {
 
             if (rs.isWantToRead()) {
                 session.removeAttribute(SESSION_CACHED_EDITIONS);
-                return addToWantToReadAndContinue(userId, rs, book);
+                return addToWantToReadAndContinue(userId, rs, book, session);
             }
 
             rs.setEditionOlidBeingRanked(soleEdition.editionOlid());
             rs.setIsbn13BeingRanked(soleEdition.isbn13());
             rs.setEditionSelected(true);
             rs.setMode(RankingMode.CATEGORIZE);
-            rankingStateRepository.save(rs);
+            saveRankingState(session, rs);
 
             session.removeAttribute(SESSION_CACHED_EDITIONS);
             return "redirect:/rank/categorize";
@@ -620,11 +629,11 @@ public class BookController {
                 Book book = bookService.findOrCreateBook(rs.getWorkOlidBeingRanked(),
                     null, rs.getTitleBeingRanked(), rs.getAuthorBeingRanked(), null, null);
                 session.removeAttribute(SESSION_CACHED_EDITIONS);
-                return addToWantToReadAndContinue(userId, rs, book);
+                return addToWantToReadAndContinue(userId, rs, book, session);
             }
             rs.setEditionSelected(true);
             rs.setMode(RankingMode.CATEGORIZE);
-            rankingStateRepository.save(rs);
+            saveRankingState(session, rs);
             session.removeAttribute(SESSION_CACHED_EDITIONS);
             return "redirect:/rank/categorize";
         }
@@ -650,7 +659,7 @@ public class BookController {
     public String showResolve(Model model, HttpSession session,
                               @RequestParam(required = false) String resolveQuery) {
         Long userId = getCurrentUserId(session);
-        RankingState rs = rankingStateRepository.findById(userId).orElse(null);
+        RankingState rs = getRankingState(session);
 
         if (rs == null || rs.getMode() != RankingMode.RESOLVE) {
             return "redirect:/my-books";
@@ -709,7 +718,7 @@ public class BookController {
     @GetMapping("/review/{rankingId}")
     public String showReview(@PathVariable Long rankingId, Model model, HttpSession session) {
         Long userId = getCurrentUserId(session);
-        RankingState rs = rankingStateRepository.findById(userId).orElse(null);
+        RankingState rs = getRankingState(session);
 
         if (rs == null || rs.getMode() != RankingMode.REVIEW ||
             !rankingId.equals(rs.getBookIdBeingReviewed())) {
@@ -757,7 +766,7 @@ public class BookController {
         if (userId == null) {
             return "redirect:/setup-username";
         }
-        RankingState rankingState = rankingStateRepository.findById(userId).orElse(null);
+        RankingState rankingState = getRankingState(session);
         if (rankingState == null) {
             return "redirect:/my-books";
         }
@@ -780,12 +789,12 @@ public class BookController {
             boolean wasRankAll = rankingState.isRankAll();
             rankingService.insertBookAtPosition(rankingState.getWorkOlidBeingRanked(), rankingState.getTitleBeingRanked(), rankingState.getAuthorBeingRanked(),
                 rankingState.getReviewBeingRanked(), rankedBookshelf, rankingState.getCategory(), newLowIndex, userId);
-            rankingStateRepository.deleteById(userId);
+            clearRankingState(session);
             session.removeAttribute(SESSION_BOOK_SEARCH_RESULTS);
             session.removeAttribute(SESSION_SKIP_RESOLVE);
 
             if (wasRankAll) {
-                return startNextUnrankedBook(userId, rankedBookshelf);
+                return startNextUnrankedBook(userId, rankedBookshelf, session);
             }
             return "redirect:/my-books?selectedBookshelf=" + rankedBookshelf.name();
         } else {
@@ -793,7 +802,7 @@ public class BookController {
             rankingState.setCompareToIndex(newCompareToIndex);
             rankingState.setLowIndex(newLowIndex);
             rankingState.setHighIndex(newHighIndex);
-            rankingStateRepository.save(rankingState);
+            saveRankingState(session, rankingState);
             return "redirect:/rank/compare";
         }
     }
@@ -810,10 +819,10 @@ public class BookController {
         } catch (IllegalArgumentException e) {
             return "redirect:/my-books";
         }
-        rankingService.restoreAbandonedBook(userId);
-        RankingState rankingState = new RankingState(userId, null, null, null, bookshlf, null);
+        rankingService.restoreAbandonedBook(userId, getRankingState(session));
+        RankingState rankingState = new RankingState(null, null, null, bookshlf, null);
         rankingState.setMode(RankingMode.RE_RANK);
-        rankingStateRepository.save(rankingState);
+        saveRankingState(session, rankingState);
         return "redirect:/my-books";
     }
 
@@ -830,13 +839,13 @@ public class BookController {
             return "redirect:/my-books";
         }
 
-        RankingState rankingState = rankingStateRepository.findById(userId).orElse(null);
+        RankingState rankingState = getRankingState(session);
         if (rankingState == null || rankingState.getMode() != RankingMode.RE_RANK) {
             return "redirect:/my-books";
         }
 
         rankingState.setBookInfo(ranking.getBook().getWorkOlid(), ranking.getBook().getTitle(), ranking.getBook().getAuthor());
-        rankingStateRepository.save(rankingState);
+        saveRankingState(session, rankingState);
 
         rankingService.deleteRankingAndCloseGap(userId, ranking);
 
@@ -855,10 +864,10 @@ public class BookController {
         } catch (IllegalArgumentException e) {
             return "redirect:/my-books";
         }
-        rankingService.restoreAbandonedBook(userId);
-        RankingState rankingState = new RankingState(userId, null, null, null, bookshlf, null);
+        rankingService.restoreAbandonedBook(userId, getRankingState(session));
+        RankingState rankingState = new RankingState(null, null, null, bookshlf, null);
         rankingState.setMode(RankingMode.REMOVE);
-        rankingStateRepository.save(rankingState);
+        saveRankingState(session, rankingState);
         return "redirect:/my-books";
     }
 
@@ -868,10 +877,10 @@ public class BookController {
         if (userId == null) {
             return "redirect:/setup-username";
         }
-        rankingService.restoreAbandonedBook(userId);
-        RankingState rankingState = new RankingState(userId, null, null, null, Bookshelf.WANT_TO_READ, BookCategory.UNRANKED);
+        rankingService.restoreAbandonedBook(userId, getRankingState(session));
+        RankingState rankingState = new RankingState(null, null, null, Bookshelf.WANT_TO_READ, BookCategory.UNRANKED);
         rankingState.setMode(RankingMode.REMOVE);
-        rankingStateRepository.save(rankingState);
+        saveRankingState(session, rankingState);
         return "redirect:/my-books?selectedBookshelf=WANT_TO_READ";
     }
 
@@ -888,14 +897,14 @@ public class BookController {
             return "redirect:/my-books?selectedBookshelf=WANT_TO_READ";
         }
 
-        RankingState rankingState = rankingStateRepository.findById(userId).orElse(null);
+        RankingState rankingState = getRankingState(session);
         if (rankingState == null || rankingState.getMode() != RankingMode.REMOVE || rankingState.getBookshelf() != Bookshelf.WANT_TO_READ) {
             return "redirect:/my-books?selectedBookshelf=WANT_TO_READ";
         }
 
         rankingService.deleteRankingAndCloseGap(userId, ranking);
 
-        rankingStateRepository.deleteById(userId);
+        clearRankingState(session);
         session.removeAttribute(SESSION_SKIP_RESOLVE);
 
         return "redirect:/my-books?selectedBookshelf=WANT_TO_READ";
@@ -913,11 +922,11 @@ public class BookController {
             return "redirect:/my-books";
         }
 
-        rankingService.restoreAbandonedBook(userId);
-        RankingState rankingState = new RankingState(userId, null, null, null, ranking.getBookshelf(), null);
+        rankingService.restoreAbandonedBook(userId, getRankingState(session));
+        RankingState rankingState = new RankingState(null, null, null, ranking.getBookshelf(), null);
         rankingState.setBookIdBeingReviewed(bookId);
         rankingState.setMode(RankingMode.REVIEW);
-        rankingStateRepository.save(rankingState);
+        saveRankingState(session, rankingState);
 
         return "redirect:/review/" + bookId;
     }
@@ -935,13 +944,13 @@ public class BookController {
             return "redirect:/my-books";
         }
 
-        rankingService.restoreAbandonedBook(userId);
-        RankingState rankingState = new RankingState(userId, ranking.getBook().getWorkOlid(), ranking.getBook().getTitle(), ranking.getBook().getAuthor(), ranking.getBookshelf(), null);
+        rankingService.restoreAbandonedBook(userId, getRankingState(session));
+        RankingState rankingState = new RankingState(ranking.getBook().getWorkOlid(), ranking.getBook().getTitle(), ranking.getBook().getAuthor(), ranking.getBookshelf(), null);
         rankingState.setReviewBeingRanked(ranking.getReview());
         rankingState.setOriginalCategory(ranking.getCategory());
         rankingState.setOriginalPosition(ranking.getPosition());
         rankingState.setMode(RankingMode.CATEGORIZE);
-        rankingStateRepository.save(rankingState);
+        saveRankingState(session, rankingState);
 
         rankingService.deleteRankingAndCloseGap(userId, ranking);
 
@@ -980,14 +989,14 @@ public class BookController {
             return "redirect:/my-books?selectedBookshelf=WANT_TO_READ";
         }
 
-        RankingState rankingState = new RankingState(userId, ranking.getBook().getWorkOlid(), ranking.getBook().getTitle(), ranking.getBook().getAuthor(), null, null);
+        RankingState rankingState = new RankingState(ranking.getBook().getWorkOlid(), ranking.getBook().getTitle(), ranking.getBook().getAuthor(), null, null);
         boolean needsResolve = ranking.getBook().getWorkOlid() == null;
         if (needsResolve) {
             rankingState.setMode(RankingMode.RESOLVE);
         } else {
             rankingState.setMode(RankingMode.SELECT_EDITION);
         }
-        rankingStateRepository.save(rankingState);
+        saveRankingState(session, rankingState);
 
         session.removeAttribute(SESSION_CACHED_EDITIONS);
         session.removeAttribute(SESSION_EDITION_PAGE);
@@ -1028,14 +1037,14 @@ public class BookController {
             return "redirect:/my-books";
         }
 
-        RankingState rankingState = rankingStateRepository.findById(userId).orElse(null);
+        RankingState rankingState = getRankingState(session);
         if (rankingState == null || rankingState.getMode() != RankingMode.REMOVE) {
             return "redirect:/my-books";
         }
 
         rankingService.deleteRankingAndCloseGap(userId, ranking);
 
-        rankingStateRepository.deleteById(userId);
+        clearRankingState(session);
         session.removeAttribute(SESSION_SKIP_RESOLVE);
 
         return "redirect:/my-books";
@@ -1053,9 +1062,9 @@ public class BookController {
         } catch (IllegalArgumentException e) {
             return "redirect:/my-books";
         }
-        RankingState rankingState = new RankingState(userId, null, null, null, bookshlf, null);
+        RankingState rankingState = new RankingState(null, null, null, bookshlf, null);
         rankingState.setMode(RankingMode.REVIEW);
-        rankingStateRepository.save(rankingState);
+        saveRankingState(session, rankingState);
         return "redirect:/my-books";
     }
 
@@ -1071,13 +1080,13 @@ public class BookController {
             return "redirect:/my-books";
         }
 
-        RankingState rankingState = rankingStateRepository.findById(userId).orElse(null);
+        RankingState rankingState = getRankingState(session);
         if (rankingState == null || rankingState.getMode() != RankingMode.REVIEW) {
             return "redirect:/my-books";
         }
 
         rankingState.setBookIdBeingReviewed(bookId);
-        rankingStateRepository.save(rankingState);
+        saveRankingState(session, rankingState);
 
         return "redirect:/my-books";
     }
@@ -1089,7 +1098,7 @@ public class BookController {
             return "redirect:/setup-username";
         }
 
-        RankingState rankingState = rankingStateRepository.findById(userId).orElse(null);
+        RankingState rankingState = getRankingState(session);
         if (rankingState == null || rankingState.getMode() != RankingMode.REVIEW || rankingState.getBookIdBeingReviewed() == null) {
             return "redirect:/my-books";
         }
@@ -1101,7 +1110,7 @@ public class BookController {
             rankingRepository.save(ranking);
         }
 
-        rankingStateRepository.deleteById(userId);
+        clearRankingState(session);
         session.removeAttribute(SESSION_SKIP_RESOLVE);
 
         return "redirect:/my-books";
@@ -1132,7 +1141,7 @@ public class BookController {
         session.setAttribute(SESSION_BOOK_SEARCH_RESULTS, results);
         session.setAttribute(SESSION_BOOK_SEARCH_QUERY, query);
 
-        RankingState rankingState = rankingStateRepository.findById(userId).orElse(null);
+        RankingState rankingState = getRankingState(session);
         if (rankingState != null && rankingState.getTitleBeingRanked() == null) {
             return "redirect:/my-books";
         }
@@ -1146,12 +1155,10 @@ public class BookController {
         if (userId == null) {
             return "redirect:/setup-username";
         }
-        String selectedBookshelf = rankingStateRepository.findById(userId)
-                .map(rs -> rs.getBookshelf())
-                .map(Bookshelf::name)
-                .orElse(null);
-        rankingService.restoreAbandonedBook(userId);
-        rankingStateRepository.deleteById(userId);
+        RankingState rs = getRankingState(session);
+        String selectedBookshelf = rs != null && rs.getBookshelf() != null ? rs.getBookshelf().name() : null;
+        rankingService.restoreAbandonedBook(userId, rs);
+        clearRankingState(session);
         session.removeAttribute(SESSION_BOOK_SEARCH_RESULTS);
         session.removeAttribute(SESSION_SKIP_RESOLVE);
         session.removeAttribute(SESSION_EDITION_SELECTION_SOURCE);
@@ -1167,13 +1174,13 @@ public class BookController {
         if (userId == null) {
             return "redirect:/setup-username";
         }
-        RankingState rs = rankingStateRepository.findById(userId).orElse(null);
+        RankingState rs = getRankingState(session);
         if (rs == null || rs.getTitleBeingRanked() == null) {
             return "redirect:/my-books";
         }
         rs.setMode(RankingMode.SELECT_EDITION);
         rs.setEditionSelected(false);
-        rankingStateRepository.save(rs);
+        saveRankingState(session, rs);
         return "redirect:/rank/edition";
     }
 
@@ -1183,15 +1190,15 @@ public class BookController {
         if (userId == null) {
             return "redirect:/setup-username";
         }
-        RankingState rs = rankingStateRepository.findById(userId).orElse(null);
+        RankingState rs = getRankingState(session);
         if (rs == null || rs.getWorkOlidBeingRanked() == null) {
             return "redirect:/my-books";
         }
         String workOlid = rs.getWorkOlidBeingRanked();
         String title = rs.getTitleBeingRanked();
         String author = rs.getAuthorBeingRanked();
-        rankingService.restoreAbandonedBook(userId);
-        rankingStateRepository.delete(rs);
+        rankingService.restoreAbandonedBook(userId, getRankingState(session));
+        clearRankingState(session);
         session.removeAttribute(SESSION_CACHED_EDITIONS);
         String url = UriComponentsBuilder.fromPath("/editions/{workOlid}")
             .queryParam("title", title)
@@ -1207,12 +1214,12 @@ public class BookController {
         if (userId == null) {
             return "redirect:/setup-username";
         }
-        RankingState rs = rankingStateRepository.findById(userId).orElse(null);
+        RankingState rs = getRankingState(session);
         if (rs == null || rs.getTitleBeingRanked() == null) {
             return "redirect:/my-books";
         }
         rs.setMode(RankingMode.RESOLVE);
-        rankingStateRepository.save(rs);
+        saveRankingState(session, rs);
         session.removeAttribute(SESSION_SKIP_RESOLVE);
         session.removeAttribute(SESSION_CACHED_EDITIONS);
         session.removeAttribute(SESSION_EDITION_SELECTION_SOURCE);
@@ -1232,7 +1239,7 @@ public class BookController {
         if (userId == null) {
             return "redirect:/setup-username";
         }
-        RankingState rankingState = rankingStateRepository.findById(userId).orElse(null);
+        RankingState rankingState = getRankingState(session);
         if (rankingState == null || rankingState.getTitleBeingRanked() == null) {
             return "redirect:/my-books";
         }
@@ -1259,7 +1266,7 @@ public class BookController {
 
         rankingState.setBookInfo(workOlid, title, author);
         rankingState.setMode(RankingMode.SELECT_EDITION);
-        rankingStateRepository.save(rankingState);
+        saveRankingState(session, rankingState);
 
         session.removeAttribute(SESSION_SKIP_RESOLVE);
         session.setAttribute(SESSION_EDITION_SELECTION_SOURCE, EDITION_SOURCE_RESOLVE);
@@ -1280,12 +1287,12 @@ public class BookController {
     @PostMapping("/abandon-resolve")
     public String abandonResolve(HttpSession session) {
         Long userId = getCurrentUserId(session);
-        RankingState rs = rankingStateRepository.findById(userId).orElse(null);
+        RankingState rs = getRankingState(session);
         String title = "unknown book";
         if (rs != null) {
             title = rs.getTitleBeingRanked();
             log.warn("RESOLVE abandoned: user skipped manual search for \"{}\" by {}", title, rs.getAuthorBeingRanked());
-            rankingStateRepository.delete(rs);
+            clearRankingState(session);
         }
         session.removeAttribute(SESSION_SKIP_RESOLVE);
         session.setAttribute(SESSION_RESOLVE_WARNING, title);
@@ -1303,7 +1310,7 @@ public class BookController {
         Long unverifiedBookId = (Long) session.getAttribute(SESSION_DUPLICATE_RESOLVE_BOOK_ID);
         clearDuplicateResolveSession(session);
 
-        rankingStateRepository.deleteById(userId);
+        clearRankingState(session);
         session.removeAttribute(SESSION_SKIP_RESOLVE);
 
         if (unverifiedBookId != null) {
@@ -1335,15 +1342,15 @@ public class BookController {
             : null;
 
         if (existingRanking == null) {
-            rankingStateRepository.deleteById(userId);
+            clearRankingState(session);
             return "redirect:/my-books";
         }
 
         Book existingBook = existingRanking.getBook();
-        RankingState newState = new RankingState(userId, existingBook.getWorkOlid(), existingBook.getTitle(), existingBook.getAuthor(), null, null);
+        RankingState newState = new RankingState(existingBook.getWorkOlid(), existingBook.getTitle(), existingBook.getAuthor(), null, null);
         newState.setReviewBeingRanked(existingRanking.getReview());
         newState.setMode(RankingMode.CATEGORIZE);
-        rankingStateRepository.save(newState);
+        saveRankingState(session, newState);
 
         rankingService.deleteRankingAndCloseGap(userId, existingRanking);
 
@@ -1362,17 +1369,17 @@ public class BookController {
         if (userId == null) {
             return "redirect:/setup-username";
         }
-        rankingService.restoreAbandonedBook(userId);
-        RankingState rankingState = rankingStateRepository.findById(userId).orElse(null);
+        rankingService.restoreAbandonedBook(userId, getRankingState(session));
+        RankingState rankingState = getRankingState(session);
         if (rankingState == null) {
-            rankingState = new RankingState(userId, null, null, null, null, null);
+            rankingState = new RankingState(null, null, null, null, null);
         }
 
         bookService.findOrCreateBook(workOlid, editionOlid, bookName, author, firstPublishYear, coverId);
 
         rankingState.setBookInfo(workOlid, bookName, author);
         rankingState.setMode(RankingMode.SELECT_EDITION);
-        rankingStateRepository.save(rankingState);
+        saveRankingState(session, rankingState);
 
         session.removeAttribute(SESSION_CACHED_EDITIONS);
         session.removeAttribute(SESSION_EDITION_PAGE);
@@ -1394,7 +1401,7 @@ public class BookController {
             return "redirect:/setup-username";
         }
 
-        RankingState rankingState = rankingStateRepository.findById(userId).orElse(null);
+        RankingState rankingState = getRankingState(session);
         if (rankingState == null || rankingState.getWorkOlidBeingRanked() == null) {
             return "redirect:/my-books";
         }
@@ -1416,14 +1423,14 @@ public class BookController {
         if (rankingState.isWantToRead() || "want-to-read".equals(action)) {
             session.removeAttribute(SESSION_CACHED_EDITIONS);
             session.removeAttribute(SESSION_EDITION_PAGE);
-            return addToWantToReadAndContinue(userId, rankingState, book);
+            return addToWantToReadAndContinue(userId, rankingState, book, session);
         }
 
         rankingState.setEditionOlidBeingRanked(editionOlid);
         rankingState.setIsbn13BeingRanked(isbn13);
         rankingState.setEditionSelected(true);
         rankingState.setMode(RankingMode.CATEGORIZE);
-        rankingStateRepository.save(rankingState);
+        saveRankingState(session, rankingState);
 
         session.removeAttribute(SESSION_CACHED_EDITIONS);
         session.removeAttribute(SESSION_EDITION_PAGE);
@@ -1439,16 +1446,16 @@ public class BookController {
         return rankingRepository.save(newRanking);
     }
 
-    private String addToWantToReadAndContinue(Long userId, RankingState rankingState, Book book) {
+    private String addToWantToReadAndContinue(Long userId, RankingState rankingState, Book book, HttpSession session) {
         Ranking newRanking = createWantToReadRanking(userId, book);
         newRanking.setReview(rankingState.getReviewBeingRanked());
         rankingRepository.save(newRanking);
 
         boolean wasRankAll = rankingState.isRankAll();
-        rankingStateRepository.delete(rankingState);
+        clearRankingState(session);
 
         if (wasRankAll) {
-            return startNextUnrankedBook(userId, Bookshelf.WANT_TO_READ);
+            return startNextUnrankedBook(userId, Bookshelf.WANT_TO_READ, session);
         }
         return "redirect:/my-books?selectedBookshelf=WANT_TO_READ";
     }
@@ -1536,7 +1543,7 @@ public class BookController {
         if (userId == null) {
             return "redirect:/setup-username";
         }
-        rankingService.restoreAbandonedBook(userId);
+        rankingService.restoreAbandonedBook(userId, getRankingState(session));
 
         String titleToUse = (editionTitle != null && !editionTitle.isBlank()) ? editionTitle : bookName;
 
@@ -1555,16 +1562,16 @@ public class BookController {
         }
         bookRepository.save(book);
 
-        RankingState rankingState = rankingStateRepository.findById(userId).orElse(null);
+        RankingState rankingState = getRankingState(session);
         if (rankingState == null) {
-            rankingState = new RankingState(userId, null, null, null, null, null);
+            rankingState = new RankingState(null, null, null, null, null);
         }
         rankingState.setBookInfo(workOlid, titleToUse, author);
         rankingState.setEditionOlidBeingRanked(editionOlid);
         rankingState.setIsbn13BeingRanked(isbn13);
         rankingState.setEditionSelected(true);
         rankingState.setMode(RankingMode.CATEGORIZE);
-        rankingStateRepository.save(rankingState);
+        saveRankingState(session, rankingState);
 
         return "redirect:/rank/categorize";
     }
@@ -1579,7 +1586,7 @@ public class BookController {
         if (userId == null) {
             return "redirect:/setup-username";
         }
-        RankingState rankingState = rankingStateRepository.findById(userId).orElse(null);
+        RankingState rankingState = getRankingState(session);
         if (rankingState == null || rankingState.getTitleBeingRanked() == null) {
             return "redirect:/my-books";
         }
@@ -1608,12 +1615,12 @@ public class BookController {
             Ranking newRanking = new Ranking(userRef, book, bookshelfEnum, bookCategory, 0);
             newRanking.setReview(trimmedReview);
             rankingRepository.save(newRanking);
-            rankingStateRepository.deleteById(userId);
+            clearRankingState(session);
             session.removeAttribute(SESSION_BOOK_SEARCH_RESULTS);
             session.removeAttribute(SESSION_SKIP_RESOLVE);
 
             if (wasRankAll) {
-                return startNextUnrankedBook(userId, bookshelfEnum);
+                return startNextUnrankedBook(userId, bookshelfEnum, session);
             }
             return "redirect:/my-books?selectedBookshelf=" + bookshelfEnum.name();
         } else {
@@ -1628,7 +1635,7 @@ public class BookController {
             rankingState.setLowIndex(lowIndex);
             rankingState.setHighIndex(highIndex);
             rankingState.setMode(RankingMode.RANK);
-            rankingStateRepository.save(rankingState);
+            saveRankingState(session, rankingState);
             return "redirect:/rank/compare";
         }
     }
@@ -2139,7 +2146,7 @@ public class BookController {
             return "redirect:/my-books?selectedBookshelf=UNRANKED";
         }
 
-        RankingState rankingState = new RankingState(userId, ranking.getBook().getWorkOlid(), ranking.getBook().getTitle(), ranking.getBook().getAuthor(), null, null);
+        RankingState rankingState = new RankingState(ranking.getBook().getWorkOlid(), ranking.getBook().getTitle(), ranking.getBook().getAuthor(), null, null);
         rankingState.setBookshelf(Bookshelf.UNRANKED);
         rankingState.setReviewBeingRanked(ranking.getReview());
         boolean needsResolve = ranking.getBook().getWorkOlid() == null;
@@ -2148,7 +2155,7 @@ public class BookController {
         } else {
             rankingState.setMode(RankingMode.SELECT_EDITION);
         }
-        rankingStateRepository.save(rankingState);
+        saveRankingState(session, rankingState);
 
         rankingService.deleteRankingAndCloseGap(userId, ranking);
 
@@ -2168,7 +2175,7 @@ public class BookController {
             return "redirect:/my-books?selectedBookshelf=UNRANKED";
         }
 
-        RankingState rankingState = new RankingState(userId, ranking.getBook().getWorkOlid(), ranking.getBook().getTitle(), ranking.getBook().getAuthor(), null, null);
+        RankingState rankingState = new RankingState(ranking.getBook().getWorkOlid(), ranking.getBook().getTitle(), ranking.getBook().getAuthor(), null, null);
         rankingState.setBookshelf(Bookshelf.UNRANKED);
         rankingState.setReviewBeingRanked(ranking.getReview());
         rankingState.setWantToRead(true);
@@ -2178,7 +2185,7 @@ public class BookController {
         } else {
             rankingState.setMode(RankingMode.SELECT_EDITION);
         }
-        rankingStateRepository.save(rankingState);
+        saveRankingState(session, rankingState);
 
         rankingService.deleteRankingAndCloseGap(userId, ranking);
 
@@ -2193,10 +2200,10 @@ public class BookController {
             return "redirect:/setup-username";
         }
 
-        return startNextUnrankedBook(userId, null);
+        return startNextUnrankedBook(userId, null, session);
     }
 
-    private String startNextUnrankedBook(Long userId, Bookshelf lastRankedBookshelf) {
+    private String startNextUnrankedBook(Long userId, Bookshelf lastRankedBookshelf, HttpSession session) {
         List<Ranking> unrankedBooks = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(userId, Bookshelf.UNRANKED, BookCategory.UNRANKED);
         if (unrankedBooks.isEmpty()) {
             String selectedBookshelf = lastRankedBookshelf != null ? lastRankedBookshelf.name() : "FICTION";
@@ -2205,7 +2212,7 @@ public class BookController {
 
         Ranking nextBook = unrankedBooks.get(0);
 
-        RankingState rankingState = new RankingState(userId, nextBook.getBook().getWorkOlid(), nextBook.getBook().getTitle(), nextBook.getBook().getAuthor(), null, null);
+        RankingState rankingState = new RankingState(nextBook.getBook().getWorkOlid(), nextBook.getBook().getTitle(), nextBook.getBook().getAuthor(), null, null);
         rankingState.setBookshelf(Bookshelf.UNRANKED);
         rankingState.setReviewBeingRanked(nextBook.getReview());
         rankingState.setRankAll(true);
@@ -2215,7 +2222,7 @@ public class BookController {
         } else {
             rankingState.setMode(RankingMode.SELECT_EDITION);
         }
-        rankingStateRepository.save(rankingState);
+        saveRankingState(session, rankingState);
 
         rankingService.deleteRankingAndCloseGap(userId, nextBook);
 

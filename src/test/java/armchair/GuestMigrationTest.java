@@ -57,12 +57,12 @@ class GuestMigrationTest extends BaseIntegrationTest {
         Book dune = createVerifiedBook("OL123W", "Dune", "Frank Herbert");
         addRanking(guestUserId, dune, Bookshelf.FICTION, BookCategory.LIKED, 0);
 
-        RankingState state = new RankingState(guestUserId, "OL789W", "Neuromancer", "William Gibson",
+        RankingState state = new RankingState("OL789W", "Neuromancer", "William Gibson",
                 Bookshelf.FICTION, BookCategory.LIKED, 0, 0, 0);
         state.setReviewBeingRanked("Great book");
         state.setMode(RankingMode.CATEGORIZE);
         state.setRankAll(true);
-        rankingStateRepository.save(state);
+        setRankingState(session, state);
 
         User oauthUser = createOAuthUser("migrator2", "oauth-migrate-2");
 
@@ -70,15 +70,14 @@ class GuestMigrationTest extends BaseIntegrationTest {
                         .with(oauthUser("oauth-migrate-2")))
                 .andExpect(status().isOk());
 
-        RankingState migratedState = rankingStateRepository.findById(oauthUser.getId()).orElse(null);
+        // RankingState is in the session, so it survives login (session persists)
+        RankingState migratedState = getRankingState(session);
         assertThat(migratedState).isNotNull();
         assertThat(migratedState.getTitleBeingRanked()).isEqualTo("Neuromancer");
         assertThat(migratedState.getAuthorBeingRanked()).isEqualTo("William Gibson");
         assertThat(migratedState.getReviewBeingRanked()).isEqualTo("Great book");
         assertThat(migratedState.getMode()).isEqualTo(RankingMode.CATEGORIZE);
         assertThat(migratedState.isRankAll()).isTrue();
-
-        assertThat(rankingStateRepository.findById(guestUserId)).isEmpty();
     }
 
     @Test

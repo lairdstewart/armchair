@@ -24,17 +24,20 @@ class BasicCrudTest extends BaseIntegrationTest {
     @Test
     void addBookFromSearch() throws Exception {
         User user = createOAuthUser("crud1", "oauth-crud-1");
+        MockHttpSession session = new MockHttpSession();
 
         mockMvc.perform(post("/select-book")
                         .param("workOlid", "OL100W")
                         .param("bookName", "Dune")
                         .param("author", "Frank Herbert")
+                        .session(session)
                         .with(oauthUser("oauth-crud-1")).with(csrf()))
                 .andExpect(status().is3xxRedirection());
 
         mockMvc.perform(post("/categorize")
                         .param("bookshelf", "nonfiction")
                         .param("category", "ok")
+                        .session(session)
                         .with(oauthUser("oauth-crud-1")).with(csrf()))
                 .andExpect(status().is3xxRedirection());
 
@@ -146,21 +149,24 @@ class BasicCrudTest extends BaseIntegrationTest {
     @Test
     void cancelAdd() throws Exception {
         User user = createOAuthUser("crud7", "oauth-crud-7");
+        MockHttpSession session = new MockHttpSession();
 
         mockMvc.perform(post("/select-book")
                         .param("workOlid", "OL100W")
                         .param("bookName", "Dune")
                         .param("author", "Frank Herbert")
+                        .session(session)
                         .with(oauthUser("oauth-crud-7")).with(csrf()))
                 .andExpect(status().is3xxRedirection());
 
-        assertThat(rankingStateRepository.findById(user.getId())).isPresent();
+        assertThat(getRankingState(session)).isNotNull();
 
         mockMvc.perform(post("/cancel-add")
+                        .session(session)
                         .with(oauthUser("oauth-crud-7")).with(csrf()))
                 .andExpect(status().is3xxRedirection());
 
-        assertThat(rankingStateRepository.findById(user.getId())).isEmpty();
+        assertThat(getRankingState(session)).isNull();
     }
 
     @Test
