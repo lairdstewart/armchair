@@ -1676,15 +1676,15 @@ public class BookController {
             List<User> allProfiles;
             if (query != null && !query.isBlank()) {
                 if (isRealUser) {
-                    allProfiles = userRepository.findByIsGuestFalseAndIsCuratedFalseAndPublishListsTrueAndUsernameContainingIgnoreCaseAndIdNot(query.trim(), currentUserId);
+                    allProfiles = userRepository.searchPublicProfilesExcluding(query.trim(), currentUserId);
                 } else {
-                    allProfiles = userRepository.findByIsGuestFalseAndIsCuratedFalseAndPublishListsTrueAndUsernameContainingIgnoreCase(query.trim());
+                    allProfiles = userRepository.searchPublicProfiles(query.trim());
                 }
             } else {
                 if (isRealUser) {
-                    allProfiles = userRepository.findByIsGuestFalseAndIsCuratedFalseAndPublishListsTrueAndIdNotOrderBySignupDateDesc(currentUserId);
+                    allProfiles = userRepository.findAllPublicProfilesExcluding(currentUserId);
                 } else {
-                    allProfiles = userRepository.findByIsGuestFalseAndIsCuratedFalseAndPublishListsTrueOrderBySignupDateDesc();
+                    allProfiles = userRepository.findAllPublicProfiles();
                 }
             }
             PaginationResult<User> profilePagination = PaginationResult.of(allProfiles, page, pageSize);
@@ -1735,7 +1735,7 @@ public class BookController {
         if ("curated".equals(type)) {
             List<User> allCurated;
             if (query != null && !query.isBlank()) {
-                allCurated = userRepository.findByIsCuratedTrueAndUsernameContainingIgnoreCase(query.trim());
+                allCurated = userRepository.searchCuratedProfiles(query.trim());
             } else {
                 allCurated = userRepository.findByIsCurated(true);
             }
@@ -1762,17 +1762,17 @@ public class BookController {
         model.addAttribute("query", query);
 
         if (query != null && !query.isBlank()) {
-            List<User> results = userRepository.findByIsGuestFalseAndIsCuratedFalseAndPublishListsTrueAndUsernameContainingIgnoreCase(query.trim());
+            List<User> results = userRepository.searchPublicProfiles(query.trim());
             List<ProfileDisplay> profileDisplays = results.stream()
                 .map(userService::createProfileDisplay)
                 .toList();
             model.addAttribute("searchResults", profileDisplays);
         } else {
-            List<User> recentProfiles = userRepository.findTop10ByIsGuestFalseAndIsCuratedFalseAndPublishListsTrueOrderBySignupDateDesc();
+            List<User> recentProfiles = userRepository.findRecentPublicProfiles();
             List<ProfileDisplay> profileDisplays = recentProfiles.stream()
                 .map(userService::createProfileDisplay)
                 .toList();
-            long totalProfiles = userRepository.countByIsGuestFalseAndIsCuratedFalseAndPublishListsTrue();
+            long totalProfiles = userRepository.countPublicProfiles();
             long moreCount = Math.max(0, totalProfiles - recentProfiles.size());
             model.addAttribute("recentProfiles", profileDisplays);
             model.addAttribute("moreProfilesCount", moreCount);
