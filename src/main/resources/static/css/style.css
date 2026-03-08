@@ -377,3 +377,14 @@ details[open] .review-toggle::before {
   text-decoration: underline;
 }
 
+/* Profile page buttons */
+.profile-buttons {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.profile-buttons form {
+  margin-bottom: 0;
+}
+
