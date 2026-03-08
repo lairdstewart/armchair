@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -61,13 +62,13 @@ public class CollaborativeFilteringAlgorithm implements RecommendationAlgorithm 
         List<Ranking> myRankings = rankingRepository.findByUserIdAndBookshelfOrderByPositionAsc(userId, bookshelf);
         Map<Long, Double> myScores = computeUserScores(myRankings, curatedUserIds.contains(userId));
 
-        // Get all user IDs with rankings
-        List<Long> allUserIds = rankingRepository.findDistinctUserIds();
-
         // Book IDs the current user already has (across all bookshelves)
-        Set<Long> ownBookIds = rankingRepository.findByUserId(userId).stream()
-                .map(r -> r.getBook().getId())
-                .collect(Collectors.toSet());
+        Set<Long> ownBookIds = new HashSet<>(rankingRepository.findBookIdsByUserId(userId));
+
+        // Batch-fetch all rankings for this bookshelf, grouped by user
+        List<Ranking> allRankings = rankingRepository.findByBookshelfOrderByUserIdAscPositionAsc(bookshelf);
+        Map<Long, List<Ranking>> rankingsByUser = allRankings.stream()
+                .collect(Collectors.groupingBy(Ranking::getUserId));
 
         // Check if we have any overlap with anyone
         boolean hasAnyOverlap = false;
@@ -78,10 +79,11 @@ public class CollaborativeFilteringAlgorithm implements RecommendationAlgorithm 
         // Track books for later lookup
         Map<Long, Book> bookMap = new HashMap<>();
 
-        for (Long otherUserId : allUserIds) {
+        for (Map.Entry<Long, List<Ranking>> entry : rankingsByUser.entrySet()) {
+            Long otherUserId = entry.getKey();
             if (otherUserId.equals(userId)) continue;
 
-            List<Ranking> otherRankings = rankingRepository.findByUserIdAndBookshelfOrderByPositionAsc(otherUserId, bookshelf);
+            List<Ranking> otherRankings = entry.getValue();
             if (otherRankings.isEmpty()) continue;
 
             Map<Long, Double> otherScores = computeUserScores(otherRankings, curatedUserIds.contains(otherUserId));

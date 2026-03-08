@@ -329,8 +329,9 @@ class CollaborativeFilteringAlgorithmTest {
             when(userRepository.findByIsCurated(true)).thenReturn(List.of());
             when(rankingRepository.findByUserIdAndBookshelfOrderByPositionAsc(1L, Bookshelf.FICTION))
                     .thenReturn(List.of());
-            when(rankingRepository.findDistinctUserIds()).thenReturn(List.of(1L));
-            when(rankingRepository.findByUserId(1L)).thenReturn(List.of());
+            when(rankingRepository.findBookIdsByUserId(1L)).thenReturn(List.of());
+            when(rankingRepository.findByBookshelfOrderByUserIdAscPositionAsc(Bookshelf.FICTION))
+                    .thenReturn(List.of());
             when(bookRepository.findRandomBooks()).thenReturn(List.of(random));
 
             List<Book> recs = algorithm.getFictionRecommendations(1L, 10);
@@ -347,8 +348,8 @@ class CollaborativeFilteringAlgorithmTest {
             when(userRepository.findByIsCurated(true)).thenReturn(List.of());
             when(rankingRepository.findByUserIdAndBookshelfOrderByPositionAsc(1L, Bookshelf.FICTION))
                     .thenReturn(List.of(ranking(1L, myBook, Bookshelf.FICTION, BookCategory.LIKED, 0)));
-            when(rankingRepository.findDistinctUserIds()).thenReturn(List.of(1L));
-            when(rankingRepository.findByUserId(1L))
+            when(rankingRepository.findBookIdsByUserId(1L)).thenReturn(List.of(1L));
+            when(rankingRepository.findByBookshelfOrderByUserIdAscPositionAsc(Bookshelf.FICTION))
                     .thenReturn(List.of(ranking(1L, myBook, Bookshelf.FICTION, BookCategory.LIKED, 0)));
             when(bookRepository.findRandomBooks()).thenReturn(List.of(random));
 
@@ -365,11 +366,10 @@ class CollaborativeFilteringAlgorithmTest {
             when(userRepository.findByIsCurated(true)).thenReturn(List.of());
             when(rankingRepository.findByUserIdAndBookshelfOrderByPositionAsc(1L, Bookshelf.FICTION))
                     .thenReturn(List.of(ranking(1L, shared, Bookshelf.FICTION, BookCategory.LIKED, 0)));
-            when(rankingRepository.findDistinctUserIds()).thenReturn(List.of(1L, 2L));
-            when(rankingRepository.findByUserId(1L))
-                    .thenReturn(List.of(ranking(1L, shared, Bookshelf.FICTION, BookCategory.LIKED, 0)));
-            when(rankingRepository.findByUserIdAndBookshelfOrderByPositionAsc(2L, Bookshelf.FICTION))
+            when(rankingRepository.findBookIdsByUserId(1L)).thenReturn(List.of(1L));
+            when(rankingRepository.findByBookshelfOrderByUserIdAscPositionAsc(Bookshelf.FICTION))
                     .thenReturn(List.of(
+                            ranking(1L, shared, Bookshelf.FICTION, BookCategory.LIKED, 0),
                             ranking(2L, shared, Bookshelf.FICTION, BookCategory.LIKED, 0),
                             ranking(2L, unique, Bookshelf.FICTION, BookCategory.LIKED, 1)
                     ));
@@ -398,20 +398,14 @@ class CollaborativeFilteringAlgorithmTest {
             );
             when(rankingRepository.findByUserIdAndBookshelfOrderByPositionAsc(1L, Bookshelf.FICTION))
                     .thenReturn(myRankings);
-            when(rankingRepository.findByUserId(1L)).thenReturn(myRankings);
-            when(rankingRepository.findDistinctUserIds()).thenReturn(List.of(1L, 2L, 3L));
-
-            // User 2: likes same books + has C
-            when(rankingRepository.findByUserIdAndBookshelfOrderByPositionAsc(2L, Bookshelf.FICTION))
+            when(rankingRepository.findBookIdsByUserId(1L)).thenReturn(List.of(1L, 2L));
+            when(rankingRepository.findByBookshelfOrderByUserIdAscPositionAsc(Bookshelf.FICTION))
                     .thenReturn(List.of(
+                            ranking(1L, a, Bookshelf.FICTION, BookCategory.LIKED, 0),
+                            ranking(1L, b, Bookshelf.FICTION, BookCategory.LIKED, 1),
                             ranking(2L, a, Bookshelf.FICTION, BookCategory.LIKED, 0),
                             ranking(2L, b, Bookshelf.FICTION, BookCategory.LIKED, 1),
-                            ranking(2L, c, Bookshelf.FICTION, BookCategory.LIKED, 2)
-                    ));
-
-            // User 3: dislikes same books + has D
-            when(rankingRepository.findByUserIdAndBookshelfOrderByPositionAsc(3L, Bookshelf.FICTION))
-                    .thenReturn(List.of(
+                            ranking(2L, c, Bookshelf.FICTION, BookCategory.LIKED, 2),
                             ranking(3L, a, Bookshelf.FICTION, BookCategory.DISLIKED, 0),
                             ranking(3L, b, Bookshelf.FICTION, BookCategory.DISLIKED, 1),
                             ranking(3L, d, Bookshelf.FICTION, BookCategory.LIKED, 2)
@@ -433,11 +427,12 @@ class CollaborativeFilteringAlgorithmTest {
             when(userRepository.findByIsCurated(true)).thenReturn(List.of());
             when(rankingRepository.findByUserIdAndBookshelfOrderByPositionAsc(1L, Bookshelf.FICTION))
                     .thenReturn(List.of(ranking(1L, a, Bookshelf.FICTION, BookCategory.LIKED, 0)));
-            when(rankingRepository.findDistinctUserIds()).thenReturn(List.of(1L, 2L));
-            when(rankingRepository.findByUserId(1L))
-                    .thenReturn(List.of(ranking(1L, a, Bookshelf.FICTION, BookCategory.LIKED, 0)));
-            when(rankingRepository.findByUserIdAndBookshelfOrderByPositionAsc(2L, Bookshelf.FICTION))
-                    .thenReturn(List.of(ranking(2L, b, Bookshelf.FICTION, BookCategory.LIKED, 0)));
+            when(rankingRepository.findBookIdsByUserId(1L)).thenReturn(List.of(1L));
+            when(rankingRepository.findByBookshelfOrderByUserIdAscPositionAsc(Bookshelf.FICTION))
+                    .thenReturn(List.of(
+                            ranking(1L, a, Bookshelf.FICTION, BookCategory.LIKED, 0),
+                            ranking(2L, b, Bookshelf.FICTION, BookCategory.LIKED, 0)
+                    ));
 
             List<Book> recs = algorithm.getFictionRecommendations(1L, 10);
             assertEquals(1, recs.size());
@@ -453,11 +448,10 @@ class CollaborativeFilteringAlgorithmTest {
             when(userRepository.findByIsCurated(true)).thenReturn(List.of());
             when(rankingRepository.findByUserIdAndBookshelfOrderByPositionAsc(1L, Bookshelf.FICTION))
                     .thenReturn(List.of(ranking(1L, a, Bookshelf.FICTION, BookCategory.LIKED, 0)));
-            when(rankingRepository.findDistinctUserIds()).thenReturn(List.of(1L, 2L));
-            when(rankingRepository.findByUserId(1L))
-                    .thenReturn(List.of(ranking(1L, a, Bookshelf.FICTION, BookCategory.LIKED, 0)));
-            when(rankingRepository.findByUserIdAndBookshelfOrderByPositionAsc(2L, Bookshelf.FICTION))
+            when(rankingRepository.findBookIdsByUserId(1L)).thenReturn(List.of(1L));
+            when(rankingRepository.findByBookshelfOrderByUserIdAscPositionAsc(Bookshelf.FICTION))
                     .thenReturn(List.of(
+                            ranking(1L, a, Bookshelf.FICTION, BookCategory.LIKED, 0),
                             ranking(2L, a, Bookshelf.FICTION, BookCategory.LIKED, 0),
                             ranking(2L, b, Bookshelf.FICTION, BookCategory.LIKED, 1),
                             ranking(2L, c, Bookshelf.FICTION, BookCategory.LIKED, 2)
@@ -478,13 +472,12 @@ class CollaborativeFilteringAlgorithmTest {
             when(userRepository.findByIsCurated(true)).thenReturn(List.of(curated));
             when(rankingRepository.findByUserIdAndBookshelfOrderByPositionAsc(1L, Bookshelf.FICTION))
                     .thenReturn(List.of(ranking(1L, a, Bookshelf.FICTION, BookCategory.LIKED, 0)));
-            when(rankingRepository.findDistinctUserIds()).thenReturn(List.of(1L, 2L));
-            when(rankingRepository.findByUserId(1L))
-                    .thenReturn(List.of(ranking(1L, a, Bookshelf.FICTION, BookCategory.LIKED, 0)));
+            when(rankingRepository.findBookIdsByUserId(1L)).thenReturn(List.of(1L));
 
             // Curated user has books in different categories - shouldn't matter
-            when(rankingRepository.findByUserIdAndBookshelfOrderByPositionAsc(2L, Bookshelf.FICTION))
+            when(rankingRepository.findByBookshelfOrderByUserIdAscPositionAsc(Bookshelf.FICTION))
                     .thenReturn(List.of(
+                            ranking(1L, a, Bookshelf.FICTION, BookCategory.LIKED, 0),
                             ranking(2L, a, Bookshelf.FICTION, BookCategory.LIKED, 0),
                             ranking(2L, b, Bookshelf.FICTION, BookCategory.DISLIKED, 1),
                             ranking(2L, c, Bookshelf.FICTION, BookCategory.OK, 2)
@@ -503,11 +496,10 @@ class CollaborativeFilteringAlgorithmTest {
             when(userRepository.findByIsCurated(true)).thenReturn(List.of());
             when(rankingRepository.findByUserIdAndBookshelfOrderByPositionAsc(1L, Bookshelf.NONFICTION))
                     .thenReturn(List.of(ranking(1L, a, Bookshelf.NONFICTION, BookCategory.LIKED, 0)));
-            when(rankingRepository.findDistinctUserIds()).thenReturn(List.of(1L, 2L));
-            when(rankingRepository.findByUserId(1L))
-                    .thenReturn(List.of(ranking(1L, a, Bookshelf.NONFICTION, BookCategory.LIKED, 0)));
-            when(rankingRepository.findByUserIdAndBookshelfOrderByPositionAsc(2L, Bookshelf.NONFICTION))
+            when(rankingRepository.findBookIdsByUserId(1L)).thenReturn(List.of(1L));
+            when(rankingRepository.findByBookshelfOrderByUserIdAscPositionAsc(Bookshelf.NONFICTION))
                     .thenReturn(List.of(
+                            ranking(1L, a, Bookshelf.NONFICTION, BookCategory.LIKED, 0),
                             ranking(2L, a, Bookshelf.NONFICTION, BookCategory.LIKED, 0),
                             ranking(2L, b, Bookshelf.NONFICTION, BookCategory.LIKED, 1)
                     ));
@@ -529,11 +521,12 @@ class CollaborativeFilteringAlgorithmTest {
             when(userRepository.findByIsCurated(true)).thenReturn(List.of());
             when(rankingRepository.findByUserIdAndBookshelfOrderByPositionAsc(1L, Bookshelf.FICTION))
                     .thenReturn(List.of(ranking(1L, a, Bookshelf.FICTION, BookCategory.LIKED, 0)));
-            when(rankingRepository.findDistinctUserIds()).thenReturn(List.of(1L, 2L));
-            when(rankingRepository.findByUserId(1L))
-                    .thenReturn(List.of(ranking(1L, a, Bookshelf.FICTION, BookCategory.LIKED, 0)));
-            when(rankingRepository.findByUserIdAndBookshelfOrderByPositionAsc(2L, Bookshelf.FICTION))
-                    .thenReturn(List.of(ranking(2L, b, Bookshelf.FICTION, BookCategory.UNRANKED, 0)));
+            when(rankingRepository.findBookIdsByUserId(1L)).thenReturn(List.of(1L));
+            when(rankingRepository.findByBookshelfOrderByUserIdAscPositionAsc(Bookshelf.FICTION))
+                    .thenReturn(List.of(
+                            ranking(1L, a, Bookshelf.FICTION, BookCategory.LIKED, 0),
+                            ranking(2L, b, Bookshelf.FICTION, BookCategory.UNRANKED, 0)
+                    ));
 
             assertThrows(NullPointerException.class,
                     () -> algorithm.getFictionRecommendations(1L, 10));

@@ -46,10 +46,10 @@ class FollowersLikedAlgorithmTest {
         Follow follow = new Follow(USER_ID, FOLLOWED_ID_1);
 
         when(followRepository.findByFollowerId(USER_ID)).thenReturn(List.of(follow));
-        when(rankingRepository.findByUserId(USER_ID)).thenReturn(List.of());
-        when(rankingRepository.findByUserId(FOLLOWED_ID_1)).thenReturn(List.of(
-                makeRanking(book, Bookshelf.FICTION, BookCategory.LIKED)
-        ));
+        when(rankingRepository.findBookIdsByUserId(USER_ID)).thenReturn(List.of());
+        when(rankingRepository.findByUserIdInAndCategoryAndBookshelfOrderByPositionAsc(
+                List.of(FOLLOWED_ID_1), BookCategory.LIKED, Bookshelf.FICTION))
+                .thenReturn(List.of(makeRanking(book, Bookshelf.FICTION, BookCategory.LIKED)));
 
         List<Book> recs = algorithm.getFictionRecommendations(USER_ID, 10);
 
@@ -63,13 +63,13 @@ class FollowersLikedAlgorithmTest {
         Follow follow = new Follow(USER_ID, FOLLOWED_ID_1);
 
         when(followRepository.findByFollowerId(USER_ID)).thenReturn(List.of(follow));
-        when(rankingRepository.findByUserId(USER_ID)).thenReturn(List.of(
-                makeRanking(alreadyRanked, Bookshelf.FICTION, BookCategory.OK)
-        ));
-        when(rankingRepository.findByUserId(FOLLOWED_ID_1)).thenReturn(List.of(
-                makeRanking(alreadyRanked, Bookshelf.FICTION, BookCategory.LIKED),
-                makeRanking(notRanked, Bookshelf.FICTION, BookCategory.LIKED)
-        ));
+        when(rankingRepository.findBookIdsByUserId(USER_ID)).thenReturn(List.of(10L));
+        when(rankingRepository.findByUserIdInAndCategoryAndBookshelfOrderByPositionAsc(
+                List.of(FOLLOWED_ID_1), BookCategory.LIKED, Bookshelf.FICTION))
+                .thenReturn(List.of(
+                        makeRanking(alreadyRanked, Bookshelf.FICTION, BookCategory.LIKED),
+                        makeRanking(notRanked, Bookshelf.FICTION, BookCategory.LIKED)
+                ));
 
         List<Book> recs = algorithm.getFictionRecommendations(USER_ID, 10);
 
@@ -94,8 +94,10 @@ class FollowersLikedAlgorithmTest {
         Follow follow = new Follow(USER_ID, FOLLOWED_ID_1);
 
         when(followRepository.findByFollowerId(USER_ID)).thenReturn(List.of(follow));
-        when(rankingRepository.findByUserId(USER_ID)).thenReturn(List.of());
-        when(rankingRepository.findByUserId(FOLLOWED_ID_1)).thenReturn(List.of());
+        when(rankingRepository.findBookIdsByUserId(USER_ID)).thenReturn(List.of());
+        when(rankingRepository.findByUserIdInAndCategoryAndBookshelfOrderByPositionAsc(
+                List.of(FOLLOWED_ID_1), BookCategory.LIKED, Bookshelf.FICTION))
+                .thenReturn(List.of());
         when(bookRepository.findRandomBooks()).thenReturn(List.of(randomBook));
 
         List<Book> recs = algorithm.getFictionRecommendations(USER_ID, 10);
@@ -110,13 +112,13 @@ class FollowersLikedAlgorithmTest {
         Follow follow2 = new Follow(USER_ID, FOLLOWED_ID_2);
 
         when(followRepository.findByFollowerId(USER_ID)).thenReturn(List.of(follow1, follow2));
-        when(rankingRepository.findByUserId(USER_ID)).thenReturn(List.of());
-        when(rankingRepository.findByUserId(FOLLOWED_ID_1)).thenReturn(List.of(
-                makeRanking(sharedBook, Bookshelf.FICTION, BookCategory.LIKED)
-        ));
-        when(rankingRepository.findByUserId(FOLLOWED_ID_2)).thenReturn(List.of(
-                makeRanking(sharedBook, Bookshelf.FICTION, BookCategory.LIKED)
-        ));
+        when(rankingRepository.findBookIdsByUserId(USER_ID)).thenReturn(List.of());
+        when(rankingRepository.findByUserIdInAndCategoryAndBookshelfOrderByPositionAsc(
+                List.of(FOLLOWED_ID_1, FOLLOWED_ID_2), BookCategory.LIKED, Bookshelf.FICTION))
+                .thenReturn(List.of(
+                        makeRanking(sharedBook, Bookshelf.FICTION, BookCategory.LIKED),
+                        makeRanking(sharedBook, Bookshelf.FICTION, BookCategory.LIKED)
+                ));
 
         List<Book> recs = algorithm.getFictionRecommendations(USER_ID, 10);
 
@@ -126,15 +128,14 @@ class FollowersLikedAlgorithmTest {
     @Test
     void onlyRecommendsLikedBooks() {
         Book likedBook = makeBook(10L, "Liked");
-        Book okBook = makeBook(11L, "OK");
         Follow follow = new Follow(USER_ID, FOLLOWED_ID_1);
 
         when(followRepository.findByFollowerId(USER_ID)).thenReturn(List.of(follow));
-        when(rankingRepository.findByUserId(USER_ID)).thenReturn(List.of());
-        when(rankingRepository.findByUserId(FOLLOWED_ID_1)).thenReturn(List.of(
-                makeRanking(likedBook, Bookshelf.FICTION, BookCategory.LIKED),
-                makeRanking(okBook, Bookshelf.FICTION, BookCategory.OK)
-        ));
+        when(rankingRepository.findBookIdsByUserId(USER_ID)).thenReturn(List.of());
+        // The batch query only fetches LIKED books, so OK books won't appear
+        when(rankingRepository.findByUserIdInAndCategoryAndBookshelfOrderByPositionAsc(
+                List.of(FOLLOWED_ID_1), BookCategory.LIKED, Bookshelf.FICTION))
+                .thenReturn(List.of(makeRanking(likedBook, Bookshelf.FICTION, BookCategory.LIKED)));
 
         List<Book> recs = algorithm.getFictionRecommendations(USER_ID, 10);
 
@@ -144,15 +145,14 @@ class FollowersLikedAlgorithmTest {
     @Test
     void filtersByBookshelf() {
         Book fictionBook = makeBook(10L, "Fiction");
-        Book nonfictionBook = makeBook(11L, "Nonfiction");
         Follow follow = new Follow(USER_ID, FOLLOWED_ID_1);
 
         when(followRepository.findByFollowerId(USER_ID)).thenReturn(List.of(follow));
-        when(rankingRepository.findByUserId(USER_ID)).thenReturn(List.of());
-        when(rankingRepository.findByUserId(FOLLOWED_ID_1)).thenReturn(List.of(
-                makeRanking(fictionBook, Bookshelf.FICTION, BookCategory.LIKED),
-                makeRanking(nonfictionBook, Bookshelf.NONFICTION, BookCategory.LIKED)
-        ));
+        when(rankingRepository.findBookIdsByUserId(USER_ID)).thenReturn(List.of());
+        // The batch query filters by bookshelf, so only fiction books appear
+        when(rankingRepository.findByUserIdInAndCategoryAndBookshelfOrderByPositionAsc(
+                List.of(FOLLOWED_ID_1), BookCategory.LIKED, Bookshelf.FICTION))
+                .thenReturn(List.of(makeRanking(fictionBook, Bookshelf.FICTION, BookCategory.LIKED)));
 
         List<Book> fictionRecs = algorithm.getFictionRecommendations(USER_ID, 10);
         assertThat(fictionRecs).containsExactly(fictionBook);
@@ -164,10 +164,10 @@ class FollowersLikedAlgorithmTest {
         Follow follow = new Follow(USER_ID, FOLLOWED_ID_1);
 
         when(followRepository.findByFollowerId(USER_ID)).thenReturn(List.of(follow));
-        when(rankingRepository.findByUserId(USER_ID)).thenReturn(List.of());
-        when(rankingRepository.findByUserId(FOLLOWED_ID_1)).thenReturn(List.of(
-                makeRanking(nonfictionBook, Bookshelf.NONFICTION, BookCategory.LIKED)
-        ));
+        when(rankingRepository.findBookIdsByUserId(USER_ID)).thenReturn(List.of());
+        when(rankingRepository.findByUserIdInAndCategoryAndBookshelfOrderByPositionAsc(
+                List.of(FOLLOWED_ID_1), BookCategory.LIKED, Bookshelf.NONFICTION))
+                .thenReturn(List.of(makeRanking(nonfictionBook, Bookshelf.NONFICTION, BookCategory.LIKED)));
 
         List<Book> recs = algorithm.getNonfictionRecommendations(USER_ID, 10);
 
@@ -182,12 +182,14 @@ class FollowersLikedAlgorithmTest {
         Follow follow = new Follow(USER_ID, FOLLOWED_ID_1);
 
         when(followRepository.findByFollowerId(USER_ID)).thenReturn(List.of(follow));
-        when(rankingRepository.findByUserId(USER_ID)).thenReturn(List.of());
-        when(rankingRepository.findByUserId(FOLLOWED_ID_1)).thenReturn(List.of(
-                makeRanking(book1, Bookshelf.FICTION, BookCategory.LIKED),
-                makeRanking(book2, Bookshelf.FICTION, BookCategory.LIKED),
-                makeRanking(book3, Bookshelf.FICTION, BookCategory.LIKED)
-        ));
+        when(rankingRepository.findBookIdsByUserId(USER_ID)).thenReturn(List.of());
+        when(rankingRepository.findByUserIdInAndCategoryAndBookshelfOrderByPositionAsc(
+                List.of(FOLLOWED_ID_1), BookCategory.LIKED, Bookshelf.FICTION))
+                .thenReturn(List.of(
+                        makeRanking(book1, Bookshelf.FICTION, BookCategory.LIKED),
+                        makeRanking(book2, Bookshelf.FICTION, BookCategory.LIKED),
+                        makeRanking(book3, Bookshelf.FICTION, BookCategory.LIKED)
+                ));
 
         List<Book> recs = algorithm.getFictionRecommendations(USER_ID, 2);
 
@@ -201,12 +203,10 @@ class FollowersLikedAlgorithmTest {
         Follow follow = new Follow(USER_ID, FOLLOWED_ID_1);
 
         when(followRepository.findByFollowerId(USER_ID)).thenReturn(List.of(follow));
-        when(rankingRepository.findByUserId(USER_ID)).thenReturn(List.of(
-                makeRanking(book, Bookshelf.FICTION, BookCategory.LIKED)
-        ));
-        when(rankingRepository.findByUserId(FOLLOWED_ID_1)).thenReturn(List.of(
-                makeRanking(book, Bookshelf.FICTION, BookCategory.LIKED)
-        ));
+        when(rankingRepository.findBookIdsByUserId(USER_ID)).thenReturn(List.of(10L));
+        when(rankingRepository.findByUserIdInAndCategoryAndBookshelfOrderByPositionAsc(
+                List.of(FOLLOWED_ID_1), BookCategory.LIKED, Bookshelf.FICTION))
+                .thenReturn(List.of(makeRanking(book, Bookshelf.FICTION, BookCategory.LIKED)));
         when(bookRepository.findRandomBooks()).thenReturn(List.of(randomBook));
 
         List<Book> recs = algorithm.getFictionRecommendations(USER_ID, 10);

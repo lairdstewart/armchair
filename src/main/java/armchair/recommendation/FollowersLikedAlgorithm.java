@@ -10,9 +10,9 @@ import armchair.repository.FollowRepository;
 import armchair.repository.RankingRepository;
 import org.springframework.stereotype.Component;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Component
 public class FollowersLikedAlgorithm implements RecommendationAlgorithm {
@@ -45,14 +45,11 @@ public class FollowersLikedAlgorithm implements RecommendationAlgorithm {
                 .toList();
 
         if (!followedUserIds.isEmpty()) {
-            Set<Long> ownBookIds = rankingRepository.findByUserId(userId).stream()
-                    .map(r -> r.getBook().getId())
-                    .collect(Collectors.toSet());
+            Set<Long> ownBookIds = new HashSet<>(rankingRepository.findBookIdsByUserId(userId));
 
-            List<Book> socialRecs = followedUserIds.stream()
-                    .flatMap(fid -> rankingRepository.findByUserId(fid).stream())
-                    .filter(r -> r.getCategory() == BookCategory.LIKED)
-                    .filter(r -> r.getBookshelf() == bookshelf)
+            List<Book> socialRecs = rankingRepository
+                    .findByUserIdInAndCategoryAndBookshelfOrderByPositionAsc(followedUserIds, BookCategory.LIKED, bookshelf)
+                    .stream()
                     .map(Ranking::getBook)
                     .filter(book -> !ownBookIds.contains(book.getId()))
                     .distinct()

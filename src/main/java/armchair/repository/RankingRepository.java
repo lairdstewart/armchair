@@ -27,8 +27,12 @@ public interface RankingRepository extends JpaRepository<Ranking, Long> {
 
     long countByUserIdAndBookshelfAndCategoryIn(Long userId, Bookshelf bookshelf, List<BookCategory> categories);
 
-    @Query("SELECT DISTINCT r.userId FROM Ranking r")
-    List<Long> findDistinctUserIds();
+    @Query("SELECT r.book.id FROM Ranking r WHERE r.userId = :userId")
+    List<Long> findBookIdsByUserId(@Param("userId") Long userId);
+
+    List<Ranking> findByBookshelfOrderByUserIdAscPositionAsc(Bookshelf bookshelf);
+
+    List<Ranking> findByUserIdInAndCategoryAndBookshelfOrderByPositionAsc(List<Long> userIds, BookCategory category, Bookshelf bookshelf);
 
     @Modifying
     @Transactional
