@@ -2,6 +2,7 @@ package armchair.service;
 
 import armchair.entity.Book;
 import armchair.repository.BookRepository;
+import armchair.repository.RankingRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -12,6 +13,9 @@ public class BookService {
 
     @Autowired
     private BookRepository bookRepository;
+
+    @Autowired
+    private RankingRepository rankingRepository;
 
     /**
      * Finds an existing book or creates a new one. Deduplicates by workOlid first,
@@ -52,5 +56,11 @@ public class BookService {
 
         // No match — create new Book
         return bookRepository.save(new Book(workOlid, editionOlid, title, author, firstPublishYear, coverId));
+    }
+
+    public void deleteIfOrphaned(Long bookId) {
+        if (!rankingRepository.existsByBookId(bookId)) {
+            bookRepository.deleteById(bookId);
+        }
     }
 }

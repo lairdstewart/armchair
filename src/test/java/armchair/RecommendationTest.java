@@ -1,6 +1,6 @@
 package armchair;
 
-import armchair.controller.BookController.BookInfo;
+import armchair.dto.BookInfo;
 import armchair.entity.Book;
 import armchair.entity.BookCategory;
 import armchair.entity.Bookshelf;

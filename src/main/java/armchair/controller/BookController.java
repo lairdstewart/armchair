@@ -1,5 +1,10 @@
 package armchair.controller;
 
+import armchair.dto.BookInfo;
+import armchair.dto.BookLists;
+import armchair.dto.ProfileDisplay;
+import armchair.dto.ProfileDisplayWithFollow;
+import armchair.dto.UserBookRank;
 import armchair.entity.Book;
 import armchair.entity.BookCategory;
 import armchair.entity.Bookshelf;
@@ -15,7 +20,11 @@ import armchair.repository.RankingStateRepository;
 import armchair.repository.UserRepository;
 import armchair.recommendation.RecommendationAlgorithm;
 import armchair.service.BookService;
+import armchair.service.ImportExportService;
 import armchair.service.OpenLibraryService;
+import armchair.service.RankingService;
+import armchair.service.SearchService;
+import armchair.service.UserService;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -39,36 +48,14 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @Controller
 public class BookController {
     private static final Logger log = LoggerFactory.getLogger(BookController.class);
-
-    public record BookInfo(Long id, String workOlid, String editionOlid, String title, String author, String review, Integer firstPublishYear, Integer coverId) {
-        public String bookUrl() {
-            if (workOlid != null) return "https://openlibrary.org/works/" + workOlid;
-            return "https://openlibrary.org/search?q=" + java.net.URLEncoder.encode(title + " " + author, java.nio.charset.StandardCharsets.UTF_8);
-        }
-        public String coverUrl() {
-            if (coverId != null) return "https://covers.openlibrary.org/b/id/" + coverId + "-M.jpg";
-            return null;
-        }
-    }
-    public record BookLists(List<BookInfo> liked, List<BookInfo> ok, List<BookInfo> disliked, List<BookInfo> unranked) {}
-    public record ProfileDisplay(String username, String stats) {}
-    public record ProfileDisplayWithFollow(String username, String stats, Long userId, boolean isFollowing) {}
-    public record UserBookRank(Long rankingId, int rank, String category, String bookshelf) {}
 
     private enum Mode {
         LIST,
@@ -85,70 +72,11 @@ public class BookController {
 
     private static final String SESSION_GUEST_USER_ID = "guestUserId";
     private static final int MAX_REVIEW_LENGTH = 5000;
-    private static final int MAX_IMPORT_ROWS = 10000;
-    private static String bookResultKey(OpenLibraryService.BookResult b) {
-        return b.workOlid();
-    }
-
-    private static List<OpenLibraryService.BookResult> deduplicateResults(List<OpenLibraryService.BookResult> results) {
-        var seen = new java.util.LinkedHashSet<String>();
-        return results.stream().filter(r -> seen.add(bookResultKey(r))).toList();
-    }
-
-    /**
-     * Combines results from structured title+author search with general query search.
-     * This handles cases where Open Library's canonical title differs from the common title
-     * (e.g., "Nineteen Eighty-Four" vs "1984"). Results are deduplicated by workOlid and
-     * sorted by edition count (descending) so the most authoritative work appears first.
-     */
-    private List<OpenLibraryService.BookResult> combinedSearch(String title, String author, int maxResults) {
-        List<OpenLibraryService.BookResult> structured =
-            openLibraryService.searchByTitleAndAuthor(title, author, maxResults);
-        List<OpenLibraryService.BookResult> general =
-            openLibraryService.searchBooks(title + " " + author, maxResults);
-
-        // Merge and deduplicate by workOlid (wrap in ArrayList since dedup returns immutable list)
-        List<OpenLibraryService.BookResult> combined = new ArrayList<>(structured);
-        combined.addAll(general);
-        combined = new ArrayList<>(deduplicateResults(combined));
-
-        // Sort by edition count descending so the most authoritative result is first
-        combined.sort((a, b) -> {
-            int countA = a.editionCount() != null ? a.editionCount() : 0;
-            int countB = b.editionCount() != null ? b.editionCount() : 0;
-            return Integer.compare(countB, countA);
-        });
-
-        return combined.size() > maxResults ? combined.subList(0, maxResults) : combined;
-    }
 
     private static String trimReview(String review) {
         if (review == null || review.isBlank()) return null;
         String trimmed = review.trim();
         return trimmed.length() > MAX_REVIEW_LENGTH ? trimmed.substring(0, MAX_REVIEW_LENGTH) : trimmed;
-    }
-
-    private static final java.util.regex.Pattern USERNAME_PATTERN = java.util.regex.Pattern.compile("^[a-zA-Z0-9_-]+$");
-
-    /**
-     * Validates a username. Returns an error message if invalid, or null if valid.
-     * The username must be non-blank, at most 50 characters, alphanumeric with hyphens/underscores,
-     * and not already taken.
-     */
-    private String validateUsername(String username) {
-        if (username == null || username.isBlank()) {
-            return "Username cannot be empty";
-        }
-        if (username.trim().length() > 50) {
-            return "Username must be fewer than 50 characters";
-        }
-        if (!USERNAME_PATTERN.matcher(username.trim()).matches()) {
-            return "Username can only contain letters, numbers, hyphens, and underscores";
-        }
-        if (userRepository.existsByUsername(username.trim())) {
-            return "Username already taken";
-        }
-        return null;
     }
 
     private static boolean isSafeRedirectUrl(String url) {
@@ -177,17 +105,19 @@ public class BookController {
     private BookService bookService;
 
     @Autowired
+    private RankingService rankingService;
+
+    @Autowired
+    private UserService userService;
+
+    @Autowired
+    private SearchService searchService;
+
+    @Autowired
+    private ImportExportService importExportService;
+
+    @Autowired
     private RecommendationAlgorithm recommendationAlgorithm;
-
-    private void closePositionGap(Long userId, Bookshelf bookshelf, BookCategory category, int removedPosition) {
-        rankingRepository.decrementPositionsAbove(userId, bookshelf, category, removedPosition);
-    }
-
-    private void deleteRankingAndCloseGap(Long userId, Ranking ranking) {
-        int removedPosition = ranking.getPosition();
-        rankingRepository.delete(ranking);
-        closePositionGap(userId, ranking.getBookshelf(), ranking.getCategory(), removedPosition);
-    }
 
     private static void clearDuplicateResolveSession(HttpSession session) {
         session.removeAttribute("duplicateResolveTitle");
@@ -195,68 +125,9 @@ public class BookController {
         session.removeAttribute("duplicateResolveBookId");
     }
 
-    private Ranking findRankingForUser(Long bookId, Long userId) {
-        Ranking ranking = rankingRepository.findById(bookId).orElse(null);
-        if (ranking == null || !ranking.getUserId().equals(userId)) {
-            return null;
-        }
-        return ranking;
-    }
-
-    private void restoreAbandonedBook(Long userId) {
-        RankingState state = rankingStateRepository.findById(userId).orElse(null);
-        if (state == null || state.getTitleBeingRanked() == null) return;
-
-        Book book = bookService.findOrCreateBook(state.getWorkOlidBeingRanked(),
-            null, state.getTitleBeingRanked(), state.getAuthorBeingRanked(), null, null);
-
-        if (!rankingRepository.existsByUserIdAndBookId(userId, book.getId())) {
-            // For re-rank: restore to original bookshelf/category/position
-            if (state.getOriginalCategory() != null && state.getOriginalPosition() != null) {
-                Bookshelf bookshelf = state.getBookshelf();
-                BookCategory category = state.getOriginalCategory();
-                int position = state.getOriginalPosition();
-
-                // Shift books at or after the original position up by 1
-                List<Ranking> rankings = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(userId, bookshelf, category);
-                for (Ranking r : rankings) {
-                    if (r.getPosition() >= position) {
-                        r.setPosition(r.getPosition() + 1);
-                        rankingRepository.save(r);
-                    }
-                }
-
-                Ranking restored = new Ranking(userId, book, bookshelf, category, position);
-                restored.setReview(state.getReviewBeingRanked());
-                rankingRepository.save(restored);
-            } else {
-                // For new books: add to UNRANKED
-                List<Ranking> unranked = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(
-                    userId, Bookshelf.UNRANKED, BookCategory.UNRANKED);
-                Ranking restored = new Ranking(userId, book, Bookshelf.UNRANKED, BookCategory.UNRANKED, unranked.size());
-                restored.setReview(state.getReviewBeingRanked());
-                rankingRepository.save(restored);
-            }
-        }
-    }
-
     @PostConstruct
     public void init() {
-        // Clean up ALL guest users on startup
-        // Assumption: On Render, the VM goes to sleep after 15 minutes of inactivity.
-        // When the app restarts, all guests are from a previous session and can be safely deleted.
-        List<User> guests = userRepository.findByIsGuest(true);
-
-        for (User guest : guests) {
-            // Delete associated data
-            rankingRepository.deleteByUserId(guest.getId());
-            rankingStateRepository.deleteById(guest.getId());
-            userRepository.delete(guest);
-        }
-
-        if (!guests.isEmpty()) {
-            log.info("Cleaned up {} guest users on startup", guests.size());
-        }
+        userService.cleanupGuests();
     }
 
     record OAuthIdentity(String subject, String provider) {}
@@ -290,22 +161,17 @@ public class BookController {
         OAuthIdentity identity = getOAuthIdentity();
 
         if (identity != null) {
-            // Find user by their OAuth subject + provider
             User user = userRepository.findByOauthSubjectAndOauthProvider(identity.subject(), identity.provider()).orElse(null);
             if (user != null) {
-                // Migrate guest data if returning user was browsing as guest
                 Long guestUserId = (Long) session.getAttribute(SESSION_GUEST_USER_ID);
                 if (guestUserId != null && !guestUserId.equals(user.getId())) {
-                    migrateGuestDataToUser(guestUserId, user.getId());
+                    userService.migrateGuestDataToUser(guestUserId, user.getId());
                     session.removeAttribute(SESSION_GUEST_USER_ID);
                 }
                 return user.getId();
             }
-            // User is authenticated but hasn't set up username yet — fall through to guest mode
-            // They'll be prompted to set up username when they visit Profile
         }
 
-        // Guest user - get or create from session
         Long guestUserId = (Long) session.getAttribute(SESSION_GUEST_USER_ID);
         if (guestUserId != null) {
             User guest = userRepository.findById(guestUserId).orElse(null);
@@ -314,7 +180,6 @@ public class BookController {
             }
         }
 
-        // Create new guest user
         User newGuest = new User("guest-" + java.util.UUID.randomUUID());
         newGuest.setGuest(true);
         userRepository.save(newGuest);
@@ -324,7 +189,7 @@ public class BookController {
 
     @GetMapping("/")
     public String showWelcome(Model model, HttpSession session) {
-        getCurrentUserId(session); // Ensure guest user exists and update activity
+        getCurrentUserId(session);
         addNavigationAttributes(model, "about");
         return "welcome";
     }
@@ -339,7 +204,7 @@ public class BookController {
     public String goToMyBooks(HttpSession session) {
         Long userId = getCurrentUserId(session);
         if (userId != null) {
-            restoreAbandonedBook(userId);
+            rankingService.restoreAbandonedBook(userId);
             rankingStateRepository.deleteById(userId);
             session.removeAttribute("bookSearchResults");
             session.removeAttribute("skipResolve");
@@ -354,7 +219,6 @@ public class BookController {
 
         addNavigationAttributes(model, "list");
 
-        // Show resolve warning if any (one-time, cleared after display)
         String resolveWarning = (String) session.getAttribute("resolveWarning");
         if (resolveWarning != null) {
             model.addAttribute("resolveWarning", resolveWarning);
@@ -365,24 +229,21 @@ public class BookController {
 
         Mode mode = determineMode(rankingState);
 
-        // Intercept for duplicate resolve — user picked a book during RESOLVE that's already in their library
         String duplicateResolveTitle = (String) session.getAttribute("duplicateResolveTitle");
         if (duplicateResolveTitle != null) {
             mode = Mode.DUPLICATE_RESOLVE;
             model.addAttribute("duplicateResolveTitle", duplicateResolveTitle);
         }
 
-        // Handle RESOLVE mode (explicit or legacy fallback for CATEGORIZE with unverified books)
         boolean needsResolve = mode == Mode.RESOLVE ||
             (mode == Mode.CATEGORIZE && rankingState != null && rankingState.getWorkOlidBeingRanked() == null);
         if (needsResolve && rankingState != null) {
             Object skipResolve = session.getAttribute("skipResolve");
             if ("manual".equals(skipResolve)) {
-                // Manual search mode — user searches Open Library themselves
                 mode = Mode.MANUAL_RESOLVE;
                 if (resolveQuery != null && !resolveQuery.isBlank()) {
                     List<OpenLibraryService.BookResult> resolveResults =
-                        deduplicateResults(openLibraryService.searchBooks(resolveQuery, 10));
+                        SearchService.deduplicateResults(openLibraryService.searchBooks(resolveQuery, 10));
                     model.addAttribute("resolveResults", resolveResults);
                     model.addAttribute("resolveQuery", resolveQuery);
                     if (resolveResults.isEmpty()) {
@@ -391,21 +252,18 @@ public class BookController {
                 }
             } else if (skipResolve == null || "expanded".equals(skipResolve)) {
                 int maxResults = "expanded".equals(skipResolve) ? 10 : 3;
-                List<OpenLibraryService.BookResult> resolveResults = combinedSearch(
+                List<OpenLibraryService.BookResult> resolveResults = searchService.combinedSearch(
                         rankingState.getTitleBeingRanked(),
                         rankingState.getAuthorBeingRanked(),
                         maxResults);
                 if (!resolveResults.isEmpty()) {
                     mode = Mode.RESOLVE;
                     model.addAttribute("resolveResults", resolveResults);
-                    // If API returned fewer results than requested, expanding won't help —
-                    // next "None of these" click should abandon immediately
                     if (skipResolve == null && resolveResults.size() < maxResults) {
                         session.setAttribute("skipResolve", "expanded");
                     }
                 } else if (skipResolve == null) {
-                    // First attempt returned nothing — try expanded (10 results) immediately
-                    resolveResults = combinedSearch(
+                    resolveResults = searchService.combinedSearch(
                         rankingState.getTitleBeingRanked(),
                         rankingState.getAuthorBeingRanked(),
                         10);
@@ -413,13 +271,11 @@ public class BookController {
                         mode = Mode.RESOLVE;
                         model.addAttribute("resolveResults", resolveResults);
                     } else {
-                        // No results at all — redirect to manual search
                         log.warn("RESOLVE auto-search found nothing for \"{}\" by {}", rankingState.getTitleBeingRanked(), rankingState.getAuthorBeingRanked());
                         session.setAttribute("skipResolve", "manual");
                         return "redirect:/my-books";
                     }
                 } else {
-                    // Expanded attempt also returned nothing — redirect to manual search
                     log.warn("RESOLVE auto-search found nothing for \"{}\" by {}", rankingState.getTitleBeingRanked(), rankingState.getAuthorBeingRanked());
                     session.setAttribute("skipResolve", "manual");
                     return "redirect:/my-books";
@@ -427,22 +283,17 @@ public class BookController {
             }
         }
 
-        // Handle SELECT_EDITION mode - fetch editions and potentially auto-select
         if (mode == Mode.SELECT_EDITION && rankingState != null && rankingState.getWorkOlidBeingRanked() != null) {
-            // Get cached editions from session, or fetch from API
             @SuppressWarnings("unchecked")
             List<OpenLibraryService.EditionResult> allEditions =
                 (List<OpenLibraryService.EditionResult>) session.getAttribute("cachedEditions");
 
             if (allEditions == null) {
-                // Get the cover edition from the Book (set during /select-book) to show it first
                 Book editionBook = bookRepository.findByWorkOlid(rankingState.getWorkOlidBeingRanked()).orElse(null);
                 String preferredEditionOlid = editionBook != null ? editionBook.getEditionOlid() : null;
 
-                // Fetch up to 50 editions
                 allEditions = openLibraryService.getEditionsForWork(
                     rankingState.getWorkOlidBeingRanked(), 50, 0, preferredEditionOlid);
-                // Move edition with matching cover to the front (same behavior as browse editions)
                 Integer editionCoverId = editionBook != null ? editionBook.getCoverId() : null;
                 if (editionCoverId != null && !allEditions.isEmpty() && !editionCoverId.equals(allEditions.get(0).coverId())) {
                     for (int i = 1; i < allEditions.size(); i++) {
@@ -458,7 +309,6 @@ public class BookController {
                 session.setAttribute("cachedEditions", allEditions);
             }
 
-            // Auto-select if only 1 edition with ISBN exists
             if (allEditions.size() == 1) {
                 OpenLibraryService.EditionResult soleEdition = allEditions.get(0);
                 rankingState.setEditionOlidBeingRanked(soleEdition.editionOlid());
@@ -467,7 +317,6 @@ public class BookController {
                 rankingState.setMode(RankingMode.CATEGORIZE);
                 rankingStateRepository.save(rankingState);
 
-                // Update the Book with the edition info
                 Book book = bookService.findOrCreateBook(rankingState.getWorkOlidBeingRanked(),
                     soleEdition.editionOlid(), rankingState.getTitleBeingRanked(),
                     rankingState.getAuthorBeingRanked(), null, null);
@@ -475,19 +324,17 @@ public class BookController {
                 bookRepository.save(book);
 
                 session.removeAttribute("cachedEditions");
-                return "redirect:/my-books"; // Will now show CATEGORIZE
+                return "redirect:/my-books";
             }
 
-            // Skip edition selection if no editions with ISBN found
             if (allEditions.isEmpty()) {
-                rankingState.setEditionSelected(true); // Mark as selected (even though none chosen)
+                rankingState.setEditionSelected(true);
                 rankingState.setMode(RankingMode.CATEGORIZE);
                 rankingStateRepository.save(rankingState);
                 session.removeAttribute("cachedEditions");
-                return "redirect:/my-books"; // Will now show CATEGORIZE
+                return "redirect:/my-books";
             }
 
-            // Pagination: 5 items per page
             int pageSize = 5;
             Integer editionPage = (Integer) session.getAttribute("editionPage");
             if (editionPage == null) editionPage = 0;
@@ -506,7 +353,6 @@ public class BookController {
             model.addAttribute("editionPageSize", pageSize);
         }
 
-        // Add username for display if logged in
         String userName = null;
         User user = userRepository.findById(userId).orElse(null);
         if (user != null && !user.isGuest()) {
@@ -514,20 +360,19 @@ public class BookController {
         }
         model.addAttribute("userName", userName);
 
-        Map<Bookshelf, Map<BookCategory, List<Ranking>>> allRankings = fetchAllRankingsGrouped(userId);
-        BookLists fictionBooks = getBookLists(Bookshelf.FICTION, allRankings);
-        BookLists nonfictionBooks = getBookLists(Bookshelf.NONFICTION, allRankings);
-        List<BookInfo> wantToReadBooks = getRankings(allRankings, Bookshelf.WANT_TO_READ, BookCategory.UNRANKED)
-            .stream().map(BookController::toBookInfo).toList();
-        List<BookInfo> unrankedBooks = getRankings(allRankings, Bookshelf.UNRANKED, BookCategory.UNRANKED)
-            .stream().map(BookController::toBookInfo).toList();
+        Map<Bookshelf, Map<BookCategory, List<Ranking>>> allRankings = rankingService.fetchAllRankingsGrouped(userId);
+        BookLists fictionBooks = rankingService.getBookLists(Bookshelf.FICTION, allRankings);
+        BookLists nonfictionBooks = rankingService.getBookLists(Bookshelf.NONFICTION, allRankings);
+        List<BookInfo> wantToReadBooks = rankingService.getRankings(allRankings, Bookshelf.WANT_TO_READ, BookCategory.UNRANKED)
+            .stream().map(RankingService::toBookInfo).toList();
+        List<BookInfo> unrankedBooks = rankingService.getRankings(allRankings, Bookshelf.UNRANKED, BookCategory.UNRANKED)
+            .stream().map(RankingService::toBookInfo).toList();
         boolean hasFiction = !fictionBooks.liked().isEmpty() || !fictionBooks.ok().isEmpty() || !fictionBooks.disliked().isEmpty();
         boolean hasNonfiction = !nonfictionBooks.liked().isEmpty() || !nonfictionBooks.ok().isEmpty() || !nonfictionBooks.disliked().isEmpty();
         boolean hasWantToRead = !wantToReadBooks.isEmpty();
         boolean hasUnranked = !unrankedBooks.isEmpty();
         boolean hasAnyBooks = hasFiction || hasNonfiction || hasWantToRead || hasUnranked;
 
-        // Determine selected bookshelf (default to fiction if exists, then nonfiction, then want-to-read, then unranked)
         String effectiveSelectedBookshelf = selectedBookshelf;
         if (effectiveSelectedBookshelf == null || effectiveSelectedBookshelf.isEmpty()) {
             if (hasFiction) {
@@ -539,7 +384,7 @@ public class BookController {
             } else if (hasUnranked) {
                 effectiveSelectedBookshelf = "UNRANKED";
             } else {
-                effectiveSelectedBookshelf = "FICTION"; // Default for empty state
+                effectiveSelectedBookshelf = "FICTION";
             }
         }
 
@@ -555,7 +400,6 @@ public class BookController {
         model.addAttribute("selectedBookshelf", effectiveSelectedBookshelf);
         model.addAttribute("rankingState", rankingState);
 
-        // For RE_RANK mode, show LIST view but with rerank bookshelf set
         if (mode == Mode.RE_RANK) {
             model.addAttribute("mode", Mode.LIST);
             model.addAttribute("rerankType", rankingState.getBookshelf().name());
@@ -567,18 +411,15 @@ public class BookController {
             model.addAttribute("removeType", rankingState.getBookshelf().name());
             model.addAttribute("reviewType", null);
         } else if (mode == Mode.REVIEW && rankingState.getBookIdBeingReviewed() == null) {
-            // Review mode but no book selected yet - show LIST with review type
             model.addAttribute("mode", Mode.LIST);
             model.addAttribute("rerankType", null);
             model.addAttribute("removeType", null);
             model.addAttribute("reviewType", rankingState.getBookshelf().name());
         } else if (mode == Mode.REVIEW) {
-            // Review mode with book selected - show REVIEW screen
             model.addAttribute("mode", mode);
             model.addAttribute("rerankType", null);
             model.addAttribute("removeType", null);
             model.addAttribute("reviewType", null);
-            // Load the ranking being reviewed
             Ranking rankingBeingReviewed = rankingRepository.findById(rankingState.getBookIdBeingReviewed()).orElse(null);
             if (rankingBeingReviewed != null) {
                 model.addAttribute("reviewBook", rankingBeingReviewed);
@@ -626,7 +467,6 @@ public class BookController {
         Long userId = getCurrentUserId(session);
         RankingState rs = rankingStateRepository.findById(userId).orElse(null);
 
-        // Validate we're in CATEGORIZE mode
         if (rs == null || rs.getMode() != RankingMode.CATEGORIZE) {
             return "redirect:/my-books";
         }
@@ -651,7 +491,6 @@ public class BookController {
         Long userId = getCurrentUserId(session);
         RankingState rs = rankingStateRepository.findById(userId).orElse(null);
 
-        // Validate we're in RANK mode
         if (rs == null || rs.getMode() != RankingMode.RANK) {
             return "redirect:/my-books";
         }
@@ -659,7 +498,6 @@ public class BookController {
         addNavigationAttributes(model, "list");
         model.addAttribute("rankingState", rs);
 
-        // Get comparison book info
         List<Ranking> currentList = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(
             userId, rs.getBookshelf(), rs.getCategory()
         );
@@ -673,7 +511,6 @@ public class BookController {
         model.addAttribute("comparisonBookCoverId", compRanking.getBook().getCoverId());
         model.addAttribute("comparisonBookEditionOlid", compRanking.getBook().getEditionOlid());
 
-        // Get the book being ranked's cover info
         if (rs.getWorkOlidBeingRanked() != null) {
             bookRepository.findByWorkOlid(rs.getWorkOlidBeingRanked())
                 .ifPresent(b -> {
@@ -693,7 +530,6 @@ public class BookController {
         Long userId = getCurrentUserId(session);
         RankingState rs = rankingStateRepository.findById(userId).orElse(null);
 
-        // Validate we're in SELECT_EDITION mode
         if (rs == null || rs.getMode() != RankingMode.SELECT_EDITION) {
             return "redirect:/my-books";
         }
@@ -703,7 +539,6 @@ public class BookController {
         model.addAttribute("cameFromResolve",
             "RESOLVE".equals(session.getAttribute("editionSelectionSource")));
 
-        // Get cached editions from session, or fetch from API
         @SuppressWarnings("unchecked")
         List<OpenLibraryService.EditionResult> allEditions =
             (List<OpenLibraryService.EditionResult>) session.getAttribute("cachedEditions");
@@ -713,7 +548,6 @@ public class BookController {
             String preferredEditionOlid = book != null ? book.getEditionOlid() : null;
             allEditions = openLibraryService.getEditionsForWork(
                 rs.getWorkOlidBeingRanked(), 50, 0, preferredEditionOlid);
-            // Move edition with matching cover to the front (same behavior as browse editions)
             Integer coverId = book != null ? book.getCoverId() : null;
             if (coverId != null && !allEditions.isEmpty() && !coverId.equals(allEditions.get(0).coverId())) {
                 for (int i = 1; i < allEditions.size(); i++) {
@@ -729,7 +563,6 @@ public class BookController {
             session.setAttribute("cachedEditions", allEditions);
         }
 
-        // Auto-select if only 1 edition (skip during rankAll so user can choose rank vs want-to-read)
         if (allEditions.size() == 1 && !rs.isRankAll()) {
             OpenLibraryService.EditionResult soleEdition = allEditions.get(0);
 
@@ -742,7 +575,6 @@ public class BookController {
             }
             bookRepository.save(book);
 
-            // If want-to-read, add directly to Want to Read
             if (rs.isWantToRead()) {
                 session.removeAttribute("cachedEditions");
                 return addToWantToReadAndContinue(userId, rs, book);
@@ -758,9 +590,7 @@ public class BookController {
             return "redirect:/rank/categorize";
         }
 
-        // Skip if no editions found
         if (allEditions.isEmpty()) {
-            // If want-to-read, add directly to Want to Read with existing book
             if (rs.isWantToRead()) {
                 Book book = bookService.findOrCreateBook(rs.getWorkOlidBeingRanked(),
                     null, rs.getTitleBeingRanked(), rs.getAuthorBeingRanked(), null, null);
@@ -774,7 +604,6 @@ public class BookController {
             return "redirect:/rank/categorize";
         }
 
-        // Pagination
         int pageSize = 5;
         int totalEditions = allEditions.size();
         int totalPages = (totalEditions + pageSize - 1) / pageSize;
@@ -803,7 +632,6 @@ public class BookController {
         Long userId = getCurrentUserId(session);
         RankingState rs = rankingStateRepository.findById(userId).orElse(null);
 
-        // Validate we're in RESOLVE mode
         if (rs == null || rs.getMode() != RankingMode.RESOLVE) {
             return "redirect:/my-books";
         }
@@ -814,10 +642,9 @@ public class BookController {
         Object skipResolve = session.getAttribute("skipResolve");
 
         if ("manual".equals(skipResolve)) {
-            // Manual search mode
             if (resolveQuery != null && !resolveQuery.isBlank()) {
                 List<OpenLibraryService.BookResult> resolveResults =
-                    deduplicateResults(openLibraryService.searchBooks(resolveQuery, 10));
+                    SearchService.deduplicateResults(openLibraryService.searchBooks(resolveQuery, 10));
                 model.addAttribute("resolveResults", resolveResults);
                 model.addAttribute("resolveQuery", resolveQuery);
                 if (resolveResults.isEmpty()) {
@@ -828,10 +655,8 @@ public class BookController {
             return "index";
         }
 
-        // Auto-search mode: combine structured (title+author) and general (q=) searches
-        // to handle cases where canonical title differs (e.g., "1984" vs "Nineteen Eighty-Four")
         int maxResults = "expanded".equals(skipResolve) ? 10 : 3;
-        List<OpenLibraryService.BookResult> resolveResults = combinedSearch(
+        List<OpenLibraryService.BookResult> resolveResults = searchService.combinedSearch(
                 rs.getTitleBeingRanked(),
                 rs.getAuthorBeingRanked(),
                 maxResults);
@@ -845,9 +670,8 @@ public class BookController {
             return "index";
         }
 
-        // No results - try expanded or go to manual
         if (skipResolve == null) {
-            resolveResults = combinedSearch(
+            resolveResults = searchService.combinedSearch(
                 rs.getTitleBeingRanked(), rs.getAuthorBeingRanked(), 10);
             if (!resolveResults.isEmpty()) {
                 model.addAttribute("resolveResults", resolveResults);
@@ -857,7 +681,6 @@ public class BookController {
             }
         }
 
-        // No results at all - redirect to manual search
         log.warn("RESOLVE auto-search found nothing for \"{}\" by {}", rs.getTitleBeingRanked(), rs.getAuthorBeingRanked());
         session.setAttribute("skipResolve", "manual");
         return "redirect:/resolve";
@@ -868,7 +691,6 @@ public class BookController {
         Long userId = getCurrentUserId(session);
         RankingState rs = rankingStateRepository.findById(userId).orElse(null);
 
-        // Validate we're in REVIEW mode with the correct book
         if (rs == null || rs.getMode() != RankingMode.REVIEW ||
             !rankingId.equals(rs.getBookIdBeingReviewed())) {
             return "redirect:/my-books";
@@ -893,7 +715,6 @@ public class BookController {
         if (rankingState.getMode() != null) {
             return convertRankingMode(rankingState.getMode());
         }
-        // Orphaned RankingState without explicit mode
         return Mode.LIST;
     }
 
@@ -907,49 +728,6 @@ public class BookController {
             case RE_RANK -> Mode.RE_RANK;
             case REMOVE -> Mode.REMOVE;
         };
-    }
-
-    private static BookInfo toBookInfo(Ranking r) {
-        return new BookInfo(r.getId(), r.getBook().getWorkOlid(), r.getBook().getEditionOlid(), r.getBook().getTitle(), r.getBook().getAuthor(), r.getReview(), r.getBook().getFirstPublishYear(), r.getBook().getCoverId());
-    }
-
-    private BookLists getBookLists(Bookshelf bookshelf, Map<Bookshelf, Map<BookCategory, List<Ranking>>> grouped) {
-        List<BookInfo> liked = getRankings(grouped, bookshelf, BookCategory.LIKED).stream().map(BookController::toBookInfo).toList();
-        List<BookInfo> ok = getRankings(grouped, bookshelf, BookCategory.OK).stream().map(BookController::toBookInfo).toList();
-        List<BookInfo> disliked = getRankings(grouped, bookshelf, BookCategory.DISLIKED).stream().map(BookController::toBookInfo).toList();
-        List<BookInfo> unranked = getRankings(grouped, bookshelf, BookCategory.UNRANKED).stream().map(BookController::toBookInfo).toList();
-        return new BookLists(liked, ok, disliked, unranked);
-    }
-
-    private String generateCsv(Long userId) {
-        StringBuilder csv = new StringBuilder();
-        csv.append("Rank,Title,Author,Category,Bookshelf,Review\n");
-
-        int rank = 1;
-
-        // Iterate through all bookshelves and categories
-        Map<Bookshelf, Map<BookCategory, List<Ranking>>> grouped = fetchAllRankingsGrouped(userId);
-        for (Bookshelf bookshelf : Bookshelf.values()) {
-            for (BookCategory category : BookCategory.values()) {
-                for (Ranking ranking : getRankings(grouped, bookshelf, category)) {
-                    csv.append(rank++).append(",");
-                    csv.append("\"").append(escapeCsv(ranking.getBook().getTitle())).append("\",");
-                    csv.append("\"").append(escapeCsv(ranking.getBook().getAuthor())).append("\",");
-                    csv.append("\"").append(category.getValue()).append("\",");
-                    csv.append("\"").append(bookshelf.getValue()).append("\",");
-                    csv.append("\"").append(escapeCsv(ranking.getReview())).append("\"\n");
-                }
-            }
-        }
-
-        return csv.toString();
-    }
-
-    private String escapeCsv(String value) {
-        if (value == null || value.isBlank()) {
-            return "";
-        }
-        return value.replace("\"", "\"\"");
     }
 
     @Transactional
@@ -972,21 +750,17 @@ public class BookController {
         int newHighIndex = rankingState.getHighIndex();
 
         if ("new".equals(choice)) {
-            // New book is better, search lower indices (towards index 0)
             newHighIndex = rankingState.getCompareToIndex() - 1;
         } else {
-            // Existing book is better, search higher indices
             newLowIndex = rankingState.getCompareToIndex() + 1;
         }
 
         if (newLowIndex > newHighIndex) {
-            // Found the insertion position - insert the book
             Bookshelf rankedBookshelf = rankingState.getBookshelf();
             boolean wasRankAll = rankingState.isRankAll();
-            insertBookAtPosition(rankingState.getWorkOlidBeingRanked(), rankingState.getTitleBeingRanked(), rankingState.getAuthorBeingRanked(),
+            rankingService.insertBookAtPosition(rankingState.getWorkOlidBeingRanked(), rankingState.getTitleBeingRanked(), rankingState.getAuthorBeingRanked(),
                 rankingState.getReviewBeingRanked(), rankedBookshelf, rankingState.getCategory(), newLowIndex, userId);
             rankingStateRepository.deleteById(userId);
-            // Clear search results
             session.removeAttribute("bookSearchResults");
             session.removeAttribute("skipResolve");
 
@@ -995,7 +769,6 @@ public class BookController {
             }
             return "redirect:/my-books?selectedBookshelf=" + rankedBookshelf.name();
         } else {
-            // Continue binary search
             int newCompareToIndex = (newLowIndex + newHighIndex) / 2;
             rankingState.setCompareToIndex(newCompareToIndex);
             rankingState.setLowIndex(newLowIndex);
@@ -1003,24 +776,6 @@ public class BookController {
             rankingStateRepository.save(rankingState);
             return "redirect:/rank/compare";
         }
-    }
-
-    private void insertBookAtPosition(String workOlid, String title, String author, String review, Bookshelf bookshelf, BookCategory category, int position, Long userId) {
-        // Shift all rankings at or after the insertion position
-        List<Ranking> rankingsToShift = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(
-            userId, bookshelf, category
-        );
-        for (int i = rankingsToShift.size() - 1; i >= position; i--) {
-            Ranking ranking = rankingsToShift.get(i);
-            ranking.setPosition(ranking.getPosition() + 1);
-            rankingRepository.save(ranking);
-        }
-
-        // Insert the new ranking
-        Book book = bookService.findOrCreateBook(workOlid, null, title, author, null, null);
-        Ranking newRanking = new Ranking(userId, book, bookshelf, category, position);
-        newRanking.setReview(review);
-        rankingRepository.save(newRanking);
     }
 
     @PostMapping("/start-rerank")
@@ -1035,7 +790,7 @@ public class BookController {
         } catch (IllegalArgumentException e) {
             return "redirect:/my-books";
         }
-        restoreAbandonedBook(userId);
+        rankingService.restoreAbandonedBook(userId);
         RankingState rankingState = new RankingState(userId, null, null, null, bookshlf, null);
         rankingState.setMode(RankingMode.RE_RANK);
         rankingStateRepository.save(rankingState);
@@ -1050,13 +805,11 @@ public class BookController {
             return "redirect:/setup-username";
         }
 
-        // Find the ranking and verify it belongs to this user
-        Ranking ranking = findRankingForUser(bookId, userId);
+        Ranking ranking = rankingService.findRankingForUser(bookId, userId);
         if (ranking == null) {
             return "redirect:/my-books";
         }
 
-        // Store book info in ranking state
         RankingState rankingState = rankingStateRepository.findById(userId).orElse(null);
         if (rankingState == null || rankingState.getMode() != RankingMode.RE_RANK) {
             return "redirect:/my-books";
@@ -1065,8 +818,7 @@ public class BookController {
         rankingState.setBookInfo(ranking.getBook().getWorkOlid(), ranking.getBook().getTitle(), ranking.getBook().getAuthor());
         rankingStateRepository.save(rankingState);
 
-        // Remove the ranking from its current position and close the gap
-        deleteRankingAndCloseGap(userId, ranking);
+        rankingService.deleteRankingAndCloseGap(userId, ranking);
 
         return "redirect:/my-books";
     }
@@ -1083,7 +835,7 @@ public class BookController {
         } catch (IllegalArgumentException e) {
             return "redirect:/my-books";
         }
-        restoreAbandonedBook(userId);
+        rankingService.restoreAbandonedBook(userId);
         RankingState rankingState = new RankingState(userId, null, null, null, bookshlf, null);
         rankingState.setMode(RankingMode.REMOVE);
         rankingStateRepository.save(rankingState);
@@ -1096,7 +848,7 @@ public class BookController {
         if (userId == null) {
             return "redirect:/setup-username";
         }
-        restoreAbandonedBook(userId);
+        rankingService.restoreAbandonedBook(userId);
         RankingState rankingState = new RankingState(userId, null, null, null, Bookshelf.WANT_TO_READ, BookCategory.UNRANKED);
         rankingState.setMode(RankingMode.REMOVE);
         rankingStateRepository.save(rankingState);
@@ -1111,22 +863,18 @@ public class BookController {
             return "redirect:/setup-username";
         }
 
-        // Find the ranking and verify it belongs to this user
-        Ranking ranking = findRankingForUser(bookId, userId);
+        Ranking ranking = rankingService.findRankingForUser(bookId, userId);
         if (ranking == null || ranking.getBookshelf() != Bookshelf.WANT_TO_READ) {
             return "redirect:/my-books?selectedBookshelf=WANT_TO_READ";
         }
 
-        // Verify we're in remove mode for want-to-read
         RankingState rankingState = rankingStateRepository.findById(userId).orElse(null);
         if (rankingState == null || rankingState.getMode() != RankingMode.REMOVE || rankingState.getBookshelf() != Bookshelf.WANT_TO_READ) {
             return "redirect:/my-books?selectedBookshelf=WANT_TO_READ";
         }
 
-        // Remove the ranking and close the gap
-        deleteRankingAndCloseGap(userId, ranking);
+        rankingService.deleteRankingAndCloseGap(userId, ranking);
 
-        // Clear the ranking state
         rankingStateRepository.deleteById(userId);
         session.removeAttribute("skipResolve");
 
@@ -1140,13 +888,12 @@ public class BookController {
             return "redirect:/setup-username";
         }
 
-        Ranking ranking = findRankingForUser(bookId, userId);
+        Ranking ranking = rankingService.findRankingForUser(bookId, userId);
         if (ranking == null) {
             return "redirect:/my-books";
         }
 
-        // Set up review mode directly
-        restoreAbandonedBook(userId);
+        rankingService.restoreAbandonedBook(userId);
         RankingState rankingState = new RankingState(userId, null, null, null, ranking.getBookshelf(), null);
         rankingState.setBookIdBeingReviewed(bookId);
         rankingState.setMode(RankingMode.REVIEW);
@@ -1163,13 +910,12 @@ public class BookController {
             return "redirect:/setup-username";
         }
 
-        Ranking ranking = findRankingForUser(bookId, userId);
+        Ranking ranking = rankingService.findRankingForUser(bookId, userId);
         if (ranking == null) {
             return "redirect:/my-books";
         }
 
-        // Store book info in ranking state (including existing review and original position for restoration)
-        restoreAbandonedBook(userId);
+        rankingService.restoreAbandonedBook(userId);
         RankingState rankingState = new RankingState(userId, ranking.getBook().getWorkOlid(), ranking.getBook().getTitle(), ranking.getBook().getAuthor(), ranking.getBookshelf(), null);
         rankingState.setReviewBeingRanked(ranking.getReview());
         rankingState.setOriginalCategory(ranking.getCategory());
@@ -1177,8 +923,7 @@ public class BookController {
         rankingState.setMode(RankingMode.CATEGORIZE);
         rankingStateRepository.save(rankingState);
 
-        // Remove the ranking from its current position and close the gap
-        deleteRankingAndCloseGap(userId, ranking);
+        rankingService.deleteRankingAndCloseGap(userId, ranking);
 
         return "redirect:/rank/categorize";
     }
@@ -1191,13 +936,13 @@ public class BookController {
             return "redirect:/setup-username";
         }
 
-        Ranking ranking = findRankingForUser(bookId, userId);
+        Ranking ranking = rankingService.findRankingForUser(bookId, userId);
         if (ranking == null) {
             return "redirect:/my-books";
         }
 
         String selectedBookshelf = ranking.getBookshelf().name();
-        deleteRankingAndCloseGap(userId, ranking);
+        rankingService.deleteRankingAndCloseGap(userId, ranking);
 
         return "redirect:/my-books?selectedBookshelf=" + selectedBookshelf;
     }
@@ -1210,15 +955,12 @@ public class BookController {
             return "redirect:/setup-username";
         }
 
-        // Find the ranking and verify it belongs to this user and is in want-to-read
-        Ranking ranking = findRankingForUser(bookId, userId);
+        Ranking ranking = rankingService.findRankingForUser(bookId, userId);
         if (ranking == null || ranking.getBookshelf() != Bookshelf.WANT_TO_READ) {
             return "redirect:/my-books?selectedBookshelf=WANT_TO_READ";
         }
 
-        // Store book info in ranking state for categorization
         RankingState rankingState = new RankingState(userId, ranking.getBook().getWorkOlid(), ranking.getBook().getTitle(), ranking.getBook().getAuthor(), null, null);
-        // Unverified books need RESOLVE first, verified books go to SELECT_EDITION
         boolean needsResolve = ranking.getBook().getWorkOlid() == null;
         if (needsResolve) {
             rankingState.setMode(RankingMode.RESOLVE);
@@ -1227,12 +969,10 @@ public class BookController {
         }
         rankingStateRepository.save(rankingState);
 
-        // Clear stale edition cache from any previous book
         session.removeAttribute("cachedEditions");
         session.removeAttribute("editionPage");
 
-        // Remove the ranking from want-to-read list and close the gap
-        deleteRankingAndCloseGap(userId, ranking);
+        rankingService.deleteRankingAndCloseGap(userId, ranking);
 
         return needsResolve ? "redirect:/resolve" : "redirect:/rank/edition";
     }
@@ -1245,14 +985,12 @@ public class BookController {
             return "redirect:/setup-username";
         }
 
-        // Find the ranking and verify it belongs to this user and is in want-to-read
-        Ranking ranking = findRankingForUser(bookId, userId);
+        Ranking ranking = rankingService.findRankingForUser(bookId, userId);
         if (ranking == null || ranking.getBookshelf() != Bookshelf.WANT_TO_READ) {
             return "redirect:/my-books?selectedBookshelf=WANT_TO_READ";
         }
 
-        // Remove the ranking and close the gap
-        deleteRankingAndCloseGap(userId, ranking);
+        rankingService.deleteRankingAndCloseGap(userId, ranking);
 
         return "redirect:/my-books?selectedBookshelf=WANT_TO_READ";
     }
@@ -1265,22 +1003,18 @@ public class BookController {
             return "redirect:/setup-username";
         }
 
-        // Find the ranking and verify it belongs to this user
-        Ranking ranking = findRankingForUser(bookId, userId);
+        Ranking ranking = rankingService.findRankingForUser(bookId, userId);
         if (ranking == null) {
             return "redirect:/my-books";
         }
 
-        // Verify we're in remove mode
         RankingState rankingState = rankingStateRepository.findById(userId).orElse(null);
         if (rankingState == null || rankingState.getMode() != RankingMode.REMOVE) {
             return "redirect:/my-books";
         }
 
-        // Remove the ranking and close the gap
-        deleteRankingAndCloseGap(userId, ranking);
+        rankingService.deleteRankingAndCloseGap(userId, ranking);
 
-        // Clear the ranking state
         rankingStateRepository.deleteById(userId);
         session.removeAttribute("skipResolve");
 
@@ -1312,19 +1046,16 @@ public class BookController {
             return "redirect:/setup-username";
         }
 
-        // Find the ranking and verify it belongs to this user
-        Ranking ranking = findRankingForUser(bookId, userId);
+        Ranking ranking = rankingService.findRankingForUser(bookId, userId);
         if (ranking == null) {
             return "redirect:/my-books";
         }
 
-        // Verify we're in review mode
         RankingState rankingState = rankingStateRepository.findById(userId).orElse(null);
         if (rankingState == null || rankingState.getMode() != RankingMode.REVIEW) {
             return "redirect:/my-books";
         }
 
-        // Set the ranking being reviewed
         rankingState.setBookIdBeingReviewed(bookId);
         rankingStateRepository.save(rankingState);
 
@@ -1343,7 +1074,6 @@ public class BookController {
             return "redirect:/my-books";
         }
 
-        // Find the ranking and update its review
         Ranking ranking = rankingRepository.findById(rankingState.getBookIdBeingReviewed()).orElse(null);
         if (ranking != null && ranking.getUserId().equals(userId)) {
             String trimmedReview = trimReview(review);
@@ -1351,7 +1081,6 @@ public class BookController {
             rankingRepository.save(ranking);
         }
 
-        // Clear the ranking state
         rankingStateRepository.deleteById(userId);
         session.removeAttribute("skipResolve");
 
@@ -1383,7 +1112,6 @@ public class BookController {
         session.setAttribute("bookSearchResults", results);
         session.setAttribute("bookSearchQuery", query);
 
-        // Check if user is in ADD mode (came from My Books page)
         RankingState rankingState = rankingStateRepository.findById(userId).orElse(null);
         if (rankingState != null && rankingState.getTitleBeingRanked() == null) {
             return "redirect:/my-books";
@@ -1398,14 +1126,12 @@ public class BookController {
         if (userId == null) {
             return "redirect:/setup-username";
         }
-        // Read bookshelf before deleting state so we can return to the correct tab
         String selectedBookshelf = rankingStateRepository.findById(userId)
                 .map(rs -> rs.getBookshelf())
                 .map(Bookshelf::name)
                 .orElse(null);
-        restoreAbandonedBook(userId);
+        rankingService.restoreAbandonedBook(userId);
         rankingStateRepository.deleteById(userId);
-        // Clear search results
         session.removeAttribute("bookSearchResults");
         session.removeAttribute("skipResolve");
         session.removeAttribute("editionSelectionSource");
@@ -1444,7 +1170,7 @@ public class BookController {
         String workOlid = rs.getWorkOlidBeingRanked();
         String title = rs.getTitleBeingRanked();
         String author = rs.getAuthorBeingRanked();
-        restoreAbandonedBook(userId);
+        rankingService.restoreAbandonedBook(userId);
         rankingStateRepository.delete(rs);
         session.removeAttribute("cachedEditions");
         String url = UriComponentsBuilder.fromPath("/editions/{workOlid}")
@@ -1491,9 +1217,7 @@ public class BookController {
             return "redirect:/my-books";
         }
 
-        // Check if user already has a ranking for a book with this workOlid
         if (rankingRepository.existsByUserIdAndBookWorkOlid(userId, workOlid)) {
-            // Find the unverified book being ranked
             Book unverifiedBook = bookService.findOrCreateBook(rankingState.getWorkOlidBeingRanked(),
                 null, rankingState.getTitleBeingRanked(), rankingState.getAuthorBeingRanked(), null, null);
             session.setAttribute("duplicateResolveTitle", title);
@@ -1503,7 +1227,6 @@ public class BookController {
             return "redirect:/my-books";
         }
 
-        // Find the existing book and update it with the selected result's metadata
         Book existingBook = bookService.findOrCreateBook(rankingState.getWorkOlidBeingRanked(),
             null, rankingState.getTitleBeingRanked(), rankingState.getAuthorBeingRanked(), null, null);
         existingBook.setWorkOlid(workOlid);
@@ -1514,7 +1237,6 @@ public class BookController {
         existingBook.setCoverId(coverId);
         bookRepository.save(existingBook);
 
-        // Update RankingState to match - edition selection happens next in SELECT_EDITION mode
         rankingState.setBookInfo(workOlid, title, author);
         rankingState.setMode(RankingMode.SELECT_EDITION);
         rankingStateRepository.save(rankingState);
@@ -1528,7 +1250,6 @@ public class BookController {
     public String skipResolve(HttpSession session) {
         Object current = session.getAttribute("skipResolve");
         if ("expanded".equals(current)) {
-            // User rejected all results — redirect to manual search
             session.setAttribute("skipResolve", "manual");
         } else {
             session.setAttribute("skipResolve", "expanded");
@@ -1562,13 +1283,11 @@ public class BookController {
         Long unverifiedBookId = (Long) session.getAttribute("duplicateResolveBookId");
         clearDuplicateResolveSession(session);
 
-        // Delete ranking state
         rankingStateRepository.deleteById(userId);
         session.removeAttribute("skipResolve");
 
-        // Delete the unverified book's ranking if the user has one, and the book if orphaned
         if (unverifiedBookId != null) {
-            cleanupUnverifiedBook(userId, unverifiedBookId);
+            rankingService.cleanupUnverifiedBook(userId, unverifiedBookId);
         }
 
         return "redirect:/my-books";
@@ -1587,12 +1306,10 @@ public class BookController {
         clearDuplicateResolveSession(session);
         session.removeAttribute("skipResolve");
 
-        // Clean up the unverified book
         if (unverifiedBookId != null) {
-            cleanupUnverifiedBook(userId, unverifiedBookId);
+            rankingService.cleanupUnverifiedBook(userId, unverifiedBookId);
         }
 
-        // Find the existing ranking by workOlid
         Ranking existingRanking = duplicateWorkOlid != null
             ? rankingRepository.findByUserIdAndBookWorkOlid(userId, duplicateWorkOlid)
             : null;
@@ -1602,32 +1319,15 @@ public class BookController {
             return "redirect:/my-books";
         }
 
-        // Set up RankingState for re-ranking the existing book through CATEGORIZE
         Book existingBook = existingRanking.getBook();
         RankingState newState = new RankingState(userId, existingBook.getWorkOlid(), existingBook.getTitle(), existingBook.getAuthor(), null, null);
         newState.setReviewBeingRanked(existingRanking.getReview());
         newState.setMode(RankingMode.CATEGORIZE);
         rankingStateRepository.save(newState);
 
-        // Remove the existing ranking from its current position and close the gap
-        deleteRankingAndCloseGap(userId, existingRanking);
+        rankingService.deleteRankingAndCloseGap(userId, existingRanking);
 
         return "redirect:/rank/categorize";
-    }
-
-    private void cleanupUnverifiedBook(Long userId, Long bookId) {
-        // Delete user's ranking for this book if they have one
-        List<Ranking> userRankings = rankingRepository.findByUserId(userId).stream()
-            .filter(r -> r.getBook().getId().equals(bookId))
-            .toList();
-        for (Ranking r : userRankings) {
-            deleteRankingAndCloseGap(userId, r);
-        }
-
-        // Delete the book if no other rankings reference it
-        if (!rankingRepository.existsByBookId(bookId)) {
-            bookRepository.deleteById(bookId);
-        }
     }
 
     @PostMapping("/select-book")
@@ -1642,24 +1342,18 @@ public class BookController {
         if (userId == null) {
             return "redirect:/setup-username";
         }
-        restoreAbandonedBook(userId);
+        rankingService.restoreAbandonedBook(userId);
         RankingState rankingState = rankingStateRepository.findById(userId).orElse(null);
         if (rankingState == null) {
-            // Create new RankingState for user coming from Search Books tab
             rankingState = new RankingState(userId, null, null, null, null, null);
         }
 
-        // Eagerly create the Book row so editionOlid and coverId are persisted
         bookService.findOrCreateBook(workOlid, editionOlid, bookName, author, firstPublishYear, coverId);
 
-        // Set the book info, leave category null to enter CATEGORIZE mode
         rankingState.setBookInfo(workOlid, bookName, author);
-        // Explicit mode: verified books go to SELECT_EDITION, unverified would go to RESOLVE
-        // (but /select-book always has workOlid from API results)
         rankingState.setMode(RankingMode.SELECT_EDITION);
         rankingStateRepository.save(rankingState);
 
-        // Clear stale edition cache from any previous book
         session.removeAttribute("cachedEditions");
         session.removeAttribute("editionPage");
 
@@ -1685,7 +1379,6 @@ public class BookController {
             return "redirect:/my-books";
         }
 
-        // Update the Book with the selected edition
         Book book = bookService.findOrCreateBook(rankingState.getWorkOlidBeingRanked(),
             editionOlid, rankingState.getTitleBeingRanked(),
             rankingState.getAuthorBeingRanked(), null, coverId);
@@ -1700,14 +1393,12 @@ public class BookController {
         }
         bookRepository.save(book);
 
-        // If want-to-read (from flag or action param), add to Want to Read and skip categorize
         if (rankingState.isWantToRead() || "want-to-read".equals(action)) {
             session.removeAttribute("cachedEditions");
             session.removeAttribute("editionPage");
             return addToWantToReadAndContinue(userId, rankingState, book);
         }
 
-        // Update RankingState
         rankingState.setEditionOlidBeingRanked(editionOlid);
         rankingState.setIsbn13BeingRanked(isbn13);
         rankingState.setEditionSelected(true);
@@ -1721,7 +1412,6 @@ public class BookController {
     }
 
     private String addToWantToReadAndContinue(Long userId, RankingState rankingState, Book book) {
-        // Add to Want to Read list at the end
         List<Ranking> wantToReadRankings = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(userId, Bookshelf.WANT_TO_READ, BookCategory.UNRANKED);
         int position = wantToReadRankings.size();
         Ranking newRanking = new Ranking(userId, book, Bookshelf.WANT_TO_READ, BookCategory.UNRANKED, position);
@@ -1753,15 +1443,12 @@ public class BookController {
 
         String redirectTo = isSafeRedirectUrl(returnUrl) ? "redirect:" + returnUrl : "redirect:/search?type=books";
 
-        // Resolve the book
         Book book = bookService.findOrCreateBook(workOlid, editionOlid, bookName, author, firstPublishYear, coverId);
 
-        // Check if book is already in user's library (any category)
         if (rankingRepository.existsByUserIdAndBookId(userId, book.getId())) {
             return redirectTo;
         }
 
-        // Add ranking directly to want-to-read list at the end
         List<Ranking> wantToReadRankings = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(userId, Bookshelf.WANT_TO_READ, BookCategory.UNRANKED);
         int position = wantToReadRankings.size();
         Ranking newRanking = new Ranking(userId, book, Bookshelf.WANT_TO_READ, BookCategory.UNRANKED, position);
@@ -1779,14 +1466,12 @@ public class BookController {
                                Model model, HttpSession session) {
         addNavigationAttributes(model, "search");
 
-        // Fetch and cache editions in session
         @SuppressWarnings("unchecked")
         List<OpenLibraryService.EditionResult> allEditions =
             (List<OpenLibraryService.EditionResult>) session.getAttribute("browseEditions_" + workOlid);
 
         if (allEditions == null) {
             allEditions = openLibraryService.getEditionsForWork(workOlid, 50, 0);
-            // Move edition with matching cover to the front
             if (coverId != null) {
                 for (int i = 1; i < allEditions.size(); i++) {
                     if (coverId.equals(allEditions.get(i).coverId())) {
@@ -1818,7 +1503,6 @@ public class BookController {
         model.addAttribute("editionTotalCount", totalEditions);
         model.addAttribute("editionPageSize", pageSize);
 
-        // Check if book is already in the user's library (don't create guest for this)
         Long userId = getExistingUserId(session);
         if (userId != null) {
             Ranking existing = rankingRepository.findByUserIdAndBookWorkOlid(userId, workOlid);
@@ -1843,12 +1527,10 @@ public class BookController {
         if (userId == null) {
             return "redirect:/setup-username";
         }
-        restoreAbandonedBook(userId);
+        rankingService.restoreAbandonedBook(userId);
 
-        // Use edition title if provided, otherwise fall back to work title
         String titleToUse = (editionTitle != null && !editionTitle.isBlank()) ? editionTitle : bookName;
 
-        // Create/update the Book with the selected edition info
         Book book = bookService.findOrCreateBook(workOlid, editionOlid, titleToUse, author, null, coverId);
         if (editionOlid != null) {
             book.setEditionOlid(editionOlid);
@@ -1864,7 +1546,6 @@ public class BookController {
         }
         bookRepository.save(book);
 
-        // Create RankingState in CATEGORIZE mode (skip edition selection since user already chose)
         RankingState rankingState = rankingStateRepository.findById(userId).orElse(null);
         if (rankingState == null) {
             rankingState = new RankingState(userId, null, null, null, null, null);
@@ -1912,14 +1593,12 @@ public class BookController {
         );
 
         if (currentList.isEmpty()) {
-            // Category is empty, insert at the start
             boolean wasRankAll = rankingState.isRankAll();
             Book book = bookService.findOrCreateBook(workOlid, null, bookName, author, null, null);
             Ranking newRanking = new Ranking(userId, book, bookshelfEnum, bookCategory, 0);
             newRanking.setReview(trimmedReview);
             rankingRepository.save(newRanking);
             rankingStateRepository.deleteById(userId);
-            // Clear search results
             session.removeAttribute("bookSearchResults");
             session.removeAttribute("skipResolve");
 
@@ -1928,7 +1607,6 @@ public class BookController {
             }
             return "redirect:/my-books?selectedBookshelf=" + bookshelfEnum.name();
         } else {
-            // Start binary search within this category
             int lowIndex = 0;
             int highIndex = currentList.size() - 1;
             int compareToIndex = (lowIndex + highIndex) / 2;
@@ -1952,7 +1630,7 @@ public class BookController {
             return ResponseEntity.badRequest().build();
         }
 
-        String csv = generateCsv(userId);
+        String csv = importExportService.generateCsv(userId);
         String filename = "books.csv";
 
         HttpHeaders headers = new HttpHeaders();
@@ -1994,17 +1672,13 @@ public class BookController {
         boolean isRealUser = currentUser != null && !currentUser.isGuest();
 
         // --- Books tab ---
-        Map<Bookshelf, Map<BookCategory, List<Ranking>>> allRankings = currentUserId != null ? fetchAllRankingsGrouped(currentUserId) : Map.of();
-        Map<String, UserBookRank> userBooks = currentUserId != null ? buildUserBooksMap(allRankings) : Map.of();
+        Map<Bookshelf, Map<BookCategory, List<Ranking>>> allRankings = currentUserId != null ? rankingService.fetchAllRankingsGrouped(currentUserId) : Map.of();
+        Map<String, UserBookRank> userBooks = currentUserId != null ? rankingService.buildUserBooksMap(allRankings) : Map.of();
         List<OpenLibraryService.BookResult> bookResults;
         if ("books".equals(type) && query != null && !query.isBlank()) {
-            bookResults = deduplicateResults(openLibraryService.searchBooks(query));
+            bookResults = SearchService.deduplicateResults(openLibraryService.searchBooks(query));
         } else {
-            Map<String, UserBookRank> finalUserBooks = userBooks;
-            bookResults = bookRepository.findRandomBooks().stream()
-                .filter(b -> !finalUserBooks.containsKey(b.getWorkOlid()))
-                .map(b -> new OpenLibraryService.BookResult(b.getWorkOlid(), b.getEditionOlid(), b.getTitle(), b.getAuthor(), b.getFirstPublishYear(), b.getCoverId(), null))
-                .toList();
+            bookResults = searchService.getRandomBooksExcluding(userBooks);
         }
         model.addAttribute("bookResults", bookResults);
         if (currentUserId != null) {
@@ -2034,7 +1708,7 @@ public class BookController {
             int endIndex = Math.min(startIndex + pageSize, totalItems);
             List<User> pageProfiles = startIndex < totalItems ? allProfiles.subList(startIndex, endIndex) : List.of();
             model.addAttribute("profileSearchResults", pageProfiles.stream()
-                .map(u -> createProfileDisplayWithFollow(u, isRealUser ? currentUserId : null)).toList());
+                .map(u -> userService.createProfileDisplayWithFollow(u, isRealUser ? currentUserId : null)).toList());
             model.addAttribute("profilesPage", page);
             model.addAttribute("profilesTotalPages", totalPages);
             model.addAttribute("profilesTotalCount", totalItems);
@@ -2048,7 +1722,7 @@ public class BookController {
             List<ProfileDisplayWithFollow> allFollowing = follows.stream()
                 .map(f -> userRepository.findById(f.getFollowedId()).orElse(null))
                 .filter(u -> u != null)
-                .map(u -> createProfileDisplayWithFollow(u, currentUserId))
+                .map(u -> userService.createProfileDisplayWithFollow(u, currentUserId))
                 .toList();
             int totalItems = allFollowing.size();
             int totalPages = (totalItems + pageSize - 1) / pageSize;
@@ -2069,7 +1743,7 @@ public class BookController {
             List<ProfileDisplayWithFollow> allFollowers = followers.stream()
                 .map(f -> userRepository.findById(f.getFollowerId()).orElse(null))
                 .filter(u -> u != null)
-                .map(u -> createProfileDisplayWithFollow(u, currentUserId))
+                .map(u -> userService.createProfileDisplayWithFollow(u, currentUserId))
                 .toList();
             int totalItems = allFollowers.size();
             int totalPages = (totalItems + pageSize - 1) / pageSize;
@@ -2105,7 +1779,6 @@ public class BookController {
             model.addAttribute("curatedResults", List.of());
         }
 
-        // Shared attributes
         model.addAttribute("canFollow", isRealUser);
         model.addAttribute("userHasPublished", currentUser != null && currentUser.isPublishLists());
         model.addAttribute("pageSize", pageSize);
@@ -2122,14 +1795,13 @@ public class BookController {
         if (query != null && !query.isBlank()) {
             List<User> results = userRepository.findByIsGuestFalseAndIsCuratedFalseAndPublishListsTrueAndUsernameContainingIgnoreCase(query.trim());
             List<ProfileDisplay> profileDisplays = results.stream()
-                .map(this::createProfileDisplay)
+                .map(userService::createProfileDisplay)
                 .toList();
             model.addAttribute("searchResults", profileDisplays);
         } else {
-            // Show recent profiles when not searching (excluding curated lists, only those who opted in)
             List<User> recentProfiles = userRepository.findTop10ByIsGuestFalseAndIsCuratedFalseAndPublishListsTrueOrderBySignupDateDesc();
             List<ProfileDisplay> profileDisplays = recentProfiles.stream()
-                .map(this::createProfileDisplay)
+                .map(userService::createProfileDisplay)
                 .toList();
             long totalProfiles = userRepository.countByIsGuestFalseAndIsCuratedFalseAndPublishListsTrue();
             long moreCount = Math.max(0, totalProfiles - recentProfiles.size());
@@ -2139,87 +1811,6 @@ public class BookController {
 
         return "explore";
     }
-
-    private void putBookKeys(Map<String, UserBookRank> userBooks, Book book, UserBookRank ubr) {
-        if (book.getWorkOlid() != null) {
-            userBooks.put(book.getWorkOlid(), ubr);
-        }
-    }
-
-    /**
-     * Fetches all rankings for a user in a single DB query and groups them by bookshelf+category,
-     * sorted by position within each group. Used by buildUserBooksMap, getBookLists, and countBooksByBookshelf.
-     */
-    private Map<Bookshelf, Map<BookCategory, List<Ranking>>> fetchAllRankingsGrouped(Long userId) {
-        List<Ranking> allRankings = rankingRepository.findByUserId(userId);
-        Map<Bookshelf, Map<BookCategory, List<Ranking>>> grouped = new HashMap<>();
-        for (Ranking r : allRankings) {
-            grouped.computeIfAbsent(r.getBookshelf(), k -> new HashMap<>())
-                   .computeIfAbsent(r.getCategory(), k -> new ArrayList<>())
-                   .add(r);
-        }
-        // Sort each group by position
-        for (Map<BookCategory, List<Ranking>> byCategory : grouped.values()) {
-            for (List<Ranking> rankings : byCategory.values()) {
-                rankings.sort(Comparator.comparingInt(r -> r.getPosition() != null ? r.getPosition() : 0));
-            }
-        }
-        return grouped;
-    }
-
-    private List<Ranking> getRankings(Map<Bookshelf, Map<BookCategory, List<Ranking>>> grouped, Bookshelf bookshelf, BookCategory category) {
-        return grouped.getOrDefault(bookshelf, Map.of()).getOrDefault(category, List.of());
-    }
-
-    private Map<String, UserBookRank> buildUserBooksMap(Map<Bookshelf, Map<BookCategory, List<Ranking>>> grouped) {
-        Map<String, UserBookRank> userBooks = new HashMap<>();
-
-        for (Bookshelf bookshelf : List.of(Bookshelf.FICTION, Bookshelf.NONFICTION)) {
-            int rank = 1;
-            for (BookCategory category : List.of(BookCategory.LIKED, BookCategory.OK, BookCategory.DISLIKED)) {
-                for (Ranking ranking : getRankings(grouped, bookshelf, category)) {
-                    UserBookRank ubr = new UserBookRank(ranking.getId(), rank, category.name().toLowerCase(), bookshelf.name().toLowerCase());
-                    putBookKeys(userBooks, ranking.getBook(), ubr);
-                    rank++;
-                }
-            }
-        }
-
-        for (Ranking ranking : getRankings(grouped, Bookshelf.WANT_TO_READ, BookCategory.UNRANKED)) {
-            UserBookRank ubr = new UserBookRank(ranking.getId(), 0, "want_to_read", "want_to_read");
-            putBookKeys(userBooks, ranking.getBook(), ubr);
-        }
-
-        for (Ranking ranking : getRankings(grouped, Bookshelf.UNRANKED, BookCategory.UNRANKED)) {
-            UserBookRank ubr = new UserBookRank(ranking.getId(), 0, "unranked", "unranked");
-            putBookKeys(userBooks, ranking.getBook(), ubr);
-        }
-
-        return userBooks;
-    }
-
-    private long countBooksByBookshelf(Map<Bookshelf, Map<BookCategory, List<Ranking>>> grouped, Bookshelf bookshelf) {
-        Map<BookCategory, List<Ranking>> byCategory = grouped.getOrDefault(bookshelf, Map.of());
-        return byCategory.values().stream().mapToLong(List::size).sum();
-    }
-
-    private String formatBookStats(Map<Bookshelf, Map<BookCategory, List<Ranking>>> grouped) {
-        return String.format(" | %d fiction | %d non-fiction",
-            countBooksByBookshelf(grouped, Bookshelf.FICTION),
-            countBooksByBookshelf(grouped, Bookshelf.NONFICTION));
-    }
-
-    private ProfileDisplay createProfileDisplay(User user) {
-        Map<Bookshelf, Map<BookCategory, List<Ranking>>> grouped = fetchAllRankingsGrouped(user.getId());
-        return new ProfileDisplay(user.getUsername(), formatBookStats(grouped));
-    }
-
-    private ProfileDisplayWithFollow createProfileDisplayWithFollow(User user, Long currentUserId) {
-        boolean isFollowing = currentUserId != null && followRepository.existsByFollowerIdAndFollowedId(currentUserId, user.getId());
-        Map<Bookshelf, Map<BookCategory, List<Ranking>>> grouped = fetchAllRankingsGrouped(user.getId());
-        return new ProfileDisplayWithFollow(user.getUsername(), formatBookStats(grouped), user.getId(), isFollowing);
-    }
-
 
     private static final int MIN_RANKED_BOOKS_FOR_RECS = 10;
     private static final List<BookCategory> RANKED_CATEGORIES = List.of(BookCategory.LIKED, BookCategory.OK, BookCategory.DISLIKED);
@@ -2254,13 +1845,12 @@ public class BookController {
         model.addAttribute("nonfictionRankedCount", nonfictionRankedCount);
         model.addAttribute("minRankedBooks", MIN_RANKED_BOOKS_FOR_RECS);
 
-        Map<Bookshelf, Map<BookCategory, List<Ranking>>> allRankings = userId != null ? fetchAllRankingsGrouped(userId) : Map.of();
-        Map<String, UserBookRank> userBooks = userId != null ? buildUserBooksMap(allRankings) : Map.of();
+        Map<Bookshelf, Map<BookCategory, List<Ranking>>> allRankings = userId != null ? rankingService.fetchAllRankingsGrouped(userId) : Map.of();
+        Map<String, UserBookRank> userBooks = userId != null ? rankingService.buildUserBooksMap(allRankings) : Map.of();
         model.addAttribute("userBooks", userBooks);
 
         return "recs";
     }
-
 
     @GetMapping("/user/{username}")
     public String viewUser(@PathVariable String username, Model model, HttpSession session) {
@@ -2271,23 +1861,21 @@ public class BookController {
             return "redirect:/";
         }
 
-        // Block access if user hasn't opted in to publish their lists (curated lists are always visible)
         if (!user.isCurated() && !user.isPublishLists()) {
             return "redirect:/";
         }
 
-        // Keep the appropriate nav button selected based on user type
         addNavigationAttributes(model, "search");
 
-        Map<Bookshelf, Map<BookCategory, List<Ranking>>> viewedUserRankings = fetchAllRankingsGrouped(user.getId());
-        BookLists fictionBooks = getBookLists(Bookshelf.FICTION, viewedUserRankings);
-        BookLists nonfictionBooks = getBookLists(Bookshelf.NONFICTION, viewedUserRankings);
+        Map<Bookshelf, Map<BookCategory, List<Ranking>>> viewedUserRankings = rankingService.fetchAllRankingsGrouped(user.getId());
+        BookLists fictionBooks = rankingService.getBookLists(Bookshelf.FICTION, viewedUserRankings);
+        BookLists nonfictionBooks = rankingService.getBookLists(Bookshelf.NONFICTION, viewedUserRankings);
         boolean hasFiction = !fictionBooks.liked().isEmpty() || !fictionBooks.ok().isEmpty() || !fictionBooks.disliked().isEmpty() || !fictionBooks.unranked().isEmpty();
         boolean hasNonfiction = !nonfictionBooks.liked().isEmpty() || !nonfictionBooks.ok().isEmpty() || !nonfictionBooks.disliked().isEmpty() || !nonfictionBooks.unranked().isEmpty();
 
         Long currentUserId = getCurrentUserId(session);
-        Map<Bookshelf, Map<BookCategory, List<Ranking>>> currentUserRankings = currentUserId != null ? fetchAllRankingsGrouped(currentUserId) : Map.of();
-        Map<String, UserBookRank> userBooks = currentUserId != null ? buildUserBooksMap(currentUserRankings) : Map.of();
+        Map<Bookshelf, Map<BookCategory, List<Ranking>>> currentUserRankings = currentUserId != null ? rankingService.fetchAllRankingsGrouped(currentUserId) : Map.of();
+        Map<String, UserBookRank> userBooks = currentUserId != null ? rankingService.buildUserBooksMap(currentUserRankings) : Map.of();
 
         model.addAttribute("viewUsername", user.getUsername());
         model.addAttribute("fictionBooks", fictionBooks);
@@ -2302,33 +1890,29 @@ public class BookController {
 
     @GetMapping("/my-profile")
     public String showProfile(Model model, HttpSession session) {
-        // If user is authenticated via OAuth but hasn't set up username, send them to setup
         OAuthIdentity identity = getOAuthIdentity();
         if (identity != null) {
             User existingUser = userRepository.findByOauthSubjectAndOauthProvider(identity.subject(), identity.provider()).orElse(null);
             if (existingUser == null) {
-                // OAuth user without username - redirect to setup
                 return "redirect:/setup-username";
             }
         }
 
         Long userId = getCurrentUserId(session);
         if (userId == null) {
-            // Not logged in - redirect to home
             return "redirect:/";
         }
 
         User user = userRepository.findById(userId).orElse(null);
         if (user == null || user.isGuest()) {
-            // Guest user - redirect to home
             return "redirect:/";
         }
 
         addNavigationAttributes(model, "profile");
 
-        Map<Bookshelf, Map<BookCategory, List<Ranking>>> profileRankings = fetchAllRankingsGrouped(userId);
-        long fictionCount = countBooksByBookshelf(profileRankings, Bookshelf.FICTION);
-        long nonfictionCount = countBooksByBookshelf(profileRankings, Bookshelf.NONFICTION);
+        Map<Bookshelf, Map<BookCategory, List<Ranking>>> profileRankings = rankingService.fetchAllRankingsGrouped(userId);
+        long fictionCount = rankingService.countBooksByBookshelf(profileRankings, Bookshelf.FICTION);
+        long nonfictionCount = rankingService.countBooksByBookshelf(profileRankings, Bookshelf.NONFICTION);
 
         model.addAttribute("username", user.getUsername());
         model.addAttribute("signupDate", user.getSignupDate());
@@ -2353,18 +1937,15 @@ public class BookController {
             return "redirect:/search?type=profiles";
         }
 
-        // Can't follow yourself
         if (currentUserId.equals(userId)) {
             return "redirect:/search?type=profiles";
         }
 
-        // Check if target user exists
         User targetUser = userRepository.findById(userId).orElse(null);
         if (targetUser == null) {
             return "redirect:/search?type=profiles";
         }
 
-        // Check if already following
         if (!followRepository.existsByFollowerIdAndFollowedId(currentUserId, userId)) {
             Follow follow = new Follow(currentUserId, userId);
             followRepository.save(follow);
@@ -2385,7 +1966,6 @@ public class BookController {
             return "redirect:/search?type=profiles";
         }
 
-        // Delete the follow relationship
         followRepository.findByFollowerIdAndFollowedId(currentUserId, userId)
             .ifPresent(followRepository::delete);
 
@@ -2412,7 +1992,6 @@ public class BookController {
 
     @GetMapping("/setup-username")
     public String showUsernameSetup(Model model) {
-        // Only allow access if user is authenticated but doesn't have a username yet
         OAuthIdentity identity = getOAuthIdentity();
         if (identity == null) {
             return "redirect:/";
@@ -2420,7 +1999,6 @@ public class BookController {
 
         User existingUser = userRepository.findByOauthSubjectAndOauthProvider(identity.subject(), identity.provider()).orElse(null);
         if (existingUser != null) {
-            // User already has username, redirect to list
             return "redirect:/my-books";
         }
 
@@ -2437,7 +2015,7 @@ public class BookController {
 
         addNavigationAttributes(model, "setup");
 
-        String validationError = validateUsername(username);
+        String validationError = userService.validateUsername(username);
         if (validationError != null) {
             model.addAttribute("error", validationError);
             if (username != null && !username.isBlank()) {
@@ -2447,11 +2025,9 @@ public class BookController {
         }
         username = username.trim();
 
-        // Create user with chosen username, OAuth subject, and provider
         User newUser = new User(username, identity.subject(), identity.provider());
         newUser.setGuest(false);
 
-        // Set signup tracking - count real users (exclude guests and curated lists)
         long realUserCount = userRepository.countByIsGuestAndIsCurated(false, false);
         newUser.setSignupNumber(realUserCount + 1);
         newUser.setSignupDate(LocalDateTime.now());
@@ -2464,11 +2040,9 @@ public class BookController {
             return "setup-username";
         }
 
-        // Migrate guest user data if they were using the app as a guest
         Long guestUserId = (Long) session.getAttribute(SESSION_GUEST_USER_ID);
         if (guestUserId != null) {
-            migrateGuestDataToUser(guestUserId, newUser.getId());
-            // Clear the guest user session
+            userService.migrateGuestDataToUser(guestUserId, newUser.getId());
             session.removeAttribute(SESSION_GUEST_USER_ID);
         }
 
@@ -2503,12 +2077,11 @@ public class BookController {
 
         addNavigationAttributes(model, "profile");
 
-        // If same as current, just redirect back
         if (username != null && username.trim().equals(user.getUsername())) {
             return "redirect:/my-profile";
         }
 
-        String validationError = validateUsername(username);
+        String validationError = userService.validateUsername(username);
         if (validationError != null) {
             model.addAttribute("error", validationError);
             model.addAttribute("username", username != null && !username.isBlank() ? username.trim() : user.getUsername());
@@ -2548,136 +2121,17 @@ public class BookController {
         return "import-goodreads";
     }
 
-    @Transactional
     @PostMapping("/import-goodreads")
     public String importGoodreads(@RequestParam("file") MultipartFile file, HttpSession session) {
         Long userId = getCurrentUserId(session);
 
-        int imported = 0;
-        int skipped = 0;
-        int failed = 0;
-
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))) {
-            // Read header row and find column indices
-            String headerLine = reader.readLine();
-            if (headerLine == null) {
-                return "redirect:/import-goodreads?imported=0&skipped=0&failed=0";
-            }
-            List<String> headers = parseCsvLine(headerLine);
-            int titleIndex = -1;
-            int authorIndex = -1;
-            int reviewIndex = -1;
-            for (int i = 0; i < headers.size(); i++) {
-                String h = headers.get(i).trim();
-                if ("Title".equalsIgnoreCase(h)) titleIndex = i;
-                else if ("Author".equalsIgnoreCase(h)) authorIndex = i;
-                else if ("My Review".equalsIgnoreCase(h)) reviewIndex = i;
-            }
-            if (titleIndex == -1 || authorIndex == -1) {
-                return "redirect:/import-goodreads?imported=0&skipped=0&failed=0";
-            }
-
-            // Build lookup set of user's existing books by title+author for dedup
-            Set<String> existingBookKeys = rankingRepository.findByUserId(userId).stream()
-                .map(r -> r.getBook().getTitle().toLowerCase().trim() + "\0" + r.getBook().getAuthor().toLowerCase().trim())
-                .collect(Collectors.toSet());
-
-            // Get current max position for uncategorized (unranked) rankings
-            List<Ranking> existingUnranked = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(userId, Bookshelf.UNRANKED, BookCategory.UNRANKED);
-            int nextUnrankedPosition = existingUnranked.size();
-
-            String line;
-            int rowCount = 0;
-            while ((line = reader.readLine()) != null) {
-                if (line.isBlank()) continue;
-                if (++rowCount > MAX_IMPORT_ROWS) break;
-                List<String> fields = parseCsvLine(line);
-                if (fields.size() <= Math.max(titleIndex, Math.max(authorIndex, reviewIndex >= 0 ? reviewIndex : 0))) {
-                    continue;
-                }
-
-                try {
-                    String title = fields.get(titleIndex).trim();
-                    int colonIndex = title.indexOf(':');
-                    if (colonIndex >= 0) {
-                        title = title.substring(0, colonIndex).trim();
-                    }
-                    // Strip Goodreads series info like "(Dune #2)" or "(Harry Potter, #3)"
-                    title = title.replaceAll("\\s*\\([^)]*#\\d+\\)\\s*$", "").trim();
-                    String author = fields.get(authorIndex).trim();
-                    String review = reviewIndex >= 0 && reviewIndex < fields.size() ? fields.get(reviewIndex).trim() : "";
-                    if (title.isEmpty() || author.isEmpty()) continue;
-
-                    // Skip if user already has this book (by title+author, catches resolved books with changed titles)
-                    String importKey = title.toLowerCase().trim() + "\0" + author.toLowerCase().trim();
-                    if (existingBookKeys.contains(importKey)) {
-                        skipped++;
-                        continue;
-                    }
-
-                    // Create unverified book (null workOlid)
-                    Book book = bookService.findOrCreateBook(null, null, title, author, null, null);
-
-                    // Update title to stripped version if book was found with a subtitle
-                    if (!title.equals(book.getTitle())) {
-                        book.setTitle(title);
-                        bookRepository.save(book);
-                    }
-
-                    // Check for duplicate by book ID
-                    if (rankingRepository.existsByUserIdAndBookId(userId, book.getId())) {
-                        skipped++;
-                    } else {
-                        String trimmedReview = trimReview(review);
-
-                        Ranking newRanking = new Ranking(userId, book, Bookshelf.UNRANKED, BookCategory.UNRANKED, nextUnrankedPosition);
-                        nextUnrankedPosition++;
-                        newRanking.setReview(trimmedReview);
-                        rankingRepository.save(newRanking);
-                        imported++;
-                    }
-                } catch (Exception e) {
-                    log.error("Error importing Goodreads row {}: {}", rowCount, e.getMessage());
-                    failed++;
-                }
-            }
-        } catch (Exception e) {
-            log.error("Error reading Goodreads CSV: {}", e.getMessage());
+        try {
+            ImportExportService.ImportResult result = importExportService.importGoodreads(file.getInputStream(), userId);
+            return "redirect:/my-books?selectedBookshelf=UNRANKED";
+        } catch (java.io.IOException e) {
+            log.error("Error reading uploaded file: {}", e.getMessage());
+            return "redirect:/my-books?selectedBookshelf=UNRANKED";
         }
-
-        return "redirect:/my-books?selectedBookshelf=UNRANKED";
-    }
-
-    private List<String> parseCsvLine(String line) {
-        List<String> fields = new ArrayList<>();
-        StringBuilder current = new StringBuilder();
-        boolean inQuotes = false;
-        for (int i = 0; i < line.length(); i++) {
-            char c = line.charAt(i);
-            if (inQuotes) {
-                if (c == '"') {
-                    if (i + 1 < line.length() && line.charAt(i + 1) == '"') {
-                        current.append('"');
-                        i++; // skip escaped quote
-                    } else {
-                        inQuotes = false;
-                    }
-                } else {
-                    current.append(c);
-                }
-            } else {
-                if (c == '"') {
-                    inQuotes = true;
-                } else if (c == ',') {
-                    fields.add(current.toString());
-                    current = new StringBuilder();
-                } else {
-                    current.append(c);
-                }
-            }
-        }
-        fields.add(current.toString());
-        return fields;
     }
 
     @Transactional
@@ -2688,16 +2142,14 @@ public class BookController {
             return "redirect:/setup-username";
         }
 
-        Ranking ranking = findRankingForUser(bookId, userId);
+        Ranking ranking = rankingService.findRankingForUser(bookId, userId);
         if (ranking == null || ranking.getBookshelf() != Bookshelf.UNRANKED) {
             return "redirect:/my-books?selectedBookshelf=UNRANKED";
         }
 
-        // Create RankingState for categorization — set bookshelf to UNRANKED so cancel returns here
         RankingState rankingState = new RankingState(userId, ranking.getBook().getWorkOlid(), ranking.getBook().getTitle(), ranking.getBook().getAuthor(), null, null);
         rankingState.setBookshelf(Bookshelf.UNRANKED);
         rankingState.setReviewBeingRanked(ranking.getReview());
-        // Unverified books need RESOLVE first, verified books go to SELECT_EDITION
         boolean needsResolve = ranking.getBook().getWorkOlid() == null;
         if (needsResolve) {
             rankingState.setMode(RankingMode.RESOLVE);
@@ -2706,8 +2158,7 @@ public class BookController {
         }
         rankingStateRepository.save(rankingState);
 
-        // Remove the ranking from unranked list and close the gap
-        deleteRankingAndCloseGap(userId, ranking);
+        rankingService.deleteRankingAndCloseGap(userId, ranking);
 
         return needsResolve ? "redirect:/resolve" : "redirect:/rank/edition";
     }
@@ -2720,12 +2171,11 @@ public class BookController {
             return "redirect:/setup-username";
         }
 
-        Ranking ranking = findRankingForUser(bookId, userId);
+        Ranking ranking = rankingService.findRankingForUser(bookId, userId);
         if (ranking == null || ranking.getBookshelf() != Bookshelf.UNRANKED) {
             return "redirect:/my-books?selectedBookshelf=UNRANKED";
         }
 
-        // Create RankingState flagged as want-to-read
         RankingState rankingState = new RankingState(userId, ranking.getBook().getWorkOlid(), ranking.getBook().getTitle(), ranking.getBook().getAuthor(), null, null);
         rankingState.setBookshelf(Bookshelf.UNRANKED);
         rankingState.setReviewBeingRanked(ranking.getReview());
@@ -2738,8 +2188,7 @@ public class BookController {
         }
         rankingStateRepository.save(rankingState);
 
-        // Remove the ranking from unranked list and close the gap
-        deleteRankingAndCloseGap(userId, ranking);
+        rankingService.deleteRankingAndCloseGap(userId, ranking);
 
         return needsResolve ? "redirect:/resolve" : "redirect:/rank/edition";
     }
@@ -2758,19 +2207,16 @@ public class BookController {
     private String startNextUnrankedBook(Long userId, Bookshelf lastRankedBookshelf) {
         List<Ranking> unrankedBooks = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(userId, Bookshelf.UNRANKED, BookCategory.UNRANKED);
         if (unrankedBooks.isEmpty()) {
-            // All done — redirect to the bookshelf of the last ranked book
             String selectedBookshelf = lastRankedBookshelf != null ? lastRankedBookshelf.name() : "FICTION";
             return "redirect:/my-books?selectedBookshelf=" + selectedBookshelf;
         }
 
         Ranking nextBook = unrankedBooks.get(0);
 
-        // Create RankingState for categorization — set bookshelf to UNRANKED so cancel returns here
         RankingState rankingState = new RankingState(userId, nextBook.getBook().getWorkOlid(), nextBook.getBook().getTitle(), nextBook.getBook().getAuthor(), null, null);
         rankingState.setBookshelf(Bookshelf.UNRANKED);
         rankingState.setReviewBeingRanked(nextBook.getReview());
         rankingState.setRankAll(true);
-        // Unverified books need RESOLVE first, verified books go to SELECT_EDITION
         boolean needsResolve = nextBook.getBook().getWorkOlid() == null;
         if (needsResolve) {
             rankingState.setMode(RankingMode.RESOLVE);
@@ -2779,8 +2225,7 @@ public class BookController {
         }
         rankingStateRepository.save(rankingState);
 
-        // Remove from unranked list and close the gap
-        deleteRankingAndCloseGap(userId, nextBook);
+        rankingService.deleteRankingAndCloseGap(userId, nextBook);
 
         return needsResolve ? "redirect:/resolve" : "redirect:/rank/edition";
     }
@@ -2798,64 +2243,10 @@ public class BookController {
             return "redirect:/";
         }
 
-        Long userId = user.getId();
+        userService.deleteUserAndData(user);
 
-        // Delete all user's rankings
-        rankingRepository.deleteByUserId(userId);
-
-        // Delete ranking state if exists
-        rankingStateRepository.deleteById(userId);
-
-        // Delete all follow relationships (both where user is follower and followed)
-        followRepository.findByFollowerId(userId).forEach(followRepository::delete);
-        followRepository.findByFollowedId(userId).forEach(followRepository::delete);
-
-        // Delete the user record
-        userRepository.delete(user);
-
-        // Invalidate the session
         session.invalidate();
 
-        // Redirect to logout to clear OAuth session
         return "redirect:/logout";
-    }
-
-    private void migrateGuestDataToUser(Long guestUserId, Long newUserId) {
-        // Migrate all rankings from guest to new user
-        for (Ranking ranking : rankingRepository.findByUserId(guestUserId)) {
-            ranking.setUserId(newUserId);
-            rankingRepository.save(ranking);
-        }
-
-        // Migrate ranking state if exists
-        RankingState guestRankingState = rankingStateRepository.findById(guestUserId).orElse(null);
-        if (guestRankingState != null) {
-            // Delete old ranking state and create new one for new user
-            rankingStateRepository.deleteById(guestUserId);
-            RankingState newRankingState = new RankingState(
-                newUserId,
-                guestRankingState.getWorkOlidBeingRanked(),
-                guestRankingState.getTitleBeingRanked(),
-                guestRankingState.getAuthorBeingRanked(),
-                guestRankingState.getBookshelf(),
-                guestRankingState.getCategory(),
-                guestRankingState.getCompareToIndex(),
-                guestRankingState.getLowIndex(),
-                guestRankingState.getHighIndex()
-            );
-            newRankingState.setReviewBeingRanked(guestRankingState.getReviewBeingRanked());
-            newRankingState.setMode(guestRankingState.getMode());
-            newRankingState.setRankAll(guestRankingState.isRankAll());
-            newRankingState.setBookIdBeingReviewed(guestRankingState.getBookIdBeingReviewed());
-            newRankingState.setOriginalCategory(guestRankingState.getOriginalCategory());
-            newRankingState.setOriginalPosition(guestRankingState.getOriginalPosition());
-            rankingStateRepository.save(newRankingState);
-        }
-
-        // Delete the guest user record
-        User guestUser = userRepository.findById(guestUserId).orElse(null);
-        if (guestUser != null && guestUser.isGuest()) {
-            userRepository.delete(guestUser);
-        }
     }
 }
