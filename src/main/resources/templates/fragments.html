@@ -14,7 +14,7 @@
       </div>
       <div class="navbar-right" style="padding-right: 1em;">
         <a th:if="${isLoggedIn}" href="/my-profile" class="navbar-link" data-text="Profile" th:style="${currentPage == 'profile' ? 'font-weight: bold;' : ''}">Profile</a>
-        <a th:unless="${isLoggedIn}" href="/login" class="navbar-link">Login</a>
+        <a th:unless="${isLoggedIn}" href="/login" class="navbar-link" data-text="Login" th:style="${currentPage == 'login' ? 'font-weight: bold;' : ''}">Login</a>
       </div>
     </div>
 
