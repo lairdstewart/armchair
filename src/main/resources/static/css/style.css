@@ -291,11 +291,11 @@ input:checked + .slider:before {
 }
 
 .review-toggle::after {
-  content: "[+]";
+  content: "▶ review";
 }
 
 details[open] .review-toggle::after {
-  content: "[−]";
+  content: "▼ review";
 }
 
 .review-text {
