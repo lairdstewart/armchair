@@ -11,8 +11,8 @@ does not use Docker.
 The Makefile drives local dev via Maven directly on the host:
 
 - `make run` — starts the app on port 8080 with real OAuth
-- `make run-no-auth` — starts on an ephemeral port with the `dev` profile
-  (mock auth, dummy OAuth creds)
+- `make run-no-auth` — starts on a port from a fixed pool (9001–9010) with the
+  `dev` profile (mock auth, dummy OAuth creds)
 - `make compile` — compiles without running, used to trigger DevTools hot reload
 
 All targets except `compile` source `../.env` for database and OAuth

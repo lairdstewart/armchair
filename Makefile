@@ -7,7 +7,9 @@ run: check-env
 	set -a && . $(ENV_FILE) && set +a && ./mvnw spring-boot:run -Dspring-boot.run.arguments="--server.port=8080"
 
 run-no-auth: check-env
-	set -a && . $(ENV_FILE) && set +a && ./mvnw spring-boot:run -Dspring-boot.run.arguments="--server.port=0 --spring.profiles.active=dev"
+	PORT=$$(./scripts/find-port.sh) && \
+	set -a && . $(ENV_FILE) && set +a && \
+	./mvnw spring-boot:run -Dspring-boot.run.arguments="--server.port=$$PORT --spring.profiles.active=dev"
 
 compile:
 	./mvnw compile -q
