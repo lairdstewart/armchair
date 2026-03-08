@@ -29,6 +29,16 @@ import java.util.stream.Collectors;
 public class CollaborativeFilteringAlgorithm implements RecommendationAlgorithm {
 
     private static final int CONFIDENCE_THRESHOLD = 5;
+    private static final double CURATED_LIST_SCORE = 0.75;
+    private static final double DISLIKED_SINGLE = -0.75;
+    private static final double DISLIKED_LOW = -1.0;
+    private static final double DISLIKED_RANGE = 0.5;
+    private static final double OK_SINGLE = 0.0;
+    private static final double OK_LOW = -0.5;
+    private static final double OK_RANGE = 1.0;
+    private static final double LIKED_SINGLE = 0.75;
+    private static final double LIKED_LOW = 0.5;
+    private static final double LIKED_RANGE = 0.5;
 
     private final RankingRepository rankingRepository;
     private final BookRepository bookRepository;
@@ -152,7 +162,7 @@ public class CollaborativeFilteringAlgorithm implements RecommendationAlgorithm 
 
         if (isCurated) {
             for (Ranking r : rankings) {
-                scores.put(r.getBook().getId(), 0.75);
+                scores.put(r.getBook().getId(), CURATED_LIST_SCORE);
             }
             return scores;
         }
@@ -182,9 +192,9 @@ public class CollaborativeFilteringAlgorithm implements RecommendationAlgorithm 
 
     private double computeScore(BookCategory category, int i, int n) {
         return switch (category) {
-            case DISLIKED -> n == 1 ? -0.75 : -1.0 + 0.5 * i / (n - 1);
-            case OK -> n == 1 ? 0.0 : -0.5 + 1.0 * i / (n - 1);
-            case LIKED -> n == 1 ? 0.75 : 0.5 + 0.5 * i / (n - 1);
+            case DISLIKED -> n == 1 ? DISLIKED_SINGLE : DISLIKED_LOW + DISLIKED_RANGE * i / (n - 1);
+            case OK -> n == 1 ? OK_SINGLE : OK_LOW + OK_RANGE * i / (n - 1);
+            case LIKED -> n == 1 ? LIKED_SINGLE : LIKED_LOW + LIKED_RANGE * i / (n - 1);
             default -> 0.0;
         };
     }

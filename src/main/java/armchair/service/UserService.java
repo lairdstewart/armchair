@@ -26,6 +26,7 @@ public class UserService {
 
     private static final Logger log = LoggerFactory.getLogger(UserService.class);
     private static final Pattern USERNAME_PATTERN = Pattern.compile("^[a-zA-Z0-9_-]+$");
+    private static final int MAX_USERNAME_LENGTH = 50;
 
     @Autowired
     private UserRepository userRepository;
@@ -46,7 +47,7 @@ public class UserService {
         if (username == null || username.isBlank()) {
             return "Username cannot be empty";
         }
-        if (username.trim().length() > 50) {
+        if (username.trim().length() > MAX_USERNAME_LENGTH) {
             return "Username must be fewer than 50 characters";
         }
         if (!USERNAME_PATTERN.matcher(username.trim()).matches()) {

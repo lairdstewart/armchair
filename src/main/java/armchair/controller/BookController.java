@@ -71,7 +71,29 @@ public class BookController {
     }
 
     private static final String SESSION_GUEST_USER_ID = "guestUserId";
-    private static final int MAX_REVIEW_LENGTH = 5000;
+    private static final String SESSION_BOOK_SEARCH_RESULTS = "bookSearchResults";
+    private static final String SESSION_BOOK_SEARCH_QUERY = "bookSearchQuery";
+    private static final String SESSION_SKIP_RESOLVE = "skipResolve";
+    private static final String SESSION_CACHED_EDITIONS = "cachedEditions";
+    private static final String SESSION_EDITION_PAGE = "editionPage";
+    private static final String SESSION_RESOLVE_WARNING = "resolveWarning";
+    private static final String SESSION_DUPLICATE_RESOLVE_TITLE = "duplicateResolveTitle";
+    private static final String SESSION_DUPLICATE_RESOLVE_WORK_OLID = "duplicateResolveWorkOlid";
+    private static final String SESSION_DUPLICATE_RESOLVE_BOOK_ID = "duplicateResolveBookId";
+    private static final String SESSION_EDITION_SELECTION_SOURCE = "editionSelectionSource";
+    private static final String SESSION_BROWSE_EDITIONS_PREFIX = "browseEditions_";
+
+    private static final String SKIP_RESOLVE_EXPANDED = "expanded";
+    private static final String SKIP_RESOLVE_MANUAL = "manual";
+    private static final String EDITION_SOURCE_RESOLVE = "RESOLVE";
+    private static final String EDITION_SOURCE_SEARCH = "SEARCH";
+
+    private static final int EDITION_PAGE_SIZE = 5;
+    private static final int SEARCH_RESULTS_DEFAULT = 3;
+    private static final int SEARCH_RESULTS_EXPANDED = 10;
+    private static final int MANUAL_SEARCH_RESULTS = 10;
+    private static final int BOOKSHELF_PAGE_SIZE = 10;
+    private static final int RECOMMENDATIONS_LIMIT = 10;
 
     private record PaginationResult<T>(List<T> pageItems, int page, int totalPages, int totalCount) {
         static <T> PaginationResult<T> of(List<T> allItems, int page, int pageSize) {
@@ -100,7 +122,8 @@ public class BookController {
     private static String trimReview(String review) {
         if (review == null || review.isBlank()) return null;
         String trimmed = review.trim();
-        return trimmed.length() > MAX_REVIEW_LENGTH ? trimmed.substring(0, MAX_REVIEW_LENGTH) : trimmed;
+        return trimmed.length() > ImportExportService.MAX_REVIEW_LENGTH
+            ? trimmed.substring(0, ImportExportService.MAX_REVIEW_LENGTH) : trimmed;
     }
 
     private static boolean isSafeRedirectUrl(String url) {
@@ -144,9 +167,9 @@ public class BookController {
     private RecommendationAlgorithm recommendationAlgorithm;
 
     private static void clearDuplicateResolveSession(HttpSession session) {
-        session.removeAttribute("duplicateResolveTitle");
-        session.removeAttribute("duplicateResolveWorkOlid");
-        session.removeAttribute("duplicateResolveBookId");
+        session.removeAttribute(SESSION_DUPLICATE_RESOLVE_TITLE);
+        session.removeAttribute(SESSION_DUPLICATE_RESOLVE_WORK_OLID);
+        session.removeAttribute(SESSION_DUPLICATE_RESOLVE_BOOK_ID);
     }
 
     @PostConstruct
@@ -230,8 +253,8 @@ public class BookController {
         if (userId != null) {
             rankingService.restoreAbandonedBook(userId);
             rankingStateRepository.deleteById(userId);
-            session.removeAttribute("bookSearchResults");
-            session.removeAttribute("skipResolve");
+            session.removeAttribute(SESSION_BOOK_SEARCH_RESULTS);
+            session.removeAttribute(SESSION_SKIP_RESOLVE);
             clearDuplicateResolveSession(session);
         }
         return "redirect:/my-books";
@@ -243,39 +266,39 @@ public class BookController {
 
         addNavigationAttributes(model, "list");
 
-        String resolveWarning = (String) session.getAttribute("resolveWarning");
+        String resolveWarning = (String) session.getAttribute(SESSION_RESOLVE_WARNING);
         if (resolveWarning != null) {
-            model.addAttribute("resolveWarning", resolveWarning);
-            session.removeAttribute("resolveWarning");
+            model.addAttribute(SESSION_RESOLVE_WARNING, resolveWarning);
+            session.removeAttribute(SESSION_RESOLVE_WARNING);
         }
 
         RankingState rankingState = rankingStateRepository.findById(userId).orElse(null);
 
         Mode mode = determineMode(rankingState);
 
-        String duplicateResolveTitle = (String) session.getAttribute("duplicateResolveTitle");
+        String duplicateResolveTitle = (String) session.getAttribute(SESSION_DUPLICATE_RESOLVE_TITLE);
         if (duplicateResolveTitle != null) {
             mode = Mode.DUPLICATE_RESOLVE;
-            model.addAttribute("duplicateResolveTitle", duplicateResolveTitle);
+            model.addAttribute(SESSION_DUPLICATE_RESOLVE_TITLE, duplicateResolveTitle);
         }
 
         boolean needsResolve = mode == Mode.RESOLVE ||
             (mode == Mode.CATEGORIZE && rankingState != null && rankingState.getWorkOlidBeingRanked() == null);
         if (needsResolve && rankingState != null) {
-            Object skipResolve = session.getAttribute("skipResolve");
-            if ("manual".equals(skipResolve)) {
+            Object skipResolve = session.getAttribute(SESSION_SKIP_RESOLVE);
+            if (SKIP_RESOLVE_MANUAL.equals(skipResolve)) {
                 mode = Mode.MANUAL_RESOLVE;
                 if (resolveQuery != null && !resolveQuery.isBlank()) {
                     List<OpenLibraryService.BookResult> resolveResults =
-                        SearchService.deduplicateResults(openLibraryService.searchBooks(resolveQuery, 10));
+                        SearchService.deduplicateResults(openLibraryService.searchBooks(resolveQuery, MANUAL_SEARCH_RESULTS));
                     model.addAttribute("resolveResults", resolveResults);
                     model.addAttribute("resolveQuery", resolveQuery);
                     if (resolveResults.isEmpty()) {
                         model.addAttribute("resolveNoResults", true);
                     }
                 }
-            } else if (skipResolve == null || "expanded".equals(skipResolve)) {
-                int maxResults = "expanded".equals(skipResolve) ? 10 : 3;
+            } else if (skipResolve == null || SKIP_RESOLVE_EXPANDED.equals(skipResolve)) {
+                int maxResults = SKIP_RESOLVE_EXPANDED.equals(skipResolve) ? SEARCH_RESULTS_EXPANDED : SEARCH_RESULTS_DEFAULT;
                 List<OpenLibraryService.BookResult> resolveResults = searchService.combinedSearch(
                         rankingState.getTitleBeingRanked(),
                         rankingState.getAuthorBeingRanked(),
@@ -284,24 +307,24 @@ public class BookController {
                     mode = Mode.RESOLVE;
                     model.addAttribute("resolveResults", resolveResults);
                     if (skipResolve == null && resolveResults.size() < maxResults) {
-                        session.setAttribute("skipResolve", "expanded");
+                        session.setAttribute(SESSION_SKIP_RESOLVE, SKIP_RESOLVE_EXPANDED);
                     }
                 } else if (skipResolve == null) {
                     resolveResults = searchService.combinedSearch(
                         rankingState.getTitleBeingRanked(),
                         rankingState.getAuthorBeingRanked(),
-                        10);
+                        SEARCH_RESULTS_EXPANDED);
                     if (!resolveResults.isEmpty()) {
                         mode = Mode.RESOLVE;
                         model.addAttribute("resolveResults", resolveResults);
                     } else {
                         log.warn("RESOLVE auto-search found nothing for \"{}\" by {}", rankingState.getTitleBeingRanked(), rankingState.getAuthorBeingRanked());
-                        session.setAttribute("skipResolve", "manual");
+                        session.setAttribute(SESSION_SKIP_RESOLVE, SKIP_RESOLVE_MANUAL);
                         return "redirect:/my-books";
                     }
                 } else {
                     log.warn("RESOLVE auto-search found nothing for \"{}\" by {}", rankingState.getTitleBeingRanked(), rankingState.getAuthorBeingRanked());
-                    session.setAttribute("skipResolve", "manual");
+                    session.setAttribute(SESSION_SKIP_RESOLVE, SKIP_RESOLVE_MANUAL);
                     return "redirect:/my-books";
                 }
             }
@@ -310,19 +333,19 @@ public class BookController {
         if (mode == Mode.SELECT_EDITION && rankingState != null && rankingState.getWorkOlidBeingRanked() != null) {
             @SuppressWarnings("unchecked")
             List<OpenLibraryService.EditionResult> allEditions =
-                (List<OpenLibraryService.EditionResult>) session.getAttribute("cachedEditions");
+                (List<OpenLibraryService.EditionResult>) session.getAttribute(SESSION_CACHED_EDITIONS);
 
             if (allEditions == null) {
                 Book editionBook = bookRepository.findByWorkOlid(rankingState.getWorkOlidBeingRanked()).orElse(null);
                 String preferredEditionOlid = editionBook != null ? editionBook.getEditionOlid() : null;
 
                 allEditions = openLibraryService.getEditionsForWork(
-                    rankingState.getWorkOlidBeingRanked(), 50, 0, preferredEditionOlid);
+                    rankingState.getWorkOlidBeingRanked(), OpenLibraryService.DEFAULT_EDITION_FETCH_LIMIT, 0, preferredEditionOlid);
                 Integer editionCoverId = editionBook != null ? editionBook.getCoverId() : null;
                 if (editionCoverId != null && !allEditions.isEmpty() && !editionCoverId.equals(allEditions.get(0).coverId())) {
                     allEditions = moveMatchingToFront(allEditions, e -> editionCoverId.equals(e.coverId()));
                 }
-                session.setAttribute("cachedEditions", allEditions);
+                session.setAttribute(SESSION_CACHED_EDITIONS, allEditions);
             }
 
             if (allEditions.size() == 1) {
@@ -339,7 +362,7 @@ public class BookController {
                 book.setIsbn13(soleEdition.isbn13());
                 bookRepository.save(book);
 
-                session.removeAttribute("cachedEditions");
+                session.removeAttribute(SESSION_CACHED_EDITIONS);
                 return "redirect:/my-books";
             }
 
@@ -347,20 +370,20 @@ public class BookController {
                 rankingState.setEditionSelected(true);
                 rankingState.setMode(RankingMode.CATEGORIZE);
                 rankingStateRepository.save(rankingState);
-                session.removeAttribute("cachedEditions");
+                session.removeAttribute(SESSION_CACHED_EDITIONS);
                 return "redirect:/my-books";
             }
 
-            Integer editionPage = (Integer) session.getAttribute("editionPage");
+            Integer editionPage = (Integer) session.getAttribute(SESSION_EDITION_PAGE);
             if (editionPage == null) editionPage = 0;
 
-            PaginationResult<OpenLibraryService.EditionResult> editionPagination = PaginationResult.of(allEditions, editionPage, 5);
+            PaginationResult<OpenLibraryService.EditionResult> editionPagination = PaginationResult.of(allEditions, editionPage, EDITION_PAGE_SIZE);
 
             model.addAttribute("editionResults", editionPagination.pageItems());
-            model.addAttribute("editionPage", editionPagination.page());
+            model.addAttribute(SESSION_EDITION_PAGE, editionPagination.page());
             model.addAttribute("editionTotalPages", editionPagination.totalPages());
             model.addAttribute("editionTotalCount", editionPagination.totalCount());
-            model.addAttribute("editionPageSize", 5);
+            model.addAttribute("editionPageSize", EDITION_PAGE_SIZE);
         }
 
         String userName = null;
@@ -547,22 +570,22 @@ public class BookController {
         addNavigationAttributes(model, "list");
         model.addAttribute("rankingState", rs);
         model.addAttribute("cameFromResolve",
-            "RESOLVE".equals(session.getAttribute("editionSelectionSource")));
+            EDITION_SOURCE_RESOLVE.equals(session.getAttribute(SESSION_EDITION_SELECTION_SOURCE)));
 
         @SuppressWarnings("unchecked")
         List<OpenLibraryService.EditionResult> allEditions =
-            (List<OpenLibraryService.EditionResult>) session.getAttribute("cachedEditions");
+            (List<OpenLibraryService.EditionResult>) session.getAttribute(SESSION_CACHED_EDITIONS);
 
         if (allEditions == null) {
             Book book = bookRepository.findByWorkOlid(rs.getWorkOlidBeingRanked()).orElse(null);
             String preferredEditionOlid = book != null ? book.getEditionOlid() : null;
             allEditions = openLibraryService.getEditionsForWork(
-                rs.getWorkOlidBeingRanked(), 50, 0, preferredEditionOlid);
+                rs.getWorkOlidBeingRanked(), OpenLibraryService.DEFAULT_EDITION_FETCH_LIMIT, 0, preferredEditionOlid);
             Integer coverId = book != null ? book.getCoverId() : null;
             if (coverId != null && !allEditions.isEmpty() && !coverId.equals(allEditions.get(0).coverId())) {
                 allEditions = moveMatchingToFront(allEditions, e -> coverId.equals(e.coverId()));
             }
-            session.setAttribute("cachedEditions", allEditions);
+            session.setAttribute(SESSION_CACHED_EDITIONS, allEditions);
         }
 
         if (allEditions.size() == 1 && !rs.isRankAll()) {
@@ -578,7 +601,7 @@ public class BookController {
             bookRepository.save(book);
 
             if (rs.isWantToRead()) {
-                session.removeAttribute("cachedEditions");
+                session.removeAttribute(SESSION_CACHED_EDITIONS);
                 return addToWantToReadAndContinue(userId, rs, book);
             }
 
@@ -588,7 +611,7 @@ public class BookController {
             rs.setMode(RankingMode.CATEGORIZE);
             rankingStateRepository.save(rs);
 
-            session.removeAttribute("cachedEditions");
+            session.removeAttribute(SESSION_CACHED_EDITIONS);
             return "redirect:/rank/categorize";
         }
 
@@ -596,23 +619,23 @@ public class BookController {
             if (rs.isWantToRead()) {
                 Book book = bookService.findOrCreateBook(rs.getWorkOlidBeingRanked(),
                     null, rs.getTitleBeingRanked(), rs.getAuthorBeingRanked(), null, null);
-                session.removeAttribute("cachedEditions");
+                session.removeAttribute(SESSION_CACHED_EDITIONS);
                 return addToWantToReadAndContinue(userId, rs, book);
             }
             rs.setEditionSelected(true);
             rs.setMode(RankingMode.CATEGORIZE);
             rankingStateRepository.save(rs);
-            session.removeAttribute("cachedEditions");
+            session.removeAttribute(SESSION_CACHED_EDITIONS);
             return "redirect:/rank/categorize";
         }
 
-        PaginationResult<OpenLibraryService.EditionResult> editionPagination = PaginationResult.of(allEditions, page, 5);
+        PaginationResult<OpenLibraryService.EditionResult> editionPagination = PaginationResult.of(allEditions, page, EDITION_PAGE_SIZE);
 
         model.addAttribute("editionResults", editionPagination.pageItems());
-        model.addAttribute("editionPage", editionPagination.page());
+        model.addAttribute(SESSION_EDITION_PAGE, editionPagination.page());
         model.addAttribute("editionTotalPages", editionPagination.totalPages());
         model.addAttribute("editionTotalCount", editionPagination.totalCount());
-        model.addAttribute("editionPageSize", 5);
+        model.addAttribute("editionPageSize", EDITION_PAGE_SIZE);
         model.addAttribute("isRankAll", rs.isRankAll());
         if (rs.isRankAll()) {
             List<Ranking> remainingUnranked = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(userId, Bookshelf.UNRANKED, BookCategory.UNRANKED);
@@ -636,12 +659,12 @@ public class BookController {
         addNavigationAttributes(model, "list");
         model.addAttribute("rankingState", rs);
 
-        Object skipResolve = session.getAttribute("skipResolve");
+        Object skipResolve = session.getAttribute(SESSION_SKIP_RESOLVE);
 
-        if ("manual".equals(skipResolve)) {
+        if (SKIP_RESOLVE_MANUAL.equals(skipResolve)) {
             if (resolveQuery != null && !resolveQuery.isBlank()) {
                 List<OpenLibraryService.BookResult> resolveResults =
-                    SearchService.deduplicateResults(openLibraryService.searchBooks(resolveQuery, 10));
+                    SearchService.deduplicateResults(openLibraryService.searchBooks(resolveQuery, MANUAL_SEARCH_RESULTS));
                 model.addAttribute("resolveResults", resolveResults);
                 model.addAttribute("resolveQuery", resolveQuery);
                 if (resolveResults.isEmpty()) {
@@ -652,7 +675,7 @@ public class BookController {
             return "index";
         }
 
-        int maxResults = "expanded".equals(skipResolve) ? 10 : 3;
+        int maxResults = SKIP_RESOLVE_EXPANDED.equals(skipResolve) ? SEARCH_RESULTS_EXPANDED : SEARCH_RESULTS_DEFAULT;
         List<OpenLibraryService.BookResult> resolveResults = searchService.combinedSearch(
                 rs.getTitleBeingRanked(),
                 rs.getAuthorBeingRanked(),
@@ -661,7 +684,7 @@ public class BookController {
         if (!resolveResults.isEmpty()) {
             model.addAttribute("resolveResults", resolveResults);
             if (skipResolve == null && resolveResults.size() < maxResults) {
-                session.setAttribute("skipResolve", "expanded");
+                session.setAttribute(SESSION_SKIP_RESOLVE, SKIP_RESOLVE_EXPANDED);
             }
             model.addAttribute("mode", Mode.RESOLVE);
             return "index";
@@ -669,17 +692,17 @@ public class BookController {
 
         if (skipResolve == null) {
             resolveResults = searchService.combinedSearch(
-                rs.getTitleBeingRanked(), rs.getAuthorBeingRanked(), 10);
+                rs.getTitleBeingRanked(), rs.getAuthorBeingRanked(), SEARCH_RESULTS_EXPANDED);
             if (!resolveResults.isEmpty()) {
                 model.addAttribute("resolveResults", resolveResults);
-                session.setAttribute("skipResolve", "expanded");
+                session.setAttribute(SESSION_SKIP_RESOLVE, SKIP_RESOLVE_EXPANDED);
                 model.addAttribute("mode", Mode.RESOLVE);
                 return "index";
             }
         }
 
         log.warn("RESOLVE auto-search found nothing for \"{}\" by {}", rs.getTitleBeingRanked(), rs.getAuthorBeingRanked());
-        session.setAttribute("skipResolve", "manual");
+        session.setAttribute(SESSION_SKIP_RESOLVE, SKIP_RESOLVE_MANUAL);
         return "redirect:/resolve";
     }
 
@@ -758,8 +781,8 @@ public class BookController {
             rankingService.insertBookAtPosition(rankingState.getWorkOlidBeingRanked(), rankingState.getTitleBeingRanked(), rankingState.getAuthorBeingRanked(),
                 rankingState.getReviewBeingRanked(), rankedBookshelf, rankingState.getCategory(), newLowIndex, userId);
             rankingStateRepository.deleteById(userId);
-            session.removeAttribute("bookSearchResults");
-            session.removeAttribute("skipResolve");
+            session.removeAttribute(SESSION_BOOK_SEARCH_RESULTS);
+            session.removeAttribute(SESSION_SKIP_RESOLVE);
 
             if (wasRankAll) {
                 return startNextUnrankedBook(userId, rankedBookshelf);
@@ -873,7 +896,7 @@ public class BookController {
         rankingService.deleteRankingAndCloseGap(userId, ranking);
 
         rankingStateRepository.deleteById(userId);
-        session.removeAttribute("skipResolve");
+        session.removeAttribute(SESSION_SKIP_RESOLVE);
 
         return "redirect:/my-books?selectedBookshelf=WANT_TO_READ";
     }
@@ -966,8 +989,8 @@ public class BookController {
         }
         rankingStateRepository.save(rankingState);
 
-        session.removeAttribute("cachedEditions");
-        session.removeAttribute("editionPage");
+        session.removeAttribute(SESSION_CACHED_EDITIONS);
+        session.removeAttribute(SESSION_EDITION_PAGE);
 
         rankingService.deleteRankingAndCloseGap(userId, ranking);
 
@@ -1013,7 +1036,7 @@ public class BookController {
         rankingService.deleteRankingAndCloseGap(userId, ranking);
 
         rankingStateRepository.deleteById(userId);
-        session.removeAttribute("skipResolve");
+        session.removeAttribute(SESSION_SKIP_RESOLVE);
 
         return "redirect:/my-books";
     }
@@ -1079,7 +1102,7 @@ public class BookController {
         }
 
         rankingStateRepository.deleteById(userId);
-        session.removeAttribute("skipResolve");
+        session.removeAttribute(SESSION_SKIP_RESOLVE);
 
         return "redirect:/my-books";
     }
@@ -1091,9 +1114,9 @@ public class BookController {
         addNavigationAttributes(model, "search-books");
 
         List<OpenLibraryService.BookResult> searchResults =
-            (List<OpenLibraryService.BookResult>) session.getAttribute("bookSearchResults");
+            (List<OpenLibraryService.BookResult>) session.getAttribute(SESSION_BOOK_SEARCH_RESULTS);
         model.addAttribute("searchResults", searchResults != null ? searchResults : List.of());
-        model.addAttribute("query", session.getAttribute("bookSearchQuery"));
+        model.addAttribute("query", session.getAttribute(SESSION_BOOK_SEARCH_QUERY));
 
         return "search-books";
     }
@@ -1106,8 +1129,8 @@ public class BookController {
         }
 
         List<OpenLibraryService.BookResult> results = openLibraryService.searchBooks(query);
-        session.setAttribute("bookSearchResults", results);
-        session.setAttribute("bookSearchQuery", query);
+        session.setAttribute(SESSION_BOOK_SEARCH_RESULTS, results);
+        session.setAttribute(SESSION_BOOK_SEARCH_QUERY, query);
 
         RankingState rankingState = rankingStateRepository.findById(userId).orElse(null);
         if (rankingState != null && rankingState.getTitleBeingRanked() == null) {
@@ -1129,9 +1152,9 @@ public class BookController {
                 .orElse(null);
         rankingService.restoreAbandonedBook(userId);
         rankingStateRepository.deleteById(userId);
-        session.removeAttribute("bookSearchResults");
-        session.removeAttribute("skipResolve");
-        session.removeAttribute("editionSelectionSource");
+        session.removeAttribute(SESSION_BOOK_SEARCH_RESULTS);
+        session.removeAttribute(SESSION_SKIP_RESOLVE);
+        session.removeAttribute(SESSION_EDITION_SELECTION_SOURCE);
         if (selectedBookshelf != null) {
             return "redirect:/my-books?selectedBookshelf=" + selectedBookshelf;
         }
@@ -1169,7 +1192,7 @@ public class BookController {
         String author = rs.getAuthorBeingRanked();
         rankingService.restoreAbandonedBook(userId);
         rankingStateRepository.delete(rs);
-        session.removeAttribute("cachedEditions");
+        session.removeAttribute(SESSION_CACHED_EDITIONS);
         String url = UriComponentsBuilder.fromPath("/editions/{workOlid}")
             .queryParam("title", title)
             .queryParam("author", author)
@@ -1190,9 +1213,9 @@ public class BookController {
         }
         rs.setMode(RankingMode.RESOLVE);
         rankingStateRepository.save(rs);
-        session.removeAttribute("skipResolve");
-        session.removeAttribute("cachedEditions");
-        session.removeAttribute("editionSelectionSource");
+        session.removeAttribute(SESSION_SKIP_RESOLVE);
+        session.removeAttribute(SESSION_CACHED_EDITIONS);
+        session.removeAttribute(SESSION_EDITION_SELECTION_SOURCE);
         return "redirect:/resolve";
     }
 
@@ -1217,10 +1240,10 @@ public class BookController {
         if (rankingRepository.existsByUserIdAndBookWorkOlid(userId, workOlid)) {
             Book unverifiedBook = bookService.findOrCreateBook(rankingState.getWorkOlidBeingRanked(),
                 null, rankingState.getTitleBeingRanked(), rankingState.getAuthorBeingRanked(), null, null);
-            session.setAttribute("duplicateResolveTitle", title);
-            session.setAttribute("duplicateResolveWorkOlid", workOlid);
-            session.setAttribute("duplicateResolveBookId", unverifiedBook.getId());
-            session.removeAttribute("skipResolve");
+            session.setAttribute(SESSION_DUPLICATE_RESOLVE_TITLE, title);
+            session.setAttribute(SESSION_DUPLICATE_RESOLVE_WORK_OLID, workOlid);
+            session.setAttribute(SESSION_DUPLICATE_RESOLVE_BOOK_ID, unverifiedBook.getId());
+            session.removeAttribute(SESSION_SKIP_RESOLVE);
             return "redirect:/my-books";
         }
 
@@ -1238,18 +1261,18 @@ public class BookController {
         rankingState.setMode(RankingMode.SELECT_EDITION);
         rankingStateRepository.save(rankingState);
 
-        session.removeAttribute("skipResolve");
-        session.setAttribute("editionSelectionSource", "RESOLVE");
+        session.removeAttribute(SESSION_SKIP_RESOLVE);
+        session.setAttribute(SESSION_EDITION_SELECTION_SOURCE, EDITION_SOURCE_RESOLVE);
         return "redirect:/rank/edition";
     }
 
     @PostMapping("/skip-resolve")
     public String skipResolve(HttpSession session) {
-        Object current = session.getAttribute("skipResolve");
-        if ("expanded".equals(current)) {
-            session.setAttribute("skipResolve", "manual");
+        Object current = session.getAttribute(SESSION_SKIP_RESOLVE);
+        if (SKIP_RESOLVE_EXPANDED.equals(current)) {
+            session.setAttribute(SESSION_SKIP_RESOLVE, SKIP_RESOLVE_MANUAL);
         } else {
-            session.setAttribute("skipResolve", "expanded");
+            session.setAttribute(SESSION_SKIP_RESOLVE, SKIP_RESOLVE_EXPANDED);
         }
         return "redirect:/resolve";
     }
@@ -1264,8 +1287,8 @@ public class BookController {
             log.warn("RESOLVE abandoned: user skipped manual search for \"{}\" by {}", title, rs.getAuthorBeingRanked());
             rankingStateRepository.delete(rs);
         }
-        session.removeAttribute("skipResolve");
-        session.setAttribute("resolveWarning", title);
+        session.removeAttribute(SESSION_SKIP_RESOLVE);
+        session.setAttribute(SESSION_RESOLVE_WARNING, title);
         return "redirect:/my-books?selectedBookshelf=UNRANKED";
     }
 
@@ -1277,11 +1300,11 @@ public class BookController {
             return "redirect:/setup-username";
         }
 
-        Long unverifiedBookId = (Long) session.getAttribute("duplicateResolveBookId");
+        Long unverifiedBookId = (Long) session.getAttribute(SESSION_DUPLICATE_RESOLVE_BOOK_ID);
         clearDuplicateResolveSession(session);
 
         rankingStateRepository.deleteById(userId);
-        session.removeAttribute("skipResolve");
+        session.removeAttribute(SESSION_SKIP_RESOLVE);
 
         if (unverifiedBookId != null) {
             rankingService.cleanupUnverifiedBook(userId, unverifiedBookId);
@@ -1298,10 +1321,10 @@ public class BookController {
             return "redirect:/setup-username";
         }
 
-        Long unverifiedBookId = (Long) session.getAttribute("duplicateResolveBookId");
-        String duplicateWorkOlid = (String) session.getAttribute("duplicateResolveWorkOlid");
+        Long unverifiedBookId = (Long) session.getAttribute(SESSION_DUPLICATE_RESOLVE_BOOK_ID);
+        String duplicateWorkOlid = (String) session.getAttribute(SESSION_DUPLICATE_RESOLVE_WORK_OLID);
         clearDuplicateResolveSession(session);
-        session.removeAttribute("skipResolve");
+        session.removeAttribute(SESSION_SKIP_RESOLVE);
 
         if (unverifiedBookId != null) {
             rankingService.cleanupUnverifiedBook(userId, unverifiedBookId);
@@ -1351,10 +1374,10 @@ public class BookController {
         rankingState.setMode(RankingMode.SELECT_EDITION);
         rankingStateRepository.save(rankingState);
 
-        session.removeAttribute("cachedEditions");
-        session.removeAttribute("editionPage");
+        session.removeAttribute(SESSION_CACHED_EDITIONS);
+        session.removeAttribute(SESSION_EDITION_PAGE);
 
-        session.setAttribute("editionSelectionSource", "SEARCH");
+        session.setAttribute(SESSION_EDITION_SELECTION_SOURCE, EDITION_SOURCE_SEARCH);
         return "redirect:/rank/edition";
     }
 
@@ -1391,8 +1414,8 @@ public class BookController {
         bookRepository.save(book);
 
         if (rankingState.isWantToRead() || "want-to-read".equals(action)) {
-            session.removeAttribute("cachedEditions");
-            session.removeAttribute("editionPage");
+            session.removeAttribute(SESSION_CACHED_EDITIONS);
+            session.removeAttribute(SESSION_EDITION_PAGE);
             return addToWantToReadAndContinue(userId, rankingState, book);
         }
 
@@ -1402,9 +1425,9 @@ public class BookController {
         rankingState.setMode(RankingMode.CATEGORIZE);
         rankingStateRepository.save(rankingState);
 
-        session.removeAttribute("cachedEditions");
-        session.removeAttribute("editionPage");
-        session.removeAttribute("editionSelectionSource");
+        session.removeAttribute(SESSION_CACHED_EDITIONS);
+        session.removeAttribute(SESSION_EDITION_PAGE);
+        session.removeAttribute(SESSION_EDITION_SELECTION_SOURCE);
         return "redirect:/rank/categorize";
     }
 
@@ -1468,26 +1491,26 @@ public class BookController {
 
         @SuppressWarnings("unchecked")
         List<OpenLibraryService.EditionResult> allEditions =
-            (List<OpenLibraryService.EditionResult>) session.getAttribute("browseEditions_" + workOlid);
+            (List<OpenLibraryService.EditionResult>) session.getAttribute(SESSION_BROWSE_EDITIONS_PREFIX + workOlid);
 
         if (allEditions == null) {
-            allEditions = openLibraryService.getEditionsForWork(workOlid, 50, 0);
+            allEditions = openLibraryService.getEditionsForWork(workOlid, OpenLibraryService.DEFAULT_EDITION_FETCH_LIMIT, 0);
             if (coverId != null) {
                 allEditions = moveMatchingToFront(allEditions, e -> coverId.equals(e.coverId()));
             }
-            session.setAttribute("browseEditions_" + workOlid, allEditions);
+            session.setAttribute(SESSION_BROWSE_EDITIONS_PREFIX + workOlid, allEditions);
         }
 
-        PaginationResult<OpenLibraryService.EditionResult> editionPagination = PaginationResult.of(allEditions, page, 5);
+        PaginationResult<OpenLibraryService.EditionResult> editionPagination = PaginationResult.of(allEditions, page, EDITION_PAGE_SIZE);
 
         model.addAttribute("workOlid", workOlid);
         model.addAttribute("workTitle", title);
         model.addAttribute("workAuthor", author);
         model.addAttribute("editionResults", editionPagination.pageItems());
-        model.addAttribute("editionPage", editionPagination.page());
+        model.addAttribute(SESSION_EDITION_PAGE, editionPagination.page());
         model.addAttribute("editionTotalPages", editionPagination.totalPages());
         model.addAttribute("editionTotalCount", editionPagination.totalCount());
-        model.addAttribute("editionPageSize", 5);
+        model.addAttribute("editionPageSize", EDITION_PAGE_SIZE);
 
         Long userId = getExistingUserId(session);
         if (userId != null) {
@@ -1586,8 +1609,8 @@ public class BookController {
             newRanking.setReview(trimmedReview);
             rankingRepository.save(newRanking);
             rankingStateRepository.deleteById(userId);
-            session.removeAttribute("bookSearchResults");
-            session.removeAttribute("skipResolve");
+            session.removeAttribute(SESSION_BOOK_SEARCH_RESULTS);
+            session.removeAttribute(SESSION_SKIP_RESOLVE);
 
             if (wasRankAll) {
                 return startNextUnrankedBook(userId, bookshelfEnum);
@@ -1673,7 +1696,7 @@ public class BookController {
         }
 
         // --- Profiles tab ---
-        int pageSize = 10;
+        int pageSize = BOOKSHELF_PAGE_SIZE;
         if ("profiles".equals(type)) {
             List<User> allProfiles;
             if (query != null && !query.isBlank()) {
@@ -1796,14 +1819,14 @@ public class BookController {
 
         List<BookInfo> fictionRecs = List.of();
         if (fictionRankedCount >= MIN_RANKED_BOOKS_FOR_RECS) {
-            fictionRecs = recommendationAlgorithm.getFictionRecommendations(userId, 10).stream()
+            fictionRecs = recommendationAlgorithm.getFictionRecommendations(userId, RECOMMENDATIONS_LIMIT).stream()
                     .map(b -> new BookInfo(b.getId(), b.getWorkOlid(), b.getEditionOlid(),
                             b.getTitle(), b.getAuthor(), null, b.getFirstPublishYear(), b.getCoverId()))
                     .toList();
         }
         List<BookInfo> nonfictionRecs = List.of();
         if (nonfictionRankedCount >= MIN_RANKED_BOOKS_FOR_RECS) {
-            nonfictionRecs = recommendationAlgorithm.getNonfictionRecommendations(userId, 10).stream()
+            nonfictionRecs = recommendationAlgorithm.getNonfictionRecommendations(userId, RECOMMENDATIONS_LIMIT).stream()
                     .map(b -> new BookInfo(b.getId(), b.getWorkOlid(), b.getEditionOlid(),
                             b.getTitle(), b.getAuthor(), null, b.getFirstPublishYear(), b.getCoverId()))
                     .toList();

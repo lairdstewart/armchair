@@ -20,6 +20,23 @@ import java.util.List;
 public class OpenLibraryService {
     private static final Logger log = LoggerFactory.getLogger(OpenLibraryService.class);
 
+    public static final String OL_WORKS_URL = "https://openlibrary.org/works/";
+    public static final String OL_SEARCH_URL = "https://openlibrary.org/search?q=";
+    public static final String OL_COVER_URL = "https://covers.openlibrary.org/b/id/";
+    public static final String OL_COVER_SUFFIX = "-M.jpg";
+
+    private static final String OL_SEARCH_API_URL = "https://openlibrary.org/search.json?%s&lang=en&limit=%d&fields=author_name,author_key,title,cover_edition_key,cover_i,key,first_publish_year,edition_count,editions,editions.title,editions.key";
+    private static final String OL_EDITIONS_API_URL = "https://openlibrary.org/works/%s/editions.json?limit=%d&offset=0";
+    private static final String OL_AUTHOR_API_URL = "https://openlibrary.org/authors/%s.json";
+    private static final String WORKS_KEY_PREFIX = "/works/";
+    private static final String BOOKS_KEY_PREFIX = "/books/";
+    private static final String ENGLISH_LANGUAGE_KEY = "/languages/eng";
+    private static final int SCORE_PREFERRED_EDITION = 1000;
+    private static final int SCORE_ENGLISH = 100;
+    private static final int SCORE_ASCII_TITLE = 50;
+    private static final int SCORE_HAS_COVER = 25;
+    public static final int DEFAULT_EDITION_FETCH_LIMIT = 50;
+
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -33,18 +50,18 @@ public class OpenLibraryService {
 
     public record BookResult(String workOlid, String editionOlid, String title, String author, Integer firstPublishYear, Integer coverId, Integer editionCount) {
         public String bookUrl() {
-            if (workOlid != null) return "https://openlibrary.org/works/" + workOlid;
-            return "https://openlibrary.org/search?q=" + URLEncoder.encode(title + " " + author, StandardCharsets.UTF_8);
+            if (workOlid != null) return OL_WORKS_URL + workOlid;
+            return OL_SEARCH_URL + URLEncoder.encode(title + " " + author, StandardCharsets.UTF_8);
         }
         public String coverUrl() {
-            if (coverId != null) return "https://covers.openlibrary.org/b/id/" + coverId + "-M.jpg";
+            if (coverId != null) return OL_COVER_URL + coverId + OL_COVER_SUFFIX;
             return null;
         }
     }
 
     public record EditionResult(String editionOlid, String title, String isbn13, Integer coverId, String publisher, String publishDate) {
         public String coverUrl() {
-            if (coverId != null) return "https://covers.openlibrary.org/b/id/" + coverId + "-M.jpg";
+            if (coverId != null) return OL_COVER_URL + coverId + OL_COVER_SUFFIX;
             return null;
         }
     }
@@ -74,7 +91,7 @@ public class OpenLibraryService {
     private List<BookResult> doSearch(String queryParams, int maxResults) {
         try {
             String url = String.format(
-                "https://openlibrary.org/search.json?%s&lang=en&limit=%d&fields=author_name,author_key,title,cover_edition_key,cover_i,key,first_publish_year,edition_count,editions,editions.title,editions.key",
+                OL_SEARCH_API_URL,
                 queryParams,
                 maxResults
             );
@@ -94,7 +111,7 @@ public class OpenLibraryService {
                 if (key == null) continue;
 
                 // Strip /works/ prefix from key to get the work OLID
-                String workOlid = key.startsWith("/works/") ? key.substring("/works/".length()) : key;
+                String workOlid = key.startsWith(WORKS_KEY_PREFIX) ? key.substring(WORKS_KEY_PREFIX.length()) : key;
 
                 // Prefer English edition title over work-level title (which may be in the original language)
                 String title = doc.has("title") ? doc.get("title").asText() : "Unknown Title";
@@ -107,7 +124,7 @@ public class OpenLibraryService {
                     }
                     String editionKey = edition.has("key") ? edition.get("key").asText() : null;
                     if (editionKey != null) {
-                        editionOlid = editionKey.startsWith("/books/") ? editionKey.substring("/books/".length()) : editionKey;
+                        editionOlid = editionKey.startsWith(BOOKS_KEY_PREFIX) ? editionKey.substring(BOOKS_KEY_PREFIX.length()) : editionKey;
                     }
                 }
 
@@ -169,7 +186,7 @@ public class OpenLibraryService {
      */
     private String fetchEnglishAuthorName(String authorKey) {
         try {
-            String url = "https://openlibrary.org/authors/" + authorKey + ".json";
+            String url = String.format(OL_AUTHOR_API_URL, authorKey);
             String response = restTemplate.getForObject(URI.create(url), String.class);
             JsonNode author = objectMapper.readTree(response);
 
@@ -225,9 +242,9 @@ public class OpenLibraryService {
         try {
             // Fetch more editions than requested so we can sort and return the best ones.
             // The API returns editions in database insertion order, not by relevance.
-            int fetchLimit = Math.max(50, limit + offset);
+            int fetchLimit = Math.max(DEFAULT_EDITION_FETCH_LIMIT, limit + offset);
             String url = String.format(
-                "https://openlibrary.org/works/%s/editions.json?limit=%d&offset=0",
+                OL_EDITIONS_API_URL,
                 workOlid, fetchLimit
             );
 
@@ -250,7 +267,7 @@ public class OpenLibraryService {
                 // Extract edition OLID from key field
                 String key = entry.has("key") ? entry.get("key").asText() : null;
                 if (key == null) continue;
-                String editionOlid = key.startsWith("/books/") ? key.substring("/books/".length()) : key;
+                String editionOlid = key.startsWith(BOOKS_KEY_PREFIX) ? key.substring(BOOKS_KEY_PREFIX.length()) : key;
 
                 // Extract title
                 String title = entry.has("title") ? entry.get("title").asText() : "Unknown Title";
@@ -278,7 +295,7 @@ public class OpenLibraryService {
                 if (languages != null && languages.isArray()) {
                     for (JsonNode lang : languages) {
                         String langKey = lang.has("key") ? lang.get("key").asText() : "";
-                        if (langKey.equals("/languages/eng")) {
+                        if (langKey.equals(ENGLISH_LANGUAGE_KEY)) {
                             isEnglish = true;
                             break;
                         }
@@ -288,11 +305,11 @@ public class OpenLibraryService {
                 // Calculate relevance score (higher = better)
                 int score = 0;
                 if (preferredEditionOlid != null && editionOlid.equals(preferredEditionOlid)) {
-                    score += 1000;  // Strongly prefer the cover edition from search
+                    score += SCORE_PREFERRED_EDITION;  // Strongly prefer the cover edition from search
                 }
-                if (isEnglish) score += 100;
-                if (isAscii(title)) score += 50;  // ASCII title suggests English
-                if (coverId != null) score += 25;
+                if (isEnglish) score += SCORE_ENGLISH;
+                if (isAscii(title)) score += SCORE_ASCII_TITLE;  // ASCII title suggests English
+                if (coverId != null) score += SCORE_HAS_COVER;
 
                 EditionResult result = new EditionResult(editionOlid, title, isbn13, coverId, publisher, publishDate);
                 scoredResults.add(new EditionWithScore(result, score));

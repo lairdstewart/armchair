@@ -32,6 +32,7 @@ import java.util.Map;
 
 public class CuratedListImporter {
     private static final Logger log = LoggerFactory.getLogger(CuratedListImporter.class);
+    private static final int API_RATE_LIMIT_DELAY_MS = 100;
 
     @Configuration
     @EnableAutoConfiguration(exclude = {SecurityAutoConfiguration.class, OAuth2ClientAutoConfiguration.class})
@@ -244,7 +245,7 @@ public class CuratedListImporter {
             position++;
 
             try {
-                Thread.sleep(100);
+                Thread.sleep(API_RATE_LIMIT_DELAY_MS);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }

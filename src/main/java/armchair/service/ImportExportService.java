@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
 public class ImportExportService {
 
     private static final Logger log = LoggerFactory.getLogger(ImportExportService.class);
-    private static final int MAX_REVIEW_LENGTH = 5000;
+    public static final int MAX_REVIEW_LENGTH = 5000;
     private static final int MAX_IMPORT_ROWS = 10000;
 
     @Autowired
