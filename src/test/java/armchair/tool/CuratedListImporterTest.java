@@ -570,10 +570,10 @@ class CuratedListImporterTest {
         OpenLibraryService openLibraryService = mock(OpenLibraryService.class);
 
         OpenLibraryService.BookResult olResult = new OpenLibraryService.BookResult(
-                "OL123W", "OL456M", "Dune (OL)", "Frank Herbert (OL)", 1965, null, 10);
+                "OL123W", "OL456M", "Dune (OL)", "Frank Herbert (OL)", 1965, 12345, 10);
         when(openLibraryService.searchBooks("Dune, Frank Herbert")).thenReturn(List.of(olResult));
-        Book book = new Book("OL123W", "OL456M", "Dune (OL)", "Frank Herbert (OL)", 1965, null);
-        when(bookService.findOrCreateBook("OL123W", "OL456M", "Dune (OL)", "Frank Herbert (OL)", 1965, null))
+        Book book = new Book("OL123W", "OL456M", "Dune (OL)", "Frank Herbert (OL)", 1965, 12345);
+        when(bookService.findOrCreateBook("OL123W", "OL456M", "Dune (OL)", "Frank Herbert (OL)", 1965, 12345))
                 .thenReturn(book);
 
         List<JsonBook> books = List.of(
@@ -584,7 +584,7 @@ class CuratedListImporterTest {
         user.setId(1L);
         CuratedListImporter.importJsonBooks(user, books, bookService, rankingRepo, openLibraryService);
 
-        verify(bookService).findOrCreateBook("OL123W", "OL456M", "Dune (OL)", "Frank Herbert (OL)", 1965, null);
+        verify(bookService).findOrCreateBook("OL123W", "OL456M", "Dune (OL)", "Frank Herbert (OL)", 1965, 12345);
     }
 
     @Test
