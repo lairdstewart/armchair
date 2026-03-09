@@ -66,7 +66,7 @@
             <ul class="plain-list">
               <li th:each="book : ${wantToReadBooks}">
                 <th:block th:replace="~{fragments :: bookEntry(${book}, ~{:: .wtr-actions})}">
-                  <span class="wtr-actions">
+                  <span class="wtr-actions" th:remove="tag">
                     <form th:action="@{/mark-as-read}" method="POST" style="display: inline;">
                       <input type="hidden" name="bookId" th:value="${book.id()}" />
                       <button type="submit" class="book-action-link">rank</button>
@@ -90,7 +90,7 @@
             <ul class="plain-list">
               <li th:each="book : ${unrankedBooks}">
                 <th:block th:replace="~{fragments :: bookEntry(${book}, ~{:: .unranked-actions})}">
-                  <span class="unranked-actions">
+                  <span class="unranked-actions" th:remove="tag">
                     <form th:action="@{/rank-unranked-book}" method="POST" style="display: inline;">
                       <input type="hidden" name="bookId" th:value="${book.id()}" />
                       <button type="submit" class="book-action-link">rank</button>
