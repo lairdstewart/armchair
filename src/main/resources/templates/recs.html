@@ -32,7 +32,7 @@
               <span class="book-number liked" th:text="${iter.index + 1}"></span>
               <th:block th:replace="~{fragments :: bookEntry(${book}, ~{:: .fiction-rec-actions})}">
                 <span class="fiction-rec-actions">
-                  <form th:if="${book.workOlid() != null && !userBooks.containsKey(book.workOlid())}" th:action="@{/add-to-reading-list}" method="POST" style="display: inline; margin-left: 0.5em;">
+                  <form th:if="${book.workOlid() != null && !userBooks.containsKey(book.workOlid())}" th:action="@{/add-to-reading-list}" method="POST" style="display: inline;">
                     <input type="hidden" name="workOlid" th:value="${book.workOlid()}" />
                     <input type="hidden" name="bookName" th:value="${book.title()}" />
                     <input type="hidden" name="author" th:value="${book.author()}" />
@@ -60,7 +60,7 @@
               <span class="book-number liked" th:text="${iter.index + 1}"></span>
               <th:block th:replace="~{fragments :: bookEntry(${book}, ~{:: .nonfiction-rec-actions})}">
                 <span class="nonfiction-rec-actions">
-                  <form th:if="${book.workOlid() != null && !userBooks.containsKey(book.workOlid())}" th:action="@{/add-to-reading-list}" method="POST" style="display: inline; margin-left: 0.5em;">
+                  <form th:if="${book.workOlid() != null && !userBooks.containsKey(book.workOlid())}" th:action="@{/add-to-reading-list}" method="POST" style="display: inline;">
                     <input type="hidden" name="workOlid" th:value="${book.workOlid()}" />
                     <input type="hidden" name="bookName" th:value="${book.title()}" />
                     <input type="hidden" name="author" th:value="${book.author()}" />

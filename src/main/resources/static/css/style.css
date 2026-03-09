@@ -323,7 +323,7 @@ details[open] .review-toggle::before {
 .book-actions > .review-toggle + form::before {
   content: "|";
   color: #888;
-  margin: 0 0.3em;
+  margin: 0 0.2em;
 }
 
 .book-action-link {
