@@ -4,3 +4,5 @@ services:
     env_file: ../.env
     ports:
       - "8080:8080"
+    mem_limit: 512m
+    memswap_limit: 512m
