@@ -27,6 +27,14 @@ if ! mkdir "$LOCK_DIR" 2>/dev/null; then
 fi
 trap cleanup EXIT
 
+# Ensure we're on the claude branch
+CURRENT_BRANCH="$(git branch --show-current)"
+if [ "$CURRENT_BRANCH" != "claude" ]; then
+    echo "ERROR: Must be on the 'claude' branch to squash-merge."
+    echo "Currently on: $CURRENT_BRANCH"
+    exit 1
+fi
+
 # Ensure worktree is clean before merging
 if ! git diff --quiet || ! git diff --cached --quiet; then
     echo "ERROR: Working tree or index is dirty. Cannot merge."
