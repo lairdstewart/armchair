@@ -25,7 +25,7 @@
         - actions: fragment expression for action buttons (bare forms, no wrapper), or null for read-only
     -->
     <th:block th:fragment="bookEntry(book, actions)">
-      <span th:if="${book.review() == null}">
+      <div th:if="${book.review() == null}" class="book-entry-wrapper">
         <div class="book-entry">
           <div class="book-info">
             <div class="book-title">
@@ -43,7 +43,7 @@
           <img th:if="${book.coverUrl() != null}" class="book-cover" loading="lazy" th:src="${book.coverUrl()}" />
           <div th:if="${book.coverUrl() == null}" class="book-cover-placeholder">?</div>
         </div>
-      </span>
+      </div>
       <details th:if="${book.review() != null}" class="book-review">
         <summary>
           <div class="book-entry">
@@ -56,10 +56,12 @@
                 <span th:if="${book.firstPublishYear() != null}" th:text="${' (' + book.firstPublishYear() + ')'}"></span>
               </div>
               <span class="book-actions">
-                <span class="review-toggle"></span>
                 <th:block th:if="${actions != null}" th:replace="${actions}" />
                 <a th:if="${book.bookUrl() != null}" th:href="${book.bookUrl()}" target="_blank" class="book-action-link">open library</a>
               </span>
+              <div class="book-actions">
+                <span class="review-toggle"></span>
+              </div>
             </div>
             <img th:if="${book.coverUrl() != null}" class="book-cover" loading="lazy" th:src="${book.coverUrl()}" />
             <div th:if="${book.coverUrl() == null}" class="book-cover-placeholder">?</div>
@@ -74,9 +76,9 @@
       Parameter: book - BookInfo record
     -->
     <th:block th:fragment="libraryActions(book)">
-      <form th:action="@{/direct-review}" method="POST" style="display: inline;">
+      <form th:if="${book.review() == null}" th:action="@{/direct-review}" method="POST" style="display: inline;">
         <input type="hidden" name="bookId" th:value="${book.id()}" />
-        <button type="submit" class="book-action-link">review</button>
+        <button type="submit" class="book-action-link">write review</button>
       </form>
       <form th:action="@{/direct-rerank}" method="POST" style="display: inline;">
         <input type="hidden" name="bookId" th:value="${book.id()}" />

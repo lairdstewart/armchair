@@ -44,7 +44,8 @@ ol.book-list li > .book-number {
   margin-top: 23px;
 }
 
-ol.book-list li > span:not(.book-number) {
+ol.book-list li > .book-entry-wrapper,
+ol.book-list li > .book-review {
   flex: 1;
   min-width: 0;
   overflow: hidden;
@@ -311,6 +312,7 @@ details[open] .review-toggle::before {
 }
 .review-toggle::after {
   content: "review";
+  margin-left: 0.2em;
 }
 
 .review-text {
