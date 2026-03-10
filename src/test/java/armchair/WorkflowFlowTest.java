@@ -369,16 +369,17 @@ class WorkflowFlowTest extends BaseIntegrationTest {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/rank/edition"));
 
-        // Book removed from unranked
+        // Book still in unranked (deferred delete until ranking completes)
         List<Ranking> unranked = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(
                 user.getId(), Bookshelf.UNRANKED, BookCategory.UNRANKED);
-        assertThat(unranked).isEmpty();
+        assertThat(unranked).hasSize(1);
 
-        // State set up for edition selection
+        // State set up for edition selection with unrankedRankingId for deferred delete
         RankingState state = getRankingState(session);
         assertThat(state.getMode()).isEqualTo(RankingMode.SELECT_EDITION);
         assertThat(state.getTitleBeingRanked()).isEqualTo("Dune");
         assertThat(state.getBookshelf()).isEqualTo(Bookshelf.UNRANKED);
+        assertThat(state.getUnrankedRankingId()).isEqualTo(ranking.getId());
     }
 
     @Test
@@ -455,10 +456,11 @@ class WorkflowFlowTest extends BaseIntegrationTest {
         assertThat(state.getMode()).isEqualTo(RankingMode.SELECT_EDITION);
         assertThat(state.isWantToRead()).isTrue();
         assertThat(state.getBookshelf()).isEqualTo(Bookshelf.UNRANKED);
+        assertThat(state.getUnrankedRankingId()).isEqualTo(ranking.getId());
 
-        // Removed from unranked
+        // Book still in unranked (deferred delete until ranking completes)
         assertThat(rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(
-                user.getId(), Bookshelf.UNRANKED, BookCategory.UNRANKED)).isEmpty();
+                user.getId(), Bookshelf.UNRANKED, BookCategory.UNRANKED)).hasSize(1);
     }
 
     @Test
@@ -499,11 +501,10 @@ class WorkflowFlowTest extends BaseIntegrationTest {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/rank/edition"));
 
-        // First book removed from unranked
+        // Both books still in unranked (deferred delete until ranking completes)
         List<Ranking> unranked = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(
                 user.getId(), Bookshelf.UNRANKED, BookCategory.UNRANKED);
-        assertThat(unranked).hasSize(1);
-        assertThat(unranked.get(0).getBook().getTitle()).isEqualTo("Book B");
+        assertThat(unranked).hasSize(2);
 
         // State has rankAll flag
         RankingState state = getRankingState(session);

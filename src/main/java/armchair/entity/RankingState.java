@@ -30,6 +30,9 @@ public class RankingState implements Serializable {
     private BookCategory originalCategory;
     private Integer originalPosition;
 
+    // ID of the UNRANKED ranking row to delete atomically when ranking completes
+    private Long unrankedRankingId;
+
     public RankingState() {}
 
     public RankingState(String workOlidBeingRanked, String titleBeingRanked, String authorBeingRanked,
@@ -198,5 +201,13 @@ public class RankingState implements Serializable {
 
     public void setMode(RankingMode mode) {
         this.mode = mode;
+    }
+
+    public Long getUnrankedRankingId() {
+        return unrankedRankingId;
+    }
+
+    public void setUnrankedRankingId(Long unrankedRankingId) {
+        this.unrankedRankingId = unrankedRankingId;
     }
 }

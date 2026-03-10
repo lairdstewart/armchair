@@ -778,7 +778,8 @@ public class BookController {
             Bookshelf rankedBookshelf = rankingState.getBookshelf();
             boolean wasRankAll = rankingState.isRankAll();
             rankingService.insertBookAtPosition(rankingState.getWorkOlidBeingRanked(), rankingState.getTitleBeingRanked(), rankingState.getAuthorBeingRanked(),
-                rankingState.getReviewBeingRanked(), rankedBookshelf, rankingState.getCategory(), newLowIndex, userId);
+                rankingState.getReviewBeingRanked(), rankedBookshelf, rankingState.getCategory(), newLowIndex, userId,
+                rankingState.getUnrankedRankingId());
             clearRankingState(session);
             session.removeAttribute(SESSION_BOOK_SEARCH_RESULTS);
             session.removeAttribute(SESSION_SKIP_RESOLVE);
@@ -1438,6 +1439,7 @@ public class BookController {
         Ranking newRanking = createWantToReadRanking(userId, book);
         newRanking.setReview(rankingState.getReviewBeingRanked());
         rankingRepository.save(newRanking);
+        rankingService.deleteUnrankedRankingById(rankingState.getUnrankedRankingId(), userId);
 
         boolean wasRankAll = rankingState.isRankAll();
         clearRankingState(session);
@@ -1605,6 +1607,7 @@ public class BookController {
             Ranking newRanking = new Ranking(userRef, book, bookshelfEnum, bookCategory, 0);
             newRanking.setReview(trimmedReview);
             rankingRepository.save(newRanking);
+            rankingService.deleteUnrankedRankingById(rankingState.getUnrankedRankingId(), userId);
             clearRankingState(session);
             session.removeAttribute(SESSION_BOOK_SEARCH_RESULTS);
             session.removeAttribute(SESSION_SKIP_RESOLVE);
@@ -2108,7 +2111,6 @@ public class BookController {
         }
     }
 
-    @Transactional
     @PostMapping("/rank-unranked-book")
     public String rankUnrankedBook(@RequestParam Long bookId, HttpSession session) {
         Long userId = getCurrentUserId();
@@ -2124,6 +2126,7 @@ public class BookController {
         RankingState rankingState = new RankingState(ranking.getBook().getWorkOlid(), ranking.getBook().getTitle(), ranking.getBook().getAuthor(), null, null);
         rankingState.setBookshelf(Bookshelf.UNRANKED);
         rankingState.setReviewBeingRanked(ranking.getReview());
+        rankingState.setUnrankedRankingId(ranking.getId());
         boolean needsResolve = ranking.getBook().getWorkOlid() == null;
         if (needsResolve) {
             rankingState.setMode(RankingMode.RESOLVE);
@@ -2132,12 +2135,9 @@ public class BookController {
         }
         saveRankingState(session, rankingState);
 
-        rankingService.deleteRankingAndCloseGap(userId, ranking);
-
         return needsResolve ? "redirect:/resolve" : "redirect:/rank/edition";
     }
 
-    @Transactional
     @PostMapping("/want-to-read-unranked-book")
     public String wantToReadUnrankedBook(@RequestParam Long bookId, HttpSession session) {
         Long userId = getCurrentUserId();
@@ -2154,6 +2154,7 @@ public class BookController {
         rankingState.setBookshelf(Bookshelf.UNRANKED);
         rankingState.setReviewBeingRanked(ranking.getReview());
         rankingState.setWantToRead(true);
+        rankingState.setUnrankedRankingId(ranking.getId());
         boolean needsResolve = ranking.getBook().getWorkOlid() == null;
         if (needsResolve) {
             rankingState.setMode(RankingMode.RESOLVE);
@@ -2162,12 +2163,9 @@ public class BookController {
         }
         saveRankingState(session, rankingState);
 
-        rankingService.deleteRankingAndCloseGap(userId, ranking);
-
         return needsResolve ? "redirect:/resolve" : "redirect:/rank/edition";
     }
 
-    @Transactional
     @PostMapping("/rank-all")
     public String rankAll(HttpSession session) {
         Long userId = getCurrentUserId();
@@ -2191,6 +2189,7 @@ public class BookController {
         rankingState.setBookshelf(Bookshelf.UNRANKED);
         rankingState.setReviewBeingRanked(nextBook.getReview());
         rankingState.setRankAll(true);
+        rankingState.setUnrankedRankingId(nextBook.getId());
         boolean needsResolve = nextBook.getBook().getWorkOlid() == null;
         if (needsResolve) {
             rankingState.setMode(RankingMode.RESOLVE);
@@ -2198,8 +2197,6 @@ public class BookController {
             rankingState.setMode(RankingMode.SELECT_EDITION);
         }
         saveRankingState(session, rankingState);
-
-        rankingService.deleteRankingAndCloseGap(userId, nextBook);
 
         return needsResolve ? "redirect:/resolve" : "redirect:/rank/edition";
     }
