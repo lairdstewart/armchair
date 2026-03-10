@@ -10,7 +10,11 @@ import org.springframework.security.oauth2.client.web.DefaultOAuth2Authorization
 import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestResolver;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.AccessDeniedHandler;
+import org.springframework.security.web.access.AccessDeniedHandlerImpl;
 import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
+import org.springframework.security.web.csrf.InvalidCsrfTokenException;
+import org.springframework.security.web.csrf.MissingCsrfTokenException;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import jakarta.servlet.http.HttpServletRequest;
@@ -77,6 +81,19 @@ public class SecurityConfig {
     }
 
     @Bean
+    public AccessDeniedHandler csrfAwareAccessDeniedHandler() {
+        AccessDeniedHandler defaultHandler = new AccessDeniedHandlerImpl();
+        return (request, response, accessDeniedException) -> {
+            if (accessDeniedException instanceof InvalidCsrfTokenException
+                    || accessDeniedException instanceof MissingCsrfTokenException) {
+                response.sendRedirect("/my-books");
+            } else {
+                defaultHandler.handle(request, response, accessDeniedException);
+            }
+        };
+    }
+
+    @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .authorizeHttpRequests(auth -> auth
@@ -85,6 +102,9 @@ public class SecurityConfig {
             )
             .csrf(csrf -> csrf
                 .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
+            )
+            .exceptionHandling(exceptions -> exceptions
+                .accessDeniedHandler(csrfAwareAccessDeniedHandler())
             )
             .oauth2Login(oauth2 -> oauth2
                 .loginPage("/login")
