@@ -20,11 +20,18 @@ public class CustomErrorController implements ErrorController {
         Object message = request.getAttribute(RequestDispatcher.ERROR_MESSAGE);
         Throwable exception = (Throwable) request.getAttribute(RequestDispatcher.ERROR_EXCEPTION);
 
-        if (exception != null) {
-            logger.error("Error serving request [{}] (status {}): {}",
-                    uri, status, message, exception);
+        int statusCode = status instanceof Integer ? (Integer) status : 0;
+
+        if (statusCode >= 500) {
+            if (exception != null) {
+                logger.error("Error serving request [{}] (status {}): {}",
+                        uri, status, message, exception);
+            } else {
+                logger.error("Error serving request [{}] (status {}): {}",
+                        uri, status, message);
+            }
         } else {
-            logger.error("Error serving request [{}] (status {}): {}",
+            logger.warn("Error serving request [{}] (status {}): {}",
                     uri, status, message);
         }
 
