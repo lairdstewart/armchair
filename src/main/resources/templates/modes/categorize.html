@@ -8,21 +8,35 @@
     <h3>Add <span th:text="${rankingState.titleBeingRanked}"></span></h3>
     <p th:if="${isRankAll}" style="margin-bottom: 15px;"><span th:text="${rankAllRemaining}"></span> uncategorized book<span th:if="${rankAllRemaining != 1}">s</span> remaining</p>
     <form th:action="@{/categorize}" method="POST">
-      <div style="margin-bottom: 15px;">
+      <div id="bookshelf-group" style="margin-bottom: 15px;">
         <label><input type="radio" name="bookshelf" value="fiction" required /> Fiction</label>
         <label style="margin-left: 15px;"><input type="radio" name="bookshelf" value="nonfiction" /> Non-Fiction</label>
       </div>
       <div style="margin-bottom: 15px;">
-        <label><input type="radio" name="category" value="liked" required /> liked it</label>
-        <label style="margin-left: 15px;"><input type="radio" name="category" value="ok" /> it was ok</label>
-        <label style="margin-left: 15px;"><input type="radio" name="category" value="disliked" /> didn't like it</label>
+        <label><input type="radio" name="category" value="liked" required onchange="toggleWantToRead(false)" /> liked it</label>
+        <label style="margin-left: 15px;"><input type="radio" name="category" value="ok" onchange="toggleWantToRead(false)" /> it was ok</label>
+        <label style="margin-left: 15px;"><input type="radio" name="category" value="disliked" onchange="toggleWantToRead(false)" /> didn't like it</label>
+        <label style="margin-left: 15px;"><input type="radio" name="category" value="want-to-read" onchange="toggleWantToRead(true)" /> want to read</label>
       </div>
-      <div style="margin-bottom: 15px;">
+      <div id="review-group" style="margin-bottom: 15px; opacity: 0.5;">
         <label for="review">Review (optional):</label><br />
-        <textarea id="review" name="review" rows="4" cols="50" maxlength="5000" placeholder="Write your thoughts about this book..." th:text="${rankingState.reviewBeingRanked}"></textarea>
+        <textarea id="review" name="review" rows="4" cols="50" maxlength="5000" disabled placeholder="Write your thoughts about this book..." th:text="${rankingState.reviewBeingRanked}"></textarea>
       </div>
       <button type="submit">Continue</button>
     </form>
+    <script>
+      function toggleWantToRead(isWantToRead) {
+        var reviewGroup = document.getElementById('review-group');
+        var reviewTextarea = document.getElementById('review');
+        if (isWantToRead) {
+          reviewGroup.style.opacity = '0.5';
+          reviewTextarea.disabled = true;
+        } else {
+          reviewGroup.style.opacity = '1';
+          reviewTextarea.disabled = false;
+        }
+      }
+    </script>
   </th:block>
 </body>
 </html>

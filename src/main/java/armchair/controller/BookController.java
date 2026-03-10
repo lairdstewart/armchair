@@ -1570,7 +1570,7 @@ public class BookController {
 
     @Transactional
     @PostMapping("/categorize")
-    public String categorizeBook(@RequestParam String bookshelf,
+    public String categorizeBook(@RequestParam(required = false) String bookshelf,
                                   @RequestParam String category,
                                   @RequestParam(required = false) String review,
                                   HttpSession session) {
@@ -1581,6 +1581,15 @@ public class BookController {
         RankingState rankingState = getRankingState(session);
         if (rankingState == null || rankingState.getTitleBeingRanked() == null) {
             return "redirect:/my-books";
+        }
+
+        if ("want-to-read".equals(category)) {
+            String workOlid = rankingState.getWorkOlidBeingRanked();
+            String bookName = rankingState.getTitleBeingRanked();
+            String author = rankingState.getAuthorBeingRanked();
+            Book book = bookService.findOrCreateBook(workOlid,
+                rankingState.getEditionOlidBeingRanked(), bookName, author, null, null);
+            return addToWantToReadAndContinue(userId, rankingState, book, session);
         }
 
         String workOlid = rankingState.getWorkOlidBeingRanked();
