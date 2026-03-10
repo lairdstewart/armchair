@@ -6,31 +6,29 @@
       <button type="submit" class="btn-back">cancel</button>
     </form>
     <h3>Which was better?</h3>
-    <form th:action="@{/choose}" method="POST">
-      <div class="book-entry-row" style="margin-bottom: 10px;">
-        <button type="submit" name="choice" value="new" class="book-number rerank">►</button>
+    <form th:action="@{/choose}" method="POST" style="margin-bottom: 4px;">
+      <input type="hidden" name="choice" value="new" />
+      <button type="submit" class="book-select-btn">
         <div class="book-entry">
           <div class="book-info">
-            <div class="book-title">
-              <button type="submit" name="choice" value="new" class="book-title-btn" th:text="${rankingState.titleBeingRanked}"></button>
-            </div>
+            <div class="book-title" th:text="${rankingState.titleBeingRanked}"></div>
             <div th:if="${rankingState.authorBeingRanked != null && !rankingState.authorBeingRanked.isBlank()}" class="book-author" th:text="${rankingState.authorBeingRanked}"></div>
           </div>
           <img th:if="${rankingBookCoverId != null}" class="book-cover" loading="lazy" th:src="${'https://covers.openlibrary.org/b/id/' + rankingBookCoverId + '-M.jpg'}" /><div th:if="${rankingBookCoverId == null}" class="book-cover-placeholder">?</div>
         </div>
-      </div>
-      <div class="book-entry-row">
-        <button type="submit" name="choice" value="existing" class="book-number rerank">►</button>
+      </button>
+    </form>
+    <form th:action="@{/choose}" method="POST">
+      <input type="hidden" name="choice" value="existing" />
+      <button type="submit" class="book-select-btn">
         <div class="book-entry">
           <div class="book-info">
-            <div class="book-title">
-              <button type="submit" name="choice" value="existing" class="book-title-btn" th:text="${comparisonBookTitle}"></button>
-            </div>
+            <div class="book-title" th:text="${comparisonBookTitle}"></div>
             <div th:if="${comparisonBookAuthor != null && !comparisonBookAuthor.isBlank()}" class="book-author" th:text="${comparisonBookAuthor}"></div>
           </div>
           <img th:if="${comparisonBookCoverId != null}" class="book-cover" loading="lazy" th:src="${'https://covers.openlibrary.org/b/id/' + comparisonBookCoverId + '-M.jpg'}" /><div th:if="${comparisonBookCoverId == null}" class="book-cover-placeholder">?</div>
         </div>
-      </div>
+      </button>
     </form>
   </th:block>
 </body>

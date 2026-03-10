@@ -26,7 +26,7 @@
       <!-- Books results -->
       <div id="stab-books" th:style="${searchType == 'books' ? '' : 'display:none'}">
         <ol th:if="${bookResults != null && !bookResults.isEmpty()}" style="list-style: none; padding-left: 0;">
-          <li th:each="book : ${bookResults}" th:with="ubr=${userBooks != null && book.workOlid() != null ? userBooks.get(book.workOlid()) : null}" style="margin-bottom: 4px;">
+          <li th:each="book : ${bookResults}" th:with="ubr=${userBooks != null && book.workOlid() != null ? userBooks.get(book.workOlid()) : null}" style="margin-bottom: 4px; padding: 4px;">
             <div class="book-entry">
               <div class="book-info">
                 <div class="book-title">

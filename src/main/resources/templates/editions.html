@@ -13,7 +13,7 @@
       <a th:if="${libraryBookshelf != null}" th:href="@{/my-books(selectedBookshelf=${libraryBookshelf})}" class="book-action-link">view in library</a>
 
       <div th:if="${editionResults != null && !editionResults.isEmpty()}">
-        <div th:each="edition : ${editionResults}" class="book-entry" style="margin-bottom: 10px;">
+        <div th:each="edition : ${editionResults}" class="book-entry" style="margin-bottom: 4px; padding: 4px;">
           <div class="book-info">
             <div class="book-title">
               <span th:text="${edition.title()}"></span>

@@ -6,27 +6,26 @@
       <button type="submit" class="btn-back">back</button>
     </form>
     <h3>Select the correct book to add</h3>
-    <form th:each="result : ${resolveResults}" th:action="@{/resolve-book}" method="POST" class="book-entry-row" style="margin-bottom: 10px;">
+    <form th:each="result : ${resolveResults}" th:action="@{/resolve-book}" method="POST" style="margin-bottom: 4px;">
       <input type="hidden" name="workOlid" th:value="${result.workOlid()}" />
       <input type="hidden" name="title" th:value="${result.title()}" />
       <input type="hidden" name="author" th:value="${result.author()}" />
       <input type="hidden" name="editionOlid" th:value="${result.editionOlid()}" />
       <input type="hidden" name="firstPublishYear" th:value="${result.firstPublishYear()}" />
       <input type="hidden" name="coverId" th:value="${result.coverId()}" />
-      <button type="submit" class="book-number rerank">►</button>
-      <div class="book-entry">
-        <div class="book-info">
-          <div class="book-title">
-            <button type="submit" class="book-title-btn" th:text="${result.title()}"></button>
+      <button type="submit" class="book-select-btn">
+        <div class="book-entry">
+          <div class="book-info">
+            <div class="book-title" th:text="${result.title()}"></div>
+            <div th:if="${result.author() != null && !result.author().isBlank()}" class="book-author">
+              <span th:text="${result.author()}"></span>
+              <span th:if="${result.firstPublishYear() != null}" th:text="'(' + ${result.firstPublishYear()} + ')'"></span>
+            </div>
+            <div th:if="${result.editionCount() != null && result.editionCount() > 0}" class="book-author" th:text="${result.editionCount() + ' edition' + (result.editionCount() != 1 ? 's' : '')}"></div>
           </div>
-          <div th:if="${result.author() != null && !result.author().isBlank()}" class="book-author">
-            <span th:text="${result.author()}"></span>
-            <span th:if="${result.firstPublishYear() != null}" th:text="'(' + ${result.firstPublishYear()} + ')'"></span>
-          </div>
-          <div th:if="${result.editionCount() != null && result.editionCount() > 0}" class="book-author" th:text="${result.editionCount() + ' edition' + (result.editionCount() != 1 ? 's' : '')}"></div>
+          <img th:if="${result.coverUrl() != null}" class="book-cover" loading="lazy" th:src="${result.coverUrl()}" /><div th:if="${result.coverUrl() == null}" class="book-cover-placeholder">?</div>
         </div>
-        <img th:if="${result.coverUrl() != null}" class="book-cover" loading="lazy" th:src="${result.coverUrl()}" /><div th:if="${result.coverUrl() == null}" class="book-cover-placeholder">?</div>
-      </div>
+      </button>
     </form>
     <form th:action="@{/skip-resolve}" method="POST" style="margin-top: 15px;">
       <button type="submit" class="book-action-link">None of these</button>
