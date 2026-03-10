@@ -37,6 +37,7 @@ public class DevSecurityConfig {
                 .anyRequest().authenticated()
             )
             .addFilterBefore(new MockAuthFilter(), OAuth2AuthorizationRequestRedirectFilter.class)
+            .formLogin(form -> form.disable())
             .logout(logout -> logout
                 .logoutSuccessUrl("/")
                 .invalidateHttpSession(true)
