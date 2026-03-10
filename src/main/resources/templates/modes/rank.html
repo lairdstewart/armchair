@@ -12,8 +12,7 @@
         <div class="book-entry">
           <div class="book-info">
             <div class="book-title">
-              <a th:if="${rankingState.workOlidBeingRanked != null}" th:href="${'https://openlibrary.org/works/' + rankingState.workOlidBeingRanked}" target="_blank" th:text="${rankingState.titleBeingRanked}"></a>
-              <a th:if="${rankingState.workOlidBeingRanked == null}" th:href="${'https://openlibrary.org/search?q=' + #uris.escapeQueryParam(rankingState.titleBeingRanked + ' ' + rankingState.authorBeingRanked)}" target="_blank" th:text="${rankingState.titleBeingRanked}"></a>
+              <button type="submit" name="choice" value="new" class="book-title-btn" th:text="${rankingState.titleBeingRanked}"></button>
             </div>
             <div th:if="${rankingState.authorBeingRanked != null && !rankingState.authorBeingRanked.isBlank()}" class="book-author" th:text="${rankingState.authorBeingRanked}"></div>
           </div>
@@ -25,8 +24,7 @@
         <div class="book-entry">
           <div class="book-info">
             <div class="book-title">
-              <a th:if="${comparisonBookWorkOlid != null}" th:href="${'https://openlibrary.org/works/' + comparisonBookWorkOlid}" target="_blank" th:text="${comparisonBookTitle}"></a>
-              <a th:if="${comparisonBookWorkOlid == null}" th:href="${'https://openlibrary.org/search?q=' + #uris.escapeQueryParam(comparisonBookTitle + ' ' + comparisonBookAuthor)}" target="_blank" th:text="${comparisonBookTitle}"></a>
+              <button type="submit" name="choice" value="existing" class="book-title-btn" th:text="${comparisonBookTitle}"></button>
             </div>
             <div th:if="${comparisonBookAuthor != null && !comparisonBookAuthor.isBlank()}" class="book-author" th:text="${comparisonBookAuthor}"></div>
           </div>

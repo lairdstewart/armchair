@@ -30,8 +30,7 @@
             <div class="book-entry">
               <div class="book-info">
                 <div class="book-title">
-                  <a th:if="${book.bookUrl() != null}" th:href="${book.bookUrl()}" target="_blank" th:text="${book.title()}"></a>
-                  <span th:if="${book.bookUrl() == null}" th:text="${book.title()}"></span>
+                  <span th:text="${book.title()}"></span>
                 </div>
                 <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author"><span th:text="${book.author()}"></span><span th:if="${book.firstPublishYear() != null}" th:text="${' (' + book.firstPublishYear() + ')'}"></span></div>
                 <!-- Already ranked -->
@@ -48,10 +47,11 @@
                 <!-- Already in unranked list -->
                 <span th:if="${ubr != null && ubr.category() == 'unranked'}"
                       class="book-action-text">uncategorized</span>
-                <!-- Browse editions link (shown for all books with a workOlid) -->
+                <!-- Browse editions and open library links -->
                 <span th:if="${book.workOlid() != null}" class="book-actions">
                   <a th:href="@{/editions/{workOlid}(workOlid=${book.workOlid()}, title=${book.title()}, author=${book.author()}, coverId=${book.coverId()})}" class="book-action-link"
                      th:text="${book.editionCount() != null ? 'browse ' + book.editionCount() + ' editions' : 'browse editions'}"></a>
+                  <a th:if="${book.bookUrl() != null}" th:href="${book.bookUrl()}" target="_blank" class="book-action-link">open library</a>
                 </span>
               </div>
               <img th:if="${book.coverUrl() != null}" class="book-cover" loading="lazy" th:src="${book.coverUrl()}" /><div th:if="${book.coverUrl() == null}" class="book-cover-placeholder">?</div>

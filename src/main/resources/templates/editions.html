@@ -16,7 +16,7 @@
         <div th:each="edition : ${editionResults}" class="book-entry" style="margin-bottom: 10px;">
           <div class="book-info">
             <div class="book-title">
-              <a th:href="${'https://openlibrary.org/books/' + edition.editionOlid()}" target="_blank" th:text="${edition.title()}"></a>
+              <span th:text="${edition.title()}"></span>
             </div>
             <div th:if="${edition.publisher() != null}" class="book-author">Publisher: <span th:text="${edition.publisher()}"></span></div>
             <div th:if="${edition.publishDate() != null}" class="book-author">Published: <span th:text="${edition.publishDate()}"></span></div>
@@ -40,6 +40,7 @@
                 <input type="hidden" name="returnUrl" th:value="${'/editions/' + workOlid + '?title=' + #strings.replace(workTitle, ' ', '+') + '&author=' + #strings.replace(workAuthor, ' ', '+') + '&page=' + editionPage}" />
                 <button type="submit" class="book-action-link">want to read</button>
               </form>
+              <a th:href="${'https://openlibrary.org/books/' + edition.editionOlid()}" target="_blank" class="book-action-link">open library</a>
             </span>
           </div>
           <img th:if="${edition.coverUrl() != null}" class="book-cover" loading="lazy" th:src="${edition.coverUrl()}" /><div th:if="${edition.coverUrl() == null}" class="book-cover-placeholder">?</div>

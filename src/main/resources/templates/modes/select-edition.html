@@ -10,18 +10,16 @@
 
     <!-- Standard flow: ► arrow per edition -->
     <th:block th:unless="${isRankAll}">
-      <div th:each="edition : ${editionResults}" class="book-entry-row" style="margin-bottom: 10px;">
-        <form th:action="@{/select-edition}" method="POST" style="display: inline;">
-          <input type="hidden" name="editionOlid" th:value="${edition.editionOlid()}" />
-          <input type="hidden" name="isbn13" th:value="${edition.isbn13()}" />
-          <input type="hidden" name="title" th:value="${edition.title()}" />
-          <input type="hidden" name="coverId" th:value="${edition.coverId()}" />
-          <button type="submit" class="book-number rerank">►</button>
-        </form>
+      <form th:each="edition : ${editionResults}" th:action="@{/select-edition}" method="POST" class="book-entry-row" style="margin-bottom: 10px;">
+        <input type="hidden" name="editionOlid" th:value="${edition.editionOlid()}" />
+        <input type="hidden" name="isbn13" th:value="${edition.isbn13()}" />
+        <input type="hidden" name="title" th:value="${edition.title()}" />
+        <input type="hidden" name="coverId" th:value="${edition.coverId()}" />
+        <button type="submit" class="book-number rerank">►</button>
         <div class="book-entry">
           <div class="book-info">
             <div class="book-title">
-              <a th:href="${'https://openlibrary.org/books/' + edition.editionOlid()}" target="_blank" th:text="${edition.title()}"></a>
+              <button type="submit" class="book-title-btn" th:text="${edition.title()}"></button>
             </div>
             <div class="book-author">
               <span th:if="${edition.publisher() != null}" th:text="'Published by ' + ${edition.publisher()}"></span>
@@ -32,7 +30,7 @@
           </div>
           <img th:if="${edition.coverUrl() != null}" class="book-cover" loading="lazy" th:src="${edition.coverUrl()}" /><div th:if="${edition.coverUrl() == null}" class="book-cover-placeholder">?</div>
         </div>
-      </div>
+      </form>
     </th:block>
 
     <!-- Categorize all flow: rank and want to read per edition -->
@@ -41,7 +39,7 @@
         <div class="book-entry">
           <div class="book-info">
             <div class="book-title">
-              <a th:href="${'https://openlibrary.org/books/' + edition.editionOlid()}" target="_blank" th:text="${edition.title()}"></a>
+              <span th:text="${edition.title()}"></span>
             </div>
             <div class="book-author">
               <span th:if="${edition.publisher() != null}" th:text="'Published by ' + ${edition.publisher()}"></span>
@@ -66,6 +64,7 @@
                 <input type="hidden" name="action" value="want-to-read" />
                 <button type="submit" class="book-action-link">want to read</button>
               </form>
+              <a th:href="${'https://openlibrary.org/books/' + edition.editionOlid()}" target="_blank" class="book-action-link">open library</a>
             </span>
           </div>
           <img th:if="${edition.coverUrl() != null}" class="book-cover" loading="lazy" th:src="${edition.coverUrl()}" /><div th:if="${edition.coverUrl() == null}" class="book-cover-placeholder">?</div>

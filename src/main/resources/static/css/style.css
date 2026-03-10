@@ -221,12 +221,22 @@ input:checked + .slider:before {
   text-overflow: ellipsis;
 }
 
-.book-title a {
+/* Clickable title button on selection pages (rank, resolve, select-edition) */
+.book-title-btn {
+  background: none;
+  border: none;
+  font: inherit;
   color: black;
-  text-decoration: none;
+  cursor: pointer;
+  padding: 0;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
-.book-title a:hover {
+.book-title-btn:hover {
   text-decoration: underline;
 }
 
@@ -320,7 +330,11 @@ details[open] .review-toggle::before {
 }
 
 .book-actions > form + form::before,
-.book-actions > .review-toggle + form::before {
+.book-actions > form + a::before,
+.book-actions > a + form::before,
+.book-actions > a + a::before,
+.book-actions > .review-toggle + form::before,
+.book-actions > .review-toggle + a::before {
   content: "|";
   color: #888;
   margin: 0 0.2em;
@@ -333,6 +347,7 @@ details[open] .review-toggle::before {
   font: inherit;
   cursor: pointer;
   padding: 0;
+  text-decoration: none;
 }
 
 .book-action-link:hover {
