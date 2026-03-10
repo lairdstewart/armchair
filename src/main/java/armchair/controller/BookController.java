@@ -24,6 +24,7 @@ import armchair.service.OpenLibraryService;
 import armchair.service.RankingService;
 import armchair.service.SearchService;
 import armchair.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.slf4j.Logger;
@@ -1861,7 +1862,7 @@ public class BookController {
     }
 
     @GetMapping("/my-profile")
-    public String showProfile(Model model, HttpSession session) {
+    public String showProfile(Model model, HttpSession session, HttpServletRequest request) {
         OAuthIdentity identity = getOAuthIdentity();
         if (identity != null) {
             User existingUser = userRepository.findByOauthSubjectAndOauthProvider(identity.subject(), identity.provider()).orElse(null);
@@ -1893,6 +1894,12 @@ public class BookController {
         model.addAttribute("nonfictionCount", nonfictionCount);
         model.addAttribute("hasAnyBooks", fictionCount + nonfictionCount > 0);
         model.addAttribute("publishLists", user.isPublishLists());
+
+        int port = request.getServerPort();
+        String publicProfileUrl = request.getScheme() + "://" + request.getServerName()
+                + (port == 80 || port == 443 ? "" : ":" + port)
+                + "/user/" + user.getUsername();
+        model.addAttribute("publicProfileUrl", publicProfileUrl);
 
         return "profile";
     }
