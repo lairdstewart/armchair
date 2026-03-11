@@ -1511,14 +1511,6 @@ public class BookController {
         model.addAttribute("editionTotalCount", editionPagination.totalCount());
         model.addAttribute("editionPageSize", EDITION_PAGE_SIZE);
 
-        Long userId = getCurrentUserId();
-        if (userId != null) {
-            Ranking existing = rankingRepository.findByUserIdAndBookWorkOlid(userId, workOlid);
-            if (existing != null) {
-                model.addAttribute("libraryBookshelf", existing.getBookshelf().name());
-            }
-        }
-
         return "editions";
     }
 
@@ -1686,9 +1678,6 @@ public class BookController {
             bookResults = searchService.getRandomBooksExcluding(userBooks);
         }
         model.addAttribute("bookResults", bookResults);
-        if (currentUserId != null) {
-            model.addAttribute("userBooks", userBooks);
-        }
 
         // --- Profiles tab ---
         int pageSize = BOOKSHELF_PAGE_SIZE;

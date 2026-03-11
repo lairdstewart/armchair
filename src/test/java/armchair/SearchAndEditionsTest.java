@@ -166,24 +166,6 @@ class SearchAndEditionsTest extends BaseIntegrationTest {
                 .andExpect(model().attribute("editionPage", 1));
     }
 
-    @Test
-    void editionsShowsLibraryBadgeForOwnedBook() throws Exception {
-        User user = createOAuthUser("ed4", "oauth-ed-4");
-
-        createVerifiedBook("OL300W", "Already Have", "Author");
-        addRanking(user.getId(),
-                bookRepository.findByWorkOlid("OL300W").orElseThrow(),
-                Bookshelf.FICTION, BookCategory.LIKED, 0);
-
-        when(openLibraryService.getEditionsForWork(eq("OL300W"), anyInt(), anyInt())).thenReturn(List.of(
-                new OpenLibraryService.EditionResult("OL3M", "Already Have", null, null, null, null)));
-
-        mockMvc.perform(get("/editions/OL300W")
-                        .with(oauthUser("oauth-ed-4")))
-                .andExpect(status().isOk())
-                .andExpect(model().attribute("libraryBookshelf", "FICTION"));
-    }
-
     // ========== POST /select-book-edition ==========
 
     @Test

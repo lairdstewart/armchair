@@ -10,7 +10,6 @@
     <div class="page-content">
       <button type="button" onclick="window.location.href='/search?type=books'" class="btn-back">back to search</button>
       <h3>Editions of <span th:text="${workTitle}" th:remove="tag"></span></h3>
-      <a th:if="${libraryBookshelf != null}" th:href="@{/my-books(selectedBookshelf=${libraryBookshelf})}" class="book-action-link">view in library</a>
 
       <div th:if="${editionResults != null && !editionResults.isEmpty()}">
         <div th:each="edition : ${editionResults}" class="book-entry" style="margin-bottom: 4px; padding: 4px;">
