@@ -1646,6 +1646,7 @@ public class BookController {
             }
             return "redirect:/my-books?selectedBookshelf=" + bookshelfEnum.name();
         } else {
+            boolean wasRankAll = rankingState.isRankAll();
             int lowIndex = 0;
             int highIndex = currentList.size() - 1;
             int compareToIndex = (lowIndex + highIndex) / 2;
@@ -1657,6 +1658,7 @@ public class BookController {
             rankingState.setLowIndex(lowIndex);
             rankingState.setHighIndex(highIndex);
             rankingState.setMode(RankingMode.RANK);
+            rankingState.setRankAll(wasRankAll);
             saveRankingState(session, rankingState);
             return "redirect:/rank/compare";
         }
