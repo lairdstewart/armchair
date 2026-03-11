@@ -1485,6 +1485,7 @@ public class BookController {
                                @RequestParam(required = false) String author,
                                @RequestParam(required = false, defaultValue = "0") int page,
                                @RequestParam(required = false) Integer coverId,
+                               @RequestParam(required = false) String query,
                                Model model, HttpSession session) {
         addNavigationAttributes(model, "search");
 
@@ -1510,6 +1511,7 @@ public class BookController {
         model.addAttribute("editionTotalPages", editionPagination.totalPages());
         model.addAttribute("editionTotalCount", editionPagination.totalCount());
         model.addAttribute("editionPageSize", EDITION_PAGE_SIZE);
+        model.addAttribute("searchQuery", query);
 
         return "editions";
     }

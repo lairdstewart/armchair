@@ -8,7 +8,7 @@
   <body>
     <div th:replace="~{fragments :: navbar}"></div>
     <div class="page-content">
-      <button type="button" onclick="window.location.href='/search?type=books'" class="btn-back">back to search</button>
+      <a th:href="@{/search(type='books', query=${searchQuery})}" class="btn-back">back to search</a>
       <h3>Editions of <span th:text="${workTitle}" th:remove="tag"></span></h3>
 
       <div th:if="${editionResults != null && !editionResults.isEmpty()}">
@@ -50,7 +50,7 @@
       <div th:if="${editionTotalPages > 1}" style="margin-top: 15px; margin-bottom: 15px;">
         <th:block th:each="p : ${#numbers.sequence(0, editionTotalPages - 1)}">
           <span th:if="${p == editionPage}" th:text="${(p * editionPageSize + 1) + '-' + T(java.lang.Math).min((p + 1) * editionPageSize, editionTotalCount)}" style="font-weight: bold; margin-right: 8px;"></span>
-          <a th:if="${p != editionPage}" th:href="@{/editions/{workOlid}(workOlid=${workOlid}, title=${workTitle}, author=${workAuthor}, page=${p})}" class="book-action-link"
+          <a th:if="${p != editionPage}" th:href="@{/editions/{workOlid}(workOlid=${workOlid}, title=${workTitle}, author=${workAuthor}, page=${p}, query=${searchQuery})}" class="book-action-link"
              th:text="${(p * editionPageSize + 1) + '-' + T(java.lang.Math).min((p + 1) * editionPageSize, editionTotalCount)}" style="margin-right: 8px;"></a>
         </th:block>
       </div>
