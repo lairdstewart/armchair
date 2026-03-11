@@ -22,7 +22,7 @@
         <label for="review">Review (optional):</label><br />
         <textarea id="review" name="review" rows="4" cols="50" maxlength="5000" disabled placeholder="Write your thoughts about this book..." th:text="${rankingState.reviewBeingRanked}"></textarea>
       </div>
-      <button type="submit">Continue</button>
+      <button type="submit" class="btn">Continue</button>
     </form>
     <script>
       function toggleWantToRead(isWantToRead) {

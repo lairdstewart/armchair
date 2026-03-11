@@ -372,15 +372,9 @@ details[open] .review-toggle::before {
   text-decoration: underline;
 }
 
-/* Profile page buttons */
-.profile-buttons {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.profile-buttons button {
-  padding: 8px 12px;
+/* Reusable button */
+.btn {
+  padding: 2px 8px;
   border: 1px solid #ccc;
   background-color: white;
   color: black;
@@ -388,8 +382,15 @@ details[open] .review-toggle::before {
   cursor: pointer;
 }
 
-.profile-buttons button:hover {
+.btn:hover {
   background-color: #f0f0f0;
+}
+
+/* Profile page buttons */
+.profile-buttons {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
 .profile-buttons form {

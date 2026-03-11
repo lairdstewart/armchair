@@ -29,17 +29,17 @@
     <div class="profile-buttons" style="margin-top: 20px;">
 
       <a th:href="@{/import-goodreads}" style="text-decoration: none;">
-        <button type="button">Import from Goodreads</button>
+        <button type="button" class="btn">Import from Goodreads</button>
       </a>
       <a th:if="${hasAnyBooks}" th:href="@{/export-csv}" style="text-decoration: none;">
-        <button type="button">Export Book Lists to .csv</button>
+        <button type="button" class="btn">Export Book Lists to .csv</button>
       </a>
       <form th:action="@{/logout}" method="POST">
-        <button type="submit">Logout</button>
+        <button type="submit" class="btn">Logout</button>
       </form>
       <form th:action="@{/delete-profile}" method="POST"
             onsubmit="return confirm('Are you sure you want to delete your profile? This will permanently remove all your data and cannot be undone.');">
-        <button type="submit">Delete Profile</button>
+        <button type="submit" class="btn">Delete Profile</button>
       </form>
     </div>
     </div>
