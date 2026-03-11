@@ -99,6 +99,12 @@ public class RankingService {
                                      Bookshelf bookshelf, BookCategory category, int position, Long userId,
                                      Long unrankedRankingId) {
         deleteUnrankedRankingById(unrankedRankingId, userId);
+
+        Book book = bookService.findOrCreateBook(workOlid, null, title, author, null, null);
+        if (rankingRepository.existsByUserIdAndBookId(userId, book.getId())) {
+            return;
+        }
+
         List<Ranking> rankingsToShift = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(
             userId, bookshelf, category
         );
@@ -108,7 +114,6 @@ public class RankingService {
             rankingRepository.save(ranking);
         }
 
-        Book book = bookService.findOrCreateBook(workOlid, null, title, author, null, null);
         User userRef = userRepository.getReferenceById(userId);
         Ranking newRanking = new Ranking(userRef, book, bookshelf, category, position);
         newRanking.setReview(review);

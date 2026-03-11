@@ -1358,6 +1358,9 @@ public class BookController {
         if (userId == null) {
             return "redirect:/login";
         }
+        if (rankingRepository.existsByUserIdAndBookWorkOlid(userId, workOlid)) {
+            return "redirect:/my-books";
+        }
         rankingService.restoreAbandonedBook(userId, getRankingState(session));
         RankingState rankingState = getRankingState(session);
         if (rankingState == null) {
@@ -1428,6 +1431,11 @@ public class BookController {
     }
 
     private Ranking createWantToReadRanking(Long userId, Book book) {
+        if (rankingRepository.existsByUserIdAndBookId(userId, book.getId())) {
+            return rankingRepository.findByUserId(userId).stream()
+                .filter(r -> r.getBook().getId().equals(book.getId()))
+                .findFirst().orElse(null);
+        }
         List<Ranking> wantToReadRankings = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(userId, Bookshelf.WANT_TO_READ, BookCategory.UNRANKED);
         int position = wantToReadRankings.size();
         User userRef = userRepository.getReferenceById(userId);
@@ -1513,6 +1521,17 @@ public class BookController {
         model.addAttribute("editionPageSize", EDITION_PAGE_SIZE);
         model.addAttribute("searchQuery", query);
 
+        Long currentUserId = getCurrentUserId();
+        if (currentUserId != null) {
+            var allRankings = rankingService.fetchAllRankingsGrouped(currentUserId);
+            var userBooks = rankingService.buildUserBooksMap(allRankings);
+            model.addAttribute("userBooks", userBooks);
+            UserBookRank existingBook = userBooks.get(workOlid);
+            if (existingBook != null) {
+                model.addAttribute("existingBookshelf", existingBook.bookshelf().toUpperCase());
+            }
+        }
+
         return "editions";
     }
 
@@ -1528,6 +1547,9 @@ public class BookController {
         Long userId = getCurrentUserId();
         if (userId == null) {
             return "redirect:/login";
+        }
+        if (rankingRepository.existsByUserIdAndBookWorkOlid(userId, workOlid)) {
+            return "redirect:/my-books";
         }
         rankingService.restoreAbandonedBook(userId, getRankingState(session));
 
@@ -1606,6 +1628,10 @@ public class BookController {
         if (currentList.isEmpty()) {
             boolean wasRankAll = rankingState.isRankAll();
             Book book = bookService.findOrCreateBook(workOlid, null, bookName, author, null, null);
+            if (rankingRepository.existsByUserIdAndBookId(userId, book.getId())) {
+                clearRankingState(session);
+                return "redirect:/my-books";
+            }
             User userRef = userRepository.getReferenceById(userId);
             Ranking newRanking = new Ranking(userRef, book, bookshelfEnum, bookCategory, 0);
             newRanking.setReview(trimmedReview);
@@ -1760,6 +1786,7 @@ public class BookController {
         model.addAttribute("canFollow", isRealUser);
         model.addAttribute("userHasPublished", currentUser != null && currentUser.isPublishLists());
         model.addAttribute("pageSize", pageSize);
+        model.addAttribute("userBooks", userBooks);
 
         return "search";
     }
