@@ -11,13 +11,14 @@
 
 ### users
 
-User accounts (both OAuth and guest).
+User accounts (OAuth).
 
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
 | id | BIGINT | PK, auto-generated | |
 | username | VARCHAR | UNIQUE | Display name |
 | oauth_subject | VARCHAR | | Google's unique user ID (OpenID "sub" claim) |
+| oauth_provider | VARCHAR | | OAuth provider name (e.g., "google", "github") |
 | signup_number | BIGINT | | Which number signup (1, 2, 3...) |
 | signup_date | TIMESTAMP | | When user signed up |
 | is_curated | BOOLEAN | default false | True for curated/imported lists (e.g., NYT Best Books) |
