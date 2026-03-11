@@ -17,46 +17,41 @@ form {
   margin-bottom: 20px;
 }
 
-ol, ul.plain-list {
+.book-list {
   padding-left: 0;
   list-style: none;
 }
 
-ul.plain-list li {
-  margin-bottom: 4px;
-  padding: 4px;
-  /* Match the space taken by .book-number in ranked tabs (26px + 4px border + 8px margin) */
-  margin-left: 38px;
-}
-
-ul.plain-list li form {
-  margin-bottom: 0;
-  display: inline;
-}
-
-ol.book-list li {
+.book-list li {
   display: flex;
   align-items: flex-start;
   margin-bottom: 4px;
   padding: 4px;
 }
 
-ol.book-list li > .book-number {
+.book-list li > .book-number,
+.book-list li > .book-number-spacer {
   /* Center with book cover: (76px cover - 30px number) / 2 = 23px */
   margin-top: 23px;
 }
 
-ol.book-list li > .book-entry-wrapper,
-ol.book-list li > .book-review {
+.book-list li > .book-entry-wrapper,
+.book-list li > .book-review {
   flex: 1;
   min-width: 0;
   overflow: hidden;
 }
 
-ol.book-list li form {
+.book-list li form {
   margin-bottom: 0;
   display: flex;
   align-items: baseline;
+}
+
+.book-number-spacer {
+  width: 30px; /* 26px + 4px border */
+  margin-right: 8px;
+  flex-shrink: 0;
 }
 
 .book-number {

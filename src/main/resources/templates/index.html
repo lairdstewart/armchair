@@ -63,8 +63,9 @@
           <div id="tab-WANT_TO_READ" th:style="${selectedBookshelf == 'WANT_TO_READ' ? '' : 'display:none'}">
             <p th:if="${!hasWantToRead}"><em>Add books via the search tab or <a th:if="${isLoggedIn}" href="/import-goodreads">import from Goodreads</a><a th:unless="${isLoggedIn}" href="#" onclick="alert('Log in to Armchair to import books from Goodreads'); return false;">import from Goodreads</a>.</em></p>
             <div th:if="${hasWantToRead}">
-            <ul class="plain-list">
+            <ul class="book-list">
               <li th:each="book : ${wantToReadBooks}">
+                <span class="book-number-spacer"></span>
                 <th:block th:replace="~{fragments :: bookEntry(${book}, ~{:: .wtr-actions})}">
                   <span class="wtr-actions" th:remove="tag">
                     <form th:action="@{/mark-as-read}" method="POST" style="display: inline;">
@@ -84,11 +85,12 @@
 
           <!-- Unranked tab -->
           <div id="tab-UNRANKED" th:if="${hasUnranked}" th:style="${selectedBookshelf == 'UNRANKED' ? '' : 'display:none'}">
-            <form th:action="@{/rank-all}" method="POST" style="margin-bottom: 15px; margin-left: 38px;">
+            <form th:action="@{/rank-all}" method="POST" style="margin-bottom: 15px;">
               <button type="submit">categorize all</button>
             </form>
-            <ul class="plain-list">
+            <ul class="book-list">
               <li th:each="book : ${unrankedBooks}">
+                <span class="book-number-spacer"></span>
                 <th:block th:replace="~{fragments :: bookEntry(${book}, ~{:: .unranked-actions})}">
                   <span class="unranked-actions" th:remove="tag">
                     <form th:action="@{/rank-unranked-book}" method="POST" style="display: inline;">
