@@ -36,7 +36,7 @@
                 <span th:if="${book.workOlid() != null}" class="book-actions">
                   <a th:href="@{/editions/{workOlid}(workOlid=${book.workOlid()}, title=${book.title()}, author=${book.author()}, coverId=${book.coverId()}, query=${query})}" class="book-action-link"
                      th:text="${book.editionCount() != null ? 'browse ' + book.editionCount() + ' editions' : 'browse editions'}"></a>
-                  <a th:if="${book.bookUrl() != null}" th:href="${book.bookUrl()}" target="_blank" class="book-action-link">open library</a>
+                  <a th:if="${book.bookUrl() != null}" th:href="${book.bookUrl()}" target="_blank" class="book-action-link">openlibrary.org</a>
                 </span>
               </div>
               <img th:if="${book.coverUrl() != null}" class="book-cover" loading="lazy" th:src="${book.coverUrl()}" /><div th:if="${book.coverUrl() == null}" class="book-cover-placeholder">?</div>

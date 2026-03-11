@@ -332,6 +332,8 @@ details[open] .review-toggle::before {
   text-decoration: underline;
 }
 
+
+
 /* Login page */
 .login-buttons {
   display: flex;

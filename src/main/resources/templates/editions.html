@@ -39,7 +39,7 @@
                 <input type="hidden" name="returnUrl" th:value="${'/editions/' + workOlid + '?title=' + #strings.replace(workTitle, ' ', '+') + '&author=' + #strings.replace(workAuthor, ' ', '+') + '&page=' + editionPage}" />
                 <button type="submit" class="book-action-link">want to read</button>
               </form>
-              <a th:href="${'https://openlibrary.org/books/' + edition.editionOlid()}" target="_blank" class="book-action-link">open library</a>
+              <a th:href="${'https://openlibrary.org/books/' + edition.editionOlid()}" target="_blank" class="book-action-link">openlibrary.org</a>
             </span>
           </div>
           <img th:if="${edition.coverUrl() != null}" class="book-cover" loading="lazy" th:src="${edition.coverUrl()}" /><div th:if="${edition.coverUrl() == null}" class="book-cover-placeholder">?</div>
