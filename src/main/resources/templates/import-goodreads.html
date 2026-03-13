@@ -12,7 +12,7 @@
     <form th:action="@{/import-goodreads}" method="POST" enctype="multipart/form-data">
       <input type="file" name="file" accept=".csv" required style="width: 100%;" onchange="document.getElementById('import-btn').disabled = !this.files.length" />
       <br />
-      <button type="submit" id="import-btn" disabled style="margin-top: 10px;">Import Books</button>
+      <button type="submit" id="import-btn" class="btn" disabled style="margin-top: 10px;">Import Books</button>
     </form>
     <p th:if="${resultMessage != null}" th:text="${resultMessage}"></p>
     </div>

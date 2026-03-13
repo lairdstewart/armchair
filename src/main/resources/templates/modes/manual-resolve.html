@@ -9,7 +9,7 @@
     <p>Try searching with or without the author, or with a shorter version of the title.</p>
     <form th:action="@{/my-books}" method="GET" style="margin-bottom: 15px;">
       <input type="text" name="resolveQuery" th:value="${resolveQuery}" placeholder="Search Open Library..." style="width: 300px;" />
-      <button type="submit">Search</button>
+      <button type="submit" class="btn">Search</button>
     </form>
     <div th:if="${resolveNoResults}" style="margin-bottom: 15px; color: #888;">
       No results found, try a different search.

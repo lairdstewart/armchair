@@ -6,10 +6,10 @@
     <p><strong th:text="${duplicateResolveTitle}"></strong> is already ranked in your library.</p>
     <div style="margin-top: 15px;">
       <form th:action="@{/skip-duplicate-resolve}" method="POST" style="display: inline;">
-        <button type="submit">Skip</button>
+        <button type="submit" class="btn">Skip</button>
       </form>
       <form th:action="@{/rerank-duplicate-resolve}" method="POST" style="display: inline; margin-left: 10px;">
-        <button type="submit">Re-rank</button>
+        <button type="submit" class="btn">Re-rank</button>
       </form>
     </div>
   </th:block>

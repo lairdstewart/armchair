@@ -86,7 +86,7 @@
           <!-- Unranked tab -->
           <div id="tab-UNRANKED" th:if="${hasUnranked}" th:style="${selectedBookshelf == 'UNRANKED' ? '' : 'display:none'}">
             <form th:action="@{/rank-all}" method="POST" style="margin-bottom: 15px;">
-              <button type="submit">categorize all</button>
+              <button type="submit" class="btn">categorize all</button>
             </form>
             <ul class="book-list">
               <li th:each="book : ${unrankedBooks}">
