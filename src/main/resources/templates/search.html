@@ -58,6 +58,7 @@
           <div th:each="profile : ${profileSearchResults}" style="margin-bottom: 4px;">
             <a th:href="@{/user/{username}(username=${profile.username()})}" th:text="${profile.username()}"></a>
             <span th:text="${' ' + profile.stats()}"></span>
+            <span th:if="${canFollow}" style="color: #888;"> | </span>
             <form th:if="${canFollow && !profile.isFollowing() && userHasPublished}" th:action="@{/follow}" method="POST" style="display: inline;" class="book-actions">
               <input type="hidden" name="userId" th:value="${profile.userId()}" />
               <input type="hidden" name="returnUrl" th:value="${'/search?type=profiles' + (query != null ? '&query=' + query : '')}" />
@@ -89,6 +90,7 @@
           <div th:each="profile : ${followingResults}" style="margin-bottom: 4px;">
             <a th:href="@{/user/{username}(username=${profile.username()})}" th:text="${profile.username()}"></a>
             <span th:text="${' ' + profile.stats()}"></span>
+            <span th:if="${canFollow}" style="color: #888;"> | </span>
             <form th:if="${canFollow}" th:action="@{/unfollow}" method="POST" style="display: inline;" class="book-actions"
                   onsubmit="return confirm('Are you sure you want to unfollow this user?');">
               <input type="hidden" name="userId" th:value="${profile.userId()}" />
@@ -112,6 +114,7 @@
           <div th:each="profile : ${followerResults}" style="margin-bottom: 4px;">
             <a th:href="@{/user/{username}(username=${profile.username()})}" th:text="${profile.username()}"></a>
             <span th:text="${' ' + profile.stats()}"></span>
+            <span th:if="${canFollow}" style="color: #888;"> | </span>
             <form th:if="${canFollow && !profile.isFollowing() && userHasPublished}" th:action="@{/follow}" method="POST" style="display: inline;" class="book-actions">
               <input type="hidden" name="userId" th:value="${profile.userId()}" />
               <input type="hidden" name="returnUrl" value="/search?type=followers" />
