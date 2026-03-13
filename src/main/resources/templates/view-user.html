@@ -50,6 +50,9 @@
                   <input type="hidden" name="returnUrl" th:value="${'/user/' + viewUsername}" />
                   <button type="submit" class="book-action-link">want to read</button>
                 </form>
+                <a th:if="${rb.book().workOlid() != null && userBooks.containsKey(rb.book().workOlid())}"
+                   th:href="@{/my-books(selectedBookshelf=${userBooks.get(rb.book().workOlid()).bookshelf()})}"
+                   class="book-action-link">in library</a>
               </span>
             </th:block>
           </li>
@@ -71,6 +74,9 @@
                   <input type="hidden" name="returnUrl" th:value="${'/user/' + viewUsername}" />
                   <button type="submit" class="book-action-link">want to read</button>
                 </form>
+                <a th:if="${rb.book().workOlid() != null && userBooks.containsKey(rb.book().workOlid())}"
+                   th:href="@{/my-books(selectedBookshelf=${userBooks.get(rb.book().workOlid()).bookshelf()})}"
+                   class="book-action-link">in library</a>
               </span>
             </th:block>
           </li>
