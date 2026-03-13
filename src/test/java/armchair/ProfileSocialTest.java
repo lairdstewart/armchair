@@ -18,10 +18,8 @@ class ProfileSocialTest extends BaseIntegrationTest {
     // --- GET /user/{username} ---
 
     @Test
-    void viewPublicProfile() throws Exception {
+    void viewUserProfile() throws Exception {
         User target = createOAuthUser("publicuser", "oauth-public-1");
-        target.setPublishLists(true);
-        userRepository.save(target);
 
         Book dune = createVerifiedBook("OL100W", "Dune", "Frank Herbert");
         addRanking(target.getId(), dune, Bookshelf.FICTION, BookCategory.LIKED, 0);
@@ -43,23 +41,9 @@ class ProfileSocialTest extends BaseIntegrationTest {
     }
 
     @Test
-    void viewPrivateProfileRedirects() throws Exception {
-        User privateUser = createOAuthUser("privateuser", "oauth-private-1");
-        // publishLists defaults to false
-
-        createOAuthUser("viewer2", "oauth-viewer-3");
-
-        mockMvc.perform(get("/user/privateuser")
-                        .with(oauthUser("oauth-viewer-3")))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/"));
-    }
-
-    @Test
     void viewCuratedProfileAlwaysVisible() throws Exception {
         User curated = createOAuthUser("curatedlist", "oauth-curated-1");
         curated.setCurated(true);
-        // publishLists is false, but curated lists are always visible
         userRepository.save(curated);
 
         mockMvc.perform(get("/user/curatedlist")
@@ -153,36 +137,6 @@ class ProfileSocialTest extends BaseIntegrationTest {
                 .andExpect(status().is3xxRedirection());
 
         assertThat(followRepository.findByFollowerId(user.getId())).isEmpty();
-    }
-
-    // --- POST /toggle-publish-lists ---
-
-    @Test
-    void togglePublishListsOn() throws Exception {
-        User user = createOAuthUser("toggler1", "oauth-toggler-1");
-        assertThat(user.isPublishLists()).isFalse();
-
-        mockMvc.perform(post("/toggle-publish-lists")
-                        .with(oauthUser("oauth-toggler-1")).with(csrf()))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/my-profile"));
-
-        User updated = userRepository.findById(user.getId()).orElseThrow();
-        assertThat(updated.isPublishLists()).isTrue();
-    }
-
-    @Test
-    void togglePublishListsOff() throws Exception {
-        User user = createOAuthUser("toggler2", "oauth-toggler-2");
-        user.setPublishLists(true);
-        userRepository.save(user);
-
-        mockMvc.perform(post("/toggle-publish-lists")
-                        .with(oauthUser("oauth-toggler-2")).with(csrf()))
-                .andExpect(status().is3xxRedirection());
-
-        User updated = userRepository.findById(user.getId()).orElseThrow();
-        assertThat(updated.isPublishLists()).isFalse();
     }
 
     // --- POST /change-username ---
@@ -281,9 +235,7 @@ class ProfileSocialTest extends BaseIntegrationTest {
 
     @Test
     void searchProfilesWithQuery() throws Exception {
-        User user = createOAuthUser("searchable", "oauth-search-1");
-        user.setPublishLists(true);
-        userRepository.save(user);
+        createOAuthUser("searchable", "oauth-search-1");
 
         mockMvc.perform(get("/search-profiles")
                         .param("query", "searchable")
@@ -301,22 +253,9 @@ class ProfileSocialTest extends BaseIntegrationTest {
     }
 
     @Test
-    void searchProfilesExcludesPrivateUsers() throws Exception {
-        User privateUser = createOAuthUser("hiddenuser", "oauth-search-2");
-        // publishLists defaults to false
-
-        mockMvc.perform(get("/search-profiles")
-                        .param("query", "hiddenuser")
-                        .with(oauthUser("oauth-searcher-3")))
-                .andExpect(status().isOk())
-                .andExpect(model().attribute("searchResults", org.hamcrest.Matchers.empty()));
-    }
-
-    @Test
     void searchProfilesExcludesCuratedLists() throws Exception {
         User curated = createOAuthUser("curatedsearch", "oauth-search-3");
         curated.setCurated(true);
-        curated.setPublishLists(true);
         userRepository.save(curated);
 
         mockMvc.perform(get("/search-profiles")

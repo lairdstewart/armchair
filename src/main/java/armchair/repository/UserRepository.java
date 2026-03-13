@@ -18,30 +18,30 @@ public interface UserRepository extends JpaRepository<User, Long> {
     List<User> findByIsCurated(boolean isCurated);
     long countByIsCurated(boolean isCurated);
 
-    @Query("SELECT u FROM User u WHERE u.isCurated = false AND u.publishLists = true AND LOWER(u.username) LIKE LOWER(CONCAT('%', :username, '%'))")
+    @Query("SELECT u FROM User u WHERE u.isCurated = false AND LOWER(u.username) LIKE LOWER(CONCAT('%', :username, '%'))")
     List<User> searchPublicProfiles(@Param("username") String username);
 
-    @Query("SELECT u FROM User u WHERE u.isCurated = false AND u.publishLists = true ORDER BY u.signupDate DESC LIMIT 10")
+    @Query("SELECT u FROM User u WHERE u.isCurated = false ORDER BY u.signupDate DESC LIMIT 10")
     List<User> findRecentPublicProfiles();
 
-    @Query("SELECT u FROM User u WHERE u.isCurated = false AND u.publishLists = true ORDER BY u.signupDate DESC")
+    @Query("SELECT u FROM User u WHERE u.isCurated = false ORDER BY u.signupDate DESC")
     List<User> findAllPublicProfiles();
 
-    @Query("SELECT COUNT(u) FROM User u WHERE u.isCurated = false AND u.publishLists = true")
+    @Query("SELECT COUNT(u) FROM User u WHERE u.isCurated = false")
     long countPublicProfiles();
 
     @Query("SELECT u FROM User u WHERE u.isCurated = true AND LOWER(u.username) LIKE LOWER(CONCAT('%', :username, '%'))")
     List<User> searchCuratedProfiles(@Param("username") String username);
 
-    @Query("SELECT u FROM User u WHERE u.isCurated = false AND u.publishLists = true AND LOWER(u.username) LIKE LOWER(CONCAT('%', :username, '%')) AND u.id <> :excludeId")
+    @Query("SELECT u FROM User u WHERE u.isCurated = false AND LOWER(u.username) LIKE LOWER(CONCAT('%', :username, '%')) AND u.id <> :excludeId")
     List<User> searchPublicProfilesExcluding(@Param("username") String username, @Param("excludeId") Long excludeId);
 
-    @Query("SELECT u FROM User u WHERE u.isCurated = false AND u.publishLists = true AND u.id <> :excludeId ORDER BY u.signupDate DESC LIMIT 10")
+    @Query("SELECT u FROM User u WHERE u.isCurated = false AND u.id <> :excludeId ORDER BY u.signupDate DESC LIMIT 10")
     List<User> findRecentPublicProfilesExcluding(@Param("excludeId") Long excludeId);
 
-    @Query("SELECT u FROM User u WHERE u.isCurated = false AND u.publishLists = true AND u.id <> :excludeId ORDER BY u.signupDate DESC")
+    @Query("SELECT u FROM User u WHERE u.isCurated = false AND u.id <> :excludeId ORDER BY u.signupDate DESC")
     List<User> findAllPublicProfilesExcluding(@Param("excludeId") Long excludeId);
 
-    @Query("SELECT COUNT(u) FROM User u WHERE u.isCurated = false AND u.publishLists = true AND u.id <> :excludeId")
+    @Query("SELECT COUNT(u) FROM User u WHERE u.isCurated = false AND u.id <> :excludeId")
     long countPublicProfilesExcluding(@Param("excludeId") Long excludeId);
 }

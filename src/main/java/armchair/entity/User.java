@@ -28,8 +28,6 @@ public class User {
 
     private boolean isCurated = false; // True if this is a curated/imported list (e.g., NYT Best Books)
 
-    private boolean publishLists = false; // True if user wants their lists visible in Explore Profiles
-
     public User() {}
 
     public User(String username) {
@@ -103,11 +101,4 @@ public class User {
         isCurated = curated;
     }
 
-    public boolean isPublishLists() {
-        return publishLists;
-    }
-
-    public void setPublishLists(boolean publishLists) {
-        this.publishLists = publishLists;
-    }
 }

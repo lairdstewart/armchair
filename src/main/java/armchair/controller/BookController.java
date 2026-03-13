@@ -1786,7 +1786,6 @@ public class BookController {
         }
 
         model.addAttribute("canFollow", isRealUser);
-        model.addAttribute("userHasPublished", currentUser != null && currentUser.isPublishLists());
         model.addAttribute("pageSize", pageSize);
         model.addAttribute("userBooks", userBooks);
 
@@ -1866,10 +1865,6 @@ public class BookController {
             return "redirect:/";
         }
 
-        if (!user.isCurated() && !user.isPublishLists()) {
-            return "redirect:/";
-        }
-
         addNavigationAttributes(model, "search");
 
         Map<Bookshelf, Map<BookCategory, List<Ranking>>> viewedUserRankings = rankingService.fetchAllRankingsGrouped(user.getId());
@@ -1925,8 +1920,6 @@ public class BookController {
         model.addAttribute("fictionCount", fictionCount);
         model.addAttribute("nonfictionCount", nonfictionCount);
         model.addAttribute("hasAnyBooks", fictionCount + nonfictionCount > 0);
-        model.addAttribute("publishLists", user.isPublishLists());
-
         int port = request.getServerPort();
         String publicProfileUrl = request.getScheme() + "://" + request.getServerName()
                 + (port == 80 || port == 443 ? "" : ":" + port)
@@ -1981,24 +1974,6 @@ public class BookController {
             .ifPresent(followRepository::delete);
 
         return isSafeRedirectUrl(returnUrl) ? "redirect:" + returnUrl : "redirect:/search?type=profiles";
-    }
-
-    @PostMapping("/toggle-publish-lists")
-    public String togglePublishLists(HttpSession session) {
-        OAuthIdentity identity = getOAuthIdentity();
-        if (identity == null) {
-            return "redirect:/";
-        }
-
-        User user = userRepository.findByOauthSubjectAndOauthProvider(identity.subject(), identity.provider()).orElse(null);
-        if (user == null) {
-            return "redirect:/";
-        }
-
-        user.setPublishLists(!user.isPublishLists());
-        userRepository.save(user);
-
-        return "redirect:/my-profile";
     }
 
     @GetMapping("/setup-username")

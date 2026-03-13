@@ -59,14 +59,11 @@
             <a th:href="@{/user/{username}(username=${profile.username()})}" th:text="${profile.username()}"></a>
             <span th:text="${' ' + profile.stats()}"></span>
             <span th:if="${canFollow}" style="color: #888;"> | </span>
-            <form th:if="${canFollow && !profile.isFollowing() && userHasPublished}" th:action="@{/follow}" method="POST" style="display: inline;" class="book-actions">
+            <form th:if="${canFollow && !profile.isFollowing()}" th:action="@{/follow}" method="POST" style="display: inline;" class="book-actions">
               <input type="hidden" name="userId" th:value="${profile.userId()}" />
               <input type="hidden" name="returnUrl" th:value="${'/search?type=profiles' + (query != null ? '&query=' + query : '')}" />
               <button type="submit" class="book-action-link">follow</button>
             </form>
-            <span th:if="${canFollow && !profile.isFollowing() && !userHasPublished}" class="book-actions">
-              <button type="button" class="book-action-link" onclick="alert('You must publish your lists before you can follow other users. Go to your Profile to enable this.');">follow</button>
-            </span>
             <form th:if="${canFollow && profile.isFollowing()}" th:action="@{/unfollow}" method="POST" style="display: inline;" class="book-actions"
                   onsubmit="return confirm('Are you sure you want to unfollow this user?');">
               <input type="hidden" name="userId" th:value="${profile.userId()}" />
@@ -115,14 +112,11 @@
             <a th:href="@{/user/{username}(username=${profile.username()})}" th:text="${profile.username()}"></a>
             <span th:text="${' ' + profile.stats()}"></span>
             <span th:if="${canFollow}" style="color: #888;"> | </span>
-            <form th:if="${canFollow && !profile.isFollowing() && userHasPublished}" th:action="@{/follow}" method="POST" style="display: inline;" class="book-actions">
+            <form th:if="${canFollow && !profile.isFollowing()}" th:action="@{/follow}" method="POST" style="display: inline;" class="book-actions">
               <input type="hidden" name="userId" th:value="${profile.userId()}" />
               <input type="hidden" name="returnUrl" value="/search?type=followers" />
               <button type="submit" class="book-action-link">follow</button>
             </form>
-            <span th:if="${canFollow && !profile.isFollowing() && !userHasPublished}" class="book-actions">
-              <button type="button" class="book-action-link" onclick="alert('You must publish your lists before you can follow other users. Go to your Profile to enable this.');">follow</button>
-            </span>
             <form th:if="${canFollow && profile.isFollowing()}" th:action="@{/unfollow}" method="POST" style="display: inline;" class="book-actions"
                   onsubmit="return confirm('Are you sure you want to unfollow this user?');">
               <input type="hidden" name="userId" th:value="${profile.userId()}" />
