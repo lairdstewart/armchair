@@ -42,7 +42,7 @@
                   </form>
                   <a th:if="${book.workOlid() != null && userBooks.containsKey(book.workOlid())}"
                      th:href="@{/my-books(selectedBookshelf=${userBooks.get(book.workOlid()).bookshelf()})}"
-                     class="book-action-link">in library</a>
+                     class="book-action-link">view in library</a>
                 </span>
               </th:block>
             </li>
@@ -73,7 +73,7 @@
                   </form>
                   <a th:if="${book.workOlid() != null && userBooks.containsKey(book.workOlid())}"
                      th:href="@{/my-books(selectedBookshelf=${userBooks.get(book.workOlid()).bookshelf()})}"
-                     class="book-action-link">in library</a>
+                     class="book-action-link">view in library</a>
                 </span>
               </th:block>
             </li>
