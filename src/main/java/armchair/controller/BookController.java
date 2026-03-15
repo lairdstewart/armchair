@@ -389,6 +389,9 @@ public class BookController {
         boolean hasAnyBooks = hasFiction || hasNonfiction || hasWantToRead || hasUnranked;
 
         String effectiveSelectedBookshelf = selectedBookshelf;
+        if (effectiveSelectedBookshelf != null && !effectiveSelectedBookshelf.isEmpty()) {
+            effectiveSelectedBookshelf = effectiveSelectedBookshelf.toUpperCase();
+        }
         if (effectiveSelectedBookshelf == null || effectiveSelectedBookshelf.isEmpty()) {
             if (hasFiction) {
                 effectiveSelectedBookshelf = "FICTION";

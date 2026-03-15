@@ -156,7 +156,7 @@ public class RankingService {
             int rank = 1;
             for (BookCategory category : List.of(BookCategory.LIKED, BookCategory.OK, BookCategory.DISLIKED)) {
                 for (Ranking ranking : getRankings(grouped, bookshelf, category)) {
-                    UserBookRank ubr = new UserBookRank(ranking.getId(), rank, category.name().toLowerCase(), bookshelf.name().toLowerCase());
+                    UserBookRank ubr = new UserBookRank(ranking.getId(), rank, category.name().toLowerCase(), bookshelf.name());
                     putBookKeys(userBooks, ranking.getBook(), ubr);
                     rank++;
                 }
@@ -164,12 +164,12 @@ public class RankingService {
         }
 
         for (Ranking ranking : getRankings(grouped, Bookshelf.WANT_TO_READ, BookCategory.UNRANKED)) {
-            UserBookRank ubr = new UserBookRank(ranking.getId(), 0, "want_to_read", "want_to_read");
+            UserBookRank ubr = new UserBookRank(ranking.getId(), 0, "want_to_read", "WANT_TO_READ");
             putBookKeys(userBooks, ranking.getBook(), ubr);
         }
 
         for (Ranking ranking : getRankings(grouped, Bookshelf.UNRANKED, BookCategory.UNRANKED)) {
-            UserBookRank ubr = new UserBookRank(ranking.getId(), 0, "unranked", "unranked");
+            UserBookRank ubr = new UserBookRank(ranking.getId(), 0, "unranked", "UNRANKED");
             putBookKeys(userBooks, ranking.getBook(), ubr);
         }
 
