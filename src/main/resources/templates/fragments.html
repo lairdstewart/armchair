@@ -58,7 +58,7 @@
               <span class="book-actions">
                 <span class="review-toggle"></span>
                 <th:block th:if="${actions != null}" th:replace="${actions}" />
-                <a th:if="${book.bookUrl() != null}" th:href="${book.bookUrl()}" target="_blank" class="book-action-link">openlibrary.org</a>
+                <a th:if="${book.bookUrl() != null}" th:href="${book.bookUrl()}" onclick="event.stopPropagation()" target="_blank" class="book-action-link">openlibrary.org</a>
               </span>
             </div>
             <img th:if="${book.coverUrl() != null}" class="book-cover" loading="lazy" th:src="${book.coverUrl()}" />
