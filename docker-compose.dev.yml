@@ -1,0 +1,13 @@
+services:
+  db:
+    image: postgres:17
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: armchair
+      POSTGRES_USER: armchair
+      POSTGRES_PASSWORD: armchair
+    volumes:
+      - armchair-db:/var/lib/postgresql/data
+volumes:
+  armchair-db:

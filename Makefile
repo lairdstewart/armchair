@@ -1,15 +1,22 @@
 ENV_FILE := ../.env
+LOCAL_DB_URL := jdbc:postgresql://localhost:5432/armchair?user=armchair&password=armchair
 
 check-env:
 	@test -f $(ENV_FILE) || (echo "Error: $(ENV_FILE) not found. Copy .env.example to ../.env and fill in values." && exit 1)
 
-run: check-env
-	set -a && . $(ENV_FILE) && set +a && ./mvnw spring-boot:run -Dspring-boot.run.arguments="--server.port=8080 --spring.profiles.active=dev"
+db-up:
+	docker compose -f docker-compose.dev.yml up -d
 
-run-no-auth: check-env
+db-down:
+	docker compose -f docker-compose.dev.yml down
+
+run: check-env db-up
+	set -a && . $(ENV_FILE) && set +a && DATABASE_URL="$(LOCAL_DB_URL)" ./mvnw spring-boot:run -Dspring-boot.run.arguments="--server.port=8080 --spring.profiles.active=dev"
+
+run-no-auth: check-env db-up
 	PORT=$$(for p in $$(seq 9001 9010); do nc -z localhost $$p 2>/dev/null || { echo $$p; break; }; done) && \
 	set -a && . $(ENV_FILE) && set +a && \
-	./mvnw spring-boot:run -Dspring-boot.run.arguments="--server.port=$$PORT --spring.profiles.active=dev"
+	DATABASE_URL="$(LOCAL_DB_URL)" ./mvnw spring-boot:run -Dspring-boot.run.arguments="--server.port=$$PORT --spring.profiles.active=dev"
 
 compile:
 	./mvnw compile -q
