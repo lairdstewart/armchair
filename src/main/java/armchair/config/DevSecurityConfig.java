@@ -75,6 +75,14 @@ public class DevSecurityConfig {
                 return;
             }
 
+            if ("/oauth2/authorization/microsoft".equals(path)) {
+                mockLogin(request, response,
+                    Map.of("sub", "dev-microsoft-subject", "name", "Dev Microsoft User"),
+                    "sub", "microsoft");
+                response.sendRedirect(consumePostLoginRedirect(request));
+                return;
+            }
+
             filterChain.doFilter(request, response);
         }
 
