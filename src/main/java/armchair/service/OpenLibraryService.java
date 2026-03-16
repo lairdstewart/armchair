@@ -42,7 +42,7 @@ public class OpenLibraryService {
 
     public OpenLibraryService(RestTemplateBuilder restTemplateBuilder) {
         this.restTemplate = restTemplateBuilder
-            .defaultHeader("User-Agent", "Armchair (armchair@lairdstewart.com)")
+            .defaultHeader("User-Agent", "Armchair (help@armchairlist.com)")
             .setConnectTimeout(Duration.ofSeconds(5))
             .setReadTimeout(Duration.ofSeconds(10))
             .build();
