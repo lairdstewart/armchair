@@ -387,6 +387,16 @@ details[open] .review-toggle::before {
   background-color: #e8e8e8;
 }
 
+.btn:disabled {
+  background-color: #e0e0e0;
+  color: #666;
+  cursor: default;
+}
+
+.btn:disabled:hover {
+  background-color: #e0e0e0;
+}
+
 /* Profile page buttons */
 .profile-buttons {
   display: flex;

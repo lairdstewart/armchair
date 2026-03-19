@@ -10,7 +10,9 @@
     <h3>Import from Goodreads</h3>
     <p>In Goodreads go to "My Books", then "Import and Export", and click "Export Library" to download a .csv.</p>
     <form th:action="@{/import-goodreads}" method="POST" enctype="multipart/form-data">
-      <input type="file" name="file" accept=".csv" required style="width: 100%;" onchange="document.getElementById('import-btn').disabled = !this.files.length" />
+      <input type="file" name="file" id="file-input" accept=".csv" required style="display: none;" onchange="document.getElementById('import-btn').disabled = !this.files.length; document.getElementById('file-name').textContent = this.files.length ? this.files[0].name : 'No file chosen';" />
+      <label for="file-input" class="btn">Choose file</label>
+      <span id="file-name" style="margin-left: 8px;">No file chosen</span>
       <br />
       <button type="submit" id="import-btn" class="btn" disabled style="margin-top: 10px;">Import Books</button>
     </form>
