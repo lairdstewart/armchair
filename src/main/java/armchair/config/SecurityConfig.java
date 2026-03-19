@@ -1,5 +1,7 @@
 package armchair.config;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -27,6 +29,8 @@ import java.util.Map;
 @EnableWebSecurity
 @Profile("!dev")
 public class SecurityConfig {
+
+    private static final Logger logger = LoggerFactory.getLogger(SecurityConfig.class);
 
     @Autowired
     private ClientRegistrationRepository clientRegistrationRepository;
@@ -109,6 +113,11 @@ public class SecurityConfig {
             .oauth2Login(oauth2 -> oauth2
                 .loginPage("/login")
                 .successHandler(postLoginRedirectHandler())
+                .failureHandler((request, response, exception) -> {
+                    logger.error("OAuth2 authentication failed: {} - {}",
+                        exception.getClass().getSimpleName(), exception.getMessage());
+                    response.sendRedirect("/error");
+                })
                 .authorizationEndpoint(authorization -> authorization
                     .authorizationRequestResolver(customAuthorizationRequestResolver())
                 )
