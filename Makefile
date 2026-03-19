@@ -5,7 +5,7 @@ check-env:
 	@test -f $(ENV_FILE) || (echo "Error: $(ENV_FILE) not found. Copy .env.example to ../.env and fill in values." && exit 1)
 
 db-up:
-	docker compose -f docker-compose.dev.yml up -d
+	@nc -z localhost 5432 2>/dev/null || docker compose -f docker-compose.dev.yml up -d
 
 db-down:
 	docker compose -f docker-compose.dev.yml down

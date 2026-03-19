@@ -1211,6 +1211,7 @@ public class BookController {
         return "redirect:" + url;
     }
 
+    @Transactional
     @PostMapping("/back-to-resolve")
     public String backToResolve(HttpSession session) {
         Long userId = getCurrentUserId();
@@ -1221,6 +1222,26 @@ public class BookController {
         if (rs == null || rs.getTitleBeingRanked() == null) {
             return "redirect:/my-books";
         }
+
+        if (rs.getOriginalResolveTitle() != null) {
+            Book book = bookService.findOrCreateBook(rs.getWorkOlidBeingRanked(),
+                null, rs.getTitleBeingRanked(), rs.getAuthorBeingRanked(), null, null);
+            book.setTitle(rs.getOriginalResolveTitle());
+            book.setAuthor(rs.getOriginalResolveAuthor());
+            book.setWorkOlid(rs.getOriginalResolveWorkOlid());
+            book.setEditionOlid(rs.getOriginalResolveEditionOlid());
+            bookRepository.save(book);
+
+            rs.setTitleBeingRanked(rs.getOriginalResolveTitle());
+            rs.setAuthorBeingRanked(rs.getOriginalResolveAuthor());
+            rs.setWorkOlidBeingRanked(rs.getOriginalResolveWorkOlid());
+
+            rs.setOriginalResolveTitle(null);
+            rs.setOriginalResolveAuthor(null);
+            rs.setOriginalResolveWorkOlid(null);
+            rs.setOriginalResolveEditionOlid(null);
+        }
+
         rs.setMode(RankingMode.RESOLVE);
         saveRankingState(session, rs);
         session.removeAttribute(SESSION_SKIP_RESOLVE);
@@ -1259,6 +1280,12 @@ public class BookController {
 
         Book existingBook = bookService.findOrCreateBook(rankingState.getWorkOlidBeingRanked(),
             null, rankingState.getTitleBeingRanked(), rankingState.getAuthorBeingRanked(), null, null);
+
+        rankingState.setOriginalResolveTitle(existingBook.getTitle());
+        rankingState.setOriginalResolveAuthor(existingBook.getAuthor());
+        rankingState.setOriginalResolveWorkOlid(existingBook.getWorkOlid());
+        rankingState.setOriginalResolveEditionOlid(existingBook.getEditionOlid());
+
         existingBook.setWorkOlid(workOlid);
         existingBook.setEditionOlid(editionOlid);
         existingBook.setTitle(title);
@@ -1641,6 +1668,7 @@ public class BookController {
         if (currentList.isEmpty()) {
             boolean wasRankAll = rankingState.isRankAll();
             Book book = bookService.findOrCreateBook(workOlid, null, bookName, author, null, null);
+            rankingService.deleteUnrankedRankingById(rankingState.getUnrankedRankingId(), userId);
             if (rankingRepository.existsByUserIdAndBookId(userId, book.getId())) {
                 clearRankingState(session);
                 return "redirect:/my-books";
@@ -1649,7 +1677,6 @@ public class BookController {
             Ranking newRanking = new Ranking(userRef, book, bookshelfEnum, bookCategory, 0);
             newRanking.setReview(trimmedReview);
             rankingRepository.save(newRanking);
-            rankingService.deleteUnrankedRankingById(rankingState.getUnrankedRankingId(), userId);
             clearRankingState(session);
             session.removeAttribute(SESSION_BOOK_SEARCH_RESULTS);
             session.removeAttribute(SESSION_SKIP_RESOLVE);

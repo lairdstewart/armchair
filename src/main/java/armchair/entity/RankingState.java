@@ -33,6 +33,12 @@ public class RankingState implements Serializable {
     // ID of the UNRANKED ranking row to delete atomically when ranking completes
     private Long unrankedRankingId;
 
+    // Pre-resolve book state so /back-to-resolve can undo mutations
+    private String originalResolveTitle;
+    private String originalResolveAuthor;
+    private String originalResolveWorkOlid;
+    private String originalResolveEditionOlid;
+
     public RankingState() {}
 
     public RankingState(String workOlidBeingRanked, String titleBeingRanked, String authorBeingRanked,
@@ -209,5 +215,37 @@ public class RankingState implements Serializable {
 
     public void setUnrankedRankingId(Long unrankedRankingId) {
         this.unrankedRankingId = unrankedRankingId;
+    }
+
+    public String getOriginalResolveTitle() {
+        return originalResolveTitle;
+    }
+
+    public void setOriginalResolveTitle(String originalResolveTitle) {
+        this.originalResolveTitle = originalResolveTitle;
+    }
+
+    public String getOriginalResolveAuthor() {
+        return originalResolveAuthor;
+    }
+
+    public void setOriginalResolveAuthor(String originalResolveAuthor) {
+        this.originalResolveAuthor = originalResolveAuthor;
+    }
+
+    public String getOriginalResolveWorkOlid() {
+        return originalResolveWorkOlid;
+    }
+
+    public void setOriginalResolveWorkOlid(String originalResolveWorkOlid) {
+        this.originalResolveWorkOlid = originalResolveWorkOlid;
+    }
+
+    public String getOriginalResolveEditionOlid() {
+        return originalResolveEditionOlid;
+    }
+
+    public void setOriginalResolveEditionOlid(String originalResolveEditionOlid) {
+        this.originalResolveEditionOlid = originalResolveEditionOlid;
     }
 }
