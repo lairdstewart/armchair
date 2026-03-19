@@ -112,8 +112,9 @@ if ! git merge --squash "$BRANCH" 2>&1; then
 fi
 
 # --- Commit the squash ---
-SUBJECT=$(git log --format='%s' "${BRANCH}" -1)
-git commit -m "$SUBJECT"
+# git merge --squash prepares .git/SQUASH_MSG with all combined commit messages.
+# Use --no-edit to accept that message as-is.
+git commit --no-edit
 
 echo ""
 echo "Squash-merged $BRANCH into $(git branch --show-current) successfully."
