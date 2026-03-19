@@ -35,7 +35,7 @@ public class DevDataInitializer implements CommandLineRunner {
             } else {
                 User devUser = new User("dev", "dev-user-subject", "google");
                 devUser.setSignupDate(LocalDateTime.now());
-                devUser.setSignupNumber(0L);
+                devUser.setSignupNumber(1L);
                 userRepository.save(devUser);
                 log.info("Dev mode: created dev user");
             }
@@ -50,7 +50,7 @@ public class DevDataInitializer implements CommandLineRunner {
             } else {
                 User devGithubUser = new User("dev-github", "12345", "github");
                 devGithubUser.setSignupDate(LocalDateTime.now());
-                devGithubUser.setSignupNumber(1L);
+                devGithubUser.setSignupNumber(2L);
                 userRepository.save(devGithubUser);
                 log.info("Dev mode: created dev-github user");
             }
