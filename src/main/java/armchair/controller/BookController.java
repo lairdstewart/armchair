@@ -8,12 +8,16 @@ import armchair.dto.UserBookRank;
 import armchair.entity.Book;
 import armchair.entity.BookCategory;
 import armchair.entity.Bookshelf;
+import armchair.entity.CuratedList;
+import armchair.entity.CuratedRanking;
 import armchair.entity.Follow;
 import armchair.entity.Ranking;
 import armchair.entity.RankingMode;
 import armchair.entity.RankingState;
 import armchair.entity.User;
 import armchair.repository.BookRepository;
+import armchair.repository.CuratedListRepository;
+import armchair.repository.CuratedRankingRepository;
 import armchair.repository.FollowRepository;
 import armchair.repository.RankingRepository;
 import armchair.repository.UserRepository;
@@ -161,6 +165,12 @@ public class BookController {
 
     @Autowired
     private RecommendationAlgorithm recommendationAlgorithm;
+
+    @Autowired
+    private CuratedListRepository curatedListRepository;
+
+    @Autowired
+    private CuratedRankingRepository curatedRankingRepository;
 
     private static void clearDuplicateResolveSession(HttpSession session) {
         session.removeAttribute(SESSION_DUPLICATE_RESOLVE_TITLE);
@@ -1773,13 +1783,13 @@ public class BookController {
 
         // --- Curated tab ---
         if ("curated".equals(type)) {
-            List<User> allCurated;
+            List<CuratedList> allCurated;
             if (query != null && !query.isBlank()) {
-                allCurated = userRepository.searchCuratedProfiles(query.trim());
+                allCurated = curatedListRepository.searchByUsername(query.trim());
             } else {
-                allCurated = userRepository.findByIsCurated(true);
+                allCurated = curatedListRepository.findAll();
             }
-            PaginationResult<User> curatedPagination = PaginationResult.of(allCurated, page, pageSize);
+            PaginationResult<CuratedList> curatedPagination = PaginationResult.of(allCurated, page, pageSize);
             model.addAttribute("curatedResults", curatedPagination.pageItems());
             model.addAttribute("curatedPage", curatedPagination.page());
             model.addAttribute("curatedTotalPages", curatedPagination.totalPages());
@@ -1811,7 +1821,7 @@ public class BookController {
             List<ProfileDisplay> profileDisplays = recentProfiles.stream()
                 .map(userService::createProfileDisplay)
                 .toList();
-            long totalProfiles = userRepository.countPublicProfiles();
+            long totalProfiles = userRepository.count();
             long moreCount = Math.max(0, totalProfiles - recentProfiles.size());
             model.addAttribute("recentProfiles", profileDisplays);
             model.addAttribute("moreProfilesCount", moreCount);
@@ -1863,16 +1873,28 @@ public class BookController {
 
     @GetMapping("/user/{username}")
     public String viewUser(@PathVariable String username, Model model, HttpSession session) {
-        User user = userRepository.findByUsername(username).orElse(null);
-        if (user == null) {
-            return "redirect:/";
-        }
-
         addNavigationAttributes(model, "search");
 
-        Map<Bookshelf, Map<BookCategory, List<Ranking>>> viewedUserRankings = rankingService.fetchAllRankingsGrouped(user.getId());
-        BookLists fictionBooks = rankingService.getBookLists(Bookshelf.FICTION, viewedUserRankings);
-        BookLists nonfictionBooks = rankingService.getBookLists(Bookshelf.NONFICTION, viewedUserRankings);
+        User user = userRepository.findByUsername(username).orElse(null);
+        boolean isCurated = false;
+        BookLists fictionBooks;
+        BookLists nonfictionBooks;
+
+        if (user != null) {
+            Map<Bookshelf, Map<BookCategory, List<Ranking>>> viewedUserRankings = rankingService.fetchAllRankingsGrouped(user.getId());
+            fictionBooks = rankingService.getBookLists(Bookshelf.FICTION, viewedUserRankings);
+            nonfictionBooks = rankingService.getBookLists(Bookshelf.NONFICTION, viewedUserRankings);
+        } else {
+            CuratedList curatedList = curatedListRepository.findByUsername(username).orElse(null);
+            if (curatedList == null) {
+                return "redirect:/";
+            }
+            isCurated = true;
+            Map<Bookshelf, Map<BookCategory, List<CuratedRanking>>> viewedRankings = rankingService.fetchAllCuratedRankingsGrouped(curatedList.getId());
+            fictionBooks = rankingService.getBookLists(Bookshelf.FICTION, viewedRankings);
+            nonfictionBooks = rankingService.getBookLists(Bookshelf.NONFICTION, viewedRankings);
+        }
+
         boolean hasFiction = !fictionBooks.liked().isEmpty() || !fictionBooks.ok().isEmpty() || !fictionBooks.disliked().isEmpty() || !fictionBooks.unranked().isEmpty();
         boolean hasNonfiction = !nonfictionBooks.liked().isEmpty() || !nonfictionBooks.ok().isEmpty() || !nonfictionBooks.disliked().isEmpty() || !nonfictionBooks.unranked().isEmpty();
 
@@ -1880,12 +1902,12 @@ public class BookController {
         Map<Bookshelf, Map<BookCategory, List<Ranking>>> currentUserRankings = currentUserId != null ? rankingService.fetchAllRankingsGrouped(currentUserId) : Map.of();
         Map<String, UserBookRank> userBooks = currentUserId != null ? rankingService.buildUserBooksMap(currentUserRankings) : Map.of();
 
-        model.addAttribute("viewUsername", user.getUsername());
+        model.addAttribute("viewUsername", username);
         model.addAttribute("fictionRankedBooks", fictionBooks.toRankedList());
         model.addAttribute("nonfictionRankedBooks", nonfictionBooks.toRankedList());
         model.addAttribute("hasFiction", hasFiction);
         model.addAttribute("hasNonfiction", hasNonfiction);
-        model.addAttribute("isCurated", user.isCurated());
+        model.addAttribute("isCurated", isCurated);
         model.addAttribute("userBooks", userBooks);
 
         return "view-user";
@@ -2016,7 +2038,7 @@ public class BookController {
 
         User newUser = new User(username, identity.subject(), identity.provider());
 
-        long realUserCount = userRepository.countByIsCurated(false);
+        long realUserCount = userRepository.count();
         newUser.setSignupNumber(realUserCount + 1);
         newUser.setSignupDate(LocalDateTime.now());
 

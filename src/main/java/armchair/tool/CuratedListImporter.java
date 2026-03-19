@@ -3,10 +3,10 @@ package armchair.tool;
 import armchair.entity.Book;
 import armchair.entity.BookCategory;
 import armchair.entity.Bookshelf;
-import armchair.entity.Ranking;
-import armchair.entity.User;
-import armchair.repository.RankingRepository;
-import armchair.repository.UserRepository;
+import armchair.entity.CuratedList;
+import armchair.entity.CuratedRanking;
+import armchair.repository.CuratedListRepository;
+import armchair.repository.CuratedRankingRepository;
 import armchair.service.BookService;
 import armchair.service.OpenLibraryService;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -53,13 +53,13 @@ public class CuratedListImporter {
         app.setWebApplicationType(WebApplicationType.NONE);
 
         try (ConfigurableApplicationContext context = app.run(args)) {
-            UserRepository userRepository = context.getBean(UserRepository.class);
+            CuratedListRepository curatedListRepository = context.getBean(CuratedListRepository.class);
             BookService bookService = context.getBean(BookService.class);
-            RankingRepository rankingRepository = context.getBean(RankingRepository.class);
+            CuratedRankingRepository curatedRankingRepository = context.getBean(CuratedRankingRepository.class);
             OpenLibraryService openLibraryService = context.getBean(OpenLibraryService.class);
 
             try {
-                importFromJson(filePath, userRepository, bookService, rankingRepository, openLibraryService);
+                importFromJson(filePath, curatedListRepository, bookService, curatedRankingRepository, openLibraryService);
             } catch (ImportException e) {
                 log.error(e.getMessage());
                 System.exit(1);
@@ -153,29 +153,28 @@ public class CuratedListImporter {
         return new ParsedJsonList(username, result);
     }
 
-    static void importFromJson(String path, UserRepository userRepository,
+    static void importFromJson(String path, CuratedListRepository curatedListRepository,
                                        BookService bookService,
-                                       RankingRepository rankingRepository, OpenLibraryService openLibraryService) {
+                                       CuratedRankingRepository curatedRankingRepository, OpenLibraryService openLibraryService) {
         ParsedJsonList parsed = parseJsonFile(path);
-        importParsedList(parsed, userRepository, bookService, rankingRepository, openLibraryService);
+        importParsedList(parsed, curatedListRepository, bookService, curatedRankingRepository, openLibraryService);
     }
 
-    static void importParsedList(ParsedJsonList parsed, UserRepository userRepository,
+    static void importParsedList(ParsedJsonList parsed, CuratedListRepository curatedListRepository,
                                          BookService bookService,
-                                         RankingRepository rankingRepository, OpenLibraryService openLibraryService) {
+                                         CuratedRankingRepository curatedRankingRepository, OpenLibraryService openLibraryService) {
         String username = parsed.username();
         List<JsonBook> allBooks = parsed.books();
 
-        User user;
-        var existing = userRepository.findByUsername(username);
+        CuratedList curatedList;
+        var existing = curatedListRepository.findByUsername(username);
         if (existing.isPresent()) {
-            user = existing.get();
-            rankingRepository.deleteByUserId(user.getId());
+            curatedList = existing.get();
+            curatedRankingRepository.deleteByCuratedListId(curatedList.getId());
             log.info("Reimporting curated list: {} (cleared existing books)", username);
         } else {
-            user = new User(username);
-            user.setCurated(true);
-            userRepository.save(user);
+            curatedList = new CuratedList(username);
+            curatedListRepository.save(curatedList);
             log.info("Importing curated list: {}", username);
         }
 
@@ -197,17 +196,17 @@ public class CuratedListImporter {
         fictionRanked.sort(Comparator.comparingInt(JsonBook::rank));
         nonfictionRanked.sort(Comparator.comparingInt(JsonBook::rank));
 
-        importJsonBooks(user, fictionRanked, bookService, rankingRepository, openLibraryService);
-        importJsonBooks(user, fictionUnranked, bookService, rankingRepository, openLibraryService);
-        importJsonBooks(user, nonfictionRanked, bookService, rankingRepository, openLibraryService);
-        importJsonBooks(user, nonfictionUnranked, bookService, rankingRepository, openLibraryService);
+        importJsonBooks(curatedList, fictionRanked, bookService, curatedRankingRepository, openLibraryService);
+        importJsonBooks(curatedList, fictionUnranked, bookService, curatedRankingRepository, openLibraryService);
+        importJsonBooks(curatedList, nonfictionRanked, bookService, curatedRankingRepository, openLibraryService);
+        importJsonBooks(curatedList, nonfictionUnranked, bookService, curatedRankingRepository, openLibraryService);
 
         log.info("Finished importing: {}", username);
     }
 
-    static void importJsonBooks(User user, List<JsonBook> books,
+    static void importJsonBooks(CuratedList curatedList, List<JsonBook> books,
                                         BookService bookService,
-                                        RankingRepository rankingRepository, OpenLibraryService openLibraryService) {
+                                        CuratedRankingRepository curatedRankingRepository, OpenLibraryService openLibraryService) {
         int position = 0;
         for (JsonBook jb : books) {
             List<OpenLibraryService.BookResult> results = openLibraryService.searchBooks(jb.title() + ", " + jb.author());
@@ -237,11 +236,11 @@ public class CuratedListImporter {
 
             Book book = bookService.findOrCreateBook(workOlid, editionOlid, title, author, firstPublishYear, coverId);
 
-            Ranking ranking = new Ranking(user, book, jb.bookshelf(), jb.category(), position);
+            CuratedRanking ranking = new CuratedRanking(curatedList, book, jb.bookshelf(), jb.category(), position);
             if (jb.review() != null && !jb.review().isEmpty()) {
                 ranking.setReview(jb.review());
             }
-            rankingRepository.save(ranking);
+            curatedRankingRepository.save(ranking);
 
             log.info("  {}. {} by {}", position + 1, jb.title(), author);
             position++;

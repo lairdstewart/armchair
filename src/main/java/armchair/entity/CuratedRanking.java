@@ -14,15 +14,15 @@ import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
 @Entity
-@Table(name = "rankings", uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "book_id"}))
-public class Ranking implements BookRanking {
+@Table(name = "curated_rankings", uniqueConstraints = @UniqueConstraint(columnNames = {"curated_list_id", "book_id"}))
+public class CuratedRanking implements BookRanking {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
-    private User user;
+    @JoinColumn(name = "curated_list_id")
+    private CuratedList curatedList;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "book_id")
@@ -40,10 +40,10 @@ public class Ranking implements BookRanking {
     @Column(length = 5000)
     private String review;
 
-    public Ranking() {}
+    public CuratedRanking() {}
 
-    public Ranking(User user, Book book, Bookshelf bookshelf, BookCategory category, Integer position) {
-        this.user = user;
+    public CuratedRanking(CuratedList curatedList, Book book, Bookshelf bookshelf, BookCategory category, Integer position) {
+        this.curatedList = curatedList;
         this.book = book;
         this.bookshelf = bookshelf;
         this.category = category;
@@ -58,14 +58,15 @@ public class Ranking implements BookRanking {
         this.id = id;
     }
 
-    public User getUser() {
-        return user;
+    public CuratedList getCuratedList() {
+        return curatedList;
     }
 
-    public void setUser(User user) {
-        this.user = user;
+    public void setCuratedList(CuratedList curatedList) {
+        this.curatedList = curatedList;
     }
 
+    @Override
     public Book getBook() {
         return book;
     }
@@ -74,6 +75,7 @@ public class Ranking implements BookRanking {
         this.book = book;
     }
 
+    @Override
     public Bookshelf getBookshelf() {
         return bookshelf;
     }
@@ -82,6 +84,7 @@ public class Ranking implements BookRanking {
         this.bookshelf = bookshelf;
     }
 
+    @Override
     public BookCategory getCategory() {
         return category;
     }
@@ -90,6 +93,7 @@ public class Ranking implements BookRanking {
         this.category = category;
     }
 
+    @Override
     public Integer getPosition() {
         return position;
     }
@@ -98,6 +102,7 @@ public class Ranking implements BookRanking {
         this.position = position;
     }
 
+    @Override
     public String getReview() {
         return review;
     }

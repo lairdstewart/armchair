@@ -26,8 +26,6 @@ public class User {
 
     private LocalDateTime signupDate; // When the user signed up
 
-    private boolean isCurated = false; // True if this is a curated/imported list (e.g., NYT Best Books)
-
     public User() {}
 
     public User(String username) {
@@ -91,14 +89,6 @@ public class User {
 
     public void setSignupDate(LocalDateTime signupDate) {
         this.signupDate = signupDate;
-    }
-
-    public boolean isCurated() {
-        return isCurated;
-    }
-
-    public void setCurated(boolean curated) {
-        isCurated = curated;
     }
 
 }

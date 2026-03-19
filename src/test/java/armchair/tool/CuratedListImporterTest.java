@@ -3,10 +3,10 @@ package armchair.tool;
 import armchair.entity.Book;
 import armchair.entity.BookCategory;
 import armchair.entity.Bookshelf;
-import armchair.entity.Ranking;
-import armchair.entity.User;
-import armchair.repository.RankingRepository;
-import armchair.repository.UserRepository;
+import armchair.entity.CuratedList;
+import armchair.entity.CuratedRanking;
+import armchair.repository.CuratedListRepository;
+import armchair.repository.CuratedRankingRepository;
 import armchair.service.BookService;
 import armchair.service.OpenLibraryService;
 import armchair.tool.CuratedListImporter.ImportException;
@@ -370,18 +370,18 @@ class CuratedListImporterTest {
     // --- importParsedList (integration with repositories) ---
 
     @Test
-    void importCreatesNewCuratedUser() {
-        UserRepository userRepo = mock(UserRepository.class);
+    void importCreatesNewCuratedList() {
+        CuratedListRepository curatedListRepo = mock(CuratedListRepository.class);
         BookService bookService = mock(BookService.class);
-        RankingRepository rankingRepo = mock(RankingRepository.class);
+        CuratedRankingRepository curatedRankingRepo = mock(CuratedRankingRepository.class);
         OpenLibraryService openLibraryService = mock(OpenLibraryService.class);
 
-        when(userRepo.findByUsername("Test List")).thenReturn(Optional.empty());
-        ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
-        when(userRepo.save(userCaptor.capture())).thenAnswer(inv -> {
-            User u = inv.getArgument(0);
-            u.setId(1L);
-            return u;
+        when(curatedListRepo.findByUsername("Test List")).thenReturn(Optional.empty());
+        ArgumentCaptor<CuratedList> listCaptor = ArgumentCaptor.forClass(CuratedList.class);
+        when(curatedListRepo.save(listCaptor.capture())).thenAnswer(inv -> {
+            CuratedList cl = inv.getArgument(0);
+            cl.setId(1L);
+            return cl;
         });
         when(openLibraryService.searchBooks(anyString())).thenReturn(List.of());
         when(bookService.findOrCreateBook(any(), any(), anyString(), anyString(), any(), any()))
@@ -391,23 +391,22 @@ class CuratedListImporterTest {
                 new JsonBook("Dune", "Frank Herbert", "", Bookshelf.FICTION, BookCategory.LIKED, 1)
         ));
 
-        CuratedListImporter.importParsedList(parsed, userRepo, bookService, rankingRepo, openLibraryService);
+        CuratedListImporter.importParsedList(parsed, curatedListRepo, bookService, curatedRankingRepo, openLibraryService);
 
-        User savedUser = userCaptor.getValue();
-        assertThat(savedUser.getUsername()).isEqualTo("Test List");
-        assertThat(savedUser.isCurated()).isTrue();
+        CuratedList savedList = listCaptor.getValue();
+        assertThat(savedList.getUsername()).isEqualTo("Test List");
     }
 
     @Test
     void importReimportClearsExistingRankings() {
-        UserRepository userRepo = mock(UserRepository.class);
+        CuratedListRepository curatedListRepo = mock(CuratedListRepository.class);
         BookService bookService = mock(BookService.class);
-        RankingRepository rankingRepo = mock(RankingRepository.class);
+        CuratedRankingRepository curatedRankingRepo = mock(CuratedRankingRepository.class);
         OpenLibraryService openLibraryService = mock(OpenLibraryService.class);
 
-        User existingUser = new User("Test List");
-        existingUser.setId(42L);
-        when(userRepo.findByUsername("Test List")).thenReturn(Optional.of(existingUser));
+        CuratedList existingList = new CuratedList("Test List");
+        existingList.setId(42L);
+        when(curatedListRepo.findByUsername("Test List")).thenReturn(Optional.of(existingList));
         when(openLibraryService.searchBooks(anyString())).thenReturn(List.of());
         when(bookService.findOrCreateBook(any(), any(), anyString(), anyString(), any(), any()))
                 .thenReturn(new Book(null, null, "Dune", "Frank Herbert", null, null));
@@ -416,24 +415,24 @@ class CuratedListImporterTest {
                 new JsonBook("Dune", "Frank Herbert", "", Bookshelf.FICTION, BookCategory.LIKED, 1)
         ));
 
-        CuratedListImporter.importParsedList(parsed, userRepo, bookService, rankingRepo, openLibraryService);
+        CuratedListImporter.importParsedList(parsed, curatedListRepo, bookService, curatedRankingRepo, openLibraryService);
 
-        verify(rankingRepo).deleteByUserId(42L);
-        verify(userRepo, never()).save(any());
+        verify(curatedRankingRepo).deleteByCuratedListId(42L);
+        verify(curatedListRepo, never()).save(any());
     }
 
     @Test
     void importSavesRankingsWithCorrectAttributes() {
-        UserRepository userRepo = mock(UserRepository.class);
+        CuratedListRepository curatedListRepo = mock(CuratedListRepository.class);
         BookService bookService = mock(BookService.class);
-        RankingRepository rankingRepo = mock(RankingRepository.class);
+        CuratedRankingRepository curatedRankingRepo = mock(CuratedRankingRepository.class);
         OpenLibraryService openLibraryService = mock(OpenLibraryService.class);
 
-        when(userRepo.findByUsername("Test")).thenReturn(Optional.empty());
-        when(userRepo.save(any(User.class))).thenAnswer(inv -> {
-            User u = inv.getArgument(0);
-            u.setId(1L);
-            return u;
+        when(curatedListRepo.findByUsername("Test")).thenReturn(Optional.empty());
+        when(curatedListRepo.save(any(CuratedList.class))).thenAnswer(inv -> {
+            CuratedList cl = inv.getArgument(0);
+            cl.setId(1L);
+            return cl;
         });
         when(openLibraryService.searchBooks(anyString())).thenReturn(List.of());
         Book dune = new Book(null, null, "Dune", "Frank Herbert", null, null);
@@ -443,13 +442,13 @@ class CuratedListImporterTest {
                 new JsonBook("Dune", "Frank Herbert", "A review", Bookshelf.FICTION, BookCategory.LIKED, 1)
         ));
 
-        CuratedListImporter.importParsedList(parsed, userRepo, bookService, rankingRepo, openLibraryService);
+        CuratedListImporter.importParsedList(parsed, curatedListRepo, bookService, curatedRankingRepo, openLibraryService);
 
-        ArgumentCaptor<Ranking> rankingCaptor = ArgumentCaptor.forClass(Ranking.class);
-        verify(rankingRepo).save(rankingCaptor.capture());
+        ArgumentCaptor<CuratedRanking> rankingCaptor = ArgumentCaptor.forClass(CuratedRanking.class);
+        verify(curatedRankingRepo).save(rankingCaptor.capture());
 
-        Ranking saved = rankingCaptor.getValue();
-        assertThat(saved.getUser().getId()).isEqualTo(1L);
+        CuratedRanking saved = rankingCaptor.getValue();
+        assertThat(saved.getCuratedList().getId()).isEqualTo(1L);
         assertThat(saved.getBookshelf()).isEqualTo(Bookshelf.FICTION);
         assertThat(saved.getCategory()).isEqualTo(BookCategory.LIKED);
         assertThat(saved.getPosition()).isEqualTo(0);
@@ -458,16 +457,16 @@ class CuratedListImporterTest {
 
     @Test
     void importEmptyReviewDoesNotSetReview() {
-        UserRepository userRepo = mock(UserRepository.class);
+        CuratedListRepository curatedListRepo = mock(CuratedListRepository.class);
         BookService bookService = mock(BookService.class);
-        RankingRepository rankingRepo = mock(RankingRepository.class);
+        CuratedRankingRepository curatedRankingRepo = mock(CuratedRankingRepository.class);
         OpenLibraryService openLibraryService = mock(OpenLibraryService.class);
 
-        when(userRepo.findByUsername("Test")).thenReturn(Optional.empty());
-        when(userRepo.save(any(User.class))).thenAnswer(inv -> {
-            User u = inv.getArgument(0);
-            u.setId(1L);
-            return u;
+        when(curatedListRepo.findByUsername("Test")).thenReturn(Optional.empty());
+        when(curatedListRepo.save(any(CuratedList.class))).thenAnswer(inv -> {
+            CuratedList cl = inv.getArgument(0);
+            cl.setId(1L);
+            return cl;
         });
         when(openLibraryService.searchBooks(anyString())).thenReturn(List.of());
         when(bookService.findOrCreateBook(any(), any(), anyString(), anyString(), any(), any()))
@@ -477,25 +476,25 @@ class CuratedListImporterTest {
                 new JsonBook("Dune", "Frank Herbert", "", Bookshelf.FICTION, BookCategory.LIKED, 1)
         ));
 
-        CuratedListImporter.importParsedList(parsed, userRepo, bookService, rankingRepo, openLibraryService);
+        CuratedListImporter.importParsedList(parsed, curatedListRepo, bookService, curatedRankingRepo, openLibraryService);
 
-        ArgumentCaptor<Ranking> rankingCaptor = ArgumentCaptor.forClass(Ranking.class);
-        verify(rankingRepo).save(rankingCaptor.capture());
+        ArgumentCaptor<CuratedRanking> rankingCaptor = ArgumentCaptor.forClass(CuratedRanking.class);
+        verify(curatedRankingRepo).save(rankingCaptor.capture());
         assertThat(rankingCaptor.getValue().getReview()).isNull();
     }
 
     @Test
     void importSortsRankedBooksByRank() {
-        UserRepository userRepo = mock(UserRepository.class);
+        CuratedListRepository curatedListRepo = mock(CuratedListRepository.class);
         BookService bookService = mock(BookService.class);
-        RankingRepository rankingRepo = mock(RankingRepository.class);
+        CuratedRankingRepository curatedRankingRepo = mock(CuratedRankingRepository.class);
         OpenLibraryService openLibraryService = mock(OpenLibraryService.class);
 
-        when(userRepo.findByUsername("Test")).thenReturn(Optional.empty());
-        when(userRepo.save(any(User.class))).thenAnswer(inv -> {
-            User u = inv.getArgument(0);
-            u.setId(1L);
-            return u;
+        when(curatedListRepo.findByUsername("Test")).thenReturn(Optional.empty());
+        when(curatedListRepo.save(any(CuratedList.class))).thenAnswer(inv -> {
+            CuratedList cl = inv.getArgument(0);
+            cl.setId(1L);
+            return cl;
         });
         when(openLibraryService.searchBooks(anyString())).thenReturn(List.of());
         when(bookService.findOrCreateBook(any(), any(), anyString(), anyString(), any(), any()))
@@ -508,12 +507,12 @@ class CuratedListImporterTest {
                 new JsonBook("Third", "Author C", "", Bookshelf.FICTION, BookCategory.LIKED, 3)
         ));
 
-        CuratedListImporter.importParsedList(parsed, userRepo, bookService, rankingRepo, openLibraryService);
+        CuratedListImporter.importParsedList(parsed, curatedListRepo, bookService, curatedRankingRepo, openLibraryService);
 
-        ArgumentCaptor<Ranking> rankingCaptor = ArgumentCaptor.forClass(Ranking.class);
-        verify(rankingRepo, org.mockito.Mockito.times(3)).save(rankingCaptor.capture());
+        ArgumentCaptor<CuratedRanking> rankingCaptor = ArgumentCaptor.forClass(CuratedRanking.class);
+        verify(curatedRankingRepo, org.mockito.Mockito.times(3)).save(rankingCaptor.capture());
 
-        List<Ranking> saved = rankingCaptor.getAllValues();
+        List<CuratedRanking> saved = rankingCaptor.getAllValues();
         assertThat(saved.get(0).getPosition()).isEqualTo(0);
         assertThat(saved.get(0).getBook().getTitle()).isEqualTo("First");
         assertThat(saved.get(1).getPosition()).isEqualTo(1);
@@ -524,16 +523,16 @@ class CuratedListImporterTest {
 
     @Test
     void importGroupsBooksCorrectlyByShelfAndCategory() {
-        UserRepository userRepo = mock(UserRepository.class);
+        CuratedListRepository curatedListRepo = mock(CuratedListRepository.class);
         BookService bookService = mock(BookService.class);
-        RankingRepository rankingRepo = mock(RankingRepository.class);
+        CuratedRankingRepository curatedRankingRepo = mock(CuratedRankingRepository.class);
         OpenLibraryService openLibraryService = mock(OpenLibraryService.class);
 
-        when(userRepo.findByUsername("Test")).thenReturn(Optional.empty());
-        when(userRepo.save(any(User.class))).thenAnswer(inv -> {
-            User u = inv.getArgument(0);
-            u.setId(1L);
-            return u;
+        when(curatedListRepo.findByUsername("Test")).thenReturn(Optional.empty());
+        when(curatedListRepo.save(any(CuratedList.class))).thenAnswer(inv -> {
+            CuratedList cl = inv.getArgument(0);
+            cl.setId(1L);
+            return cl;
         });
         when(openLibraryService.searchBooks(anyString())).thenReturn(List.of());
         when(bookService.findOrCreateBook(any(), any(), anyString(), anyString(), any(), any()))
@@ -547,12 +546,12 @@ class CuratedListImporterTest {
                 new JsonBook("Nonfiction Ranked", "D", "", Bookshelf.NONFICTION, BookCategory.LIKED, 1)
         ));
 
-        CuratedListImporter.importParsedList(parsed, userRepo, bookService, rankingRepo, openLibraryService);
+        CuratedListImporter.importParsedList(parsed, curatedListRepo, bookService, curatedRankingRepo, openLibraryService);
 
-        ArgumentCaptor<Ranking> rankingCaptor = ArgumentCaptor.forClass(Ranking.class);
-        verify(rankingRepo, org.mockito.Mockito.times(4)).save(rankingCaptor.capture());
+        ArgumentCaptor<CuratedRanking> rankingCaptor = ArgumentCaptor.forClass(CuratedRanking.class);
+        verify(curatedRankingRepo, org.mockito.Mockito.times(4)).save(rankingCaptor.capture());
 
-        List<Ranking> saved = rankingCaptor.getAllValues();
+        List<CuratedRanking> saved = rankingCaptor.getAllValues();
         // Order: fiction ranked, fiction unranked, nonfiction ranked, nonfiction unranked
         assertThat(saved.get(0).getBook().getTitle()).isEqualTo("Fiction Ranked");
         assertThat(saved.get(1).getBook().getTitle()).isEqualTo("Fiction Unranked");
@@ -565,7 +564,7 @@ class CuratedListImporterTest {
     @Test
     void importUsesOpenLibraryResultWhenAvailable() {
         BookService bookService = mock(BookService.class);
-        RankingRepository rankingRepo = mock(RankingRepository.class);
+        CuratedRankingRepository curatedRankingRepo = mock(CuratedRankingRepository.class);
         OpenLibraryService openLibraryService = mock(OpenLibraryService.class);
 
         OpenLibraryService.BookResult olResult = new OpenLibraryService.BookResult(
@@ -579,9 +578,9 @@ class CuratedListImporterTest {
                 new JsonBook("Dune", "Frank Herbert", "", Bookshelf.FICTION, BookCategory.LIKED, 1)
         );
 
-        User user = new User();
-        user.setId(1L);
-        CuratedListImporter.importJsonBooks(user, books, bookService, rankingRepo, openLibraryService);
+        CuratedList curatedList = new CuratedList("Test");
+        curatedList.setId(1L);
+        CuratedListImporter.importJsonBooks(curatedList, books, bookService, curatedRankingRepo, openLibraryService);
 
         verify(bookService).findOrCreateBook("OL123W", "OL456M", "Dune (OL)", "Frank Herbert (OL)", 1965, 12345);
     }
@@ -589,7 +588,7 @@ class CuratedListImporterTest {
     @Test
     void importFallsBackToJsonDataWhenNoOpenLibraryResult() {
         BookService bookService = mock(BookService.class);
-        RankingRepository rankingRepo = mock(RankingRepository.class);
+        CuratedRankingRepository curatedRankingRepo = mock(CuratedRankingRepository.class);
         OpenLibraryService openLibraryService = mock(OpenLibraryService.class);
 
         when(openLibraryService.searchBooks(anyString())).thenReturn(List.of());
@@ -600,9 +599,9 @@ class CuratedListImporterTest {
                 new JsonBook("Dune", "Frank Herbert", "", Bookshelf.FICTION, BookCategory.LIKED, 1)
         );
 
-        User user = new User();
-        user.setId(1L);
-        CuratedListImporter.importJsonBooks(user, books, bookService, rankingRepo, openLibraryService);
+        CuratedList curatedList = new CuratedList("Test");
+        curatedList.setId(1L);
+        CuratedListImporter.importJsonBooks(curatedList, books, bookService, curatedRankingRepo, openLibraryService);
 
         verify(bookService).findOrCreateBook(null, null, "Dune", "Frank Herbert", null, null);
     }

@@ -3,11 +3,13 @@ package armchair.recommendation;
 import armchair.entity.Book;
 import armchair.entity.BookCategory;
 import armchair.entity.Bookshelf;
+import armchair.entity.CuratedList;
+import armchair.entity.CuratedRanking;
 import armchair.entity.Ranking;
-import armchair.entity.User;
 import armchair.repository.BookRepository;
+import armchair.repository.CuratedListRepository;
+import armchair.repository.CuratedRankingRepository;
 import armchair.repository.RankingRepository;
-import armchair.repository.UserRepository;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
@@ -42,14 +44,17 @@ public class CollaborativeFilteringAlgorithm implements RecommendationAlgorithm 
 
     private final RankingRepository rankingRepository;
     private final BookRepository bookRepository;
-    private final UserRepository userRepository;
+    private final CuratedListRepository curatedListRepository;
+    private final CuratedRankingRepository curatedRankingRepository;
 
     public CollaborativeFilteringAlgorithm(RankingRepository rankingRepository,
                                            BookRepository bookRepository,
-                                           UserRepository userRepository) {
+                                           CuratedListRepository curatedListRepository,
+                                           CuratedRankingRepository curatedRankingRepository) {
         this.rankingRepository = rankingRepository;
         this.bookRepository = bookRepository;
-        this.userRepository = userRepository;
+        this.curatedListRepository = curatedListRepository;
+        this.curatedRankingRepository = curatedRankingRepository;
     }
 
     @Override
@@ -63,14 +68,9 @@ public class CollaborativeFilteringAlgorithm implements RecommendationAlgorithm 
     }
 
     private List<Book> getRecommendationsForBookshelf(Long userId, Bookshelf bookshelf, int limit) {
-        // Build curated user ID set for score computation
-        Set<Long> curatedUserIds = userRepository.findByIsCurated(true).stream()
-                .map(User::getId)
-                .collect(Collectors.toSet());
-
         // Get current user's scores for this bookshelf
         List<Ranking> myRankings = rankingRepository.findByUserIdAndBookshelfOrderByPositionAsc(userId, bookshelf);
-        Map<Long, Double> myScores = computeUserScores(myRankings, curatedUserIds.contains(userId));
+        Map<Long, Double> myScores = computeUserScores(myRankings, false);
 
         // Book IDs the current user already has (across all bookshelves)
         Set<Long> ownBookIds = new HashSet<>(rankingRepository.findBookIdsByUserId(userId));
@@ -84,11 +84,10 @@ public class CollaborativeFilteringAlgorithm implements RecommendationAlgorithm 
         boolean hasAnyOverlap = false;
 
         // Compute similarities and collect candidate scores
-        // candidateScores: bookId -> list of (similarity, score) pairs
         Map<Long, List<double[]>> candidateData = new HashMap<>();
-        // Track books for later lookup
         Map<Long, Book> bookMap = new HashMap<>();
 
+        // Process real users
         for (Map.Entry<Long, List<Ranking>> entry : rankingsByUser.entrySet()) {
             Long otherUserId = entry.getKey();
             if (otherUserId.equals(userId)) continue;
@@ -96,14 +95,13 @@ public class CollaborativeFilteringAlgorithm implements RecommendationAlgorithm 
             List<Ranking> otherRankings = entry.getValue();
             if (otherRankings.isEmpty()) continue;
 
-            Map<Long, Double> otherScores = computeUserScores(otherRankings, curatedUserIds.contains(otherUserId));
+            Map<Long, Double> otherScores = computeUserScores(otherRankings, false);
 
             double similarity = computeSimilarity(myScores, otherScores);
             if (similarity != 0.0) {
                 hasAnyOverlap = true;
             }
 
-            // Collect candidate books from this user
             for (Ranking r : otherRankings) {
                 Long bookId = r.getBook().getId();
                 if (ownBookIds.contains(bookId)) continue;
@@ -111,6 +109,32 @@ public class CollaborativeFilteringAlgorithm implements RecommendationAlgorithm 
                 bookMap.putIfAbsent(bookId, r.getBook());
                 candidateData.computeIfAbsent(bookId, k -> new ArrayList<>())
                         .add(new double[]{similarity, otherScores.get(bookId)});
+            }
+        }
+
+        // Process curated lists
+        List<CuratedRanking> curatedRankings = curatedRankingRepository.findByBookshelfOrderByCuratedListIdAscPositionAsc(bookshelf);
+        Map<Long, List<CuratedRanking>> rankingsByCuratedList = curatedRankings.stream()
+                .collect(Collectors.groupingBy(r -> r.getCuratedList().getId()));
+
+        for (Map.Entry<Long, List<CuratedRanking>> entry : rankingsByCuratedList.entrySet()) {
+            List<CuratedRanking> curatedListRankings = entry.getValue();
+            if (curatedListRankings.isEmpty()) continue;
+
+            Map<Long, Double> curatedScores = computeCuratedScores(curatedListRankings);
+
+            double similarity = computeSimilarity(myScores, curatedScores);
+            if (similarity != 0.0) {
+                hasAnyOverlap = true;
+            }
+
+            for (CuratedRanking r : curatedListRankings) {
+                Long bookId = r.getBook().getId();
+                if (ownBookIds.contains(bookId)) continue;
+
+                bookMap.putIfAbsent(bookId, r.getBook());
+                candidateData.computeIfAbsent(bookId, k -> new ArrayList<>())
+                        .add(new double[]{similarity, curatedScores.get(bookId)});
             }
         }
 
@@ -150,6 +174,14 @@ public class CollaborativeFilteringAlgorithm implements RecommendationAlgorithm 
         }
 
         return result;
+    }
+
+    private Map<Long, Double> computeCuratedScores(List<CuratedRanking> rankings) {
+        Map<Long, Double> scores = new HashMap<>();
+        for (CuratedRanking r : rankings) {
+            scores.put(r.getBook().getId(), CURATED_LIST_SCORE);
+        }
+        return scores;
     }
 
     /**

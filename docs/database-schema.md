@@ -21,8 +21,16 @@ User accounts (OAuth).
 | oauth_provider | VARCHAR | | OAuth provider name (e.g., "google", "github") |
 | signup_number | BIGINT | | Which number signup (1, 2, 3...) |
 | signup_date | TIMESTAMP | | When user signed up |
-| is_curated | BOOLEAN | default false | True for curated/imported lists (e.g., NYT Best Books) |
 | publish_lists | BOOLEAN | default false | True if user's lists are visible in Explore |
+
+### curated_lists
+
+Curated/imported book lists (e.g., NYT Best Books). Separate from users — no OAuth or signup data.
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| id | BIGINT | PK, auto-generated | |
+| username | VARCHAR | UNIQUE | Display name for the curated list |
 
 ### books
 
@@ -57,6 +65,20 @@ User-specific book rankings. One row per user-book relationship.
 | category | ENUM | | LIKED, OK, DISLIKED, UNRANKED |
 | position | INTEGER | | Rank within bookshelf+category (0 = best) |
 | review | VARCHAR(5000) | | User's review text |
+
+### curated_rankings
+
+Book rankings for curated lists. One row per curated-list-book relationship.
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| id | BIGINT | PK, auto-generated | |
+| curated_list_id | BIGINT | FK -> curated_lists | |
+| book_id | BIGINT | FK -> books | UNIQUE with curated_list_id |
+| bookshelf | ENUM | | FICTION, NONFICTION |
+| category | ENUM | | LIKED, UNRANKED |
+| position | INTEGER | | Rank within bookshelf+category (0 = best) |
+| review | VARCHAR(5000) | | Review text |
 
 ### ranking_state (REMOVED)
 
@@ -98,6 +120,8 @@ User follow relationships.
 ```
 users 1--* rankings (user_id)
 books 1--* rankings (book_id)
+curated_lists 1--* curated_rankings (curated_list_id)
+books 1--* curated_rankings (book_id)
 users 1--* follows (follower_id)
 users 1--* follows (followed_id)
 ```

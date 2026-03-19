@@ -5,10 +5,13 @@ import armchair.dto.BookLists;
 import armchair.dto.UserBookRank;
 import armchair.entity.Book;
 import armchair.entity.BookCategory;
+import armchair.entity.BookRanking;
 import armchair.entity.Bookshelf;
+import armchair.entity.CuratedRanking;
 import armchair.entity.Ranking;
 import armchair.entity.RankingState;
 import armchair.entity.User;
+import armchair.repository.CuratedRankingRepository;
 import armchair.repository.RankingRepository;
 import armchair.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +35,9 @@ public class RankingService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private CuratedRankingRepository curatedRankingRepository;
 
     public void closePositionGap(Long userId, Bookshelf bookshelf, BookCategory category, int removedPosition) {
         rankingRepository.decrementPositionsAbove(userId, bookshelf, category, removedPosition);
@@ -136,12 +142,28 @@ public class RankingService {
         return grouped;
     }
 
-    public List<Ranking> getRankings(Map<Bookshelf, Map<BookCategory, List<Ranking>>> grouped,
+    public Map<Bookshelf, Map<BookCategory, List<CuratedRanking>>> fetchAllCuratedRankingsGrouped(Long curatedListId) {
+        List<CuratedRanking> allRankings = curatedRankingRepository.findByCuratedListId(curatedListId);
+        Map<Bookshelf, Map<BookCategory, List<CuratedRanking>>> grouped = new HashMap<>();
+        for (CuratedRanking r : allRankings) {
+            grouped.computeIfAbsent(r.getBookshelf(), k -> new HashMap<>())
+                   .computeIfAbsent(r.getCategory(), k -> new ArrayList<>())
+                   .add(r);
+        }
+        for (Map<BookCategory, List<CuratedRanking>> byCategory : grouped.values()) {
+            for (List<CuratedRanking> rankings : byCategory.values()) {
+                rankings.sort(Comparator.comparingInt(r -> r.getPosition() != null ? r.getPosition() : 0));
+            }
+        }
+        return grouped;
+    }
+
+    public <T extends BookRanking> List<T> getRankings(Map<Bookshelf, Map<BookCategory, List<T>>> grouped,
                                      Bookshelf bookshelf, BookCategory category) {
         return grouped.getOrDefault(bookshelf, Map.of()).getOrDefault(category, List.of());
     }
 
-    public BookLists getBookLists(Bookshelf bookshelf, Map<Bookshelf, Map<BookCategory, List<Ranking>>> grouped) {
+    public <T extends BookRanking> BookLists getBookLists(Bookshelf bookshelf, Map<Bookshelf, Map<BookCategory, List<T>>> grouped) {
         List<BookInfo> liked = getRankings(grouped, bookshelf, BookCategory.LIKED).stream().map(RankingService::toBookInfo).toList();
         List<BookInfo> ok = getRankings(grouped, bookshelf, BookCategory.OK).stream().map(RankingService::toBookInfo).toList();
         List<BookInfo> disliked = getRankings(grouped, bookshelf, BookCategory.DISLIKED).stream().map(RankingService::toBookInfo).toList();
@@ -149,13 +171,13 @@ public class RankingService {
         return new BookLists(liked, ok, disliked, unranked);
     }
 
-    public Map<String, UserBookRank> buildUserBooksMap(Map<Bookshelf, Map<BookCategory, List<Ranking>>> grouped) {
+    public <T extends BookRanking> Map<String, UserBookRank> buildUserBooksMap(Map<Bookshelf, Map<BookCategory, List<T>>> grouped) {
         Map<String, UserBookRank> userBooks = new HashMap<>();
 
         for (Bookshelf bookshelf : List.of(Bookshelf.FICTION, Bookshelf.NONFICTION)) {
             int rank = 1;
             for (BookCategory category : List.of(BookCategory.LIKED, BookCategory.OK, BookCategory.DISLIKED)) {
-                for (Ranking ranking : getRankings(grouped, bookshelf, category)) {
+                for (BookRanking ranking : getRankings(grouped, bookshelf, category)) {
                     UserBookRank ubr = new UserBookRank(ranking.getId(), rank, category.name().toLowerCase(), bookshelf.name());
                     putBookKeys(userBooks, ranking.getBook(), ubr);
                     rank++;
@@ -163,12 +185,12 @@ public class RankingService {
             }
         }
 
-        for (Ranking ranking : getRankings(grouped, Bookshelf.WANT_TO_READ, BookCategory.UNRANKED)) {
+        for (BookRanking ranking : getRankings(grouped, Bookshelf.WANT_TO_READ, BookCategory.UNRANKED)) {
             UserBookRank ubr = new UserBookRank(ranking.getId(), 0, "want_to_read", "WANT_TO_READ");
             putBookKeys(userBooks, ranking.getBook(), ubr);
         }
 
-        for (Ranking ranking : getRankings(grouped, Bookshelf.UNRANKED, BookCategory.UNRANKED)) {
+        for (BookRanking ranking : getRankings(grouped, Bookshelf.UNRANKED, BookCategory.UNRANKED)) {
             UserBookRank ubr = new UserBookRank(ranking.getId(), 0, "unranked", "UNRANKED");
             putBookKeys(userBooks, ranking.getBook(), ubr);
         }
@@ -181,7 +203,7 @@ public class RankingService {
         return byCategory.values().stream().mapToLong(List::size).sum();
     }
 
-    public static BookInfo toBookInfo(Ranking r) {
+    public static BookInfo toBookInfo(BookRanking r) {
         return new BookInfo(r.getId(), r.getBook().getWorkOlid(), r.getBook().getEditionOlid(),
             r.getBook().getTitle(), r.getBook().getAuthor(), r.getReview(),
             r.getBook().getFirstPublishYear(), r.getBook().getCoverId());

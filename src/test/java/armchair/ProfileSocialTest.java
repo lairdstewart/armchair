@@ -3,9 +3,12 @@ package armchair;
 import armchair.entity.Book;
 import armchair.entity.BookCategory;
 import armchair.entity.Bookshelf;
+import armchair.entity.CuratedList;
 import armchair.entity.Follow;
 import armchair.entity.User;
+import armchair.repository.CuratedListRepository;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
@@ -14,6 +17,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 class ProfileSocialTest extends BaseIntegrationTest {
+
+    @Autowired
+    private CuratedListRepository curatedListRepository;
 
     // --- GET /user/{username} ---
 
@@ -42,9 +48,8 @@ class ProfileSocialTest extends BaseIntegrationTest {
 
     @Test
     void viewCuratedProfileAlwaysVisible() throws Exception {
-        User curated = createOAuthUser("curatedlist", "oauth-curated-1");
-        curated.setCurated(true);
-        userRepository.save(curated);
+        CuratedList curatedList = new CuratedList("curatedlist");
+        curatedListRepository.save(curatedList);
 
         mockMvc.perform(get("/user/curatedlist")
                         .with(oauthUser("oauth-viewer-4")))
@@ -253,10 +258,9 @@ class ProfileSocialTest extends BaseIntegrationTest {
     }
 
     @Test
-    void searchProfilesExcludesCuratedLists() throws Exception {
-        User curated = createOAuthUser("curatedsearch", "oauth-search-3");
-        curated.setCurated(true);
-        userRepository.save(curated);
+    void searchProfilesDoesNotReturnCuratedLists() throws Exception {
+        CuratedList curatedList = new CuratedList("curatedsearch");
+        curatedListRepository.save(curatedList);
 
         mockMvc.perform(get("/search-profiles")
                         .param("query", "curatedsearch")
