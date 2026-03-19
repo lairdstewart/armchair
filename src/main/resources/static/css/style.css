@@ -397,6 +397,16 @@ details[open] .review-toggle::before {
   background-color: #e0e0e0;
 }
 
+/* Reusable text input */
+.text-input {
+  padding: 2px 8px;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  background-color: white;
+  color: black;
+  font: inherit;
+}
+
 /* Profile page buttons */
 .profile-buttons {
   display: flex;

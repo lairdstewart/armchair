@@ -17,9 +17,9 @@
           <label style="margin-left: 15px;"><input type="radio" name="type" value="followers" th:checked="${searchType == 'followers'}" onchange="showSearchTab(this)" /> Followers</label>
         </div>
         <span id="search-bar" th:style="${searchType == 'following' || searchType == 'followers' ? 'display:none' : ''}">
-          <input type="text" name="query" id="searchQuery" th:placeholder="${searchType == 'books' ? 'Search books...' : (searchType == 'profiles' ? 'Search profiles...' : 'Search curated lists...')}"
-                 th:value="${query}" autofocus style="width: 200px;" />
-          <button type="submit">Search</button>
+          <input type="text" name="query" id="searchQuery" class="text-input" th:placeholder="${searchType == 'books' ? 'Search books...' : (searchType == 'profiles' ? 'Search profiles...' : 'Search curated lists...')}"
+                 th:value="${query}" autofocus />
+          <button type="submit" class="btn">Search</button>
         </span>
       </form>
 

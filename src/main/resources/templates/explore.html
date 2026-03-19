@@ -10,8 +10,8 @@
     <h2>Search Profiles</h2>
 
     <form action="/search-profiles" method="GET" style="margin-bottom: 20px;">
-      <input type="text" name="query" placeholder="Search usernames..."
-             th:value="${query}" autofocus style="width: 200px;" />
+      <input type="text" name="query" class="text-input" placeholder="Search usernames..."
+             th:value="${query}" autofocus />
       <button type="submit" class="btn">Search</button>
     </form>
 
