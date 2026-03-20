@@ -23,8 +23,9 @@
       Parameters:
         - book: BookInfo record
         - actions: fragment expression for action buttons (bare forms, no wrapper), or null for read-only
+        - showCover: boolean, whether to show the book cover (default true)
     -->
-    <th:block th:fragment="bookEntry(book, actions)">
+    <th:block th:fragment="bookEntry(book, actions, showCover)">
       <div th:if="${book.review() == null}" class="book-entry-wrapper">
         <div class="book-entry">
           <div class="book-info">
@@ -40,8 +41,8 @@
               <a th:if="${book.bookUrl() != null}" th:href="${book.bookUrl()}" target="_blank" class="book-action-link">openlibrary.org</a>
             </span>
           </div>
-          <img th:if="${book.coverUrl() != null}" class="book-cover" loading="lazy" th:src="${book.coverUrl()}" />
-          <div th:if="${book.coverUrl() == null}" class="book-cover-placeholder">?</div>
+          <img th:if="${showCover and book.coverUrl() != null}" class="book-cover" loading="lazy" th:src="${book.coverUrl()}" />
+          <div th:if="${showCover and book.coverUrl() == null}" class="book-cover-placeholder">?</div>
         </div>
       </div>
       <details th:if="${book.review() != null}" class="book-review">
@@ -61,8 +62,8 @@
                 <a th:if="${book.bookUrl() != null}" th:href="${book.bookUrl()}" onclick="event.stopPropagation()" target="_blank" class="book-action-link">openlibrary.org</a>
               </span>
             </div>
-            <img th:if="${book.coverUrl() != null}" class="book-cover" loading="lazy" th:src="${book.coverUrl()}" />
-            <div th:if="${book.coverUrl() == null}" class="book-cover-placeholder">?</div>
+            <img th:if="${showCover and book.coverUrl() != null}" class="book-cover" loading="lazy" th:src="${book.coverUrl()}" />
+            <div th:if="${showCover and book.coverUrl() == null}" class="book-cover-placeholder">?</div>
           </div>
         </summary>
         <div class="review-text" th:text="${book.review()}"></div>
