@@ -31,6 +31,8 @@ import armchair.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.web.util.UriComponentsBuilder;
+import org.springframework.web.util.UriUtils;
+import java.nio.charset.StandardCharsets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
@@ -1916,7 +1918,7 @@ public class BookController {
         } else {
             CuratedList curatedList = curatedListRepository.findByUsername(username).orElse(null);
             if (curatedList == null) {
-                return "redirect:/";
+                return "redirect:/search?type=profiles&query=" + UriUtils.encode(username, StandardCharsets.UTF_8);
             }
             isCurated = true;
             Map<Bookshelf, Map<BookCategory, List<CuratedRanking>>> viewedRankings = rankingService.fetchAllCuratedRankingsGrouped(curatedList.getId());

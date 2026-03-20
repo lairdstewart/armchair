@@ -43,7 +43,7 @@ class ProfileSocialTest extends BaseIntegrationTest {
         mockMvc.perform(get("/user/nosuchuser")
                         .with(oauthUser("oauth-viewer-2")))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/"));
+                .andExpect(redirectedUrl("/search?type=profiles&query=nosuchuser"));
     }
 
     @Test
