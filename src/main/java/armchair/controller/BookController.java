@@ -446,14 +446,15 @@ public class BookController {
             model.addAttribute("removeType", null);
             model.addAttribute("reviewType", rankingState.getBookshelf().name());
         } else if (mode == Mode.REVIEW) {
-            model.addAttribute("mode", mode);
+            // User navigated to /my-books while a review was in progress on /review/{id}.
+            // Clear the abandoned review state and show the book list.
+            clearRankingState(session);
+            rankingState = null;
+            mode = Mode.LIST;
+            model.addAttribute("mode", Mode.LIST);
             model.addAttribute("rerankType", null);
             model.addAttribute("removeType", null);
             model.addAttribute("reviewType", null);
-            Ranking rankingBeingReviewed = rankingRepository.findById(rankingState.getBookIdBeingReviewed()).orElse(null);
-            if (rankingBeingReviewed != null) {
-                model.addAttribute("reviewBook", rankingBeingReviewed);
-            }
         } else {
             model.addAttribute("mode", mode);
             model.addAttribute("rerankType", null);
