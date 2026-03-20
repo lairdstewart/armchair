@@ -404,6 +404,9 @@ public class RankingWorkflowController extends BaseController {
             if (rankingRepository.existsByUserIdAndBookId(userId, book.getId())) {
                 rankingService.deleteUnrankedRankingById(rankingState.getUnrankedRankingId(), userId);
                 sessionState.clearRankingState(session);
+                if (wasRankAll) {
+                    return bookActionController.startNextUnrankedBook(userId, bookshelfEnum, session);
+                }
                 return "redirect:/my-books";
             }
             rankingService.deleteUnrankedRankingById(rankingState.getUnrankedRankingId(), userId);
