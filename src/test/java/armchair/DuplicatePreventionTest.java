@@ -3,6 +3,7 @@ package armchair;
 import armchair.entity.Book;
 import armchair.entity.BookCategory;
 import armchair.entity.Bookshelf;
+import armchair.entity.Ranking;
 import armchair.entity.User;
 import armchair.service.OpenLibraryService;
 import armchair.service.RankingService;
@@ -123,6 +124,26 @@ class DuplicatePreventionTest extends BaseIntegrationTest {
 
         long countAfter = rankingRepository.findByUserId(user.getId()).size();
         assertThat(countAfter).isEqualTo(countBefore);
+    }
+
+    @Test
+    void insertBookAtPositionDeletesUnrankedOnDuplicate() throws Exception {
+        User user = nextUser();
+        // Book already ranked
+        Book rankedBook = createVerifiedBook("OL303W", "The Great Gatsby", "F. Scott Fitzgerald");
+        addRanking(user.getId(), rankedBook, Bookshelf.FICTION, BookCategory.LIKED, 0);
+        // Different book in unranked (simulates the unranked entry that will be cleaned up)
+        Book unrankedBook = createVerifiedBook("OL304W", "Tender Is the Night", "F. Scott Fitzgerald");
+        Ranking unranked = addRanking(user.getId(), unrankedBook, Bookshelf.UNRANKED, BookCategory.LIKED, 0);
+        flushAndClear();
+
+        // Try to insert the already-ranked book — should detect duplicate and still delete unranked
+        rankingService.insertBookAtPosition("OL303W", "The Great Gatsby", "F. Scott Fitzgerald", null,
+            Bookshelf.FICTION, BookCategory.LIKED, 0, user.getId(), unranked.getId());
+        flushAndClear();
+
+        assertThat(rankingRepository.findById(unranked.getId())).isEmpty();
+        assertThat(rankingRepository.existsByUserIdAndBookId(user.getId(), rankedBook.getId())).isTrue();
     }
 
     @Autowired

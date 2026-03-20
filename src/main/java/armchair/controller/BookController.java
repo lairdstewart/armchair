@@ -1668,11 +1668,12 @@ public class BookController {
         if (currentList.isEmpty()) {
             boolean wasRankAll = rankingState.isRankAll();
             Book book = bookService.findOrCreateBook(workOlid, null, bookName, author, null, null);
-            rankingService.deleteUnrankedRankingById(rankingState.getUnrankedRankingId(), userId);
             if (rankingRepository.existsByUserIdAndBookId(userId, book.getId())) {
+                rankingService.deleteUnrankedRankingById(rankingState.getUnrankedRankingId(), userId);
                 clearRankingState(session);
                 return "redirect:/my-books";
             }
+            rankingService.deleteUnrankedRankingById(rankingState.getUnrankedRankingId(), userId);
             User userRef = userRepository.getReferenceById(userId);
             Ranking newRanking = new Ranking(userRef, book, bookshelfEnum, bookCategory, 0);
             newRanking.setReview(trimmedReview);
