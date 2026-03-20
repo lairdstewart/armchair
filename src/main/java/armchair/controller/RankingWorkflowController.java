@@ -651,12 +651,20 @@ public class RankingWorkflowController extends BaseController {
     public String abandonResolve(HttpSession session) {
         RankingState rs = sessionState.getRankingState(session);
         String title = "unknown book";
+        boolean wasRankAll = false;
         if (rs != null) {
             title = rs.getBookIdentity().getTitle();
+            wasRankAll = rs.isRankAll();
             log.warn("RESOLVE abandoned: user skipped manual search for \"{}\" by {}", title, rs.getBookIdentity().getAuthor());
             sessionState.clearRankingState(session);
         }
         sessionState.clearSearchAndResolveState(session);
+        if (wasRankAll) {
+            Long userId = getCurrentUserId();
+            if (userId != null) {
+                return bookActionController.startNextUnrankedBook(userId, Bookshelf.UNRANKED, session);
+            }
+        }
         sessionState.setResolveWarning(session, title);
         return "redirect:/my-books?selectedBookshelf=UNRANKED";
     }
@@ -672,6 +680,8 @@ public class RankingWorkflowController extends BaseController {
         Long unverifiedBookId = sessionState.getDuplicateResolveBookId(session);
         sessionState.clearDuplicateResolveSession(session);
 
+        RankingState rs = sessionState.getRankingState(session);
+        boolean wasRankAll = rs != null && rs.isRankAll();
         sessionState.clearRankingState(session);
         sessionState.clearSearchAndResolveState(session);
 
@@ -679,6 +689,9 @@ public class RankingWorkflowController extends BaseController {
             rankingService.cleanupUnverifiedBook(userId, unverifiedBookId);
         }
 
+        if (wasRankAll) {
+            return bookActionController.startNextUnrankedBook(userId, Bookshelf.UNRANKED, session);
+        }
         return "redirect:/my-books";
     }
 
