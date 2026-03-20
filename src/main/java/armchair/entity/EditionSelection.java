@@ -5,9 +5,13 @@ import java.io.Serializable;
 public class EditionSelection implements Serializable {
     private static final long serialVersionUID = 1L;
 
+    public static final String SOURCE_SEARCH = "SEARCH";
+    public static final String SOURCE_RESOLVE = "RESOLVE";
+
     private String editionOlid;
     private String isbn13;
     private boolean editionSelected;
+    private String editionSource;
 
     public EditionSelection() {}
 
@@ -35,9 +39,18 @@ public class EditionSelection implements Serializable {
         this.editionSelected = editionSelected;
     }
 
+    public String getEditionSource() {
+        return editionSource;
+    }
+
+    public void setEditionSource(String editionSource) {
+        this.editionSource = editionSource;
+    }
+
     public void clear() {
         this.editionOlid = null;
         this.isbn13 = null;
         this.editionSelected = false;
+        this.editionSource = null;
     }
 }

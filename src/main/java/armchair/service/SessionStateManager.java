@@ -20,15 +20,11 @@ public class SessionStateManager {
     public static final String SESSION_DUPLICATE_RESOLVE_TITLE = "duplicateResolveTitle";
     public static final String SESSION_DUPLICATE_RESOLVE_WORK_OLID = "duplicateResolveWorkOlid";
     public static final String SESSION_DUPLICATE_RESOLVE_BOOK_ID = "duplicateResolveBookId";
-    public static final String SESSION_EDITION_SELECTION_SOURCE = "editionSelectionSource";
     public static final String SESSION_BROWSE_EDITIONS_PREFIX = "browseEditions_";
     public static final String SESSION_RANKING_STATE = "rankingState";
 
     public static final String SKIP_RESOLVE_EXPANDED = "expanded";
     public static final String SKIP_RESOLVE_MANUAL = "manual";
-    public static final String EDITION_SOURCE_RESOLVE = "RESOLVE";
-    public static final String EDITION_SOURCE_SEARCH = "SEARCH";
-
     public RankingState getRankingState(HttpSession session) {
         return (RankingState) session.getAttribute(SESSION_RANKING_STATE);
     }
@@ -108,15 +104,4 @@ public class SessionStateManager {
         session.setAttribute(SESSION_DUPLICATE_RESOLVE_BOOK_ID, bookId);
     }
 
-    public String getEditionSelectionSource(HttpSession session) {
-        return (String) session.getAttribute(SESSION_EDITION_SELECTION_SOURCE);
-    }
-
-    public void setEditionSelectionSource(HttpSession session, String source) {
-        session.setAttribute(SESSION_EDITION_SELECTION_SOURCE, source);
-    }
-
-    public void clearEditionSelectionSource(HttpSession session) {
-        session.removeAttribute(SESSION_EDITION_SELECTION_SOURCE);
-    }
 }

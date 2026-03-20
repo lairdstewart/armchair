@@ -618,7 +618,8 @@ class WorkflowFlowTest extends BaseIntegrationTest {
         setRankingState(session, rs);
         session.setAttribute("skipResolve", "expanded");
         session.setAttribute("cachedEditions", List.of());
-        session.setAttribute("editionSelectionSource", "RESOLVE");
+        rs.getEditionSelection().setEditionSource(armchair.entity.EditionSelection.SOURCE_RESOLVE);
+        setRankingState(session, rs);
 
         mockMvc.perform(post("/back-to-resolve")
                         .session(session)
@@ -632,7 +633,6 @@ class WorkflowFlowTest extends BaseIntegrationTest {
         // Session attributes cleared
         assertThat(session.getAttribute("skipResolve")).isNull();
         assertThat(session.getAttribute("cachedEditions")).isNull();
-        assertThat(session.getAttribute("editionSelectionSource")).isNull();
     }
 
     @Test

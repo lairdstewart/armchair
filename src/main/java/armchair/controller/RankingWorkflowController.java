@@ -79,6 +79,8 @@ public class RankingWorkflowController extends BaseController {
         model.addAttribute("rankingState", rs);
         model.addAttribute("isRerank", rs.getRestoration().getOriginalPosition() != null);
         model.addAttribute("editionSelected", rs.getEditionSelection().isEditionSelected());
+        model.addAttribute("cameFromSearch",
+            armchair.entity.EditionSelection.SOURCE_SEARCH.equals(rs.getEditionSelection().getEditionSource()));
         model.addAttribute("isRankAll", rs.isRankAll());
         if (rs.isRankAll()) {
             List<Ranking> unrankedBooks = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(
@@ -147,7 +149,7 @@ public class RankingWorkflowController extends BaseController {
         addNavigationAttributes(model, "list");
         model.addAttribute("rankingState", rs);
         model.addAttribute("cameFromResolve",
-            EDITION_SOURCE_RESOLVE.equals(sessionState.getEditionSelectionSource(session)));
+            armchair.entity.EditionSelection.SOURCE_RESOLVE.equals(rs.getEditionSelection().getEditionSource()));
 
         List<OpenLibraryService.EditionResult> allEditions = sessionState.getCachedEditions(session);
 
@@ -483,7 +485,6 @@ public class RankingWorkflowController extends BaseController {
         sessionState.saveRankingState(session, rankingState);
 
         sessionState.clearEditionCache(session);
-        sessionState.clearEditionSelectionSource(session);
         return "redirect:/rank/categorize";
     }
 
@@ -498,7 +499,6 @@ public class RankingWorkflowController extends BaseController {
         rankingService.restoreAbandonedBook(userId, rs);
         sessionState.clearRankingState(session);
         sessionState.clearSearchAndResolveState(session);
-        sessionState.clearEditionSelectionSource(session);
         if (selectedBookshelf != null) {
             return "redirect:/my-books?selectedBookshelf=" + selectedBookshelf;
         }
@@ -580,7 +580,6 @@ public class RankingWorkflowController extends BaseController {
         sessionState.saveRankingState(session, rs);
         sessionState.clearSearchAndResolveState(session);
         sessionState.clearEditionCache(session);
-        sessionState.clearEditionSelectionSource(session);
         return "redirect:/resolve";
     }
 
@@ -631,7 +630,8 @@ public class RankingWorkflowController extends BaseController {
         sessionState.saveRankingState(session, rankingState);
 
         session.removeAttribute(SESSION_SKIP_RESOLVE);
-        sessionState.setEditionSelectionSource(session, EDITION_SOURCE_RESOLVE);
+        rankingState.getEditionSelection().setEditionSource(armchair.entity.EditionSelection.SOURCE_RESOLVE);
+        sessionState.saveRankingState(session, rankingState);
         return "redirect:/rank/edition";
     }
 

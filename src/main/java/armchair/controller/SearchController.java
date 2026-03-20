@@ -384,7 +384,8 @@ public class SearchController extends BaseController {
 
         sessionState.clearEditionCache(session);
 
-        session.setAttribute(SESSION_EDITION_SELECTION_SOURCE, EDITION_SOURCE_SEARCH);
+        rankingState.getEditionSelection().setEditionSource(armchair.entity.EditionSelection.SOURCE_SEARCH);
+        sessionState.saveRankingState(session, rankingState);
         return "redirect:/rank/edition";
     }
 
