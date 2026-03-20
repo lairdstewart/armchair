@@ -2,8 +2,9 @@
 #
 # Atomic squash-merge with file locking.
 #
-# Usage: scripts/squash-merge.sh <branch-name>
+# Usage: scripts/squash-merge.sh <branch-name> "<title>" ["<body>"]
 #
+# Title is required. Body is optional.
 # Acquires a lock so only one agent can merge at a time.
 # If the merge has conflicts, aborts cleanly and exits non-zero.
 # The agent should then rebase their feature branch and retry.
@@ -18,12 +19,14 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ARMCHAIR_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 CLAUDE_WORKTREE="$ARMCHAIR_ROOT/claude"
 
-if [ $# -lt 1 ]; then
-    echo "Usage: squash-merge.sh <branch-name>"
+if [ $# -lt 2 ]; then
+    echo "Usage: squash-merge.sh <branch-name> \"<title>\" [\"<body>\"]"
     exit 1
 fi
 
 BRANCH="$1"
+TITLE="$2"
+BODY="${3:-}"
 
 # --- Validate claude worktree exists ---
 if [ ! -d "$CLAUDE_WORKTREE/.git" ] && [ ! -f "$CLAUDE_WORKTREE/.git" ]; then
@@ -112,9 +115,11 @@ if ! git merge --squash "$BRANCH" 2>&1; then
 fi
 
 # --- Commit the squash ---
-# git merge --squash prepares .git/SQUASH_MSG with all combined commit messages.
-# Use --no-edit to accept that message as-is.
-git commit --no-edit
+if [ -n "$BODY" ]; then
+    git commit -m "$TITLE" -m "$BODY"
+else
+    git commit -m "$TITLE"
+fi
 
 echo ""
 echo "Squash-merged $BRANCH into $(git branch --show-current) successfully."

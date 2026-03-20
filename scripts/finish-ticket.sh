@@ -2,8 +2,9 @@
 #
 # Finish a ticket: squash-merge, remove worktree, close issue, hot-reload.
 #
-# Usage: scripts/finish-ticket.sh <branch-name> <issue-number>
+# Usage: scripts/finish-ticket.sh <branch-name> "<title>" ["<body>"]
 #
+# Issue number is extracted from the branch name (e.g., "42-some-feature" → 42).
 # Can be run from any directory — auto-cds to the claude worktree.
 #
 
@@ -15,12 +16,14 @@ ARMCHAIR_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 CLAUDE_WORKTREE="$ARMCHAIR_ROOT/claude"
 
 if [ $# -lt 2 ]; then
-    echo "Usage: finish-ticket.sh <branch-name> <issue-number>"
+    echo "Usage: finish-ticket.sh <branch-name> \"<title>\" [\"<body>\"]"
     exit 1
 fi
 
 BRANCH="$1"
-ISSUE="$2"
+TITLE="$2"
+BODY="${3:-}"
+ISSUE="${BRANCH%%-*}"
 WORKTREE_PATH="${ARMCHAIR_ROOT}/${BRANCH}"
 
 # --- Validate claude worktree exists ---
@@ -60,7 +63,7 @@ echo "[1/5] Squash-merging ${BRANCH} into claude..."
 MAX_RETRIES=3
 RETRY=0
 while true; do
-    if "${SCRIPT_DIR}/squash-merge.sh" "$BRANCH"; then
+    if "${SCRIPT_DIR}/squash-merge.sh" "$BRANCH" "$TITLE" "$BODY"; then
         echo "[1/5] Squash-merge succeeded."
         break
     fi
