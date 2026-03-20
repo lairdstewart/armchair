@@ -115,7 +115,7 @@ public class SecurityConfig {
                 .successHandler(postLoginRedirectHandler())
                 .failureHandler((request, response, exception) -> {
                     logger.error("OAuth2 authentication failed: {} - {}",
-                        exception.getClass().getSimpleName(), exception.getMessage());
+                        exception.getClass().getSimpleName(), exception.getMessage(), exception);
                     response.sendRedirect("/error");
                 })
                 .authorizationEndpoint(authorization -> authorization
