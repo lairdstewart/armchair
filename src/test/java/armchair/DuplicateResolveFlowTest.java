@@ -291,7 +291,7 @@ class DuplicateResolveFlowTest extends BaseIntegrationTest {
         RankingState state = getRankingState(session);
         assertThat(state).isNotNull();
         assertThat(state.getBookIdentity().getWorkOlid()).isEqualTo("OL999W");
-        assertThat(state.getMode()).isEqualTo(RankingMode.SELECT_EDITION);
+        assertThat(state.getMode()).isEqualTo(RankingMode.CATEGORIZE);
     }
 
     @Test

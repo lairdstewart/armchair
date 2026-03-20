@@ -251,7 +251,7 @@ class ResolveFlowTest extends BaseIntegrationTest {
     }
 
     @Test
-    void resolveFlowsContinuesToEditionSelection() throws Exception {
+    void resolveFlowsContinuesToCategorize() throws Exception {
         MockHttpSession session = new MockHttpSession();
         User user = createOAuthUser("resolve9", "oauth-resolve9");
         Long userId = user.getId();
@@ -278,21 +278,9 @@ class ResolveFlowTest extends BaseIntegrationTest {
                         .session(session).with(oauthUser("oauth-resolve9")).with(csrf()))
                 .andExpect(status().is3xxRedirection());
 
-        // Verify RankingState has workOlid but edition NOT selected
+        // Verify RankingState has workOlid and mode is CATEGORIZE
         RankingState state = getRankingState(session);
         assertThat(state.getBookIdentity().getWorkOlid()).isEqualTo("OL123W");
-        assertThat(state.getEditionSelection().isEditionSelected()).isFalse();
-
-        // Mock edition selection API - return multiple editions so it doesn't auto-select
-        when(openLibraryService.getEditionsForWork(eq("OL123W"), anyInt(), eq(0), any()))
-                .thenReturn(List.of(
-                        new OpenLibraryService.EditionResult("OL123M", "Dune (1st Edition)", "9780801950773", 12345, "Chilton", "1965"),
-                        new OpenLibraryService.EditionResult("OL456M", "Dune (Paperback)", "9780441172719", 67890, "Ace", "1990")
-                ));
-
-        // Visit /rank/edition to show SELECT_EDITION mode
-        mockMvc.perform(get("/rank/edition").session(session).with(oauthUser("oauth-resolve9")))
-                .andExpect(status().isOk())
-                .andExpect(model().attributeExists("editionResults"));
+        assertThat(state.getMode()).isEqualTo(RankingMode.CATEGORIZE);
     }
 }

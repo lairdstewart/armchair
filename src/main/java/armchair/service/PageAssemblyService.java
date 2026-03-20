@@ -1,10 +1,8 @@
 package armchair.service;
 
 import armchair.controller.ControllerUtils;
-import armchair.controller.ControllerUtils.PaginationResult;
 import armchair.dto.BookInfo;
 import armchair.dto.BookLists;
-import armchair.entity.Book;
 import armchair.entity.BookCategory;
 import armchair.entity.Bookshelf;
 import armchair.entity.Ranking;
@@ -33,7 +31,6 @@ public class PageAssemblyService {
 
     public enum Mode {
         LIST,
-        SELECT_EDITION,
         CATEGORIZE,
         RANK,
         RE_RANK,
@@ -63,9 +60,6 @@ public class PageAssemblyService {
     private SearchService searchService;
 
     @Autowired
-    private BookService bookService;
-
-    @Autowired
     private SessionStateManager sessionState;
 
     public Mode determineMode(RankingState rankingState) {
@@ -81,7 +75,6 @@ public class PageAssemblyService {
     public Mode convertRankingMode(RankingMode rankingMode) {
         return switch (rankingMode) {
             case RESOLVE -> Mode.RESOLVE;
-            case SELECT_EDITION -> Mode.SELECT_EDITION;
             case CATEGORIZE -> Mode.CATEGORIZE;
             case RANK -> Mode.RANK;
             case REVIEW -> Mode.REVIEW;
@@ -156,13 +149,6 @@ public class PageAssemblyService {
                     sessionState.setSkipResolve(session, SKIP_RESOLVE_MANUAL);
                     return "redirect:/my-books";
                 }
-            }
-        }
-
-        if (mode == Mode.SELECT_EDITION && rankingState != null && rankingState.getBookIdentity().getWorkOlid() != null) {
-            String editionRedirect = handleEditionSelection(rankingState, model, session);
-            if (editionRedirect != null) {
-                return editionRedirect;
             }
         }
 
@@ -277,59 +263,4 @@ public class PageAssemblyService {
         return null; // no redirect needed
     }
 
-    private String handleEditionSelection(RankingState rankingState, Model model, HttpSession session) {
-        List<OpenLibraryService.EditionResult> allEditions = sessionState.getCachedEditions(session);
-
-        if (allEditions == null) {
-            Book editionBook = bookRepository.findByWorkOlid(rankingState.getBookIdentity().getWorkOlid()).orElse(null);
-            String preferredEditionOlid = editionBook != null ? editionBook.getEditionOlid() : null;
-
-            allEditions = openLibraryService.getEditionsForWork(
-                rankingState.getBookIdentity().getWorkOlid(), OpenLibraryService.DEFAULT_EDITION_FETCH_LIMIT, 0, preferredEditionOlid);
-            Integer editionCoverId = editionBook != null ? editionBook.getCoverId() : null;
-            if (editionCoverId != null && !allEditions.isEmpty() && !editionCoverId.equals(allEditions.get(0).coverId())) {
-                allEditions = ControllerUtils.moveMatchingToFront(allEditions, e -> editionCoverId.equals(e.coverId()));
-            }
-            sessionState.setCachedEditions(session, allEditions);
-        }
-
-        if (allEditions.size() == 1) {
-            OpenLibraryService.EditionResult soleEdition = allEditions.get(0);
-            rankingState.getEditionSelection().setEditionOlid(soleEdition.editionOlid());
-            rankingState.getEditionSelection().setIsbn13(soleEdition.isbn13());
-            rankingState.getEditionSelection().setEditionSelected(true);
-            rankingState.setMode(RankingMode.CATEGORIZE);
-            sessionState.saveRankingState(session, rankingState);
-
-            Book book = bookService.findOrCreateBook(rankingState.getBookIdentity().getWorkOlid(),
-                soleEdition.editionOlid(), rankingState.getBookIdentity().getTitle(),
-                rankingState.getBookIdentity().getAuthor(), null, null);
-            book.setIsbn13(soleEdition.isbn13());
-            bookRepository.save(book);
-
-            session.removeAttribute(SESSION_CACHED_EDITIONS);
-            return "redirect:/my-books";
-        }
-
-        if (allEditions.isEmpty()) {
-            rankingState.getEditionSelection().setEditionSelected(true);
-            rankingState.setMode(RankingMode.CATEGORIZE);
-            sessionState.saveRankingState(session, rankingState);
-            session.removeAttribute(SESSION_CACHED_EDITIONS);
-            return "redirect:/my-books";
-        }
-
-        Integer editionPage = sessionState.getEditionPage(session);
-        if (editionPage == null) editionPage = 0;
-
-        PaginationResult<OpenLibraryService.EditionResult> editionPagination = PaginationResult.of(allEditions, editionPage, ControllerUtils.EDITION_PAGE_SIZE);
-
-        model.addAttribute("editionResults", editionPagination.pageItems());
-        model.addAttribute(SESSION_EDITION_PAGE, editionPagination.page());
-        model.addAttribute("editionTotalPages", editionPagination.totalPages());
-        model.addAttribute("editionTotalCount", editionPagination.totalCount());
-        model.addAttribute("editionPageSize", ControllerUtils.EDITION_PAGE_SIZE);
-
-        return null; // no redirect
-    }
 }

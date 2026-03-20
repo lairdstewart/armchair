@@ -189,9 +189,6 @@ class SearchAndEditionsTest extends BaseIntegrationTest {
         assertThat(rs.getBookIdentity().getWorkOlid()).isEqualTo("OL400W");
         assertThat(rs.getBookIdentity().getTitle()).isEqualTo("Dune");
         assertThat(rs.getBookIdentity().getAuthor()).isEqualTo("Frank Herbert");
-        assertThat(rs.getEditionSelection().getEditionOlid()).isEqualTo("OL400M");
-        assertThat(rs.getEditionSelection().getIsbn13()).isEqualTo("9780441172719");
-        assertThat(rs.getEditionSelection().isEditionSelected()).isTrue();
         assertThat(rs.getMode()).isEqualTo(RankingMode.CATEGORIZE);
     }
 

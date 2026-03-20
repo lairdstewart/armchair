@@ -27,7 +27,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.List;
 
@@ -78,9 +77,6 @@ public class RankingWorkflowController extends BaseController {
         addNavigationAttributes(model, "list");
         model.addAttribute("rankingState", rs);
         model.addAttribute("isRerank", rs.getRestoration().getOriginalPosition() != null);
-        model.addAttribute("editionSelected", rs.getEditionSelection().isEditionSelected());
-        model.addAttribute("cameFromSearch",
-            armchair.entity.EditionSelection.SOURCE_SEARCH.equals(rs.getEditionSelection().getEditionSource()));
         model.addAttribute("isRankAll", rs.isRankAll());
         if (rs.isRankAll()) {
             List<Ranking> unrankedBooks = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(
@@ -129,97 +125,6 @@ public class RankingWorkflowController extends BaseController {
         }
 
         model.addAttribute("mode", PageAssemblyService.Mode.RANK);
-        return "index";
-    }
-
-    @Transactional
-    @GetMapping("/rank/edition")
-    public String showEditionSelection(@RequestParam(required = false, defaultValue = "0") int page,
-                                       Model model, HttpSession session) {
-        Long userId = getCurrentUserId();
-        if (userId == null) {
-            return "redirect:/login";
-        }
-        RankingState rs = sessionState.getRankingState(session);
-
-        if (rs == null || rs.getMode() != RankingMode.SELECT_EDITION) {
-            return "redirect:/my-books";
-        }
-
-        addNavigationAttributes(model, "list");
-        model.addAttribute("rankingState", rs);
-        model.addAttribute("cameFromResolve",
-            armchair.entity.EditionSelection.SOURCE_RESOLVE.equals(rs.getEditionSelection().getEditionSource()));
-
-        List<OpenLibraryService.EditionResult> allEditions = sessionState.getCachedEditions(session);
-
-        if (allEditions == null) {
-            Book book = bookRepository.findByWorkOlid(rs.getBookIdentity().getWorkOlid()).orElse(null);
-            String preferredEditionOlid = book != null ? book.getEditionOlid() : null;
-            allEditions = openLibraryService.getEditionsForWork(
-                rs.getBookIdentity().getWorkOlid(), OpenLibraryService.DEFAULT_EDITION_FETCH_LIMIT, 0, preferredEditionOlid);
-            Integer coverId = book != null ? book.getCoverId() : null;
-            if (coverId != null && !allEditions.isEmpty() && !coverId.equals(allEditions.get(0).coverId())) {
-                allEditions = moveMatchingToFront(allEditions, e -> coverId.equals(e.coverId()));
-            }
-            sessionState.setCachedEditions(session, allEditions);
-        }
-
-        if (allEditions.size() == 1 && !rs.isRankAll()) {
-            OpenLibraryService.EditionResult soleEdition = allEditions.get(0);
-
-            Book book = bookService.findOrCreateBook(rs.getBookIdentity().getWorkOlid(),
-                soleEdition.editionOlid(), rs.getBookIdentity().getTitle(),
-                rs.getBookIdentity().getAuthor(), null, soleEdition.coverId());
-            book.setIsbn13(soleEdition.isbn13());
-            if (soleEdition.coverId() != null) {
-                book.setCoverId(soleEdition.coverId());
-            }
-            bookRepository.save(book);
-
-            if (rs.isWantToRead()) {
-                sessionState.clearEditionCache(session);
-                return addToWantToReadAndContinue(userId, rs, book, session);
-            }
-
-            rs.getEditionSelection().setEditionOlid(soleEdition.editionOlid());
-            rs.getEditionSelection().setIsbn13(soleEdition.isbn13());
-            rs.getEditionSelection().setEditionSelected(true);
-            rs.setMode(RankingMode.CATEGORIZE);
-            sessionState.saveRankingState(session, rs);
-
-            sessionState.clearEditionCache(session);
-            return "redirect:/rank/categorize";
-        }
-
-        if (allEditions.isEmpty()) {
-            if (rs.isWantToRead()) {
-                Book book = bookService.findOrCreateBook(rs.getBookIdentity().getWorkOlid(),
-                    null, rs.getBookIdentity().getTitle(), rs.getBookIdentity().getAuthor(), null, null);
-                sessionState.clearEditionCache(session);
-                return addToWantToReadAndContinue(userId, rs, book, session);
-            }
-            rs.getEditionSelection().setEditionSelected(true);
-            rs.setMode(RankingMode.CATEGORIZE);
-            sessionState.saveRankingState(session, rs);
-            sessionState.clearEditionCache(session);
-            return "redirect:/rank/categorize";
-        }
-
-        PaginationResult<OpenLibraryService.EditionResult> editionPagination = PaginationResult.of(allEditions, page, EDITION_PAGE_SIZE);
-
-        model.addAttribute("editionResults", editionPagination.pageItems());
-        model.addAttribute(SESSION_EDITION_PAGE, editionPagination.page());
-        model.addAttribute("editionTotalPages", editionPagination.totalPages());
-        model.addAttribute("editionTotalCount", editionPagination.totalCount());
-        model.addAttribute("editionPageSize", EDITION_PAGE_SIZE);
-        model.addAttribute("isRankAll", rs.isRankAll());
-        if (rs.isRankAll()) {
-            List<Ranking> remainingUnranked = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(userId, Bookshelf.UNRANKED, BookCategory.UNRANKED);
-            model.addAttribute("rankAllRemaining", remainingUnranked.size());
-        }
-        model.addAttribute("mode", PageAssemblyService.Mode.SELECT_EDITION);
-
         return "index";
     }
 
@@ -379,7 +284,7 @@ public class RankingWorkflowController extends BaseController {
             String bookName = rankingState.getBookIdentity().getTitle();
             String author = rankingState.getBookIdentity().getAuthor();
             Book book = bookService.findOrCreateBook(workOlid,
-                rankingState.getEditionSelection().getEditionOlid(), bookName, author, null, null);
+                null, bookName, author, null, null);
             return addToWantToReadAndContinue(userId, rankingState, book, session);
         }
 
@@ -441,53 +346,6 @@ public class RankingWorkflowController extends BaseController {
         }
     }
 
-    @Transactional
-    @PostMapping("/select-edition")
-    public String selectEdition(@RequestParam String editionOlid,
-                                @RequestParam(required = false) String isbn13,
-                                @RequestParam(required = false) String title,
-                                @RequestParam(required = false) Integer coverId,
-                                @RequestParam(required = false) String action,
-                                HttpSession session) {
-        Long userId = getCurrentUserId();
-        if (userId == null) {
-            return "redirect:/login";
-        }
-
-        RankingState rankingState = sessionState.getRankingState(session);
-        if (rankingState == null || rankingState.getBookIdentity().getWorkOlid() == null) {
-            return "redirect:/my-books";
-        }
-
-        Book book = bookService.findOrCreateBook(rankingState.getBookIdentity().getWorkOlid(),
-            editionOlid, rankingState.getBookIdentity().getTitle(),
-            rankingState.getBookIdentity().getAuthor(), null, coverId);
-        book.setEditionOlid(editionOlid);
-        book.setIsbn13(isbn13);
-        if (coverId != null) {
-            book.setCoverId(coverId);
-        }
-        if (title != null && !title.isBlank()) {
-            book.setTitle(title);
-            rankingState.getBookIdentity().setTitle(title);
-        }
-        bookRepository.save(book);
-
-        if (rankingState.isWantToRead() || "want-to-read".equals(action)) {
-            sessionState.clearEditionCache(session);
-            return addToWantToReadAndContinue(userId, rankingState, book, session);
-        }
-
-        rankingState.getEditionSelection().setEditionOlid(editionOlid);
-        rankingState.getEditionSelection().setIsbn13(isbn13);
-        rankingState.getEditionSelection().setEditionSelected(true);
-        rankingState.setMode(RankingMode.CATEGORIZE);
-        sessionState.saveRankingState(session, rankingState);
-
-        sessionState.clearEditionCache(session);
-        return "redirect:/rank/categorize";
-    }
-
     @PostMapping("/cancel-add")
     public String cancelAdd(HttpSession session) {
         Long userId = getCurrentUserId();
@@ -503,46 +361,6 @@ public class RankingWorkflowController extends BaseController {
             return "redirect:/my-books?selectedBookshelf=" + selectedBookshelf;
         }
         return "redirect:/my-books";
-    }
-
-    @PostMapping("/back-to-edition")
-    public String backToEdition(HttpSession session) {
-        Long userId = getCurrentUserId();
-        if (userId == null) {
-            return "redirect:/login";
-        }
-        RankingState rs = sessionState.getRankingState(session);
-        if (rs == null || rs.getBookIdentity().getTitle() == null) {
-            return "redirect:/my-books";
-        }
-        rs.setMode(RankingMode.SELECT_EDITION);
-        rs.getEditionSelection().setEditionSelected(false);
-        sessionState.saveRankingState(session, rs);
-        return "redirect:/rank/edition";
-    }
-
-    @PostMapping("/back-to-editions")
-    public String backToEditions(HttpSession session) {
-        Long userId = getCurrentUserId();
-        if (userId == null) {
-            return "redirect:/login";
-        }
-        RankingState rs = sessionState.getRankingState(session);
-        if (rs == null || rs.getBookIdentity().getWorkOlid() == null) {
-            return "redirect:/my-books";
-        }
-        String workOlid = rs.getBookIdentity().getWorkOlid();
-        String titleVal = rs.getBookIdentity().getTitle();
-        String author = rs.getBookIdentity().getAuthor();
-        rankingService.restoreAbandonedBook(userId, sessionState.getRankingState(session));
-        sessionState.clearRankingState(session);
-        sessionState.clearEditionCache(session);
-        String url = UriComponentsBuilder.fromPath("/editions/{workOlid}")
-            .queryParam("title", titleVal)
-            .queryParam("author", author)
-            .buildAndExpand(workOlid)
-            .toUriString();
-        return "redirect:" + url;
     }
 
     @Transactional
@@ -579,7 +397,6 @@ public class RankingWorkflowController extends BaseController {
         rs.setMode(RankingMode.RESOLVE);
         sessionState.saveRankingState(session, rs);
         sessionState.clearSearchAndResolveState(session);
-        sessionState.clearEditionCache(session);
         return "redirect:/resolve";
     }
 
@@ -626,13 +443,11 @@ public class RankingWorkflowController extends BaseController {
         bookRepository.save(existingBook);
 
         rankingState.getBookIdentity().setBookInfo(workOlid, title, author);
-        rankingState.setMode(RankingMode.SELECT_EDITION);
+        rankingState.setMode(RankingMode.CATEGORIZE);
         sessionState.saveRankingState(session, rankingState);
 
         session.removeAttribute(SESSION_SKIP_RESOLVE);
-        rankingState.getEditionSelection().setEditionSource(armchair.entity.EditionSelection.SOURCE_RESOLVE);
-        sessionState.saveRankingState(session, rankingState);
-        return "redirect:/rank/edition";
+        return "redirect:/rank/categorize";
     }
 
     @PostMapping("/skip-resolve")

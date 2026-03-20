@@ -6,6 +6,7 @@ import armchair.entity.Bookshelf;
 import armchair.entity.Ranking;
 import armchair.entity.RankingMode;
 import armchair.entity.RankingState;
+import armchair.repository.BookRepository;
 import armchair.repository.RankingRepository;
 import armchair.service.BookService;
 import armchair.service.RankingService;
@@ -23,6 +24,9 @@ import static armchair.controller.ControllerUtils.*;
 
 @Controller
 public class BookActionController extends BaseController {
+
+    @Autowired
+    private BookRepository bookRepository;
 
     @Autowired
     private RankingRepository rankingRepository;
@@ -315,15 +319,13 @@ public class BookActionController extends BaseController {
         if (needsResolve) {
             rankingState.setMode(RankingMode.RESOLVE);
         } else {
-            rankingState.setMode(RankingMode.SELECT_EDITION);
+            rankingState.setMode(RankingMode.CATEGORIZE);
         }
         sessionState.saveRankingState(session, rankingState);
 
-        sessionState.clearEditionCache(session);
-
         rankingService.deleteRankingAndCloseGap(userId, ranking);
 
-        return needsResolve ? "redirect:/resolve" : "redirect:/rank/edition";
+        return needsResolve ? "redirect:/resolve" : "redirect:/rank/categorize";
     }
 
     @Transactional
@@ -364,11 +366,11 @@ public class BookActionController extends BaseController {
         if (needsResolve) {
             rankingState.setMode(RankingMode.RESOLVE);
         } else {
-            rankingState.setMode(RankingMode.SELECT_EDITION);
+            rankingState.setMode(RankingMode.CATEGORIZE);
         }
         sessionState.saveRankingState(session, rankingState);
 
-        return needsResolve ? "redirect:/resolve" : "redirect:/rank/edition";
+        return needsResolve ? "redirect:/resolve" : "redirect:/rank/categorize";
     }
 
     @PostMapping("/want-to-read-unranked-book")
@@ -392,11 +394,11 @@ public class BookActionController extends BaseController {
         if (needsResolve) {
             rankingState.setMode(RankingMode.RESOLVE);
         } else {
-            rankingState.setMode(RankingMode.SELECT_EDITION);
+            rankingState.setMode(RankingMode.CATEGORIZE);
         }
         sessionState.saveRankingState(session, rankingState);
 
-        return needsResolve ? "redirect:/resolve" : "redirect:/rank/edition";
+        return needsResolve ? "redirect:/resolve" : "redirect:/rank/categorize";
     }
 
     @PostMapping("/rank-all")
@@ -427,10 +429,44 @@ public class BookActionController extends BaseController {
         if (needsResolve) {
             rankingState.setMode(RankingMode.RESOLVE);
         } else {
-            rankingState.setMode(RankingMode.SELECT_EDITION);
+            rankingState.setMode(RankingMode.CATEGORIZE);
         }
         sessionState.saveRankingState(session, rankingState);
 
-        return needsResolve ? "redirect:/resolve" : "redirect:/rank/edition";
+        return needsResolve ? "redirect:/resolve" : "redirect:/rank/categorize";
+    }
+
+    @Transactional
+    @PostMapping("/update-book-edition")
+    public String updateBookEdition(@RequestParam Long bookId,
+                                    @RequestParam String editionOlid,
+                                    @RequestParam(required = false) String isbn13,
+                                    @RequestParam(required = false) Integer coverId,
+                                    @RequestParam(required = false) String editionTitle) {
+        Long userId = getCurrentUserId();
+        if (userId == null) {
+            return "redirect:/login";
+        }
+
+        Ranking ranking = rankingService.findRankingForUser(bookId, userId);
+        if (ranking == null) {
+            return "redirect:/my-books";
+        }
+
+        Book book = ranking.getBook();
+        book.setEditionOlid(editionOlid);
+        if (isbn13 != null) {
+            book.setIsbn13(isbn13);
+        }
+        if (coverId != null) {
+            book.setCoverId(coverId);
+        }
+        if (editionTitle != null && !editionTitle.isBlank()) {
+            book.setTitle(editionTitle);
+        }
+        bookRepository.save(book);
+
+        String selectedBookshelf = ranking.getBookshelf().name();
+        return "redirect:/my-books?selectedBookshelf=" + selectedBookshelf;
     }
 }

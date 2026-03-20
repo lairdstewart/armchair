@@ -79,6 +79,7 @@
         <input type="hidden" name="bookId" th:value="${book.id()}" />
         <button type="submit" class="book-action-link">write review</button>
       </form>
+      <a th:if="${book.workOlid() != null}" th:href="@{/editions/{workOlid}(workOlid=${book.workOlid()}, title=${book.title()}, author=${book.author()}, changeBookId=${book.id()})}" class="book-action-link">change edition</a>
       <form th:action="@{/direct-rerank}" method="POST" style="display: inline;">
         <input type="hidden" name="bookId" th:value="${book.id()}" />
         <button type="submit" class="book-action-link">re-rank</button>

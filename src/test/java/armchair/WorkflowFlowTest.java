@@ -367,16 +367,16 @@ class WorkflowFlowTest extends BaseIntegrationTest {
                         .session(session)
                         .with(oauthUser("oauth-wf-11")).with(csrf()))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/rank/edition"));
+                .andExpect(redirectedUrl("/rank/categorize"));
 
         // Book still in unranked (deferred delete until ranking completes)
         List<Ranking> unranked = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(
                 user.getId(), Bookshelf.UNRANKED, BookCategory.UNRANKED);
         assertThat(unranked).hasSize(1);
 
-        // State set up for edition selection with unrankedRankingId for deferred delete
+        // State set up for categorize with unrankedRankingId for deferred delete
         RankingState state = getRankingState(session);
-        assertThat(state.getMode()).isEqualTo(RankingMode.SELECT_EDITION);
+        assertThat(state.getMode()).isEqualTo(RankingMode.CATEGORIZE);
         assertThat(state.getBookIdentity().getTitle()).isEqualTo("Dune");
         assertThat(state.getBookshelf()).isEqualTo(Bookshelf.UNRANKED);
         assertThat(state.getUnrankedRankingId()).isEqualTo(ranking.getId());
@@ -450,10 +450,10 @@ class WorkflowFlowTest extends BaseIntegrationTest {
                         .session(session)
                         .with(oauthUser("oauth-wf-15")).with(csrf()))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/rank/edition"));
+                .andExpect(redirectedUrl("/rank/categorize"));
 
         RankingState state = getRankingState(session);
-        assertThat(state.getMode()).isEqualTo(RankingMode.SELECT_EDITION);
+        assertThat(state.getMode()).isEqualTo(RankingMode.CATEGORIZE);
         assertThat(state.isWantToRead()).isTrue();
         assertThat(state.getBookshelf()).isEqualTo(Bookshelf.UNRANKED);
         assertThat(state.getUnrankedRankingId()).isEqualTo(ranking.getId());
@@ -499,7 +499,7 @@ class WorkflowFlowTest extends BaseIntegrationTest {
                         .session(session)
                         .with(oauthUser("oauth-wf-17")).with(csrf()))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/rank/edition"));
+                .andExpect(redirectedUrl("/rank/categorize"));
 
         // Both books still in unranked (deferred delete until ranking completes)
         List<Ranking> unranked = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(
@@ -545,81 +545,16 @@ class WorkflowFlowTest extends BaseIntegrationTest {
     // ── Navigation-back endpoints ──
 
     @Test
-    void backToEditionChangesMode() throws Exception {
-        User user = createOAuthUser("wf20", "oauth-wf-20");
-        MockHttpSession session = new MockHttpSession();
-
-        RankingState rs = new RankingState("OL1W", "Dune", "Frank Herbert", null, null);
-        rs.setMode(RankingMode.CATEGORIZE);
-        rs.getEditionSelection().setEditionSelected(true);
-        setRankingState(session, rs);
-
-        mockMvc.perform(post("/back-to-edition")
-                        .session(session)
-                        .with(oauthUser("oauth-wf-20")).with(csrf()))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/rank/edition"));
-
-        RankingState updated = getRankingState(session);
-        assertThat(updated.getMode()).isEqualTo(RankingMode.SELECT_EDITION);
-        assertThat(updated.getEditionSelection().isEditionSelected()).isFalse();
-    }
-
-    @Test
-    void backToEditionWithoutStateRedirects() throws Exception {
-        User user = createOAuthUser("wf21", "oauth-wf-21");
-
-        mockMvc.perform(post("/back-to-edition")
-                        .with(oauthUser("oauth-wf-21")).with(csrf()))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/my-books"));
-    }
-
-    @Test
-    void backToEditionsRedirectsToEditionsPage() throws Exception {
-        User user = createOAuthUser("wf22", "oauth-wf-22");
-
-        RankingState rs = new RankingState("OL1W", "Dune", "Frank Herbert", null, null);
-        rs.setMode(RankingMode.SELECT_EDITION);
-
-        MockHttpSession session = new MockHttpSession();
-        setRankingState(session, rs);
-        session.setAttribute("cachedEditions", List.of());
-
-        mockMvc.perform(post("/back-to-editions")
-                        .session(session)
-                        .with(oauthUser("oauth-wf-22")).with(csrf()))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/editions/OL1W?title=Dune&author=Frank Herbert"));
-
-        // State and cache cleared
-        assertThat(getRankingState(session)).isNull();
-        assertThat(session.getAttribute("cachedEditions")).isNull();
-    }
-
-    @Test
-    void backToEditionsWithoutStateRedirects() throws Exception {
-        User user = createOAuthUser("wf23", "oauth-wf-23");
-
-        mockMvc.perform(post("/back-to-editions")
-                        .with(oauthUser("oauth-wf-23")).with(csrf()))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/my-books"));
-    }
-
-    @Test
     void backToResolveChangesMode() throws Exception {
         User user = createOAuthUser("wf24", "oauth-wf-24");
 
         RankingState rs = new RankingState("OL1W", "Dune", "Frank Herbert", null, null);
-        rs.setMode(RankingMode.SELECT_EDITION);
+        rs.setMode(RankingMode.CATEGORIZE);
 
         MockHttpSession session = new MockHttpSession();
         setRankingState(session, rs);
         session.setAttribute("skipResolve", "expanded");
         session.setAttribute("cachedEditions", List.of());
-        rs.getEditionSelection().setEditionSource(armchair.entity.EditionSelection.SOURCE_RESOLVE);
-        setRankingState(session, rs);
 
         mockMvc.perform(post("/back-to-resolve")
                         .session(session)
@@ -632,7 +567,6 @@ class WorkflowFlowTest extends BaseIntegrationTest {
 
         // Session attributes cleared
         assertThat(session.getAttribute("skipResolve")).isNull();
-        assertThat(session.getAttribute("cachedEditions")).isNull();
     }
 
     @Test

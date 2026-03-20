@@ -314,6 +314,7 @@ public class SearchController extends BaseController {
                                @RequestParam(required = false, defaultValue = "0") int page,
                                @RequestParam(required = false) Integer coverId,
                                @RequestParam(required = false) String query,
+                               @RequestParam(required = false) Long changeBookId,
                                Model model, HttpSession session) {
         addNavigationAttributes(model, "search");
 
@@ -340,6 +341,7 @@ public class SearchController extends BaseController {
         model.addAttribute("editionTotalCount", editionPagination.totalCount());
         model.addAttribute("editionPageSize", EDITION_PAGE_SIZE);
         model.addAttribute("searchQuery", query);
+        model.addAttribute("changeBookId", changeBookId);
 
         Long currentUserId = getCurrentUserId();
         if (currentUserId != null) {
@@ -379,14 +381,10 @@ public class SearchController extends BaseController {
         bookService.findOrCreateBook(workOlid, editionOlid, bookName, author, firstPublishYear, coverId);
 
         rankingState.getBookIdentity().setBookInfo(workOlid, bookName, author);
-        rankingState.setMode(RankingMode.SELECT_EDITION);
+        rankingState.setMode(RankingMode.CATEGORIZE);
         sessionState.saveRankingState(session, rankingState);
 
-        sessionState.clearEditionCache(session);
-
-        rankingState.getEditionSelection().setEditionSource(armchair.entity.EditionSelection.SOURCE_SEARCH);
-        sessionState.saveRankingState(session, rankingState);
-        return "redirect:/rank/edition";
+        return "redirect:/rank/categorize";
     }
 
     @PostMapping("/select-book-edition")
@@ -429,9 +427,6 @@ public class SearchController extends BaseController {
             rankingState = new RankingState(null, null, null, null, null);
         }
         rankingState.getBookIdentity().setBookInfo(workOlid, titleToUse, author);
-        rankingState.getEditionSelection().setEditionOlid(editionOlid);
-        rankingState.getEditionSelection().setIsbn13(isbn13);
-        rankingState.getEditionSelection().setEditionSelected(true);
         rankingState.setMode(RankingMode.CATEGORIZE);
         sessionState.saveRankingState(session, rankingState);
 

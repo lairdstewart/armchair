@@ -21,10 +21,20 @@
             <div th:if="${edition.publisher() != null}" class="book-author">Publisher: <span th:text="${edition.publisher()}"></span></div>
             <div th:if="${edition.publishDate() != null}" class="book-author">Published: <span th:text="${edition.publishDate()}"></span></div>
             <span class="book-actions">
-              <th:block th:if="${existingBookshelf != null}">
+              <th:block th:if="${changeBookId != null}">
+                <form th:action="@{/update-book-edition}" method="POST" style="display: inline;">
+                  <input type="hidden" name="bookId" th:value="${changeBookId}" />
+                  <input type="hidden" name="editionOlid" th:value="${edition.editionOlid()}" />
+                  <input type="hidden" name="isbn13" th:value="${edition.isbn13()}" />
+                  <input type="hidden" name="coverId" th:value="${edition.coverId()}" />
+                  <input type="hidden" name="editionTitle" th:value="${edition.title()}" />
+                  <button type="submit" class="book-action-link">select</button>
+                </form>
+              </th:block>
+              <th:block th:if="${changeBookId == null && existingBookshelf != null}">
                 <a th:href="@{/my-books(selectedBookshelf=${existingBookshelf})}" class="book-action-link">view in library</a>
               </th:block>
-              <th:block th:if="${existingBookshelf == null}">
+              <th:block th:if="${changeBookId == null && existingBookshelf == null}">
                 <form th:action="@{/select-book-edition}" method="POST" style="display: inline;">
                   <input type="hidden" name="workOlid" th:value="${workOlid}" />
                   <input type="hidden" name="bookName" th:value="${workTitle}" />
@@ -56,7 +66,7 @@
       <div th:if="${editionTotalPages > 1}" style="margin-top: 15px; margin-bottom: 15px;">
         <th:block th:each="p : ${#numbers.sequence(0, editionTotalPages - 1)}">
           <span th:if="${p == editionPage}" th:text="${(p * editionPageSize + 1) + '-' + T(java.lang.Math).min((p + 1) * editionPageSize, editionTotalCount)}" style="font-weight: bold; margin-right: 8px;"></span>
-          <a th:if="${p != editionPage}" th:href="@{/editions/{workOlid}(workOlid=${workOlid}, title=${workTitle}, author=${workAuthor}, page=${p}, query=${searchQuery})}" class="book-action-link"
+          <a th:if="${p != editionPage}" th:href="@{/editions/{workOlid}(workOlid=${workOlid}, title=${workTitle}, author=${workAuthor}, page=${p}, query=${searchQuery}, changeBookId=${changeBookId})}" class="book-action-link"
              th:text="${(p * editionPageSize + 1) + '-' + T(java.lang.Math).min((p + 1) * editionPageSize, editionTotalCount)}" style="margin-right: 8px;"></a>
         </th:block>
       </div>

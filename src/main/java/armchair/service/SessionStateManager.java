@@ -25,6 +25,7 @@ public class SessionStateManager {
 
     public static final String SKIP_RESOLVE_EXPANDED = "expanded";
     public static final String SKIP_RESOLVE_MANUAL = "manual";
+
     public RankingState getRankingState(HttpSession session) {
         return (RankingState) session.getAttribute(SESSION_RANKING_STATE);
     }

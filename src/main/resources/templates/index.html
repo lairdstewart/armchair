@@ -73,6 +73,7 @@
                       <input type="hidden" name="bookId" th:value="${book.id()}" />
                       <button type="submit" class="book-action-link">rank</button>
                     </form>
+                    <a th:if="${book.workOlid() != null}" th:href="@{/editions/{workOlid}(workOlid=${book.workOlid()}, title=${book.title()}, author=${book.author()}, changeBookId=${book.id()})}" class="book-action-link">change edition</a>
                     <form th:action="@{/remove-from-reading-list}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to remove this book?');">
                       <input type="hidden" name="bookId" th:value="${book.id()}" />
                       <button type="submit" class="book-action-link">remove</button>
@@ -112,7 +113,6 @@
             </ul>
           </div>
       </div>
-      <div th:case="'SELECT_EDITION'" th:insert="~{modes/select-edition :: content}"></div>
       <div th:case="'CATEGORIZE'" th:insert="~{modes/categorize :: content}"></div>
       <div th:case="'RESOLVE'" th:insert="~{modes/resolve :: content}"></div>
       <div th:case="'MANUAL_RESOLVE'" th:insert="~{modes/manual-resolve :: content}"></div>

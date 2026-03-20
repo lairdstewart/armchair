@@ -6,7 +6,6 @@ package armchair.entity;
  */
 public enum RankingMode {
     RESOLVE,        // Unverified book needs Open Library match
-    SELECT_EDITION, // User picks which edition/cover to use
     CATEGORIZE,     // User selects bookshelf + category
     RANK,           // Binary search pairwise comparisons
     REVIEW,         // Editing a book's review

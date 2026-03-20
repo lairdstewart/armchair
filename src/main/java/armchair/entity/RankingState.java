@@ -6,7 +6,6 @@ public class RankingState implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private final BookIdentity bookIdentity = new BookIdentity();
-    private final EditionSelection editionSelection = new EditionSelection();
     private final BinarySearchState binarySearch = new BinarySearchState();
     private final RestorationState restoration = new RestorationState();
 
@@ -39,10 +38,6 @@ public class RankingState implements Serializable {
 
     public BookIdentity getBookIdentity() {
         return bookIdentity;
-    }
-
-    public EditionSelection getEditionSelection() {
-        return editionSelection;
     }
 
     public BinarySearchState getBinarySearch() {
