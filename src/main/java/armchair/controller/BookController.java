@@ -2069,12 +2069,22 @@ public class BookController {
         newUser.setSignupNumber(realUserCount + 1);
         newUser.setSignupDate(LocalDateTime.now());
 
+        log.info("Registering username '{}' for provider '{}'", username, identity.provider());
         try {
             userRepository.save(newUser);
         } catch (org.springframework.dao.DataIntegrityViolationException e) {
-            model.addAttribute("error", "Username already taken");
-            model.addAttribute("username", username);
-            return "setup-username";
+            String message = e.getMessage() != null ? e.getMessage() : "";
+            if (message.toLowerCase().contains("username")) {
+                log.warn("Username constraint violation registering '{}' (provider={}): {}",
+                        username, identity.provider(), message);
+                model.addAttribute("error", "Username already taken");
+                model.addAttribute("username", username);
+                return "setup-username";
+            } else {
+                log.error("Unexpected constraint violation registering '{}' (provider={}): {}",
+                        username, identity.provider(), message, e);
+                return "redirect:/error";
+            }
         }
 
         return "redirect:/my-profile";
@@ -2124,9 +2134,18 @@ public class BookController {
         try {
             userRepository.save(user);
         } catch (org.springframework.dao.DataIntegrityViolationException e) {
-            model.addAttribute("error", "Username already taken");
-            model.addAttribute("username", username);
-            return "change-username";
+            String message = e.getMessage() != null ? e.getMessage() : "";
+            if (message.toLowerCase().contains("username")) {
+                log.warn("Username constraint violation changing to '{}' (provider={}): {}",
+                        username, identity.provider(), message);
+                model.addAttribute("error", "Username already taken");
+                model.addAttribute("username", username);
+                return "change-username";
+            } else {
+                log.error("Unexpected constraint violation changing to '{}' (provider={}): {}",
+                        username, identity.provider(), message, e);
+                return "redirect:/error";
+            }
         }
 
         return "redirect:/my-profile";
