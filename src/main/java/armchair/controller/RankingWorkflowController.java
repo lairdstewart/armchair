@@ -400,16 +400,15 @@ public class RankingWorkflowController extends BaseController {
 
         if (currentList.isEmpty()) {
             boolean wasRankAll = rankingState.isRankAll();
+            rankingService.deleteUnrankedRankingById(rankingState.getUnrankedRankingId(), userId);
             Book book = bookService.findOrCreateBook(workOlid, null, bookName, author, null, null);
             if (rankingRepository.existsByUserIdAndBookId(userId, book.getId())) {
-                rankingService.deleteUnrankedRankingById(rankingState.getUnrankedRankingId(), userId);
                 sessionState.clearRankingState(session);
                 if (wasRankAll) {
                     return bookActionController.startNextUnrankedBook(userId, bookshelfEnum, session);
                 }
                 return "redirect:/my-books";
             }
-            rankingService.deleteUnrankedRankingById(rankingState.getUnrankedRankingId(), userId);
             User userRef = userRepository.getReferenceById(userId);
             Ranking newRanking = new Ranking(userRef, book, bookshelfEnum, bookCategory, 0);
             newRanking.setReview(trimmedReview);

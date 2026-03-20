@@ -104,12 +104,11 @@ public class RankingService {
     public void insertBookAtPosition(String workOlid, String title, String author, String review,
                                      Bookshelf bookshelf, BookCategory category, int position, Long userId,
                                      Long unrankedRankingId) {
+        deleteUnrankedRankingById(unrankedRankingId, userId);
         Book book = bookService.findOrCreateBook(workOlid, null, title, author, null, null);
         if (rankingRepository.existsByUserIdAndBookId(userId, book.getId())) {
-            deleteUnrankedRankingById(unrankedRankingId, userId);
             return;
         }
-        deleteUnrankedRankingById(unrankedRankingId, userId);
 
         List<Ranking> rankingsToShift = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(
             userId, bookshelf, category
