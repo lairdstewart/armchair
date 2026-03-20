@@ -81,12 +81,6 @@ public class RankingService {
                 Ranking restored = new Ranking(userRef, book, bookshelf, category, position);
                 restored.setReview(state.getReviewBeingRanked());
                 rankingRepository.save(restored);
-            } else {
-                List<Ranking> unranked = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(
-                    userId, Bookshelf.UNRANKED, BookCategory.UNRANKED);
-                Ranking restored = new Ranking(userRef, book, Bookshelf.UNRANKED, BookCategory.UNRANKED, unranked.size());
-                restored.setReview(state.getReviewBeingRanked());
-                rankingRepository.save(restored);
             }
         }
     }
