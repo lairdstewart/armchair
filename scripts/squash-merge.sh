@@ -97,7 +97,7 @@ fi
 # --- Ensure worktree is clean before merging ---
 if ! git diff --quiet || ! git diff --cached --quiet; then
     echo "ERROR: Working tree or index is dirty. Cannot merge. STOP STOP STOP. DO NOT PROCEED. ASK THE USER FOR HELP."
-    exit 1
+    exit 99
 fi
 
 # --- Attempt the squash merge ---
