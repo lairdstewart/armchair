@@ -82,8 +82,8 @@ class RankingFlowTest extends BaseIntegrationTest {
 
         RankingState state = getRankingState(session);
         assertThat(state.getCategory()).isEqualTo(BookCategory.LIKED);
-        assertThat(state.getLowIndex()).isEqualTo(0);
-        assertThat(state.getHighIndex()).isEqualTo(1);
+        assertThat(state.getBinarySearch().getLowIndex()).isEqualTo(0);
+        assertThat(state.getBinarySearch().getHighIndex()).isEqualTo(1);
 
         mockMvc.perform(post("/choose")
                         .param("choice", "new")
@@ -216,7 +216,7 @@ class RankingFlowTest extends BaseIntegrationTest {
                 user.getId(), Bookshelf.WANT_TO_READ, BookCategory.UNRANKED)).isEmpty();
 
         RankingState state = getRankingState(session);
-        assertThat(state.getTitleBeingRanked()).isEqualTo("Dune");
+        assertThat(state.getBookIdentity().getTitle()).isEqualTo("Dune");
 
         mockMvc.perform(post("/categorize")
                         .param("bookshelf", "fiction")
@@ -283,10 +283,10 @@ class RankingFlowTest extends BaseIntegrationTest {
         assertThat(liked.get(1).getBook().getTitle()).isEqualTo("Book C");
 
         RankingState state = getRankingState(session);
-        assertThat(state.getTitleBeingRanked()).isEqualTo("Book B");
+        assertThat(state.getBookIdentity().getTitle()).isEqualTo("Book B");
         assertThat(state.getMode()).isEqualTo(RankingMode.CATEGORIZE);
-        assertThat(state.getOriginalCategory()).isEqualTo(BookCategory.LIKED);
-        assertThat(state.getOriginalPosition()).isEqualTo(1);
+        assertThat(state.getRestoration().getOriginalCategory()).isEqualTo(BookCategory.LIKED);
+        assertThat(state.getRestoration().getOriginalPosition()).isEqualTo(1);
     }
 
     @Test
@@ -465,8 +465,8 @@ class RankingFlowTest extends BaseIntegrationTest {
 
         // Verify the ranking state points to book B, not book A
         RankingState state = getRankingState(session);
-        assertThat(state.getTitleBeingRanked()).isEqualTo("Book B");
-        assertThat(state.getWorkOlidBeingRanked()).isEqualTo("OL600W");
+        assertThat(state.getBookIdentity().getTitle()).isEqualTo("Book B");
+        assertThat(state.getBookIdentity().getWorkOlid()).isEqualTo("OL600W");
     }
 
     @Test

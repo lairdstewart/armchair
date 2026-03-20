@@ -58,17 +58,17 @@ public class RankingService {
     }
 
     public void restoreAbandonedBook(Long userId, RankingState state) {
-        if (state == null || state.getTitleBeingRanked() == null) return;
+        if (state == null || state.getBookIdentity().getTitle() == null) return;
 
-        Book book = bookService.findOrCreateBook(state.getWorkOlidBeingRanked(),
-            null, state.getTitleBeingRanked(), state.getAuthorBeingRanked(), null, null);
+        Book book = bookService.findOrCreateBook(state.getBookIdentity().getWorkOlid(),
+            null, state.getBookIdentity().getTitle(), state.getBookIdentity().getAuthor(), null, null);
 
         if (!rankingRepository.existsByUserIdAndBookId(userId, book.getId())) {
             User userRef = userRepository.getReferenceById(userId);
-            if (state.getOriginalCategory() != null && state.getOriginalPosition() != null) {
+            if (state.getRestoration().getOriginalCategory() != null && state.getRestoration().getOriginalPosition() != null) {
                 Bookshelf bookshelf = state.getBookshelf();
-                BookCategory category = state.getOriginalCategory();
-                int position = state.getOriginalPosition();
+                BookCategory category = state.getRestoration().getOriginalCategory();
+                int position = state.getRestoration().getOriginalPosition();
 
                 List<Ranking> rankings = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(userId, bookshelf, category);
                 for (Ranking r : rankings) {

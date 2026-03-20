@@ -5,7 +5,7 @@
     <form th:action="@{/cancel-add}" method="POST" style="margin-bottom: 0;">
       <button type="submit" class="btn-back">back</button>
     </form>
-    <h3>Search for <span th:text="${rankingState.titleBeingRanked}"></span> in Open Library's database</h3>
+    <h3>Search for <span th:text="${rankingState.bookIdentity.title}"></span> in Open Library's database</h3>
     <p>Try searching with or without the author, or with a shorter version of the title.</p>
     <form th:action="@{/my-books}" method="GET" style="margin-bottom: 15px;">
       <input type="text" name="resolveQuery" class="text-input" th:value="${resolveQuery}" placeholder="Search Open Library..." />

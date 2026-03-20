@@ -5,7 +5,7 @@
     <form th:action="${isRerank} ? @{/cancel-add} : (${editionSelected} ? @{/back-to-editions} : @{/back-to-edition})" method="POST" style="margin-bottom: 0;">
       <button type="submit" class="btn-back">back</button>
     </form>
-    <h3>Add <span th:text="${rankingState.titleBeingRanked}"></span></h3>
+    <h3>Add <span th:text="${rankingState.bookIdentity.title}"></span></h3>
     <p th:if="${isRankAll}" style="margin-bottom: 15px;"><span th:text="${rankAllRemaining}"></span> uncategorized book<span th:if="${rankAllRemaining != 1}">s</span> remaining</p>
     <form th:action="@{/categorize}" method="POST">
       <div id="bookshelf-group" style="margin-bottom: 15px;">

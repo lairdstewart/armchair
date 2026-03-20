@@ -277,7 +277,7 @@ public class BookController {
         }
 
         boolean needsResolve = mode == Mode.RESOLVE ||
-            (mode == Mode.CATEGORIZE && rankingState != null && rankingState.getWorkOlidBeingRanked() == null);
+            (mode == Mode.CATEGORIZE && rankingState != null && rankingState.getBookIdentity().getWorkOlid() == null);
         if (needsResolve && rankingState != null) {
             Object skipResolve = session.getAttribute(SESSION_SKIP_RESOLVE);
             if (SKIP_RESOLVE_MANUAL.equals(skipResolve)) {
@@ -294,8 +294,8 @@ public class BookController {
             } else if (skipResolve == null || SKIP_RESOLVE_EXPANDED.equals(skipResolve)) {
                 int maxResults = SKIP_RESOLVE_EXPANDED.equals(skipResolve) ? SEARCH_RESULTS_EXPANDED : SEARCH_RESULTS_DEFAULT;
                 List<OpenLibraryService.BookResult> resolveResults = searchService.combinedSearch(
-                        rankingState.getTitleBeingRanked(),
-                        rankingState.getAuthorBeingRanked(),
+                        rankingState.getBookIdentity().getTitle(),
+                        rankingState.getBookIdentity().getAuthor(),
                         maxResults);
                 if (!resolveResults.isEmpty()) {
                     mode = Mode.RESOLVE;
@@ -305,36 +305,36 @@ public class BookController {
                     }
                 } else if (skipResolve == null) {
                     resolveResults = searchService.combinedSearch(
-                        rankingState.getTitleBeingRanked(),
-                        rankingState.getAuthorBeingRanked(),
+                        rankingState.getBookIdentity().getTitle(),
+                        rankingState.getBookIdentity().getAuthor(),
                         SEARCH_RESULTS_EXPANDED);
                     if (!resolveResults.isEmpty()) {
                         mode = Mode.RESOLVE;
                         model.addAttribute("resolveResults", resolveResults);
                     } else {
-                        log.warn("RESOLVE auto-search found nothing for \"{}\" by {}", rankingState.getTitleBeingRanked(), rankingState.getAuthorBeingRanked());
+                        log.warn("RESOLVE auto-search found nothing for \"{}\" by {}", rankingState.getBookIdentity().getTitle(), rankingState.getBookIdentity().getAuthor());
                         session.setAttribute(SESSION_SKIP_RESOLVE, SKIP_RESOLVE_MANUAL);
                         return "redirect:/my-books";
                     }
                 } else {
-                    log.warn("RESOLVE auto-search found nothing for \"{}\" by {}", rankingState.getTitleBeingRanked(), rankingState.getAuthorBeingRanked());
+                    log.warn("RESOLVE auto-search found nothing for \"{}\" by {}", rankingState.getBookIdentity().getTitle(), rankingState.getBookIdentity().getAuthor());
                     session.setAttribute(SESSION_SKIP_RESOLVE, SKIP_RESOLVE_MANUAL);
                     return "redirect:/my-books";
                 }
             }
         }
 
-        if (mode == Mode.SELECT_EDITION && rankingState != null && rankingState.getWorkOlidBeingRanked() != null) {
+        if (mode == Mode.SELECT_EDITION && rankingState != null && rankingState.getBookIdentity().getWorkOlid() != null) {
             @SuppressWarnings("unchecked")
             List<OpenLibraryService.EditionResult> allEditions =
                 (List<OpenLibraryService.EditionResult>) session.getAttribute(SESSION_CACHED_EDITIONS);
 
             if (allEditions == null) {
-                Book editionBook = bookRepository.findByWorkOlid(rankingState.getWorkOlidBeingRanked()).orElse(null);
+                Book editionBook = bookRepository.findByWorkOlid(rankingState.getBookIdentity().getWorkOlid()).orElse(null);
                 String preferredEditionOlid = editionBook != null ? editionBook.getEditionOlid() : null;
 
                 allEditions = openLibraryService.getEditionsForWork(
-                    rankingState.getWorkOlidBeingRanked(), OpenLibraryService.DEFAULT_EDITION_FETCH_LIMIT, 0, preferredEditionOlid);
+                    rankingState.getBookIdentity().getWorkOlid(), OpenLibraryService.DEFAULT_EDITION_FETCH_LIMIT, 0, preferredEditionOlid);
                 Integer editionCoverId = editionBook != null ? editionBook.getCoverId() : null;
                 if (editionCoverId != null && !allEditions.isEmpty() && !editionCoverId.equals(allEditions.get(0).coverId())) {
                     allEditions = moveMatchingToFront(allEditions, e -> editionCoverId.equals(e.coverId()));
@@ -344,15 +344,15 @@ public class BookController {
 
             if (allEditions.size() == 1) {
                 OpenLibraryService.EditionResult soleEdition = allEditions.get(0);
-                rankingState.setEditionOlidBeingRanked(soleEdition.editionOlid());
-                rankingState.setIsbn13BeingRanked(soleEdition.isbn13());
-                rankingState.setEditionSelected(true);
+                rankingState.getEditionSelection().setEditionOlid(soleEdition.editionOlid());
+                rankingState.getEditionSelection().setIsbn13(soleEdition.isbn13());
+                rankingState.getEditionSelection().setEditionSelected(true);
                 rankingState.setMode(RankingMode.CATEGORIZE);
                 saveRankingState(session, rankingState);
 
-                Book book = bookService.findOrCreateBook(rankingState.getWorkOlidBeingRanked(),
-                    soleEdition.editionOlid(), rankingState.getTitleBeingRanked(),
-                    rankingState.getAuthorBeingRanked(), null, null);
+                Book book = bookService.findOrCreateBook(rankingState.getBookIdentity().getWorkOlid(),
+                    soleEdition.editionOlid(), rankingState.getBookIdentity().getTitle(),
+                    rankingState.getBookIdentity().getAuthor(), null, null);
                 book.setIsbn13(soleEdition.isbn13());
                 bookRepository.save(book);
 
@@ -361,7 +361,7 @@ public class BookController {
             }
 
             if (allEditions.isEmpty()) {
-                rankingState.setEditionSelected(true);
+                rankingState.getEditionSelection().setEditionSelected(true);
                 rankingState.setMode(RankingMode.CATEGORIZE);
                 saveRankingState(session, rankingState);
                 session.removeAttribute(SESSION_CACHED_EDITIONS);
@@ -471,18 +471,18 @@ public class BookController {
             model.addAttribute("rankAllRemaining", remainingUnranked);
         }
 
-        if (rankingState != null && mode == Mode.RANK && rankingState.getTitleBeingRanked() != null) {
+        if (rankingState != null && mode == Mode.RANK && rankingState.getBookIdentity().getTitle() != null) {
             List<Ranking> currentList = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(
                 userId, rankingState.getBookshelf(), rankingState.getCategory()
             );
-            Ranking compRanking = currentList.get(rankingState.getCompareToIndex());
+            Ranking compRanking = currentList.get(rankingState.getBinarySearch().getCompareToIndex());
             model.addAttribute("comparisonBookTitle", compRanking.getBook().getTitle());
             model.addAttribute("comparisonBookAuthor", compRanking.getBook().getAuthor());
             model.addAttribute("comparisonBookWorkOlid", compRanking.getBook().getWorkOlid());
             model.addAttribute("comparisonBookCoverId", compRanking.getBook().getCoverId());
             model.addAttribute("comparisonBookEditionOlid", compRanking.getBook().getEditionOlid());
-            if (rankingState.getWorkOlidBeingRanked() != null) {
-                bookRepository.findByWorkOlid(rankingState.getWorkOlidBeingRanked())
+            if (rankingState.getBookIdentity().getWorkOlid() != null) {
+                bookRepository.findByWorkOlid(rankingState.getBookIdentity().getWorkOlid())
                     .ifPresent(b -> {
                         model.addAttribute("rankingBookCoverId", b.getCoverId());
                         model.addAttribute("rankingBookEditionOlid", b.getEditionOlid());
@@ -509,8 +509,8 @@ public class BookController {
 
         addNavigationAttributes(model, "list");
         model.addAttribute("rankingState", rs);
-        model.addAttribute("isRerank", rs.getOriginalPosition() != null);
-        model.addAttribute("editionSelected", rs.isEditionSelected());
+        model.addAttribute("isRerank", rs.getRestoration().getOriginalPosition() != null);
+        model.addAttribute("editionSelected", rs.getEditionSelection().isEditionSelected());
         model.addAttribute("isRankAll", rs.isRankAll());
         if (rs.isRankAll()) {
             List<Ranking> unrankedBooks = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(
@@ -540,18 +540,18 @@ public class BookController {
         List<Ranking> currentList = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(
             userId, rs.getBookshelf(), rs.getCategory()
         );
-        if (rs.getCompareToIndex() >= currentList.size()) {
+        if (rs.getBinarySearch().getCompareToIndex() >= currentList.size()) {
             return "redirect:/my-books";
         }
-        Ranking compRanking = currentList.get(rs.getCompareToIndex());
+        Ranking compRanking = currentList.get(rs.getBinarySearch().getCompareToIndex());
         model.addAttribute("comparisonBookTitle", compRanking.getBook().getTitle());
         model.addAttribute("comparisonBookAuthor", compRanking.getBook().getAuthor());
         model.addAttribute("comparisonBookWorkOlid", compRanking.getBook().getWorkOlid());
         model.addAttribute("comparisonBookCoverId", compRanking.getBook().getCoverId());
         model.addAttribute("comparisonBookEditionOlid", compRanking.getBook().getEditionOlid());
 
-        if (rs.getWorkOlidBeingRanked() != null) {
-            bookRepository.findByWorkOlid(rs.getWorkOlidBeingRanked())
+        if (rs.getBookIdentity().getWorkOlid() != null) {
+            bookRepository.findByWorkOlid(rs.getBookIdentity().getWorkOlid())
                 .ifPresent(b -> {
                     model.addAttribute("rankingBookCoverId", b.getCoverId());
                     model.addAttribute("rankingBookEditionOlid", b.getEditionOlid());
@@ -586,10 +586,10 @@ public class BookController {
             (List<OpenLibraryService.EditionResult>) session.getAttribute(SESSION_CACHED_EDITIONS);
 
         if (allEditions == null) {
-            Book book = bookRepository.findByWorkOlid(rs.getWorkOlidBeingRanked()).orElse(null);
+            Book book = bookRepository.findByWorkOlid(rs.getBookIdentity().getWorkOlid()).orElse(null);
             String preferredEditionOlid = book != null ? book.getEditionOlid() : null;
             allEditions = openLibraryService.getEditionsForWork(
-                rs.getWorkOlidBeingRanked(), OpenLibraryService.DEFAULT_EDITION_FETCH_LIMIT, 0, preferredEditionOlid);
+                rs.getBookIdentity().getWorkOlid(), OpenLibraryService.DEFAULT_EDITION_FETCH_LIMIT, 0, preferredEditionOlid);
             Integer coverId = book != null ? book.getCoverId() : null;
             if (coverId != null && !allEditions.isEmpty() && !coverId.equals(allEditions.get(0).coverId())) {
                 allEditions = moveMatchingToFront(allEditions, e -> coverId.equals(e.coverId()));
@@ -600,9 +600,9 @@ public class BookController {
         if (allEditions.size() == 1 && !rs.isRankAll()) {
             OpenLibraryService.EditionResult soleEdition = allEditions.get(0);
 
-            Book book = bookService.findOrCreateBook(rs.getWorkOlidBeingRanked(),
-                soleEdition.editionOlid(), rs.getTitleBeingRanked(),
-                rs.getAuthorBeingRanked(), null, soleEdition.coverId());
+            Book book = bookService.findOrCreateBook(rs.getBookIdentity().getWorkOlid(),
+                soleEdition.editionOlid(), rs.getBookIdentity().getTitle(),
+                rs.getBookIdentity().getAuthor(), null, soleEdition.coverId());
             book.setIsbn13(soleEdition.isbn13());
             if (soleEdition.coverId() != null) {
                 book.setCoverId(soleEdition.coverId());
@@ -614,9 +614,9 @@ public class BookController {
                 return addToWantToReadAndContinue(userId, rs, book, session);
             }
 
-            rs.setEditionOlidBeingRanked(soleEdition.editionOlid());
-            rs.setIsbn13BeingRanked(soleEdition.isbn13());
-            rs.setEditionSelected(true);
+            rs.getEditionSelection().setEditionOlid(soleEdition.editionOlid());
+            rs.getEditionSelection().setIsbn13(soleEdition.isbn13());
+            rs.getEditionSelection().setEditionSelected(true);
             rs.setMode(RankingMode.CATEGORIZE);
             saveRankingState(session, rs);
 
@@ -626,12 +626,12 @@ public class BookController {
 
         if (allEditions.isEmpty()) {
             if (rs.isWantToRead()) {
-                Book book = bookService.findOrCreateBook(rs.getWorkOlidBeingRanked(),
-                    null, rs.getTitleBeingRanked(), rs.getAuthorBeingRanked(), null, null);
+                Book book = bookService.findOrCreateBook(rs.getBookIdentity().getWorkOlid(),
+                    null, rs.getBookIdentity().getTitle(), rs.getBookIdentity().getAuthor(), null, null);
                 session.removeAttribute(SESSION_CACHED_EDITIONS);
                 return addToWantToReadAndContinue(userId, rs, book, session);
             }
-            rs.setEditionSelected(true);
+            rs.getEditionSelection().setEditionSelected(true);
             rs.setMode(RankingMode.CATEGORIZE);
             saveRankingState(session, rs);
             session.removeAttribute(SESSION_CACHED_EDITIONS);
@@ -689,8 +689,8 @@ public class BookController {
 
         int maxResults = SKIP_RESOLVE_EXPANDED.equals(skipResolve) ? SEARCH_RESULTS_EXPANDED : SEARCH_RESULTS_DEFAULT;
         List<OpenLibraryService.BookResult> resolveResults = searchService.combinedSearch(
-                rs.getTitleBeingRanked(),
-                rs.getAuthorBeingRanked(),
+                rs.getBookIdentity().getTitle(),
+                rs.getBookIdentity().getAuthor(),
                 maxResults);
 
         if (!resolveResults.isEmpty()) {
@@ -704,7 +704,7 @@ public class BookController {
 
         if (skipResolve == null) {
             resolveResults = searchService.combinedSearch(
-                rs.getTitleBeingRanked(), rs.getAuthorBeingRanked(), SEARCH_RESULTS_EXPANDED);
+                rs.getBookIdentity().getTitle(), rs.getBookIdentity().getAuthor(), SEARCH_RESULTS_EXPANDED);
             if (!resolveResults.isEmpty()) {
                 model.addAttribute("resolveResults", resolveResults);
                 session.setAttribute(SESSION_SKIP_RESOLVE, SKIP_RESOLVE_EXPANDED);
@@ -713,7 +713,7 @@ public class BookController {
             }
         }
 
-        log.warn("RESOLVE auto-search found nothing for \"{}\" by {}", rs.getTitleBeingRanked(), rs.getAuthorBeingRanked());
+        log.warn("RESOLVE auto-search found nothing for \"{}\" by {}", rs.getBookIdentity().getTitle(), rs.getBookIdentity().getAuthor());
         session.setAttribute(SESSION_SKIP_RESOLVE, SKIP_RESOLVE_MANUAL);
         return "redirect:/resolve";
     }
@@ -781,19 +781,19 @@ public class BookController {
             userId, rankingState.getBookshelf(), rankingState.getCategory()
         );
 
-        int newLowIndex = rankingState.getLowIndex();
-        int newHighIndex = rankingState.getHighIndex();
+        int newLowIndex = rankingState.getBinarySearch().getLowIndex();
+        int newHighIndex = rankingState.getBinarySearch().getHighIndex();
 
         if ("new".equals(choice)) {
-            newHighIndex = rankingState.getCompareToIndex() - 1;
+            newHighIndex = rankingState.getBinarySearch().getCompareToIndex() - 1;
         } else {
-            newLowIndex = rankingState.getCompareToIndex() + 1;
+            newLowIndex = rankingState.getBinarySearch().getCompareToIndex() + 1;
         }
 
         if (newLowIndex > newHighIndex) {
             Bookshelf rankedBookshelf = rankingState.getBookshelf();
             boolean wasRankAll = rankingState.isRankAll();
-            rankingService.insertBookAtPosition(rankingState.getWorkOlidBeingRanked(), rankingState.getTitleBeingRanked(), rankingState.getAuthorBeingRanked(),
+            rankingService.insertBookAtPosition(rankingState.getBookIdentity().getWorkOlid(), rankingState.getBookIdentity().getTitle(), rankingState.getBookIdentity().getAuthor(),
                 rankingState.getReviewBeingRanked(), rankedBookshelf, rankingState.getCategory(), newLowIndex, userId,
                 rankingState.getUnrankedRankingId());
             clearRankingState(session);
@@ -806,9 +806,9 @@ public class BookController {
             return "redirect:/my-books?selectedBookshelf=" + rankedBookshelf.name();
         } else {
             int newCompareToIndex = (newLowIndex + newHighIndex) / 2;
-            rankingState.setCompareToIndex(newCompareToIndex);
-            rankingState.setLowIndex(newLowIndex);
-            rankingState.setHighIndex(newHighIndex);
+            rankingState.getBinarySearch().setCompareToIndex(newCompareToIndex);
+            rankingState.getBinarySearch().setLowIndex(newLowIndex);
+            rankingState.getBinarySearch().setHighIndex(newHighIndex);
             saveRankingState(session, rankingState);
             return "redirect:/rank/compare";
         }
@@ -851,7 +851,7 @@ public class BookController {
             return "redirect:/my-books";
         }
 
-        rankingState.setBookInfo(ranking.getBook().getWorkOlid(), ranking.getBook().getTitle(), ranking.getBook().getAuthor());
+        rankingState.getBookIdentity().setBookInfo(ranking.getBook().getWorkOlid(), ranking.getBook().getTitle(), ranking.getBook().getAuthor());
         saveRankingState(session, rankingState);
 
         rankingService.deleteRankingAndCloseGap(userId, ranking);
@@ -954,8 +954,8 @@ public class BookController {
         rankingService.restoreAbandonedBook(userId, getRankingState(session));
         RankingState rankingState = new RankingState(ranking.getBook().getWorkOlid(), ranking.getBook().getTitle(), ranking.getBook().getAuthor(), ranking.getBookshelf(), null);
         rankingState.setReviewBeingRanked(ranking.getReview());
-        rankingState.setOriginalCategory(ranking.getCategory());
-        rankingState.setOriginalPosition(ranking.getPosition());
+        rankingState.getRestoration().setOriginalCategory(ranking.getCategory());
+        rankingState.getRestoration().setOriginalPosition(ranking.getPosition());
         rankingState.setMode(RankingMode.CATEGORIZE);
         saveRankingState(session, rankingState);
 
@@ -1148,7 +1148,7 @@ public class BookController {
         session.setAttribute(SESSION_BOOK_SEARCH_QUERY, query);
 
         RankingState rankingState = getRankingState(session);
-        if (rankingState != null && rankingState.getTitleBeingRanked() == null) {
+        if (rankingState != null && rankingState.getBookIdentity().getTitle() == null) {
             return "redirect:/my-books";
         }
 
@@ -1181,11 +1181,11 @@ public class BookController {
             return "redirect:/login";
         }
         RankingState rs = getRankingState(session);
-        if (rs == null || rs.getTitleBeingRanked() == null) {
+        if (rs == null || rs.getBookIdentity().getTitle() == null) {
             return "redirect:/my-books";
         }
         rs.setMode(RankingMode.SELECT_EDITION);
-        rs.setEditionSelected(false);
+        rs.getEditionSelection().setEditionSelected(false);
         saveRankingState(session, rs);
         return "redirect:/rank/edition";
     }
@@ -1197,12 +1197,12 @@ public class BookController {
             return "redirect:/login";
         }
         RankingState rs = getRankingState(session);
-        if (rs == null || rs.getWorkOlidBeingRanked() == null) {
+        if (rs == null || rs.getBookIdentity().getWorkOlid() == null) {
             return "redirect:/my-books";
         }
-        String workOlid = rs.getWorkOlidBeingRanked();
-        String title = rs.getTitleBeingRanked();
-        String author = rs.getAuthorBeingRanked();
+        String workOlid = rs.getBookIdentity().getWorkOlid();
+        String title = rs.getBookIdentity().getTitle();
+        String author = rs.getBookIdentity().getAuthor();
         rankingService.restoreAbandonedBook(userId, getRankingState(session));
         clearRankingState(session);
         session.removeAttribute(SESSION_CACHED_EDITIONS);
@@ -1222,27 +1222,27 @@ public class BookController {
             return "redirect:/login";
         }
         RankingState rs = getRankingState(session);
-        if (rs == null || rs.getTitleBeingRanked() == null) {
+        if (rs == null || rs.getBookIdentity().getTitle() == null) {
             return "redirect:/my-books";
         }
 
-        if (rs.getOriginalResolveTitle() != null) {
-            Book book = bookService.findOrCreateBook(rs.getWorkOlidBeingRanked(),
-                null, rs.getTitleBeingRanked(), rs.getAuthorBeingRanked(), null, null);
-            book.setTitle(rs.getOriginalResolveTitle());
-            book.setAuthor(rs.getOriginalResolveAuthor());
-            book.setWorkOlid(rs.getOriginalResolveWorkOlid());
-            book.setEditionOlid(rs.getOriginalResolveEditionOlid());
+        if (rs.getRestoration().getOriginalResolveTitle() != null) {
+            Book book = bookService.findOrCreateBook(rs.getBookIdentity().getWorkOlid(),
+                null, rs.getBookIdentity().getTitle(), rs.getBookIdentity().getAuthor(), null, null);
+            book.setTitle(rs.getRestoration().getOriginalResolveTitle());
+            book.setAuthor(rs.getRestoration().getOriginalResolveAuthor());
+            book.setWorkOlid(rs.getRestoration().getOriginalResolveWorkOlid());
+            book.setEditionOlid(rs.getRestoration().getOriginalResolveEditionOlid());
             bookRepository.save(book);
 
-            rs.setTitleBeingRanked(rs.getOriginalResolveTitle());
-            rs.setAuthorBeingRanked(rs.getOriginalResolveAuthor());
-            rs.setWorkOlidBeingRanked(rs.getOriginalResolveWorkOlid());
+            rs.getBookIdentity().setTitle(rs.getRestoration().getOriginalResolveTitle());
+            rs.getBookIdentity().setAuthor(rs.getRestoration().getOriginalResolveAuthor());
+            rs.getBookIdentity().setWorkOlid(rs.getRestoration().getOriginalResolveWorkOlid());
 
-            rs.setOriginalResolveTitle(null);
-            rs.setOriginalResolveAuthor(null);
-            rs.setOriginalResolveWorkOlid(null);
-            rs.setOriginalResolveEditionOlid(null);
+            rs.getRestoration().setOriginalResolveTitle(null);
+            rs.getRestoration().setOriginalResolveAuthor(null);
+            rs.getRestoration().setOriginalResolveWorkOlid(null);
+            rs.getRestoration().setOriginalResolveEditionOlid(null);
         }
 
         rs.setMode(RankingMode.RESOLVE);
@@ -1267,13 +1267,13 @@ public class BookController {
             return "redirect:/login";
         }
         RankingState rankingState = getRankingState(session);
-        if (rankingState == null || rankingState.getTitleBeingRanked() == null) {
+        if (rankingState == null || rankingState.getBookIdentity().getTitle() == null) {
             return "redirect:/my-books";
         }
 
         if (rankingRepository.existsByUserIdAndBookWorkOlid(userId, workOlid)) {
-            Book unverifiedBook = bookService.findOrCreateBook(rankingState.getWorkOlidBeingRanked(),
-                null, rankingState.getTitleBeingRanked(), rankingState.getAuthorBeingRanked(), null, null);
+            Book unverifiedBook = bookService.findOrCreateBook(rankingState.getBookIdentity().getWorkOlid(),
+                null, rankingState.getBookIdentity().getTitle(), rankingState.getBookIdentity().getAuthor(), null, null);
             session.setAttribute(SESSION_DUPLICATE_RESOLVE_TITLE, title);
             session.setAttribute(SESSION_DUPLICATE_RESOLVE_WORK_OLID, workOlid);
             session.setAttribute(SESSION_DUPLICATE_RESOLVE_BOOK_ID, unverifiedBook.getId());
@@ -1281,13 +1281,13 @@ public class BookController {
             return "redirect:/my-books";
         }
 
-        Book existingBook = bookService.findOrCreateBook(rankingState.getWorkOlidBeingRanked(),
-            null, rankingState.getTitleBeingRanked(), rankingState.getAuthorBeingRanked(), null, null);
+        Book existingBook = bookService.findOrCreateBook(rankingState.getBookIdentity().getWorkOlid(),
+            null, rankingState.getBookIdentity().getTitle(), rankingState.getBookIdentity().getAuthor(), null, null);
 
-        rankingState.setOriginalResolveTitle(existingBook.getTitle());
-        rankingState.setOriginalResolveAuthor(existingBook.getAuthor());
-        rankingState.setOriginalResolveWorkOlid(existingBook.getWorkOlid());
-        rankingState.setOriginalResolveEditionOlid(existingBook.getEditionOlid());
+        rankingState.getRestoration().setOriginalResolveTitle(existingBook.getTitle());
+        rankingState.getRestoration().setOriginalResolveAuthor(existingBook.getAuthor());
+        rankingState.getRestoration().setOriginalResolveWorkOlid(existingBook.getWorkOlid());
+        rankingState.getRestoration().setOriginalResolveEditionOlid(existingBook.getEditionOlid());
 
         existingBook.setWorkOlid(workOlid);
         existingBook.setEditionOlid(editionOlid);
@@ -1297,7 +1297,7 @@ public class BookController {
         existingBook.setCoverId(coverId);
         bookRepository.save(existingBook);
 
-        rankingState.setBookInfo(workOlid, title, author);
+        rankingState.getBookIdentity().setBookInfo(workOlid, title, author);
         rankingState.setMode(RankingMode.SELECT_EDITION);
         saveRankingState(session, rankingState);
 
@@ -1322,8 +1322,8 @@ public class BookController {
         RankingState rs = getRankingState(session);
         String title = "unknown book";
         if (rs != null) {
-            title = rs.getTitleBeingRanked();
-            log.warn("RESOLVE abandoned: user skipped manual search for \"{}\" by {}", title, rs.getAuthorBeingRanked());
+            title = rs.getBookIdentity().getTitle();
+            log.warn("RESOLVE abandoned: user skipped manual search for \"{}\" by {}", title, rs.getBookIdentity().getAuthor());
             clearRankingState(session);
         }
         session.removeAttribute(SESSION_SKIP_RESOLVE);
@@ -1412,7 +1412,7 @@ public class BookController {
 
         bookService.findOrCreateBook(workOlid, editionOlid, bookName, author, firstPublishYear, coverId);
 
-        rankingState.setBookInfo(workOlid, bookName, author);
+        rankingState.getBookIdentity().setBookInfo(workOlid, bookName, author);
         rankingState.setMode(RankingMode.SELECT_EDITION);
         saveRankingState(session, rankingState);
 
@@ -1437,13 +1437,13 @@ public class BookController {
         }
 
         RankingState rankingState = getRankingState(session);
-        if (rankingState == null || rankingState.getWorkOlidBeingRanked() == null) {
+        if (rankingState == null || rankingState.getBookIdentity().getWorkOlid() == null) {
             return "redirect:/my-books";
         }
 
-        Book book = bookService.findOrCreateBook(rankingState.getWorkOlidBeingRanked(),
-            editionOlid, rankingState.getTitleBeingRanked(),
-            rankingState.getAuthorBeingRanked(), null, coverId);
+        Book book = bookService.findOrCreateBook(rankingState.getBookIdentity().getWorkOlid(),
+            editionOlid, rankingState.getBookIdentity().getTitle(),
+            rankingState.getBookIdentity().getAuthor(), null, coverId);
         book.setEditionOlid(editionOlid);
         book.setIsbn13(isbn13);
         if (coverId != null) {
@@ -1451,7 +1451,7 @@ public class BookController {
         }
         if (title != null && !title.isBlank()) {
             book.setTitle(title);
-            rankingState.setTitleBeingRanked(title);
+            rankingState.getBookIdentity().setTitle(title);
         }
         bookRepository.save(book);
 
@@ -1461,9 +1461,9 @@ public class BookController {
             return addToWantToReadAndContinue(userId, rankingState, book, session);
         }
 
-        rankingState.setEditionOlidBeingRanked(editionOlid);
-        rankingState.setIsbn13BeingRanked(isbn13);
-        rankingState.setEditionSelected(true);
+        rankingState.getEditionSelection().setEditionOlid(editionOlid);
+        rankingState.getEditionSelection().setIsbn13(isbn13);
+        rankingState.getEditionSelection().setEditionSelected(true);
         rankingState.setMode(RankingMode.CATEGORIZE);
         saveRankingState(session, rankingState);
 
@@ -1617,10 +1617,10 @@ public class BookController {
         if (rankingState == null) {
             rankingState = new RankingState(null, null, null, null, null);
         }
-        rankingState.setBookInfo(workOlid, titleToUse, author);
-        rankingState.setEditionOlidBeingRanked(editionOlid);
-        rankingState.setIsbn13BeingRanked(isbn13);
-        rankingState.setEditionSelected(true);
+        rankingState.getBookIdentity().setBookInfo(workOlid, titleToUse, author);
+        rankingState.getEditionSelection().setEditionOlid(editionOlid);
+        rankingState.getEditionSelection().setIsbn13(isbn13);
+        rankingState.getEditionSelection().setEditionSelected(true);
         rankingState.setMode(RankingMode.CATEGORIZE);
         saveRankingState(session, rankingState);
 
@@ -1638,22 +1638,22 @@ public class BookController {
             return "redirect:/login";
         }
         RankingState rankingState = getRankingState(session);
-        if (rankingState == null || rankingState.getTitleBeingRanked() == null) {
+        if (rankingState == null || rankingState.getBookIdentity().getTitle() == null) {
             return "redirect:/my-books";
         }
 
         if ("want-to-read".equals(category)) {
-            String workOlid = rankingState.getWorkOlidBeingRanked();
-            String bookName = rankingState.getTitleBeingRanked();
-            String author = rankingState.getAuthorBeingRanked();
+            String workOlid = rankingState.getBookIdentity().getWorkOlid();
+            String bookName = rankingState.getBookIdentity().getTitle();
+            String author = rankingState.getBookIdentity().getAuthor();
             Book book = bookService.findOrCreateBook(workOlid,
-                rankingState.getEditionOlidBeingRanked(), bookName, author, null, null);
+                rankingState.getEditionSelection().getEditionOlid(), bookName, author, null, null);
             return addToWantToReadAndContinue(userId, rankingState, book, session);
         }
 
-        String workOlid = rankingState.getWorkOlidBeingRanked();
-        String bookName = rankingState.getTitleBeingRanked();
-        String author = rankingState.getAuthorBeingRanked();
+        String workOlid = rankingState.getBookIdentity().getWorkOlid();
+        String bookName = rankingState.getBookIdentity().getTitle();
+        String author = rankingState.getBookIdentity().getAuthor();
         String trimmedReview = trimReview(review);
 
         Bookshelf bookshelfEnum;
@@ -1694,13 +1694,13 @@ public class BookController {
             int lowIndex = 0;
             int highIndex = currentList.size() - 1;
             int compareToIndex = (lowIndex + highIndex) / 2;
-            rankingState.setBookInfo(workOlid, bookName, author);
+            rankingState.getBookIdentity().setBookInfo(workOlid, bookName, author);
             rankingState.setReviewBeingRanked(trimmedReview);
             rankingState.setBookshelf(bookshelfEnum);
             rankingState.setCategory(bookCategory);
-            rankingState.setCompareToIndex(compareToIndex);
-            rankingState.setLowIndex(lowIndex);
-            rankingState.setHighIndex(highIndex);
+            rankingState.getBinarySearch().setCompareToIndex(compareToIndex);
+            rankingState.getBinarySearch().setLowIndex(lowIndex);
+            rankingState.getBinarySearch().setHighIndex(highIndex);
             rankingState.setMode(RankingMode.RANK);
             rankingState.setRankAll(wasRankAll);
             saveRankingState(session, rankingState);

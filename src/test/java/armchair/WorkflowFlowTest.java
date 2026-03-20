@@ -64,8 +64,8 @@ class WorkflowFlowTest extends BaseIntegrationTest {
 
         // State has book info for re-ranking
         state = getRankingState(session);
-        assertThat(state.getTitleBeingRanked()).isEqualTo("Book B");
-        assertThat(state.getWorkOlidBeingRanked()).isEqualTo("OL2W");
+        assertThat(state.getBookIdentity().getTitle()).isEqualTo("Book B");
+        assertThat(state.getBookIdentity().getWorkOlid()).isEqualTo("OL2W");
     }
 
     @Test
@@ -377,7 +377,7 @@ class WorkflowFlowTest extends BaseIntegrationTest {
         // State set up for edition selection with unrankedRankingId for deferred delete
         RankingState state = getRankingState(session);
         assertThat(state.getMode()).isEqualTo(RankingMode.SELECT_EDITION);
-        assertThat(state.getTitleBeingRanked()).isEqualTo("Dune");
+        assertThat(state.getBookIdentity().getTitle()).isEqualTo("Dune");
         assertThat(state.getBookshelf()).isEqualTo(Bookshelf.UNRANKED);
         assertThat(state.getUnrankedRankingId()).isEqualTo(ranking.getId());
     }
@@ -399,7 +399,7 @@ class WorkflowFlowTest extends BaseIntegrationTest {
 
         RankingState state = getRankingState(session);
         assertThat(state.getMode()).isEqualTo(RankingMode.RESOLVE);
-        assertThat(state.getTitleBeingRanked()).isEqualTo("Mystery Book");
+        assertThat(state.getBookIdentity().getTitle()).isEqualTo("Mystery Book");
     }
 
     @Test
@@ -509,7 +509,7 @@ class WorkflowFlowTest extends BaseIntegrationTest {
         // State has rankAll flag
         RankingState state = getRankingState(session);
         assertThat(state.isRankAll()).isTrue();
-        assertThat(state.getTitleBeingRanked()).isEqualTo("Book A");
+        assertThat(state.getBookIdentity().getTitle()).isEqualTo("Book A");
     }
 
     @Test
@@ -551,7 +551,7 @@ class WorkflowFlowTest extends BaseIntegrationTest {
 
         RankingState rs = new RankingState("OL1W", "Dune", "Frank Herbert", null, null);
         rs.setMode(RankingMode.CATEGORIZE);
-        rs.setEditionSelected(true);
+        rs.getEditionSelection().setEditionSelected(true);
         setRankingState(session, rs);
 
         mockMvc.perform(post("/back-to-edition")
@@ -562,7 +562,7 @@ class WorkflowFlowTest extends BaseIntegrationTest {
 
         RankingState updated = getRankingState(session);
         assertThat(updated.getMode()).isEqualTo(RankingMode.SELECT_EDITION);
-        assertThat(updated.isEditionSelected()).isFalse();
+        assertThat(updated.getEditionSelection().isEditionSelected()).isFalse();
     }
 
     @Test
@@ -680,7 +680,7 @@ class WorkflowFlowTest extends BaseIntegrationTest {
         // The state should now be fresh RE_RANK, no book info
         RankingState state = getRankingState(session);
         assertThat(state.getMode()).isEqualTo(RankingMode.RE_RANK);
-        assertThat(state.getTitleBeingRanked()).isNull();
+        assertThat(state.getBookIdentity().getTitle()).isNull();
     }
 
     @Test

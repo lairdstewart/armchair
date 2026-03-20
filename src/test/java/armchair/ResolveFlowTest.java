@@ -60,8 +60,8 @@ class ResolveFlowTest extends BaseIntegrationTest {
 
         RankingState state = getRankingState(session);
         assertThat(state).isNotNull();
-        assertThat(state.getWorkOlidBeingRanked()).isEqualTo("OL123W");
-        assertThat(state.getTitleBeingRanked()).isEqualTo("Dune");
+        assertThat(state.getBookIdentity().getWorkOlid()).isEqualTo("OL123W");
+        assertThat(state.getBookIdentity().getTitle()).isEqualTo("Dune");
     }
 
     @Test
@@ -280,8 +280,8 @@ class ResolveFlowTest extends BaseIntegrationTest {
 
         // Verify RankingState has workOlid but edition NOT selected
         RankingState state = getRankingState(session);
-        assertThat(state.getWorkOlidBeingRanked()).isEqualTo("OL123W");
-        assertThat(state.isEditionSelected()).isFalse();
+        assertThat(state.getBookIdentity().getWorkOlid()).isEqualTo("OL123W");
+        assertThat(state.getEditionSelection().isEditionSelected()).isFalse();
 
         // Mock edition selection API - return multiple editions so it doesn't auto-select
         when(openLibraryService.getEditionsForWork(eq("OL123W"), anyInt(), eq(0), any()))

@@ -186,12 +186,12 @@ class SearchAndEditionsTest extends BaseIntegrationTest {
                 .andExpect(redirectedUrl("/rank/categorize"));
 
         RankingState rs = getRankingState(session);
-        assertThat(rs.getWorkOlidBeingRanked()).isEqualTo("OL400W");
-        assertThat(rs.getTitleBeingRanked()).isEqualTo("Dune");
-        assertThat(rs.getAuthorBeingRanked()).isEqualTo("Frank Herbert");
-        assertThat(rs.getEditionOlidBeingRanked()).isEqualTo("OL400M");
-        assertThat(rs.getIsbn13BeingRanked()).isEqualTo("9780441172719");
-        assertThat(rs.isEditionSelected()).isTrue();
+        assertThat(rs.getBookIdentity().getWorkOlid()).isEqualTo("OL400W");
+        assertThat(rs.getBookIdentity().getTitle()).isEqualTo("Dune");
+        assertThat(rs.getBookIdentity().getAuthor()).isEqualTo("Frank Herbert");
+        assertThat(rs.getEditionSelection().getEditionOlid()).isEqualTo("OL400M");
+        assertThat(rs.getEditionSelection().getIsbn13()).isEqualTo("9780441172719");
+        assertThat(rs.getEditionSelection().isEditionSelected()).isTrue();
         assertThat(rs.getMode()).isEqualTo(RankingMode.CATEGORIZE);
     }
 
@@ -210,7 +210,7 @@ class SearchAndEditionsTest extends BaseIntegrationTest {
                 .andExpect(status().is3xxRedirection());
 
         RankingState rs = getRankingState(session);
-        assertThat(rs.getTitleBeingRanked()).isEqualTo("Special Edition Title");
+        assertThat(rs.getBookIdentity().getTitle()).isEqualTo("Special Edition Title");
 
         // Book should also have the edition title
         assertThat(bookRepository.findByWorkOlid("OL500W").orElseThrow().getTitle())

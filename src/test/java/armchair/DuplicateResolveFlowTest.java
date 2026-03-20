@@ -113,8 +113,8 @@ class DuplicateResolveFlowTest extends BaseIntegrationTest {
         RankingState state = getRankingState(session);
         assertThat(state).isNotNull();
         assertThat(state.getMode()).isEqualTo(RankingMode.CATEGORIZE);
-        assertThat(state.getWorkOlidBeingRanked()).isEqualTo("OL123W");
-        assertThat(state.getTitleBeingRanked()).isEqualTo("Dune");
+        assertThat(state.getBookIdentity().getWorkOlid()).isEqualTo("OL123W");
+        assertThat(state.getBookIdentity().getTitle()).isEqualTo("Dune");
 
         assertThat(bookRepository.findById(unverifiedBookId)).isEmpty();
 
@@ -290,7 +290,7 @@ class DuplicateResolveFlowTest extends BaseIntegrationTest {
 
         RankingState state = getRankingState(session);
         assertThat(state).isNotNull();
-        assertThat(state.getWorkOlidBeingRanked()).isEqualTo("OL999W");
+        assertThat(state.getBookIdentity().getWorkOlid()).isEqualTo("OL999W");
         assertThat(state.getMode()).isEqualTo(RankingMode.SELECT_EDITION);
     }
 

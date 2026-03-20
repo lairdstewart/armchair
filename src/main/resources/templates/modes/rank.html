@@ -11,8 +11,8 @@
       <button type="submit" class="book-select-btn">
         <div class="book-entry">
           <div class="book-info">
-            <div class="book-title" th:text="${rankingState.titleBeingRanked}"></div>
-            <div th:if="${rankingState.authorBeingRanked != null && !rankingState.authorBeingRanked.isBlank()}" class="book-author" th:text="${rankingState.authorBeingRanked}"></div>
+            <div class="book-title" th:text="${rankingState.bookIdentity.title}"></div>
+            <div th:if="${rankingState.bookIdentity.author != null && !rankingState.bookIdentity.author.isBlank()}" class="book-author" th:text="${rankingState.bookIdentity.author}"></div>
           </div>
           <img th:if="${rankingBookCoverId != null}" class="book-cover" loading="lazy" th:src="${'https://covers.openlibrary.org/b/id/' + rankingBookCoverId + '-M.jpg'}" /><div th:if="${rankingBookCoverId == null}" class="book-cover-placeholder">?</div>
         </div>
