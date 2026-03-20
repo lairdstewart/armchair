@@ -209,6 +209,19 @@ public class RankingService {
             r.getBook().getFirstPublishYear(), r.getBook().getCoverId());
     }
 
+    public Ranking createWantToReadRanking(Long userId, Book book) {
+        if (rankingRepository.existsByUserIdAndBookId(userId, book.getId())) {
+            return rankingRepository.findByUserId(userId).stream()
+                .filter(r -> r.getBook().getId().equals(book.getId()))
+                .findFirst().orElse(null);
+        }
+        List<Ranking> wantToReadRankings = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(userId, Bookshelf.WANT_TO_READ, BookCategory.UNRANKED);
+        int position = wantToReadRankings.size();
+        User userRef = userRepository.getReferenceById(userId);
+        Ranking newRanking = new Ranking(userRef, book, Bookshelf.WANT_TO_READ, BookCategory.UNRANKED, position);
+        return rankingRepository.save(newRanking);
+    }
+
     public void cleanupUnverifiedBook(Long userId, Long bookId) {
         List<Ranking> userRankings = rankingRepository.findByUserId(userId).stream()
             .filter(r -> r.getBook().getId().equals(bookId))
