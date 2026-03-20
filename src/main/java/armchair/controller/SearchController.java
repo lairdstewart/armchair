@@ -79,12 +79,23 @@ public class SearchController extends BaseController {
 
     @SuppressWarnings("unchecked")
     @GetMapping("/search-books")
-    public String showSearchBooks(Model model, HttpSession session) {
+    public String showSearchBooks(@RequestParam(defaultValue = "0") int page,
+                                  Model model, HttpSession session) {
         addNavigationAttributes(model, "search-books");
 
         List<OpenLibraryService.BookResult> searchResults =
             (List<OpenLibraryService.BookResult>) session.getAttribute(SESSION_BOOK_SEARCH_RESULTS);
-        model.addAttribute("searchResults", searchResults != null ? searchResults : List.of());
+        if (searchResults != null && !searchResults.isEmpty()) {
+            PaginationResult<OpenLibraryService.BookResult> pagination =
+                PaginationResult.of(searchResults, page, BOOK_SEARCH_PAGE_SIZE);
+            model.addAttribute("searchResults", pagination.pageItems());
+            model.addAttribute("booksPage", pagination.page());
+            model.addAttribute("booksTotalPages", pagination.totalPages());
+            model.addAttribute("booksTotalCount", pagination.totalCount());
+            model.addAttribute("bookPageSize", BOOK_SEARCH_PAGE_SIZE);
+        } else {
+            model.addAttribute("searchResults", List.of());
+        }
         model.addAttribute("query", session.getAttribute(SESSION_BOOK_SEARCH_QUERY));
 
         return "search-books";
@@ -97,7 +108,8 @@ public class SearchController extends BaseController {
             return "redirect:/login";
         }
 
-        List<OpenLibraryService.BookResult> results = openLibraryService.searchBooks(query);
+        List<OpenLibraryService.BookResult> results =
+            openLibraryService.searchBooks(query, BOOK_SEARCH_FETCH_LIMIT);
         session.setAttribute(SESSION_BOOK_SEARCH_RESULTS, results);
         session.setAttribute(SESSION_BOOK_SEARCH_QUERY, query);
 
@@ -127,11 +139,29 @@ public class SearchController extends BaseController {
         Map<String, UserBookRank> userBooks = currentUserId != null ? rankingService.buildUserBooksMap(allRankings) : Map.of();
         List<OpenLibraryService.BookResult> bookResults;
         if ("books".equals(type) && query != null && !query.isBlank()) {
-            bookResults = SearchService.deduplicateResults(openLibraryService.searchBooks(query));
+            String cachedQuery = (String) session.getAttribute(SESSION_UNIFIED_BOOK_SEARCH_QUERY);
+            @SuppressWarnings("unchecked")
+            List<OpenLibraryService.BookResult> cachedResults =
+                (List<OpenLibraryService.BookResult>) session.getAttribute(SESSION_UNIFIED_BOOK_SEARCH_RESULTS);
+            if (cachedResults != null && query.equals(cachedQuery)) {
+                bookResults = cachedResults;
+            } else {
+                bookResults = SearchService.deduplicateResults(
+                    openLibraryService.searchBooks(query, BOOK_SEARCH_FETCH_LIMIT));
+                session.setAttribute(SESSION_UNIFIED_BOOK_SEARCH_RESULTS, bookResults);
+                session.setAttribute(SESSION_UNIFIED_BOOK_SEARCH_QUERY, query);
+            }
+            PaginationResult<OpenLibraryService.BookResult> bookPagination =
+                PaginationResult.of(bookResults, page, BOOK_SEARCH_PAGE_SIZE);
+            model.addAttribute("bookResults", bookPagination.pageItems());
+            model.addAttribute("booksPage", bookPagination.page());
+            model.addAttribute("booksTotalPages", bookPagination.totalPages());
+            model.addAttribute("booksTotalCount", bookPagination.totalCount());
+            model.addAttribute("bookPageSize", BOOK_SEARCH_PAGE_SIZE);
         } else {
             bookResults = searchService.getRandomBooksExcluding(userBooks);
+            model.addAttribute("bookResults", bookResults);
         }
-        model.addAttribute("bookResults", bookResults);
 
         int pageSize = BOOKSHELF_PAGE_SIZE;
         if ("profiles".equals(type)) {

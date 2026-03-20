@@ -11,6 +11,8 @@ public class SessionStateManager {
 
     public static final String SESSION_BOOK_SEARCH_RESULTS = "bookSearchResults";
     public static final String SESSION_BOOK_SEARCH_QUERY = "bookSearchQuery";
+    public static final String SESSION_UNIFIED_BOOK_SEARCH_RESULTS = "unifiedBookSearchResults";
+    public static final String SESSION_UNIFIED_BOOK_SEARCH_QUERY = "unifiedBookSearchQuery";
     public static final String SESSION_SKIP_RESOLVE = "skipResolve";
     public static final String SESSION_CACHED_EDITIONS = "cachedEditions";
     public static final String SESSION_EDITION_PAGE = "editionPage";

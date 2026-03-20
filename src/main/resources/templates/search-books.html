@@ -34,6 +34,12 @@
             <button type="submit" class="add-book-btn">+</button>
           </form>
         </div>
+        <div th:if="${booksTotalPages != null && booksTotalPages > 1}" style="margin-top: 15px;">
+          <th:block th:each="p : ${#numbers.sequence(0, booksTotalPages - 1)}">
+            <span th:if="${p == booksPage}" th:text="${(p * bookPageSize + 1) + '-' + T(java.lang.Math).min((p + 1) * bookPageSize, booksTotalCount)}" style="font-weight: bold; margin-right: 8px;"></span>
+            <a th:if="${p != booksPage}" th:href="@{/search-books(page=${p})}" class="book-action-link" th:text="${(p * bookPageSize + 1) + '-' + T(java.lang.Math).min((p + 1) * bookPageSize, booksTotalCount)}" style="margin-right: 8px;"></a>
+          </th:block>
+        </div>
       </div>
     </div>
   </body>

@@ -49,6 +49,12 @@
             </div>
           </li>
         </ol>
+        <div th:if="${booksTotalPages != null && booksTotalPages > 1}" style="margin-top: 15px;">
+          <th:block th:each="p : ${#numbers.sequence(0, booksTotalPages - 1)}">
+            <span th:if="${p == booksPage}" th:text="${(p * bookPageSize + 1) + '-' + T(java.lang.Math).min((p + 1) * bookPageSize, booksTotalCount)}" style="font-weight: bold; margin-right: 8px;"></span>
+            <a th:if="${p != booksPage}" th:href="@{/search(type='books', query=${query}, page=${p})}" class="book-action-link" th:text="${(p * bookPageSize + 1) + '-' + T(java.lang.Math).min((p + 1) * bookPageSize, booksTotalCount)}" style="margin-right: 8px;"></a>
+          </th:block>
+        </div>
         <p th:if="${query == null || query.isBlank()}"><em>... 40 million more books</em></p>
         <p th:if="${query != null && !query.isBlank() && (bookResults == null || bookResults.isEmpty())}"><em>No results found.</em></p>
       </div>
