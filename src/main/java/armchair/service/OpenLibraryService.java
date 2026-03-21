@@ -54,6 +54,10 @@ public class OpenLibraryService {
             if (workOlid != null) return OL_WORKS_URL + workOlid;
             return OL_SEARCH_URL + URLEncoder.encode(title + " " + author, StandardCharsets.UTF_8);
         }
+        public String authorSearchUrl() {
+            if (author == null || author.isBlank()) return null;
+            return OL_AUTHOR_SEARCH_URL + URLEncoder.encode(author, StandardCharsets.UTF_8);
+        }
         public String coverUrl() {
             if (coverId != null) return OL_COVER_URL + coverId + OL_COVER_SUFFIX;
             return null;
