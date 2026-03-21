@@ -9,7 +9,8 @@
   <body>
     <div th:replace="~{fragments :: navbar}"></div>
     <div class="page-content">
-      <a th:href="@{/search(type='books', query=${searchQuery})}" class="btn-back">back to search</a>
+      <a th:if="${changeBookId != null}" th:href="@{/my-books}" class="btn-back">back to library</a>
+      <a th:if="${changeBookId == null}" th:href="@{/search(type='books', query=${searchQuery})}" class="btn-back">back to search</a>
       <h3>Editions of <span th:text="${workTitle}" th:remove="tag"></span></h3>
 
       <div th:if="${editionResults != null && !editionResults.isEmpty()}">
