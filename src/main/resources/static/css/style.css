@@ -427,6 +427,10 @@ details[open] .review-toggle::before {
   width: 300px;
 }
 
+textarea {
+  font: inherit;
+}
+
 /* Profile page buttons */
 .profile-buttons {
   display: flex;
