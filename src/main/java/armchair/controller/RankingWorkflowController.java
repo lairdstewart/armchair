@@ -514,10 +514,11 @@ public class RankingWorkflowController extends BaseController {
     }
 
     private String addToWantToReadAndContinue(Long userId, RankingState rankingState, Book book, HttpSession session) {
-        Ranking newRanking = rankingService.createWantToReadRanking(userId, book);
-        newRanking.setReview(rankingState.getReviewBeingRanked());
-        rankingRepository.save(newRanking);
+        String review = rankingState.getReviewBeingRanked();
         rankingService.deleteUnrankedRankingById(rankingState.getUnrankedRankingId(), userId);
+        Ranking newRanking = rankingService.createWantToReadRanking(userId, book);
+        newRanking.setReview(review);
+        rankingRepository.save(newRanking);
 
         boolean wasRankAll = rankingState.isRankAll();
         sessionState.clearRankingState(session);
