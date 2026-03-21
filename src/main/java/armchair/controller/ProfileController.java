@@ -1,5 +1,6 @@
 package armchair.controller;
 
+import armchair.dto.BookInfo;
 import armchair.dto.BookLists;
 import armchair.dto.ProfileDisplay;
 import armchair.dto.ProfileDisplayWithFollow;
@@ -60,10 +61,14 @@ public class ProfileController extends BaseController {
         BookLists fictionBooks;
         BookLists nonfictionBooks;
 
+        List<BookInfo> wantToReadBooks = List.of();
+
         if (user != null) {
             Map<Bookshelf, Map<BookCategory, List<Ranking>>> viewedUserRankings = rankingService.fetchAllRankingsGrouped(user.getId());
             fictionBooks = rankingService.getBookLists(Bookshelf.FICTION, viewedUserRankings);
             nonfictionBooks = rankingService.getBookLists(Bookshelf.NONFICTION, viewedUserRankings);
+            wantToReadBooks = rankingService.getRankings(viewedUserRankings, Bookshelf.WANT_TO_READ, BookCategory.UNRANKED)
+                    .stream().map(RankingService::toBookInfo).toList();
         } else {
             CuratedList curatedList = curatedListRepository.findByUsername(username).orElse(null);
             if (curatedList == null) {
@@ -89,6 +94,8 @@ public class ProfileController extends BaseController {
         model.addAttribute("hasNonfiction", hasNonfiction);
         model.addAttribute("isCurated", isCurated);
         model.addAttribute("userBooks", userBooks);
+        model.addAttribute("wantToReadBooks", wantToReadBooks);
+        model.addAttribute("hasWantToRead", !wantToReadBooks.isEmpty());
 
         return "view-user";
     }

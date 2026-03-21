@@ -11,33 +11,41 @@
     <div class="page-content">
     <h2 th:text="${viewUsername}"></h2>
 
-    <div th:if="${hasFiction || hasNonfiction}">
+    <div th:if="${hasFiction || hasNonfiction || hasWantToRead}">
+      <script th:inline="javascript">
+        function showTab(tab) {
+          document.querySelectorAll('.profile-tab').forEach(function(el) { el.style.display = 'none'; });
+          var el = document.getElementById(tab + '-list');
+          if (el) el.style.display = 'block';
+        }
+      </script>
+
       <!-- Type selector radio buttons -->
-      <div th:if="${hasFiction && hasNonfiction}" style="margin-bottom: 15px;">
-        <label>
-          <input type="radio" name="typeSelector" value="fiction" checked onchange="document.getElementById('fiction-list').style.display='block'; document.getElementById('nonfiction-list').style.display='none';" />
-          Fiction
-        </label>
-        <label style="margin-left: 15px;">
-          <input type="radio" name="typeSelector" value="nonfiction" onchange="document.getElementById('fiction-list').style.display='none'; document.getElementById('nonfiction-list').style.display='block';" />
-          Non-Fiction
-        </label>
-      </div>
-      <div th:if="${hasFiction && !hasNonfiction}" style="margin-bottom: 15px;">
-        <label>
-          <input type="radio" name="typeSelector" value="fiction" checked disabled />
-          Fiction
-        </label>
-      </div>
-      <div th:if="${!hasFiction && hasNonfiction}" style="margin-bottom: 15px;">
-        <label>
-          <input type="radio" name="typeSelector" value="nonfiction" checked disabled />
-          Non-Fiction
-        </label>
+      <div style="margin-bottom: 15px;">
+        <th:block th:if="${hasFiction}">
+          <label>
+            <input type="radio" name="typeSelector" value="fiction" checked onchange="showTab('fiction')" />
+            Fiction
+          </label>
+        </th:block>
+        <th:block th:if="${hasNonfiction}">
+          <label th:style="${hasFiction} ? 'margin-left: 15px;' : ''">
+            <input type="radio" name="typeSelector" value="nonfiction"
+                   th:checked="${!hasFiction}" onchange="showTab('nonfiction')" />
+            Non-Fiction
+          </label>
+        </th:block>
+        <th:block th:if="${hasWantToRead}">
+          <label th:style="${hasFiction || hasNonfiction} ? 'margin-left: 15px;' : ''">
+            <input type="radio" name="typeSelector" value="wanttoread"
+                   th:checked="${!hasFiction && !hasNonfiction}" onchange="showTab('wanttoread')" />
+            Want to Read
+          </label>
+        </th:block>
       </div>
 
       <!-- Fiction books list -->
-      <div id="fiction-list" th:if="${hasFiction}" th:style="${hasNonfiction} ? 'display: block;' : ''">
+      <div id="fiction-list" class="profile-tab" th:if="${hasFiction}" style="display: block;">
         <ol class="book-list">
           <li th:each="rb : ${fictionRankedBooks}">
             <span th:class="'book-number ' + ${rb.categoryClass()}" th:text="${rb.rankDisplay()}"></span>
@@ -61,7 +69,7 @@
       </div>
 
       <!-- Non-Fiction books list -->
-      <div id="nonfiction-list" th:if="${hasNonfiction}" th:style="${hasFiction} ? 'display: none;' : ''">
+      <div id="nonfiction-list" class="profile-tab" th:if="${hasNonfiction}" th:style="${hasFiction} ? 'display: none;' : 'display: block;'">
         <ol class="book-list">
           <li th:each="rb : ${nonfictionRankedBooks}">
             <span th:class="'book-number ' + ${rb.categoryClass()}" th:text="${rb.rankDisplay()}"></span>
@@ -83,9 +91,33 @@
           </li>
         </ol>
       </div>
+
+      <!-- Want to Read books list -->
+      <div id="wanttoread-list" class="profile-tab" th:if="${hasWantToRead}" th:style="${hasFiction || hasNonfiction} ? 'display: none;' : 'display: block;'">
+        <ul class="book-list">
+          <li th:each="book : ${wantToReadBooks}">
+            <span class="book-number-spacer"></span>
+            <th:block th:replace="~{fragments :: bookEntry(${book}, ~{:: .wanttoread-actions}, true, true)}">
+              <span class="wanttoread-actions" th:remove="tag">
+                <form th:if="${book.workOlid() != null && !userBooks.containsKey(book.workOlid())}" th:action="@{/add-to-reading-list}" method="POST" style="display: inline;">
+                  <input type="hidden" name="workOlid" th:value="${book.workOlid()}" />
+                  <input type="hidden" name="bookName" th:value="${book.title()}" />
+                  <input type="hidden" name="author" th:value="${book.author()}" />
+                  <input type="hidden" name="editionOlid" th:value="${book.editionOlid()}" />
+                  <input type="hidden" name="returnUrl" th:value="${'/user/' + viewUsername}" />
+                  <button type="submit" class="book-action-link">want to read</button>
+                </form>
+                <a th:if="${book.workOlid() != null && userBooks.containsKey(book.workOlid())}"
+                   th:href="@{/my-books(selectedBookshelf=${userBooks.get(book.workOlid()).bookshelf()})}"
+                   class="book-action-link">view in library</a>
+              </span>
+            </th:block>
+          </li>
+        </ul>
+      </div>
     </div>
 
-    <p th:if="${!hasFiction && !hasNonfiction}"><em>No books yet.</em></p>
+    <p th:if="${!hasFiction && !hasNonfiction && !hasWantToRead}"><em>No books yet.</em></p>
     </div>
     <script th:src="@{/js/review-toggle.js}"></script>
   </body>
