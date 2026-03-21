@@ -58,7 +58,7 @@
                 <a th:href="${book.authorSearchUrl()}" onclick="event.stopPropagation()" target="_blank" class="book-title-link" th:text="${book.author()}"></a>
                 <span th:if="${book.firstPublishYear() != null}" th:text="${' (' + book.firstPublishYear() + ')'}"></span>
               </div>
-              <span class="book-actions">
+              <span class="book-actions" onclick="event.stopPropagation()">
                 <span class="review-toggle"></span>
                 <th:block th:if="${actions != null}" th:replace="${actions}" />
               </span>
