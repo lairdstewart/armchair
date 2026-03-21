@@ -121,6 +121,9 @@
       document.querySelectorAll('[id^="tab-"]').forEach(function(el) { el.style.display = 'none'; });
       var tab = document.getElementById('tab-' + type);
       if (tab) tab.style.display = '';
+      var url = new URL(window.location);
+      url.searchParams.set('selectedBookshelf', type);
+      history.replaceState(null, '', url);
     }
     </script>
     <script th:src="@{/js/review-toggle.js}"></script>

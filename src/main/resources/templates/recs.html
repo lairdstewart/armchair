@@ -89,6 +89,9 @@
       var tab = document.getElementById('tab-' + type);
       if (tab) tab.style.display = '';
       document.querySelector('input[name="typeSelector"][value="' + type + '"]').checked = true;
+      var url = new URL(window.location);
+      url.searchParams.set('tab', type);
+      history.replaceState(null, '', url);
     }
     var params = new URLSearchParams(window.location.search);
     var tab = params.get('tab');
