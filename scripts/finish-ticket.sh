@@ -94,6 +94,7 @@ echo "[3/5] Deleted branch."
 
 # --- Step 4: Close the GitHub issue ---
 echo "[4/5] Closing GitHub issue #${ISSUE}..."
+gh issue edit "$ISSUE" --remove-label "in-progress" 2>/dev/null || true
 if gh issue close "$ISSUE"; then
     echo "[4/5] Closed issue #${ISSUE}."
 else
