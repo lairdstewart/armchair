@@ -40,8 +40,7 @@
                     <a th:href="@{/my-books(selectedBookshelf=${userBooks[book.workOlid()].bookshelf()})}" class="book-action-link">view in library</a>
                   </th:block>
                   <th:block th:if="${userBooks == null || !userBooks.containsKey(book.workOlid())}">
-                    <a th:href="@{/editions/{workOlid}(workOlid=${book.workOlid()}, title=${book.title()}, author=${book.author()}, coverId=${book.coverId()}, query=${query})}" class="book-action-link"
-                       th:text="${book.editionCount() != null ? 'browse ' + book.editionCount() + ' editions' : 'browse editions'}"></a>
+                    <a th:href="@{/add-book(workOlid=${book.workOlid()}, title=${book.title()}, author=${book.author()}, coverId=${book.coverId()}, firstPublishYear=${book.firstPublishYear()}, searchQuery=${query})}" class="book-action-link">add to library</a>
                   </th:block>
                 </span>
               </div>

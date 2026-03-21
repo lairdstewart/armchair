@@ -440,6 +440,102 @@ public class SearchController extends BaseController {
         return "redirect:/rank/categorize";
     }
 
+    @GetMapping("/add-book")
+    public String showAddBook(@RequestParam String workOlid,
+                              @RequestParam String title,
+                              @RequestParam(required = false) String author,
+                              @RequestParam(required = false) Integer coverId,
+                              @RequestParam(required = false) Integer firstPublishYear,
+                              @RequestParam(required = false) String searchQuery,
+                              Model model) {
+        Long userId = getCurrentUserId();
+        if (userId == null) {
+            return "redirect:/login";
+        }
+
+        if (rankingRepository.existsByUserIdAndBookWorkOlid(userId, workOlid)) {
+            return "redirect:/my-books";
+        }
+
+        addNavigationAttributes(model, "search");
+        model.addAttribute("workOlid", workOlid);
+        model.addAttribute("title", title);
+        model.addAttribute("author", author);
+        model.addAttribute("coverId", coverId);
+        model.addAttribute("firstPublishYear", firstPublishYear);
+        model.addAttribute("searchQuery", searchQuery);
+
+        return "add-book";
+    }
+
+    @org.springframework.transaction.annotation.Transactional
+    @PostMapping("/save-add-book")
+    public String saveAddBook(@RequestParam String workOlid,
+                              @RequestParam String title,
+                              @RequestParam(required = false) String author,
+                              @RequestParam String bookshelf,
+                              @RequestParam(required = false) String category,
+                              @RequestParam(required = false) String review,
+                              @RequestParam(required = false) Integer coverId,
+                              @RequestParam(required = false) Integer firstPublishYear,
+                              @RequestParam(required = false) String searchQuery,
+                              HttpSession session) {
+        Long userId = getCurrentUserId();
+        if (userId == null) {
+            return "redirect:/login";
+        }
+
+        if (rankingRepository.existsByUserIdAndBookWorkOlid(userId, workOlid)) {
+            return "redirect:/my-books";
+        }
+
+        Book book = bookService.findOrCreateBook(workOlid, null, title, author, firstPublishYear, coverId);
+        String trimmedReview = trimReview(review);
+
+        if ("want-to-read".equals(bookshelf)) {
+            Ranking wtr = rankingService.createWantToReadRanking(userId, book);
+            wtr.setReview(trimmedReview);
+            rankingRepository.save(wtr);
+            return "redirect:/my-books?selectedBookshelf=WANT_TO_READ";
+        }
+
+        Bookshelf newBookshelf;
+        BookCategory newCategory;
+        try {
+            newBookshelf = Bookshelf.fromString(bookshelf);
+            newCategory = BookCategory.fromString(category);
+        } catch (IllegalArgumentException e) {
+            return "redirect:/add-book?workOlid=" + workOlid + "&title=" + title;
+        }
+
+        List<Ranking> currentList = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(
+                userId, newBookshelf, newCategory);
+
+        if (currentList.isEmpty()) {
+            rankingService.insertBookAtPosition(workOlid, title, author, trimmedReview,
+                    newBookshelf, newCategory, 0, userId, null);
+            return "redirect:/my-books?selectedBookshelf=" + newBookshelf.name();
+        }
+
+        rankingService.restoreAbandonedBook(userId, sessionState.getRankingState(session));
+
+        RankingState rankingState = new RankingState(workOlid, title, author, null, null);
+        rankingState.setReviewBeingRanked(trimmedReview);
+        rankingState.setBookshelf(newBookshelf);
+        rankingState.setCategory(newCategory);
+
+        int lowIndex = 0;
+        int highIndex = currentList.size() - 1;
+        int compareToIndex = (lowIndex + highIndex) / 2;
+        rankingState.getBinarySearch().setCompareToIndex(compareToIndex);
+        rankingState.getBinarySearch().setLowIndex(lowIndex);
+        rankingState.getBinarySearch().setHighIndex(highIndex);
+        rankingState.setMode(RankingMode.RANK);
+        sessionState.saveRankingState(session, rankingState);
+
+        return "redirect:/rank/compare";
+    }
+
     @PostMapping("/add-to-reading-list")
     public String addToReadingList(@RequestParam String workOlid,
                                    @RequestParam String bookName,

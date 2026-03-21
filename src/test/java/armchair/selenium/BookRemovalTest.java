@@ -31,8 +31,9 @@ class BookRemovalTest extends BaseSeleniumTest {
         List<String> titlesBefore = getDisplayedBookTitles();
         assertThat(titlesBefore).containsExactly("Alpha Book", "Beta Book", "Gamma Book");
 
-        // Click remove on the middle book and accept the confirm dialog
-        clickBookAction("Beta Book", "remove");
+        // Click edit then remove on the middle book and accept the confirm dialog
+        clickEditLink("Beta Book");
+        clickButton("Remove");
         Alert alert = driver.switchTo().alert();
         alert.accept();
 
@@ -53,7 +54,7 @@ class BookRemovalTest extends BaseSeleniumTest {
     }
 
     @Test
-    void bulkRemoveFromWantToRead() {
+    void removeFromWantToRead() {
         User user = createUserAndLogin("removal2");
 
         Book bookA = createVerifiedBook("OL1W", "WTR Alpha", "Author A");
@@ -70,8 +71,9 @@ class BookRemovalTest extends BaseSeleniumTest {
         assertTextPresent("WTR Beta");
         assertTextPresent("WTR Gamma");
 
-        // Remove first book
-        clickBookAction("WTR Alpha", "remove");
+        // Remove first book via edit page
+        clickEditLink("WTR Alpha");
+        clickButton("Remove");
         Alert alert1 = driver.switchTo().alert();
         alert1.accept();
 
@@ -80,8 +82,9 @@ class BookRemovalTest extends BaseSeleniumTest {
         assertTextPresent("WTR Beta");
         assertTextPresent("WTR Gamma");
 
-        // Remove second book
-        clickBookAction("WTR Beta", "remove");
+        // Remove second book via edit page
+        clickEditLink("WTR Beta");
+        clickButton("Remove");
         Alert alert2 = driver.switchTo().alert();
         alert2.accept();
 

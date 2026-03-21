@@ -71,10 +71,9 @@ class WantToReadTest extends BaseSeleniumTest {
 
         assertTextPresent("The Great Gatsby");
 
-        // Click remove — triggers a confirm dialog
-        driver.findElement(By.xpath(
-                "//div[@id='tab-WANT_TO_READ']//button[normalize-space(text())='remove']"
-        )).click();
+        // Click edit then remove
+        clickEditLink("The Great Gatsby");
+        clickButton("Remove");
 
         // Accept the confirmation dialog
         Alert alert = webWait().until(d -> d.switchTo().alert());
@@ -103,17 +102,14 @@ class WantToReadTest extends BaseSeleniumTest {
 
         assertTextPresent("Neuromancer");
 
-        // Click "rank" to mark as read
-        driver.findElement(By.xpath(
-                "//div[@id='tab-WANT_TO_READ']//button[normalize-space(text())='rank']"
-        )).click();
+        // Click edit, change to fiction/liked, save to trigger ranking
+        clickEditLink("Neuromancer");
 
-        // Should go to categorize page
-        assertTextPresent("Categorize Neuromancer");
+        assertTextPresent("Edit Neuromancer");
 
         selectRadio("bookshelf", "fiction");
         selectRadio("category", "liked");
-        clickButton("Continue");
+        clickButton("Save");
 
         // Pairwise comparison — choose "new" until done
         chooseNewUntilDone();
