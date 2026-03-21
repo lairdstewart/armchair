@@ -94,18 +94,18 @@
               <li th:each="book : ${unrankedBooks}">
                 <span class="book-number-spacer"></span>
                 <th:block th:replace="~{fragments :: bookEntry(${book}, ~{:: .unranked-actions}, false)}">
-                  <span class="unranked-actions" th:remove="tag">
-                    <form th:action="@{/rank-unranked-book}" method="POST" style="display: inline;">
+                  <span class="unranked-actions">
+                    <form th:action="@{/rank-unranked-book}" method="POST">
                       <input type="hidden" name="bookId" th:value="${book.id()}" />
-                      <button type="submit" class="book-action-link">rank</button>
+                      <button type="submit" class="btn">rank</button>
                     </form>
-                    <form th:action="@{/want-to-read-unranked-book}" method="POST" style="display: inline;">
+                    <form th:action="@{/want-to-read-unranked-book}" method="POST">
                       <input type="hidden" name="bookId" th:value="${book.id()}" />
-                      <button type="submit" class="book-action-link">want to read</button>
+                      <button type="submit" class="btn">want to read</button>
                     </form>
-                    <form th:action="@{/direct-remove}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to remove this book?');">
+                    <form th:action="@{/direct-remove}" method="POST" onsubmit="return confirm('Are you sure you want to remove this book?');">
                       <input type="hidden" name="bookId" th:value="${book.id()}" />
-                      <button type="submit" class="book-action-link">remove</button>
+                      <button type="submit" class="btn">remove</button>
                     </form>
                   </span>
                 </th:block>

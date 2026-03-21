@@ -318,6 +318,15 @@ details[open] .review-toggle::before {
   margin: 0 0.2em;
 }
 
+.unranked-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.book-actions > .unranked-actions::before {
+  content: none;
+}
+
 .book-title-link {
   color: inherit;
   text-decoration: none;
