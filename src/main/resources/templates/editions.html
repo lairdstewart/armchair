@@ -17,7 +17,7 @@
         <div th:each="edition : ${editionResults}" class="book-entry" style="margin-bottom: 4px; padding: 4px;">
           <div class="book-info">
             <div class="book-title">
-              <span th:text="${edition.title()}"></span>
+              <a th:href="${'https://openlibrary.org/books/' + edition.editionOlid()}" target="_blank" class="book-title-link" th:text="${edition.title()}"></a>
             </div>
             <div th:if="${edition.publisher() != null}" class="book-author">Publisher: <span th:text="${edition.publisher()}"></span></div>
             <div th:if="${edition.publishDate() != null}" class="book-author">Published: <span th:text="${edition.publishDate()}"></span></div>
@@ -56,7 +56,6 @@
                   <button type="submit" class="book-action-link">want to read</button>
                 </form>
               </th:block>
-              <a th:href="${'https://openlibrary.org/books/' + edition.editionOlid()}" target="_blank" class="book-action-link">openlibrary.org</a>
             </span>
           </div>
           <img th:if="${edition.coverUrl() != null}" class="book-cover" loading="lazy" th:src="${edition.coverUrl()}" /><div th:if="${edition.coverUrl() == null}" class="book-cover-placeholder">?</div>

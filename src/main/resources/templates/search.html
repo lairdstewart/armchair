@@ -31,9 +31,10 @@
             <div class="book-entry">
               <div class="book-info">
                 <div class="book-title">
-                  <span th:text="${book.title()}"></span>
+                  <a th:if="${book.bookUrl() != null}" th:href="${book.bookUrl()}" target="_blank" class="book-title-link" th:text="${book.title()}"></a>
+                  <span th:if="${book.bookUrl() == null}" th:text="${book.title()}"></span>
                 </div>
-                <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author"><span th:text="${book.author()}"></span><span th:if="${book.firstPublishYear() != null}" th:text="${' (' + book.firstPublishYear() + ')'}"></span></div>
+                <div th:if="${book.author() != null && !book.author().isBlank()}" class="book-author"><a th:if="${book.authorSearchUrl() != null}" th:href="${book.authorSearchUrl()}" target="_blank" class="book-title-link" th:text="${book.author()}"></a><span th:if="${book.authorSearchUrl() == null}" th:text="${book.author()}"></span><span th:if="${book.firstPublishYear() != null}" th:text="${' (' + book.firstPublishYear() + ')'}"></span></div>
                 <span th:if="${book.workOlid() != null}" class="book-actions">
                   <th:block th:if="${userBooks != null && userBooks.containsKey(book.workOlid())}">
                     <a th:href="@{/my-books(selectedBookshelf=${userBooks[book.workOlid()].bookshelf()})}" class="book-action-link">view in library</a>
@@ -42,7 +43,6 @@
                     <a th:href="@{/editions/{workOlid}(workOlid=${book.workOlid()}, title=${book.title()}, author=${book.author()}, coverId=${book.coverId()}, query=${query})}" class="book-action-link"
                        th:text="${book.editionCount() != null ? 'browse ' + book.editionCount() + ' editions' : 'browse editions'}"></a>
                   </th:block>
-                  <a th:if="${book.bookUrl() != null}" th:href="${book.bookUrl()}" target="_blank" class="book-action-link">openlibrary.org</a>
                 </span>
               </div>
               <img th:if="${book.coverUrl() != null}" class="book-cover" loading="lazy" th:src="${book.coverUrl()}" /><div th:if="${book.coverUrl() == null}" class="book-cover-placeholder">?</div>
