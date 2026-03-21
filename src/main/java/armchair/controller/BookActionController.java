@@ -378,34 +378,6 @@ public class BookActionController extends BaseController {
         return needsResolve ? "redirect:/resolve" : "redirect:/rank/categorize";
     }
 
-    @PostMapping("/want-to-read-unranked-book")
-    public String wantToReadUnrankedBook(@RequestParam Long bookId, HttpSession session) {
-        Long userId = getCurrentUserId();
-        if (userId == null) {
-            return "redirect:/login";
-        }
-
-        Ranking ranking = rankingService.findRankingForUser(bookId, userId);
-        if (ranking == null || ranking.getBookshelf() != Bookshelf.UNRANKED) {
-            return "redirect:/my-books?selectedBookshelf=UNRANKED";
-        }
-
-        RankingState rankingState = new RankingState(ranking.getBook().getWorkOlid(), ranking.getBook().getTitle(), ranking.getBook().getAuthor(), null, null);
-        rankingState.setBookshelf(Bookshelf.UNRANKED);
-        rankingState.setReviewBeingRanked(ranking.getReview());
-        rankingState.setWantToRead(true);
-        rankingState.setUnrankedRankingId(ranking.getId());
-        boolean needsResolve = ranking.getBook().getWorkOlid() == null;
-        if (needsResolve) {
-            rankingState.setMode(RankingMode.RESOLVE);
-        } else {
-            rankingState.setMode(RankingMode.CATEGORIZE);
-        }
-        sessionState.saveRankingState(session, rankingState);
-
-        return needsResolve ? "redirect:/resolve" : "redirect:/rank/categorize";
-    }
-
     @PostMapping("/rank-all")
     public String rankAll(HttpSession session) {
         Long userId = getCurrentUserId();

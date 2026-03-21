@@ -97,11 +97,7 @@
                   <span class="unranked-actions">
                     <form th:action="@{/rank-unranked-book}" method="POST">
                       <input type="hidden" name="bookId" th:value="${book.id()}" />
-                      <button type="submit" class="btn">rank</button>
-                    </form>
-                    <form th:action="@{/want-to-read-unranked-book}" method="POST">
-                      <input type="hidden" name="bookId" th:value="${book.id()}" />
-                      <button type="submit" class="btn">want to read</button>
+                      <button type="submit" class="btn">categorize</button>
                     </form>
                     <form th:action="@{/direct-remove}" method="POST" onsubmit="return confirm('Are you sure you want to remove this book?');">
                       <input type="hidden" name="bookId" th:value="${book.id()}" />

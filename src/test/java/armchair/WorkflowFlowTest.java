@@ -437,52 +437,6 @@ class WorkflowFlowTest extends BaseIntegrationTest {
         assertThat(rankingRepository.findById(ranking.getId())).isPresent();
     }
 
-    @Test
-    void wantToReadUnrankedVerifiedBook() throws Exception {
-        User user = createOAuthUser("wf15", "oauth-wf-15");
-        MockHttpSession session = new MockHttpSession();
-
-        Book book = createVerifiedBook("OL1W", "Dune", "Frank Herbert");
-        Ranking ranking = addRanking(user.getId(), book, Bookshelf.UNRANKED, BookCategory.UNRANKED, 0);
-
-        mockMvc.perform(post("/want-to-read-unranked-book")
-                        .param("bookId", String.valueOf(ranking.getId()))
-                        .session(session)
-                        .with(oauthUser("oauth-wf-15")).with(csrf()))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/rank/categorize"));
-
-        RankingState state = getRankingState(session);
-        assertThat(state.getMode()).isEqualTo(RankingMode.CATEGORIZE);
-        assertThat(state.isWantToRead()).isTrue();
-        assertThat(state.getBookshelf()).isEqualTo(Bookshelf.UNRANKED);
-        assertThat(state.getUnrankedRankingId()).isEqualTo(ranking.getId());
-
-        // Book still in unranked (deferred delete until ranking completes)
-        assertThat(rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(
-                user.getId(), Bookshelf.UNRANKED, BookCategory.UNRANKED)).hasSize(1);
-    }
-
-    @Test
-    void wantToReadUnrankedUnverifiedBook() throws Exception {
-        User user = createOAuthUser("wf16", "oauth-wf-16");
-        MockHttpSession session = new MockHttpSession();
-
-        Book book = createUnverifiedBook("Mystery Book", "Unknown Author");
-        Ranking ranking = addRanking(user.getId(), book, Bookshelf.UNRANKED, BookCategory.UNRANKED, 0);
-
-        mockMvc.perform(post("/want-to-read-unranked-book")
-                        .param("bookId", String.valueOf(ranking.getId()))
-                        .session(session)
-                        .with(oauthUser("oauth-wf-16")).with(csrf()))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/resolve"));
-
-        RankingState state = getRankingState(session);
-        assertThat(state.getMode()).isEqualTo(RankingMode.RESOLVE);
-        assertThat(state.isWantToRead()).isTrue();
-    }
-
     // ── Rank all workflow ──
 
     @Test
