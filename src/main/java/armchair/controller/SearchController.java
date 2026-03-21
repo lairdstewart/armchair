@@ -26,6 +26,7 @@ import armchair.service.RankingService;
 import armchair.service.SearchService;
 import armchair.service.SessionStateManager;
 import armchair.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -125,7 +126,10 @@ public class SearchController extends BaseController {
     public String showUnifiedSearch(@RequestParam(required = false, defaultValue = "books") String type,
                                      @RequestParam(required = false) String query,
                                      @RequestParam(required = false, defaultValue = "0") int page,
-                                     Model model, HttpSession session) {
+                                     Model model, HttpSession session, HttpServletRequest request) {
+        if (!request.getParameterMap().containsKey("type")) {
+            return "redirect:/search?type=books";
+        }
         addNavigationAttributes(model, "search");
         model.addAttribute("searchType", type);
         model.addAttribute("query", query);

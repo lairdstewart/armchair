@@ -179,6 +179,10 @@ class BasicCrudTest extends BaseIntegrationTest {
         createOAuthUser("crud-mybooks", "oauth-crud-mybooks");
         mockMvc.perform(get("/my-books")
                         .with(oauthUser("oauth-crud-mybooks")))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrlPattern("/my-books?selectedBookshelf=*"));
+        mockMvc.perform(get("/my-books").param("selectedBookshelf", "FICTION")
+                        .with(oauthUser("oauth-crud-mybooks")))
                 .andExpect(status().isOk());
     }
 

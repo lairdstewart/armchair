@@ -44,6 +44,17 @@ public class MyBooksController extends BaseController {
             return "redirect:/login";
         }
 
+        if (selectedBookshelf == null
+                && sessionState.getRankingState(session) == null
+                && sessionState.getDuplicateResolveTitle(session) == null) {
+            String defaultShelf = pageAssemblyService.getDefaultBookshelf(userId);
+            String redirect = "redirect:/my-books?selectedBookshelf=" + defaultShelf;
+            if (resolveQuery != null) {
+                redirect += "&resolveQuery=" + resolveQuery;
+            }
+            return redirect;
+        }
+
         addNavigationAttributes(model, "list");
 
         String redirect = pageAssemblyService.assemblePage(userId, model, session, selectedBookshelf, resolveQuery);

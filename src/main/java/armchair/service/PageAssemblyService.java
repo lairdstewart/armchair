@@ -29,6 +29,21 @@ public class PageAssemblyService {
 
     private static final Logger log = LoggerFactory.getLogger(PageAssemblyService.class);
 
+    public String getDefaultBookshelf(Long userId) {
+        Map<Bookshelf, Map<BookCategory, List<Ranking>>> allRankings = rankingService.fetchAllRankingsGrouped(userId);
+        BookLists fictionBooks = rankingService.getBookLists(Bookshelf.FICTION, allRankings);
+        BookLists nonfictionBooks = rankingService.getBookLists(Bookshelf.NONFICTION, allRankings);
+        boolean hasFiction = !fictionBooks.liked().isEmpty() || !fictionBooks.ok().isEmpty() || !fictionBooks.disliked().isEmpty();
+        boolean hasNonfiction = !nonfictionBooks.liked().isEmpty() || !nonfictionBooks.ok().isEmpty() || !nonfictionBooks.disliked().isEmpty();
+        boolean hasWantToRead = !rankingService.getRankings(allRankings, Bookshelf.WANT_TO_READ, BookCategory.UNRANKED).isEmpty();
+        boolean hasUnranked = !rankingService.getRankings(allRankings, Bookshelf.UNRANKED, BookCategory.UNRANKED).isEmpty();
+        if (hasFiction) return "FICTION";
+        if (hasNonfiction) return "NONFICTION";
+        if (hasWantToRead) return "WANT_TO_READ";
+        if (hasUnranked) return "UNRANKED";
+        return "FICTION";
+    }
+
     public enum Mode {
         LIST,
         CATEGORIZE,
