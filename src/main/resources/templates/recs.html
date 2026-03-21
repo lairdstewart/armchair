@@ -69,7 +69,7 @@
                     <input type="hidden" name="bookName" th:value="${book.title()}" />
                     <input type="hidden" name="author" th:value="${book.author()}" />
                     <input type="hidden" name="editionOlid" th:value="${book.editionOlid()}" />
-                    <input type="hidden" name="returnUrl" value="/recs" />
+                    <input type="hidden" name="returnUrl" value="/recs?tab=NONFICTION" />
                     <button type="submit" class="book-action-link">want to read</button>
                   </form>
                   <a th:if="${book.workOlid() != null && userBooks.containsKey(book.workOlid())}"
@@ -88,7 +88,11 @@
       document.querySelectorAll('[id^="tab-"]').forEach(function(el) { el.style.display = 'none'; });
       var tab = document.getElementById('tab-' + type);
       if (tab) tab.style.display = '';
+      document.querySelector('input[name="typeSelector"][value="' + type + '"]').checked = true;
     }
+    var params = new URLSearchParams(window.location.search);
+    var tab = params.get('tab');
+    if (tab) showTab(tab);
     </script>
     <script th:src="@{/js/review-toggle.js}"></script>
   </body>
