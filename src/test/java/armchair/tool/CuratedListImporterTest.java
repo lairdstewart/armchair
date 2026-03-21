@@ -367,6 +367,37 @@ class CuratedListImporterTest {
         assertThat(result.books()).hasSize(1);
     }
 
+    @Test
+    void parseDescriptionFromJson() throws IOException {
+        String json = """
+                {
+                  "username": "Test",
+                  "description": "Curated from <a href=\\"https://example.com\\">example.com</a>.",
+                  "books": []
+                }
+                """;
+        Path file = writeJson(json);
+
+        ParsedJsonList result = CuratedListImporter.parseJsonFile(file.toString());
+
+        assertThat(result.description()).isEqualTo("Curated from <a href=\"https://example.com\">example.com</a>.");
+    }
+
+    @Test
+    void parseMissingDescriptionReturnsNull() throws IOException {
+        String json = """
+                {
+                  "username": "Test",
+                  "books": []
+                }
+                """;
+        Path file = writeJson(json);
+
+        ParsedJsonList result = CuratedListImporter.parseJsonFile(file.toString());
+
+        assertThat(result.description()).isNull();
+    }
+
     // --- importParsedList (integration with repositories) ---
 
     @Test
@@ -387,7 +418,7 @@ class CuratedListImporterTest {
         when(bookService.findOrCreateBook(any(), any(), anyString(), anyString(), any(), any()))
                 .thenReturn(new Book(null, null, "Dune", "Frank Herbert", null, null));
 
-        ParsedJsonList parsed = new ParsedJsonList("Test List", List.of(
+        ParsedJsonList parsed = new ParsedJsonList("Test List", null, List.of(
                 new JsonBook("Dune", "Frank Herbert", "", Bookshelf.FICTION, BookCategory.LIKED, 1)
         ));
 
@@ -407,18 +438,19 @@ class CuratedListImporterTest {
         CuratedList existingList = new CuratedList("Test List");
         existingList.setId(42L);
         when(curatedListRepo.findByUsername("Test List")).thenReturn(Optional.of(existingList));
+        when(curatedListRepo.save(any(CuratedList.class))).thenReturn(existingList);
         when(openLibraryService.searchBooks(anyString())).thenReturn(List.of());
         when(bookService.findOrCreateBook(any(), any(), anyString(), anyString(), any(), any()))
                 .thenReturn(new Book(null, null, "Dune", "Frank Herbert", null, null));
 
-        ParsedJsonList parsed = new ParsedJsonList("Test List", List.of(
+        ParsedJsonList parsed = new ParsedJsonList("Test List", null, List.of(
                 new JsonBook("Dune", "Frank Herbert", "", Bookshelf.FICTION, BookCategory.LIKED, 1)
         ));
 
         CuratedListImporter.importParsedList(parsed, curatedListRepo, bookService, curatedRankingRepo, openLibraryService);
 
         verify(curatedRankingRepo).deleteByCuratedListId(42L);
-        verify(curatedListRepo, never()).save(any());
+        verify(curatedListRepo).save(existingList);
     }
 
     @Test
@@ -438,7 +470,7 @@ class CuratedListImporterTest {
         Book dune = new Book(null, null, "Dune", "Frank Herbert", null, null);
         when(bookService.findOrCreateBook(any(), any(), anyString(), anyString(), any(), any())).thenReturn(dune);
 
-        ParsedJsonList parsed = new ParsedJsonList("Test", List.of(
+        ParsedJsonList parsed = new ParsedJsonList("Test", null, List.of(
                 new JsonBook("Dune", "Frank Herbert", "A review", Bookshelf.FICTION, BookCategory.LIKED, 1)
         ));
 
@@ -472,7 +504,7 @@ class CuratedListImporterTest {
         when(bookService.findOrCreateBook(any(), any(), anyString(), anyString(), any(), any()))
                 .thenReturn(new Book(null, null, "Dune", "Frank Herbert", null, null));
 
-        ParsedJsonList parsed = new ParsedJsonList("Test", List.of(
+        ParsedJsonList parsed = new ParsedJsonList("Test", null, List.of(
                 new JsonBook("Dune", "Frank Herbert", "", Bookshelf.FICTION, BookCategory.LIKED, 1)
         ));
 
@@ -501,7 +533,7 @@ class CuratedListImporterTest {
                 .thenAnswer(inv -> new Book(null, null, inv.getArgument(2), inv.getArgument(3), null, null));
 
         // Provide books out of rank order
-        ParsedJsonList parsed = new ParsedJsonList("Test", List.of(
+        ParsedJsonList parsed = new ParsedJsonList("Test", null, List.of(
                 new JsonBook("Second", "Author B", "", Bookshelf.FICTION, BookCategory.LIKED, 2),
                 new JsonBook("First", "Author A", "", Bookshelf.FICTION, BookCategory.LIKED, 1),
                 new JsonBook("Third", "Author C", "", Bookshelf.FICTION, BookCategory.LIKED, 3)
@@ -539,7 +571,7 @@ class CuratedListImporterTest {
                 .thenAnswer(inv -> new Book(null, null, inv.getArgument(2), inv.getArgument(3), null, null));
 
         // Mix of fiction/nonfiction, ranked/unranked
-        ParsedJsonList parsed = new ParsedJsonList("Test", List.of(
+        ParsedJsonList parsed = new ParsedJsonList("Test", null, List.of(
                 new JsonBook("Fiction Ranked", "A", "", Bookshelf.FICTION, BookCategory.LIKED, 1),
                 new JsonBook("Nonfiction Unranked", "B", "", Bookshelf.NONFICTION, BookCategory.UNRANKED, null),
                 new JsonBook("Fiction Unranked", "C", "", Bookshelf.FICTION, BookCategory.UNRANKED, null),

@@ -68,7 +68,7 @@ public class CuratedListImporter {
     }
 
     record JsonBook(String title, String author, String review, Bookshelf bookshelf, BookCategory category, Integer rank) {}
-    record ParsedJsonList(String username, List<JsonBook> books) {}
+    record ParsedJsonList(String username, String description, List<JsonBook> books) {}
 
     static class ImportException extends RuntimeException {
         ImportException(String message) { super(message); }
@@ -93,6 +93,8 @@ public class CuratedListImporter {
         if (username == null || username.isBlank()) {
             throw new ImportException("No 'username' found in " + source);
         }
+
+        String description = (String) data.get("description");
 
         List<Map<String, String>> books = (List<Map<String, String>>) data.get("books");
         if (books == null) {
@@ -150,7 +152,7 @@ public class CuratedListImporter {
             result.add(new JsonBook(title, author, review, bookshelf, category, rankNum));
         }
 
-        return new ParsedJsonList(username, result);
+        return new ParsedJsonList(username, description, result);
     }
 
     static void importFromJson(String path, CuratedListRepository curatedListRepository,
@@ -174,9 +176,10 @@ public class CuratedListImporter {
             log.info("Reimporting curated list: {} (cleared existing books)", username);
         } else {
             curatedList = new CuratedList(username);
-            curatedListRepository.save(curatedList);
             log.info("Importing curated list: {}", username);
         }
+        curatedList.setDescription(parsed.description());
+        curatedListRepository.save(curatedList);
 
         List<JsonBook> fictionRanked = new ArrayList<>();
         List<JsonBook> fictionUnranked = new ArrayList<>();

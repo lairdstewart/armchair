@@ -31,6 +31,7 @@ Curated/imported book lists (e.g., NYT Best Books). Separate from users — no O
 |--------|------|-------------|-------------|
 | id | BIGINT | PK, auto-generated | |
 | username | VARCHAR | UNIQUE | Display name for the curated list |
+| description | VARCHAR(5000) | | Optional HTML description shown on the list page |
 
 ### books
 

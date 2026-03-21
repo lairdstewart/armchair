@@ -75,6 +75,7 @@ public class ProfileController extends BaseController {
                 return "redirect:/search?type=profiles&query=" + UriUtils.encode(username, StandardCharsets.UTF_8);
             }
             isCurated = true;
+            model.addAttribute("curatedDescription", curatedList.getDescription());
             Map<Bookshelf, Map<BookCategory, List<CuratedRanking>>> viewedRankings = rankingService.fetchAllCuratedRankingsGrouped(curatedList.getId());
             fictionBooks = rankingService.getBookLists(Bookshelf.FICTION, viewedRankings);
             nonfictionBooks = rankingService.getBookLists(Bookshelf.NONFICTION, viewedRankings);

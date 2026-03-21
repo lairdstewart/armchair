@@ -11,6 +11,7 @@
     <div th:replace="~{fragments :: navbar}"></div>
     <div class="page-content">
     <h2 th:text="${viewUsername}"></h2>
+    <p th:if="${curatedDescription != null}" th:utext="${curatedDescription}"></p>
 
     <div th:if="${hasFiction || hasNonfiction || hasWantToRead}">
       <script th:inline="javascript">

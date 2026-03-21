@@ -17,6 +17,9 @@ public class CuratedList {
     @Column(unique = true)
     private String username;
 
+    @Column(length = 5000)
+    private String description;
+
     public CuratedList() {}
 
     public CuratedList(String username) {
@@ -37,5 +40,13 @@ public class CuratedList {
 
     public void setUsername(String username) {
         this.username = username;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 }
