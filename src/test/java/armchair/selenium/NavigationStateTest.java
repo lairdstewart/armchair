@@ -26,7 +26,7 @@ class NavigationStateTest extends BaseSeleniumTest {
         navigateTo("/my-books");
 
         clickBookAction("Book A", "re-rank");
-        assertTextPresent("Add Book A");
+        assertTextPresent("Categorize Book A");
 
         // Click Library in the navbar to clear state
         clickLibrary();
@@ -34,7 +34,7 @@ class NavigationStateTest extends BaseSeleniumTest {
         assertOnPath("/my-books");
         assertTextPresent("Book A");
         assertTextPresent("Book B");
-        assertTextNotPresent("Add Book A");
+        assertTextNotPresent("Categorize Book A");
     }
 
     @Test
@@ -127,8 +127,8 @@ class NavigationStateTest extends BaseSeleniumTest {
         navigateTo("/my-books");
         clickBookAction("Book B", "re-rank");
 
-        assertTextPresent("Add Book B");
-        assertTextNotPresent("Add Book A");
+        assertTextPresent("Categorize Book B");
+        assertTextNotPresent("Categorize Book A");
 
         selectRadio("bookshelf", "nonfiction");
         selectRadio("category", "ok");
@@ -151,12 +151,12 @@ class NavigationStateTest extends BaseSeleniumTest {
 
         navigateTo("/my-books");
         clickBookAction("Book A", "re-rank");
-        assertTextPresent("Add Book A");
+        assertTextPresent("Categorize Book A");
 
         clickButton("back");
 
         assertOnPath("/my-books");
-        assertTextNotPresent("Add Book A");
+        assertTextNotPresent("Categorize Book A");
     }
 
     @Test
@@ -168,7 +168,7 @@ class NavigationStateTest extends BaseSeleniumTest {
 
         navigateTo("/my-books");
         clickBookAction("Book A", "re-rank");
-        assertTextPresent("Add Book A");
+        assertTextPresent("Categorize Book A");
 
         clickNavLink("Search");
         assertOnPath("/search");
@@ -176,6 +176,6 @@ class NavigationStateTest extends BaseSeleniumTest {
         clickLibrary();
 
         assertOnPath("/my-books");
-        assertTextNotPresent("Add Book A");
+        assertTextNotPresent("Categorize Book A");
     }
 }

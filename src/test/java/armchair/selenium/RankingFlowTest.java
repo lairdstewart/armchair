@@ -34,7 +34,7 @@ class RankingFlowTest extends BaseSeleniumTest {
                 "//div[@id='tab-UNRANKED']//button[normalize-space(text())='rank']"
         )).click();
 
-        assertTextPresent("Add Gamma Book");
+        assertTextPresent("Categorize Gamma Book");
 
         selectRadio("bookshelf", "fiction");
         selectRadio("category", "liked");
@@ -69,7 +69,7 @@ class RankingFlowTest extends BaseSeleniumTest {
                 "//div[@id='tab-WANT_TO_READ']//button[normalize-space(text())='rank']"
         )).click();
 
-        assertTextPresent("Add Dune");
+        assertTextPresent("Categorize Dune");
 
         selectRadio("bookshelf", "fiction");
         selectRadio("category", "liked");
@@ -160,7 +160,7 @@ class RankingFlowTest extends BaseSeleniumTest {
                 "//div[@id='tab-UNRANKED']//button[normalize-space(text())='rank']"
         )).click();
 
-        assertTextPresent("Add Future Read");
+        assertTextPresent("Categorize Future Read");
 
         selectRadio("bookshelf", "fiction");
         selectRadio("category", "liked");
@@ -187,14 +187,14 @@ class RankingFlowTest extends BaseSeleniumTest {
         selectRadio("typeSelector", "UNRANKED");
         clickButton("categorize all");
 
-        assertTextPresent("Add Unranked A");
+        assertTextPresent("Categorize Unranked A");
         assertTextPresent("uncategorized book");
 
         selectRadio("bookshelf", "fiction");
         selectRadio("category", "liked");
         clickButton("Continue");
 
-        assertTextPresent("Add Unranked B");
+        assertTextPresent("Categorize Unranked B");
 
         selectRadio("bookshelf", "nonfiction");
         selectRadio("category", "ok");

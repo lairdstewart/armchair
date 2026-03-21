@@ -5,7 +5,7 @@
     <form th:action="@{/cancel-add}" method="POST" style="margin-bottom: 0;">
       <button type="submit" class="btn-back">back</button>
     </form>
-    <h3>Add <span th:text="${rankingState.bookIdentity.title}"></span></h3>
+    <h3>Categorize <span th:text="${rankingState.bookIdentity.title}"></span></h3>
     <form th:action="@{/resolve}" method="GET" style="margin-bottom: 15px;">
       <input type="text" name="resolveQuery" class="text-input" th:value="${resolveQuery}" placeholder="Search Open Library..." />
       <button type="submit" class="btn">Search</button>
