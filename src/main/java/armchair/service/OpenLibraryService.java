@@ -45,7 +45,7 @@ public class OpenLibraryService {
         this.restTemplate = restTemplateBuilder
             .defaultHeader("User-Agent", "Armchair (help@armchairlist.com)")
             .setConnectTimeout(Duration.ofSeconds(5))
-            .setReadTimeout(Duration.ofSeconds(10))
+            .setReadTimeout(Duration.ofSeconds(30))
             .build();
     }
 

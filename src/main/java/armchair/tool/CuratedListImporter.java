@@ -209,40 +209,45 @@ public class CuratedListImporter {
                                         CuratedRankingRepository curatedRankingRepository, OpenLibraryService openLibraryService) {
         int position = 0;
         for (JsonBook jb : books) {
-            List<OpenLibraryService.BookResult> results = openLibraryService.searchBooks(jb.title() + ", " + jb.author());
+            try {
+                List<OpenLibraryService.BookResult> results = openLibraryService.searchBooks(jb.title() + ", " + jb.author());
 
-            String workOlid;
-            String editionOlid;
-            String title;
-            String author;
-            Integer firstPublishYear;
-            Integer coverId;
-            if (!results.isEmpty()) {
-                OpenLibraryService.BookResult firstResult = results.get(0);
-                workOlid = firstResult.workOlid();
-                editionOlid = firstResult.editionOlid();
-                title = firstResult.title();
-                author = firstResult.author();
-                firstPublishYear = firstResult.firstPublishYear();
-                coverId = firstResult.coverId();
-            } else {
-                author = jb.author();
-                title = jb.title();
-                workOlid = null;
-                editionOlid = null;
-                firstPublishYear = null;
-                coverId = null;
+                String workOlid;
+                String editionOlid;
+                String title;
+                String author;
+                Integer firstPublishYear;
+                Integer coverId;
+                if (!results.isEmpty()) {
+                    OpenLibraryService.BookResult firstResult = results.get(0);
+                    workOlid = firstResult.workOlid();
+                    editionOlid = firstResult.editionOlid();
+                    title = firstResult.title();
+                    author = firstResult.author();
+                    firstPublishYear = firstResult.firstPublishYear();
+                    coverId = firstResult.coverId();
+                } else {
+                    author = jb.author();
+                    title = jb.title();
+                    workOlid = null;
+                    editionOlid = null;
+                    firstPublishYear = null;
+                    coverId = null;
+                }
+
+                Book book = bookService.findOrCreateBook(workOlid, editionOlid, title, author, firstPublishYear, coverId);
+
+                CuratedRanking ranking = new CuratedRanking(curatedList, book, jb.bookshelf(), jb.category(), position);
+                if (jb.review() != null && !jb.review().isEmpty()) {
+                    ranking.setReview(jb.review());
+                }
+                curatedRankingRepository.save(ranking);
+
+                log.info("  {}. {} by {}", position + 1, jb.title(), jb.author());
+            } catch (Exception e) {
+                log.warn("  Skipped #{}: {} by {} — {}", position + 1, jb.title(), jb.author(), e.getMessage());
             }
 
-            Book book = bookService.findOrCreateBook(workOlid, editionOlid, title, author, firstPublishYear, coverId);
-
-            CuratedRanking ranking = new CuratedRanking(curatedList, book, jb.bookshelf(), jb.category(), position);
-            if (jb.review() != null && !jb.review().isEmpty()) {
-                ranking.setReview(jb.review());
-            }
-            curatedRankingRepository.save(ranking);
-
-            log.info("  {}. {} by {}", position + 1, jb.title(), author);
             position++;
 
             try {

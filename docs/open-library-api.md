@@ -93,7 +93,7 @@ HTML is served. For example:
 
 ### What the server-side timeout does NOT control
 
-`OpenLibraryService` has a 5s connect / 10s read timeout on its `RestTemplate`.
+`OpenLibraryService` has a 5s connect / 30s read timeout on its `RestTemplate`.
 This timeout applies only to **API calls** made by the server (search, editions,
 author lookups). It has **no effect** on cover image loading, which bypasses our
 server entirely.
