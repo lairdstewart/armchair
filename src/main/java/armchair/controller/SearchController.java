@@ -343,6 +343,13 @@ public class SearchController extends BaseController {
         model.addAttribute("searchQuery", query);
         model.addAttribute("changeBookId", changeBookId);
 
+        if (changeBookId != null) {
+            Ranking changeRanking = rankingRepository.findById(changeBookId).orElse(null);
+            if (changeRanking != null) {
+                model.addAttribute("changeBookshelf", changeRanking.getBookshelf().name());
+            }
+        }
+
         Long currentUserId = getCurrentUserId();
         if (currentUserId != null) {
             var allRankings = rankingService.fetchAllRankingsGrouped(currentUserId);

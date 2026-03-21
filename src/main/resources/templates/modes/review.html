@@ -3,7 +3,7 @@
 <body>
   <th:block th:fragment="content">
     <form th:action="@{/cancel-add}" method="POST" style="margin-bottom: 0;">
-      <button type="submit" class="btn-back">cancel</button>
+      <button type="submit" class="btn-back">back</button>
     </form>
     <h3>Review <span th:text="${reviewBook.book.title}"></span></h3>
     <form th:action="@{/save-review}" method="POST">

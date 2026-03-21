@@ -289,15 +289,20 @@ public class BookActionController extends BaseController {
         }
 
         Ranking ranking = rankingRepository.findById(rankingState.getBookIdBeingReviewed()).orElse(null);
+        String selectedBookshelf = null;
         if (ranking != null && ranking.getUser().getId().equals(userId)) {
             String trimmedReview = trimReview(review);
             ranking.setReview(trimmedReview);
             rankingRepository.save(ranking);
+            selectedBookshelf = ranking.getBookshelf().name();
         }
 
         sessionState.clearRankingState(session);
         sessionState.clearSearchAndResolveState(session);
 
+        if (selectedBookshelf != null) {
+            return "redirect:/my-books?selectedBookshelf=" + selectedBookshelf;
+        }
         return "redirect:/my-books";
     }
 

@@ -300,7 +300,7 @@ class WorkflowFlowTest extends BaseIntegrationTest {
                         .session(session)
                         .with(oauthUser("oauth-wf-8")).with(csrf()))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/my-books"));
+                .andExpect(redirectedUrl("/my-books?selectedBookshelf=FICTION"));
 
         Ranking updated = rankingRepository.findById(ranking.getId()).orElseThrow();
         assertThat(updated.getReview()).isEqualTo("An epic masterpiece");
