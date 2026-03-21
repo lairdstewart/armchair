@@ -5,6 +5,7 @@ import java.nio.charset.StandardCharsets;
 
 import static armchair.service.OpenLibraryService.OL_WORKS_URL;
 import static armchair.service.OpenLibraryService.OL_SEARCH_URL;
+import static armchair.service.OpenLibraryService.OL_AUTHOR_SEARCH_URL;
 import static armchair.service.OpenLibraryService.OL_COVER_URL;
 import static armchair.service.OpenLibraryService.OL_COVER_SUFFIX;
 
@@ -13,6 +14,11 @@ public record BookInfo(Long id, String workOlid, String editionOlid, String titl
     public String bookUrl() {
         if (workOlid != null) return OL_WORKS_URL + workOlid;
         return OL_SEARCH_URL + URLEncoder.encode(title + " " + author, StandardCharsets.UTF_8);
+    }
+
+    public String authorSearchUrl() {
+        if (author == null || author.isBlank()) return null;
+        return OL_AUTHOR_SEARCH_URL + URLEncoder.encode(author, StandardCharsets.UTF_8);
     }
 
     public String coverUrl() {

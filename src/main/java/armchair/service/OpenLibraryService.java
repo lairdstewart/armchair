@@ -22,6 +22,7 @@ public class OpenLibraryService {
 
     public static final String OL_WORKS_URL = "https://openlibrary.org/works/";
     public static final String OL_SEARCH_URL = "https://openlibrary.org/search?q=";
+    public static final String OL_AUTHOR_SEARCH_URL = "https://openlibrary.org/search/authors?q=";
     public static final String OL_COVER_URL = "https://covers.openlibrary.org/b/id/";
     public static final String OL_COVER_SUFFIX = "-M.jpg";
 

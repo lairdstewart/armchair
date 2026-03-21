@@ -24,9 +24,9 @@
       <div th:if="${searchResults != null && !searchResults.isEmpty()}">
         <h4>Search Results:</h4>
         <div th:each="book : ${searchResults}" style="margin-bottom: 15px; padding: 10px; border: 1px solid #ccc;">
-          <a th:if="${book.bookUrl() != null}" th:href="${book.bookUrl()}" target="_blank"><strong th:text="${book.title()}"></strong></a>
+          <a th:if="${book.bookUrl() != null}" th:href="${book.bookUrl()}" target="_blank" class="book-title-link"><strong th:text="${book.title()}"></strong></a>
           <strong th:if="${book.bookUrl() == null}" th:text="${book.title()}"></strong>
-          <span th:text="' by ' + ${book.author()}"></span>
+          <span th:text="' by '"></span><a th:href="@{'https://openlibrary.org/search/authors?q=' + ${book.author()}}" target="_blank" class="book-title-link" th:text="${book.author()}"></a>
           <form th:action="@{/select-book}" method="POST" style="display: inline; margin-left: 10px;">
             <input type="hidden" name="workOlid" th:value="${book.workOlid()}" />
             <input type="hidden" name="bookName" th:value="${book.title()}" />
