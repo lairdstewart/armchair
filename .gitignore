@@ -4,3 +4,4 @@ target/
 .merge-lock
 .settings/
 .classpath
+.DS_Store
