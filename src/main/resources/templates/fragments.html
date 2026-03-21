@@ -24,9 +24,10 @@
         - book: BookInfo record
         - actions: fragment expression for action buttons (bare forms, no wrapper), or null for read-only
         - showCover: boolean, whether to show the book cover (default true)
+        - showReview: boolean, whether to show the review toggle (default true)
     -->
-    <th:block th:fragment="bookEntry(book, actions, showCover)">
-      <div th:if="${book.review() == null}" class="book-entry-wrapper">
+    <th:block th:fragment="bookEntry(book, actions, showCover, showReview)">
+      <div th:if="${book.review() == null or !showReview}" class="book-entry-wrapper">
         <div class="book-entry">
           <div class="book-info">
             <div class="book-title">
@@ -45,7 +46,7 @@
           <div th:if="${showCover and book.coverUrl() == null}" class="book-cover-placeholder">?</div>
         </div>
       </div>
-      <details th:if="${book.review() != null}" class="book-review">
+      <details th:if="${book.review() != null and showReview}" class="book-review">
         <summary>
           <div class="book-entry">
             <div class="book-info">

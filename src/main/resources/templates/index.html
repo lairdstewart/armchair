@@ -41,7 +41,7 @@
             <ol class="book-list">
               <li th:each="rb : ${fictionRankedBooks}">
                 <span th:class="'book-number ' + ${rb.categoryClass()}" th:text="${rb.rankDisplay()}"></span>
-                <th:block th:replace="~{fragments :: bookEntry(${rb.book()}, ~{fragments :: libraryActions(${rb.book()})}, true)}" />
+                <th:block th:replace="~{fragments :: bookEntry(${rb.book()}, ~{fragments :: libraryActions(${rb.book()})}, true, true)}" />
               </li>
             </ol>
             </div>
@@ -54,7 +54,7 @@
             <ol class="book-list">
               <li th:each="rb : ${nonfictionRankedBooks}">
                 <span th:class="'book-number ' + ${rb.categoryClass()}" th:text="${rb.rankDisplay()}"></span>
-                <th:block th:replace="~{fragments :: bookEntry(${rb.book()}, ~{fragments :: libraryActions(${rb.book()})}, true)}" />
+                <th:block th:replace="~{fragments :: bookEntry(${rb.book()}, ~{fragments :: libraryActions(${rb.book()})}, true, true)}" />
               </li>
             </ol>
             </div>
@@ -67,7 +67,7 @@
             <ul class="book-list">
               <li th:each="book : ${wantToReadBooks}">
                 <span class="book-number-spacer"></span>
-                <th:block th:replace="~{fragments :: bookEntry(${book}, ~{:: .wtr-actions}, true)}">
+                <th:block th:replace="~{fragments :: bookEntry(${book}, ~{:: .wtr-actions}, true, true)}">
                   <span class="wtr-actions" th:remove="tag">
                     <form th:action="@{/mark-as-read}" method="POST" style="display: inline;">
                       <input type="hidden" name="bookId" th:value="${book.id()}" />
@@ -93,7 +93,7 @@
             <ul class="book-list">
               <li th:each="book : ${unrankedBooks}">
                 <span class="book-number-spacer"></span>
-                <th:block th:replace="~{fragments :: bookEntry(${book}, ~{:: .unranked-actions}, false)}">
+                <th:block th:replace="~{fragments :: bookEntry(${book}, ~{:: .unranked-actions}, false, false)}">
                   <span class="unranked-actions">
                     <form th:action="@{/rank-unranked-book}" method="POST">
                       <input type="hidden" name="bookId" th:value="${book.id()}" />
