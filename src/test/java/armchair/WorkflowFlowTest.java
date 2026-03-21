@@ -553,7 +553,6 @@ class WorkflowFlowTest extends BaseIntegrationTest {
 
         MockHttpSession session = new MockHttpSession();
         setRankingState(session, rs);
-        session.setAttribute("skipResolve", "expanded");
         session.setAttribute("cachedEditions", List.of());
 
         mockMvc.perform(post("/back-to-resolve")
@@ -566,7 +565,6 @@ class WorkflowFlowTest extends BaseIntegrationTest {
         assertThat(updated.getMode()).isEqualTo(RankingMode.RESOLVE);
 
         // Session attributes cleared
-        assertThat(session.getAttribute("skipResolve")).isNull();
     }
 
     @Test

@@ -37,7 +37,6 @@ public class PageAssemblyService {
         REMOVE,
         REVIEW,
         RESOLVE,
-        MANUAL_RESOLVE,
         DUPLICATE_RESOLVE;
     }
 
@@ -107,47 +106,28 @@ public class PageAssemblyService {
         boolean needsResolve = mode == Mode.RESOLVE ||
             (mode == Mode.CATEGORIZE && rankingState != null && rankingState.getBookIdentity().getWorkOlid() == null);
         if (needsResolve && rankingState != null) {
-            String skipResolve = sessionState.getSkipResolve(session);
-            if (SKIP_RESOLVE_MANUAL.equals(skipResolve)) {
-                mode = Mode.MANUAL_RESOLVE;
-                if (resolveQuery != null && !resolveQuery.isBlank()) {
-                    List<OpenLibraryService.BookResult> resolveResults =
-                        SearchService.deduplicateResults(openLibraryService.searchBooks(resolveQuery, ControllerUtils.MANUAL_SEARCH_RESULTS));
-                    model.addAttribute("resolveResults", resolveResults);
-                    model.addAttribute("resolveQuery", resolveQuery);
-                    if (resolveResults.isEmpty()) {
-                        model.addAttribute("resolveNoResults", true);
-                    }
-                }
-            } else if (skipResolve == null || SKIP_RESOLVE_EXPANDED.equals(skipResolve)) {
-                int maxResults = SKIP_RESOLVE_EXPANDED.equals(skipResolve) ? ControllerUtils.SEARCH_RESULTS_EXPANDED : ControllerUtils.SEARCH_RESULTS_DEFAULT;
-                List<OpenLibraryService.BookResult> resolveResults = searchService.combinedSearch(
-                        rankingState.getBookIdentity().getTitle(),
-                        rankingState.getBookIdentity().getAuthor(),
-                        maxResults);
-                if (!resolveResults.isEmpty()) {
-                    mode = Mode.RESOLVE;
-                    model.addAttribute("resolveResults", resolveResults);
-                    if (skipResolve == null && resolveResults.size() < maxResults) {
-                        sessionState.setSkipResolve(session, SKIP_RESOLVE_EXPANDED);
-                    }
-                } else if (skipResolve == null) {
-                    resolveResults = searchService.combinedSearch(
-                        rankingState.getBookIdentity().getTitle(),
-                        rankingState.getBookIdentity().getAuthor(),
-                        ControllerUtils.SEARCH_RESULTS_EXPANDED);
-                    if (!resolveResults.isEmpty()) {
-                        mode = Mode.RESOLVE;
-                        model.addAttribute("resolveResults", resolveResults);
-                    } else {
-                        log.warn("RESOLVE auto-search found nothing for \"{}\" by {}", rankingState.getBookIdentity().getTitle(), rankingState.getBookIdentity().getAuthor());
-                        sessionState.setSkipResolve(session, SKIP_RESOLVE_MANUAL);
-                        return "redirect:/my-books";
-                    }
-                } else {
-                    log.warn("RESOLVE auto-search found nothing for \"{}\" by {}", rankingState.getBookIdentity().getTitle(), rankingState.getBookIdentity().getAuthor());
-                    sessionState.setSkipResolve(session, SKIP_RESOLVE_MANUAL);
-                    return "redirect:/my-books";
+            mode = Mode.RESOLVE;
+            String title = rankingState.getBookIdentity().getTitle();
+            String author = rankingState.getBookIdentity().getAuthor();
+            String defaultQuery = author != null && !author.isBlank() ? title + " " + author : title;
+
+            List<OpenLibraryService.BookResult> resolveResults;
+
+            if (resolveQuery != null && !resolveQuery.isBlank()) {
+                resolveResults = SearchService.deduplicateResults(
+                    openLibraryService.searchBooks(resolveQuery, ControllerUtils.SEARCH_RESULTS_EXPANDED));
+                model.addAttribute("resolveQuery", resolveQuery);
+            } else {
+                resolveResults = searchService.combinedSearch(title, author, ControllerUtils.SEARCH_RESULTS_EXPANDED);
+                model.addAttribute("resolveQuery", defaultQuery);
+            }
+
+            if (!resolveResults.isEmpty()) {
+                model.addAttribute("resolveResults", resolveResults);
+            } else {
+                model.addAttribute("resolveNoResults", true);
+                if (resolveQuery == null) {
+                    log.warn("RESOLVE auto-search found nothing for \"{}\" by {}", title, author);
                 }
             }
         }

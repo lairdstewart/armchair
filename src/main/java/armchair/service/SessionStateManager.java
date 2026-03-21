@@ -23,8 +23,6 @@ public class SessionStateManager {
     public static final String SESSION_BROWSE_EDITIONS_PREFIX = "browseEditions_";
     public static final String SESSION_RANKING_STATE = "rankingState";
 
-    public static final String SKIP_RESOLVE_EXPANDED = "expanded";
-    public static final String SKIP_RESOLVE_MANUAL = "manual";
 
     public RankingState getRankingState(HttpSession session) {
         return (RankingState) session.getAttribute(SESSION_RANKING_STATE);
@@ -42,14 +40,6 @@ public class SessionStateManager {
         session.removeAttribute(SESSION_DUPLICATE_RESOLVE_TITLE);
         session.removeAttribute(SESSION_DUPLICATE_RESOLVE_WORK_OLID);
         session.removeAttribute(SESSION_DUPLICATE_RESOLVE_BOOK_ID);
-    }
-
-    public String getSkipResolve(HttpSession session) {
-        return (String) session.getAttribute(SESSION_SKIP_RESOLVE);
-    }
-
-    public void setSkipResolve(HttpSession session, String value) {
-        session.setAttribute(SESSION_SKIP_RESOLVE, value);
     }
 
     public void clearSearchAndResolveState(HttpSession session) {

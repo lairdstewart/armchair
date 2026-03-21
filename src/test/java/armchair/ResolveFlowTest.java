@@ -40,7 +40,7 @@ class ResolveFlowTest extends BaseIntegrationTest {
 
         setupUnverifiedBookForRanking(session, userId, "Dune", "Frank Herbert");
 
-        when(openLibraryService.searchByTitleAndAuthor(eq("Dune"), eq("Frank Herbert"), eq(3)))
+        when(openLibraryService.searchByTitleAndAuthor(eq("Dune"), eq("Frank Herbert"), eq(10)))
                 .thenReturn(List.of(
                         new OpenLibraryService.BookResult("OL123W", "OL123M", "Dune", "Frank Herbert", 1965, 12345, null),
                         new OpenLibraryService.BookResult("OL456W", "OL456M", "Dune Messiah", "Frank Herbert", 1969, 12346, null)
@@ -65,69 +65,38 @@ class ResolveFlowTest extends BaseIntegrationTest {
     }
 
     @Test
-    void expandTo10Results() throws Exception {
+    void manualSearchWithCustomQuery() throws Exception {
         MockHttpSession session = new MockHttpSession();
         User user = createOAuthUser("resolve2", "oauth-resolve2");
         Long userId = user.getId();
 
         setupUnverifiedBookForRanking(session, userId, "Dune", "Frank Herbert");
 
-        when(openLibraryService.searchByTitleAndAuthor(eq("Dune"), eq("Frank Herbert"), eq(3)))
+        when(openLibraryService.searchByTitleAndAuthor(eq("Dune"), eq("Frank Herbert"), eq(10)))
                 .thenReturn(List.of(
-                        new OpenLibraryService.BookResult("OL111W", null, "Wrong Dune", "Someone", 2000, null, null),
-                        new OpenLibraryService.BookResult("OL222W", null, "Also Wrong", "Another", 2001, null, null),
-                        new OpenLibraryService.BookResult("OL333W", null, "Still Wrong", "Third", 2002, null, null)
+                        new OpenLibraryService.BookResult("OL111W", null, "Wrong Dune", "Someone", 2000, null, null)
                 ));
 
+        // Auto-search shows results with search bar
         mockMvc.perform(get("/my-books").session(session).with(oauthUser("oauth-resolve2")))
                 .andExpect(status().isOk())
-                .andExpect(model().attributeExists("resolveResults"));
+                .andExpect(model().attributeExists("resolveResults"))
+                .andExpect(model().attribute("resolveQuery", "Dune Frank Herbert"));
 
-        mockMvc.perform(post("/skip-resolve").session(session).with(oauthUser("oauth-resolve2")).with(csrf()))
-                .andExpect(status().is3xxRedirection());
-
-        when(openLibraryService.searchByTitleAndAuthor(eq("Dune"), eq("Frank Herbert"), eq(10)))
+        // User edits query and re-searches
+        when(openLibraryService.searchBooks(eq("Dune Frank Herbert 1965"), eq(10)))
                 .thenReturn(List.of(
                         new OpenLibraryService.BookResult("OL123W", "OL123M", "Dune", "Frank Herbert", 1965, 12345, null)
                 ));
 
-        mockMvc.perform(get("/my-books").session(session).with(oauthUser("oauth-resolve2")))
+        mockMvc.perform(get("/my-books").param("resolveQuery", "Dune Frank Herbert 1965")
+                        .session(session).with(oauthUser("oauth-resolve2")))
                 .andExpect(status().isOk())
                 .andExpect(model().attributeExists("resolveResults"));
     }
 
     @Test
-    void manualSearchFallback() throws Exception {
-        MockHttpSession session = new MockHttpSession();
-        User user = createOAuthUser("resolve3", "oauth-resolve3");
-        Long userId = user.getId();
-
-        setupUnverifiedBookForRanking(session, userId, "Dune", "Frank Herbert");
-
-        when(openLibraryService.searchByTitleAndAuthor(eq("Dune"), eq("Frank Herbert"), eq(3)))
-                .thenReturn(List.of(
-                        new OpenLibraryService.BookResult("OL111W", null, "Wrong", "Wrong", 2000, null, null)
-                ));
-        when(openLibraryService.searchByTitleAndAuthor(eq("Dune"), eq("Frank Herbert"), eq(10)))
-                .thenReturn(List.of(
-                        new OpenLibraryService.BookResult("OL222W", null, "Still Wrong", "Wrong", 2001, null, null)
-                ));
-
-        // First visit — show initial results (which are < 3, so skipResolve goes to "expanded")
-        mockMvc.perform(get("/my-books").session(session).with(oauthUser("oauth-resolve3")))
-                .andExpect(status().isOk());
-
-        // Skip expanded results → goes to manual
-        mockMvc.perform(post("/skip-resolve").session(session).with(oauthUser("oauth-resolve3")).with(csrf()))
-                .andExpect(status().is3xxRedirection());
-
-        // Now should be in MANUAL_RESOLVE mode
-        mockMvc.perform(get("/my-books").session(session).with(oauthUser("oauth-resolve3")))
-                .andExpect(status().isOk());
-    }
-
-    @Test
-    void noResultsBothStagesGoesToManual() throws Exception {
+    void noResultsShowsSearchBarWithMessage() throws Exception {
         MockHttpSession session = new MockHttpSession();
         User user = createOAuthUser("resolve4", "oauth-resolve4");
         Long userId = user.getId();
@@ -137,13 +106,11 @@ class ResolveFlowTest extends BaseIntegrationTest {
         when(openLibraryService.searchByTitleAndAuthor(eq("Obscure Book"), eq("Unknown Author"), anyInt()))
                 .thenReturn(List.of());
 
-        // First attempt empty, tries expanded, also empty → redirect to manual
+        // No results — shows resolve page with "no results" and search bar
         mockMvc.perform(get("/my-books").session(session).with(oauthUser("oauth-resolve4")))
-                .andExpect(status().is3xxRedirection());
-
-        // Should redirect to manual resolve mode
-        mockMvc.perform(get("/my-books").session(session).with(oauthUser("oauth-resolve4")))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(model().attribute("resolveNoResults", true))
+                .andExpect(model().attribute("resolveQuery", "Obscure Book Unknown Author"));
     }
 
     @Test
@@ -157,7 +124,7 @@ class ResolveFlowTest extends BaseIntegrationTest {
 
         setupUnverifiedBookForRanking(session, userId, "Dune Import", "F. Herbert");
 
-        when(openLibraryService.searchByTitleAndAuthor(eq("Dune Import"), eq("F. Herbert"), eq(3)))
+        when(openLibraryService.searchByTitleAndAuthor(eq("Dune Import"), eq("F. Herbert"), eq(10)))
                 .thenReturn(List.of(
                         new OpenLibraryService.BookResult("OL123W", "OL123M", "Dune", "Frank Herbert", 1965, 12345, null)
                 ));
@@ -199,7 +166,7 @@ class ResolveFlowTest extends BaseIntegrationTest {
 
         setupUnverifiedBookForRanking(session, userId, "Dune Import", "F. Herbert");
 
-        when(openLibraryService.searchByTitleAndAuthor(eq("Dune Import"), eq("F. Herbert"), eq(3)))
+        when(openLibraryService.searchByTitleAndAuthor(eq("Dune Import"), eq("F. Herbert"), eq(10)))
                 .thenReturn(List.of(
                         new OpenLibraryService.BookResult("OL123W", "OL123M", "Dune", "Frank Herbert", 1965, 12345, null)
                 ));
@@ -228,7 +195,7 @@ class ResolveFlowTest extends BaseIntegrationTest {
 
         setupUnverifiedBookForRanking(session, userId, "Dune Import", "F. Herbert");
 
-        when(openLibraryService.searchByTitleAndAuthor(eq("Dune Import"), eq("F. Herbert"), eq(3)))
+        when(openLibraryService.searchByTitleAndAuthor(eq("Dune Import"), eq("F. Herbert"), eq(10)))
                 .thenReturn(List.of(
                         new OpenLibraryService.BookResult("OL123W", "OL123M", "Dune", "Frank Herbert", 1965, 12345, null)
                 ));
@@ -258,7 +225,7 @@ class ResolveFlowTest extends BaseIntegrationTest {
 
         setupUnverifiedBookForRanking(session, userId, "Dune", "Frank Herbert");
 
-        when(openLibraryService.searchByTitleAndAuthor(eq("Dune"), eq("Frank Herbert"), eq(3)))
+        when(openLibraryService.searchByTitleAndAuthor(eq("Dune"), eq("Frank Herbert"), eq(10)))
                 .thenReturn(List.of(
                         new OpenLibraryService.BookResult("OL123W", "OL123M", "Dune", "Frank Herbert", 1965, 12345, null)
                 ));

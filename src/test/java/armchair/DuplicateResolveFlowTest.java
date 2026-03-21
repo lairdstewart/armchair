@@ -46,7 +46,7 @@ class DuplicateResolveFlowTest extends BaseIntegrationTest {
 
         setupUnverifiedBookForRanking(session, user.getId(), unverifiedTitle, unverifiedAuthor);
 
-        when(openLibraryService.searchByTitleAndAuthor(eq(unverifiedTitle), eq(unverifiedAuthor), eq(3)))
+        when(openLibraryService.searchByTitleAndAuthor(eq(unverifiedTitle), eq(unverifiedAuthor), eq(10)))
                 .thenReturn(List.of(
                         new OpenLibraryService.BookResult(existingWorkOlid, "OL123M", "Dune", "Frank Herbert", 1965, 12345, null)
                 ));
@@ -133,7 +133,7 @@ class DuplicateResolveFlowTest extends BaseIntegrationTest {
 
         setupUnverifiedBookForRanking(session, user.getId(), "Dune Import", "F. Herbert");
 
-        when(openLibraryService.searchByTitleAndAuthor(eq("Dune Import"), eq("F. Herbert"), eq(3)))
+        when(openLibraryService.searchByTitleAndAuthor(eq("Dune Import"), eq("F. Herbert"), eq(10)))
                 .thenReturn(List.of(
                         new OpenLibraryService.BookResult("OL123W", "OL123M", "Dune", "Frank Herbert", 1965, 12345, null)
                 ));
@@ -173,7 +173,7 @@ class DuplicateResolveFlowTest extends BaseIntegrationTest {
 
         setupUnverifiedBookForRanking(session, user.getId(), "Dune Import", "F. Herbert");
 
-        when(openLibraryService.searchByTitleAndAuthor(eq("Dune Import"), eq("F. Herbert"), eq(3)))
+        when(openLibraryService.searchByTitleAndAuthor(eq("Dune Import"), eq("F. Herbert"), eq(10)))
                 .thenReturn(List.of(
                         new OpenLibraryService.BookResult("OL123W", "OL123M", "Dune", "Frank Herbert", 1965, 12345, null)
                 ));
@@ -270,7 +270,7 @@ class DuplicateResolveFlowTest extends BaseIntegrationTest {
 
         setupUnverifiedBookForRanking(session, user.getId(), "Second Book", "Second Author");
 
-        when(openLibraryService.searchByTitleAndAuthor(eq("Second Book"), eq("Second Author"), eq(3)))
+        when(openLibraryService.searchByTitleAndAuthor(eq("Second Book"), eq("Second Author"), eq(10)))
                 .thenReturn(List.of(
                         new OpenLibraryService.BookResult("OL999W", "OL999M", "Second Book", "Second Author", 2020, null, null)
                 ));
@@ -295,26 +295,6 @@ class DuplicateResolveFlowTest extends BaseIntegrationTest {
     }
 
     @Test
-    void skipResolveStateTransitions() throws Exception {
-        User user = nextUser();
-        MockHttpSession session = new MockHttpSession();
-
-        setupUnverifiedBookForRanking(session, user.getId(), "Dune", "Frank Herbert");
-
-        assertThat(session.getAttribute("skipResolve")).isNull();
-
-        mockMvc.perform(post("/skip-resolve").session(session)
-                        .with(oauthUser(user.getOauthSubject())).with(csrf()))
-                .andExpect(status().is3xxRedirection());
-        assertThat(session.getAttribute("skipResolve")).isEqualTo("expanded");
-
-        mockMvc.perform(post("/skip-resolve").session(session)
-                        .with(oauthUser(user.getOauthSubject())).with(csrf()))
-                .andExpect(status().is3xxRedirection());
-        assertThat(session.getAttribute("skipResolve")).isEqualTo("manual");
-    }
-
-    @Test
     void duplicateDetectionSetsDuplicateSessionAttributes() throws Exception {
         User user = nextUser();
         MockHttpSession session = new MockHttpSession();
@@ -326,8 +306,6 @@ class DuplicateResolveFlowTest extends BaseIntegrationTest {
         assertThat(session.getAttribute("duplicateResolveBookId")).isNotNull();
 
         assertThat(getRankingState(session)).isNotNull();
-
-        assertThat(session.getAttribute("skipResolve")).isNull();
     }
 
     @Test
@@ -342,7 +320,7 @@ class DuplicateResolveFlowTest extends BaseIntegrationTest {
 
         setupUnverifiedBookForRanking(session1, user1.getId(), "Dune Import", "F. Herbert");
 
-        when(openLibraryService.searchByTitleAndAuthor(eq("Dune Import"), eq("F. Herbert"), eq(3)))
+        when(openLibraryService.searchByTitleAndAuthor(eq("Dune Import"), eq("F. Herbert"), eq(10)))
                 .thenReturn(List.of(
                         new OpenLibraryService.BookResult("OL123W", "OL123M", "Dune", "Frank Herbert", 1965, 12345, null)
                 ));

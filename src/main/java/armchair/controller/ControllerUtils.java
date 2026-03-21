@@ -11,9 +11,7 @@ public final class ControllerUtils {
     private ControllerUtils() {}
 
     public static final int EDITION_PAGE_SIZE = 5;
-    public static final int SEARCH_RESULTS_DEFAULT = 3;
     public static final int SEARCH_RESULTS_EXPANDED = 10;
-    public static final int MANUAL_SEARCH_RESULTS = 10;
     public static final int BOOK_SEARCH_PAGE_SIZE = 5;
     public static final int BOOK_SEARCH_FETCH_LIMIT = 25;
     public static final int BOOKSHELF_PAGE_SIZE = 10;

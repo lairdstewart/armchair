@@ -31,7 +31,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import java.util.List;
 
 import static armchair.controller.ControllerUtils.*;
-import static armchair.service.SessionStateManager.*;
 
 @Controller
 public class RankingWorkflowController extends BaseController {
@@ -144,51 +143,32 @@ public class RankingWorkflowController extends BaseController {
         addNavigationAttributes(model, "list");
         model.addAttribute("rankingState", rs);
 
-        String skipResolve = sessionState.getSkipResolve(session);
+        String title = rs.getBookIdentity().getTitle();
+        String author = rs.getBookIdentity().getAuthor();
+        String defaultQuery = author != null && !author.isBlank() ? title + " " + author : title;
 
-        if (SKIP_RESOLVE_MANUAL.equals(skipResolve)) {
-            if (resolveQuery != null && !resolveQuery.isBlank()) {
-                List<OpenLibraryService.BookResult> resolveResults =
-                    SearchService.deduplicateResults(openLibraryService.searchBooks(resolveQuery, MANUAL_SEARCH_RESULTS));
-                model.addAttribute("resolveResults", resolveResults);
-                model.addAttribute("resolveQuery", resolveQuery);
-                if (resolveResults.isEmpty()) {
-                    model.addAttribute("resolveNoResults", true);
-                }
-            }
-            model.addAttribute("mode", PageAssemblyService.Mode.MANUAL_RESOLVE);
-            return "index";
+        List<OpenLibraryService.BookResult> resolveResults;
+
+        if (resolveQuery != null && !resolveQuery.isBlank()) {
+            resolveResults = SearchService.deduplicateResults(
+                openLibraryService.searchBooks(resolveQuery, SEARCH_RESULTS_EXPANDED));
+            model.addAttribute("resolveQuery", resolveQuery);
+        } else {
+            resolveResults = searchService.combinedSearch(title, author, SEARCH_RESULTS_EXPANDED);
+            model.addAttribute("resolveQuery", defaultQuery);
         }
-
-        int maxResults = SKIP_RESOLVE_EXPANDED.equals(skipResolve) ? SEARCH_RESULTS_EXPANDED : SEARCH_RESULTS_DEFAULT;
-        List<OpenLibraryService.BookResult> resolveResults = searchService.combinedSearch(
-                rs.getBookIdentity().getTitle(),
-                rs.getBookIdentity().getAuthor(),
-                maxResults);
 
         if (!resolveResults.isEmpty()) {
             model.addAttribute("resolveResults", resolveResults);
-            if (skipResolve == null && resolveResults.size() < maxResults) {
-                sessionState.setSkipResolve(session, SKIP_RESOLVE_EXPANDED);
-            }
-            model.addAttribute("mode", PageAssemblyService.Mode.RESOLVE);
-            return "index";
-        }
-
-        if (skipResolve == null) {
-            resolveResults = searchService.combinedSearch(
-                rs.getBookIdentity().getTitle(), rs.getBookIdentity().getAuthor(), SEARCH_RESULTS_EXPANDED);
-            if (!resolveResults.isEmpty()) {
-                model.addAttribute("resolveResults", resolveResults);
-                sessionState.setSkipResolve(session, SKIP_RESOLVE_EXPANDED);
-                model.addAttribute("mode", PageAssemblyService.Mode.RESOLVE);
-                return "index";
+        } else {
+            model.addAttribute("resolveNoResults", true);
+            if (resolveQuery == null) {
+                log.warn("RESOLVE auto-search found nothing for \"{}\" by {}", title, author);
             }
         }
 
-        log.warn("RESOLVE auto-search found nothing for \"{}\" by {}", rs.getBookIdentity().getTitle(), rs.getBookIdentity().getAuthor());
-        sessionState.setSkipResolve(session, SKIP_RESOLVE_MANUAL);
-        return "redirect:/resolve";
+        model.addAttribute("mode", PageAssemblyService.Mode.RESOLVE);
+        return "index";
     }
 
     @GetMapping("/review/{rankingId}")
@@ -422,7 +402,6 @@ public class RankingWorkflowController extends BaseController {
             Book unverifiedBook = bookService.findOrCreateBook(rankingState.getBookIdentity().getWorkOlid(),
                 null, rankingState.getBookIdentity().getTitle(), rankingState.getBookIdentity().getAuthor(), null, null);
             sessionState.setDuplicateResolveState(session, title, workOlid, unverifiedBook.getId());
-            session.removeAttribute(SESSION_SKIP_RESOLVE);
             return "redirect:/my-books";
         }
 
@@ -446,19 +425,7 @@ public class RankingWorkflowController extends BaseController {
         rankingState.setMode(RankingMode.CATEGORIZE);
         sessionState.saveRankingState(session, rankingState);
 
-        session.removeAttribute(SESSION_SKIP_RESOLVE);
         return "redirect:/rank/categorize";
-    }
-
-    @PostMapping("/skip-resolve")
-    public String skipResolve(HttpSession session) {
-        String current = sessionState.getSkipResolve(session);
-        if (SKIP_RESOLVE_EXPANDED.equals(current)) {
-            sessionState.setSkipResolve(session, SKIP_RESOLVE_MANUAL);
-        } else {
-            sessionState.setSkipResolve(session, SKIP_RESOLVE_EXPANDED);
-        }
-        return "redirect:/resolve";
     }
 
     @PostMapping("/abandon-resolve")
