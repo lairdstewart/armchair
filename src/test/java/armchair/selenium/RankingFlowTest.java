@@ -30,9 +30,7 @@ class RankingFlowTest extends BaseSeleniumTest {
         navigateTo("/my-books");
         selectRadio("typeSelector", "UNRANKED");
 
-        driver.findElement(By.xpath(
-                "//div[@id='tab-UNRANKED']//button[normalize-space(text())='rank']"
-        )).click();
+        clickBookAction("Gamma Book", "categorize");
 
         assertTextPresent("Categorize Gamma Book");
 
@@ -156,9 +154,7 @@ class RankingFlowTest extends BaseSeleniumTest {
         navigateTo("/my-books");
         selectRadio("typeSelector", "UNRANKED");
 
-        driver.findElement(By.xpath(
-                "//div[@id='tab-UNRANKED']//button[normalize-space(text())='rank']"
-        )).click();
+        clickBookAction("Future Read", "categorize");
 
         assertTextPresent("Categorize Future Read");
 
@@ -223,9 +219,7 @@ class RankingFlowTest extends BaseSeleniumTest {
         navigateTo("/my-books");
         selectRadio("typeSelector", "UNRANKED");
 
-        driver.findElement(By.xpath(
-                "//div[@id='tab-UNRANKED']//button[normalize-space(text())='rank']"
-        )).click();
+        clickBookAction("Reviewed Book", "categorize");
 
         selectRadio("bookshelf", "fiction");
         selectRadio("category", "liked");
