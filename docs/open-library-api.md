@@ -76,6 +76,42 @@ In `OpenLibraryService.getEditionsForWork()`:
 
 The cover edition from the Search API is passed to `getEditionsForWork()` and gets a large score boost. This ensures the edition the user saw in search results appears first.
 
+## Slow Cover Image Loading (Mar 2025)
+
+Cover images sometimes load slowly. This is entirely a browser-side concern —
+our server is not involved.
+
+### How covers are loaded
+
+Cover images are rendered as plain `<img>` tags pointing directly to
+`covers.openlibrary.org`. The browser fetches them independently after the page
+HTML is served. For example:
+
+```html
+<img src="https://covers.openlibrary.org/b/id/12345-M.jpg" loading="lazy" />
+```
+
+### What the server-side timeout does NOT control
+
+`OpenLibraryService` has a 5s connect / 10s read timeout on its `RestTemplate`.
+This timeout applies only to **API calls** made by the server (search, editions,
+author lookups). It has **no effect** on cover image loading, which bypasses our
+server entirely.
+
+### Why we can't fix slow covers
+
+Since the browser fetches covers directly from Open Library's CDN, the load
+speed depends on Open Library's infrastructure. We have no control over it.
+
+Possible mitigations (not currently worth the complexity):
+- **Proxy and cache covers server-side** — adds storage, bandwidth, and
+  cache-invalidation complexity for a third-party service issue
+- **Use a smaller size suffix** (`-S` instead of `-M`) — reduces file size but
+  degrades image quality
+
+For now, we accept that covers may load slowly and rely on `loading="lazy"` to
+avoid blocking initial page rendering.
+
 ## References
 
 - Open Library API docs: https://openlibrary.org/developers/api
