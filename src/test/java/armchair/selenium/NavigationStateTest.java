@@ -25,8 +25,10 @@ class NavigationStateTest extends BaseSeleniumTest {
 
         navigateTo("/my-books");
 
-        clickBookAction("Book A", "re-rank");
-        assertTextPresent("Categorize Book A");
+        clickEditLink("Book A");
+        clickButton("Re-rank");
+        // Re-rank now skips categorize and goes straight to comparison
+        assertTextPresent("Which was better?");
 
         // Click Library in the navbar to clear state
         clickLibrary();
@@ -34,7 +36,7 @@ class NavigationStateTest extends BaseSeleniumTest {
         assertOnPath("/my-books");
         assertTextPresent("Book A");
         assertTextPresent("Book B");
-        assertTextNotPresent("Categorize Book A");
+        assertTextNotPresent("Which was better?");
     }
 
     @Test
@@ -48,13 +50,10 @@ class NavigationStateTest extends BaseSeleniumTest {
 
         navigateTo("/my-books");
 
-        clickBookAction("Book B", "re-rank");
+        clickEditLink("Book B");
+        clickButton("Re-rank");
 
-        selectRadio("bookshelf", "fiction");
-        selectRadio("category", "liked");
-        clickButton("Continue");
-
-        // Pairwise comparison — choose new book
+        // Goes straight to pairwise comparison
         assertTextPresent("Which was better?");
         chooseInComparison("new");
 
@@ -79,8 +78,10 @@ class NavigationStateTest extends BaseSeleniumTest {
         addRanking(user.getId(), bookC, Bookshelf.FICTION, BookCategory.LIKED, 2);
 
         navigateTo("/my-books");
-        clickBookAction("Book B", "re-rank");
-        clickButton("back");
+        clickEditLink("Book B");
+        clickButton("Re-rank");
+        // Now on comparison page — click cancel to abandon
+        clickButton("cancel");
 
         assertOnPath("/my-books");
 
@@ -112,28 +113,23 @@ class NavigationStateTest extends BaseSeleniumTest {
         addRanking(user.getId(), bookA, Bookshelf.FICTION, BookCategory.LIKED, 0);
 
         navigateTo("/my-books");
-        clickBookAction("Book A", "re-rank");
+        clickEditLink("Book A");
+        clickButton("Re-rank");
 
-        selectRadio("bookshelf", "fiction");
-        selectRadio("category", "liked");
-        clickButton("Continue");
-
-        // No other books — inserts directly
+        // No other books in fiction/liked — inserts directly
         assertOnPath("/my-books");
 
         Book bookB = createVerifiedBook("OL2W", "Book B", "Author B");
         addRanking(user.getId(), bookB, Bookshelf.FICTION, BookCategory.LIKED, 1);
 
         navigateTo("/my-books");
-        clickBookAction("Book B", "re-rank");
-
-        assertTextPresent("Categorize Book B");
-        assertTextNotPresent("Categorize Book A");
-
+        clickEditLink("Book B");
+        // Change to nonfiction before re-ranking
         selectRadio("bookshelf", "nonfiction");
         selectRadio("category", "ok");
-        clickButton("Continue");
+        clickButton("Re-rank");
 
+        // No other books in nonfiction/ok — inserts directly
         assertOnPath("/my-books");
 
         List<Ranking> nfOk = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(
@@ -143,20 +139,24 @@ class NavigationStateTest extends BaseSeleniumTest {
     }
 
     @Test
-    void cancelFromCategorize_returnsToLibrary() {
+    void cancelFromRanking_returnsToLibrary() {
         User user = createUserAndLogin("nav6");
 
         Book bookA = createVerifiedBook("OL1W", "Book A", "Author A");
+        Book bookB = createVerifiedBook("OL2W", "Book B", "Author B");
         addRanking(user.getId(), bookA, Bookshelf.FICTION, BookCategory.LIKED, 0);
+        addRanking(user.getId(), bookB, Bookshelf.FICTION, BookCategory.LIKED, 1);
 
         navigateTo("/my-books");
-        clickBookAction("Book A", "re-rank");
-        assertTextPresent("Categorize Book A");
+        clickEditLink("Book A");
+        clickButton("Re-rank");
+        // Now on comparison page
+        assertTextPresent("Which was better?");
 
-        clickButton("back");
+        clickButton("cancel");
 
         assertOnPath("/my-books");
-        assertTextNotPresent("Categorize Book A");
+        assertTextNotPresent("Which was better?");
     }
 
     @Test
@@ -164,11 +164,15 @@ class NavigationStateTest extends BaseSeleniumTest {
         User user = createUserAndLogin("nav7");
 
         Book bookA = createVerifiedBook("OL1W", "Book A", "Author A");
+        Book bookB = createVerifiedBook("OL2W", "Book B", "Author B");
         addRanking(user.getId(), bookA, Bookshelf.FICTION, BookCategory.LIKED, 0);
+        addRanking(user.getId(), bookB, Bookshelf.FICTION, BookCategory.LIKED, 1);
 
         navigateTo("/my-books");
-        clickBookAction("Book A", "re-rank");
-        assertTextPresent("Categorize Book A");
+        clickEditLink("Book A");
+        clickButton("Re-rank");
+        // Now on comparison page
+        assertTextPresent("Which was better?");
 
         clickNavLink("Search");
         assertOnPath("/search");
@@ -176,6 +180,6 @@ class NavigationStateTest extends BaseSeleniumTest {
         clickLibrary();
 
         assertOnPath("/my-books");
-        assertTextNotPresent("Categorize Book A");
+        assertTextNotPresent("Which was better?");
     }
 }

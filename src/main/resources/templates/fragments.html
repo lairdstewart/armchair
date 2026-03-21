@@ -72,23 +72,11 @@
     </th:block>
 
     <!--
-      Library action buttons (bare forms, no wrapper): review, re-rank, remove
+      Library action link: single "edit" link for ranked books.
       Parameter: book - BookInfo record
     -->
     <th:block th:fragment="libraryActions(book)">
-      <form th:if="${book.review() == null}" th:action="@{/direct-review}" method="POST" style="display: inline;">
-        <input type="hidden" name="bookId" th:value="${book.id()}" />
-        <button type="submit" class="book-action-link">write review</button>
-      </form>
-      <a th:if="${book.workOlid() != null}" th:href="@{/editions/{workOlid}(workOlid=${book.workOlid()}, title=${book.title()}, author=${book.author()}, changeBookId=${book.id()})}" class="book-action-link">change edition</a>
-      <form th:action="@{/direct-rerank}" method="POST" style="display: inline;">
-        <input type="hidden" name="bookId" th:value="${book.id()}" />
-        <button type="submit" class="book-action-link">re-rank</button>
-      </form>
-      <form th:action="@{/direct-remove}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to remove this book?');">
-        <input type="hidden" name="bookId" th:value="${book.id()}" />
-        <button type="submit" class="book-action-link">remove</button>
-      </form>
+      <a th:href="@{/edit-book/{id}(id=${book.id()})}" class="book-action-link">edit</a>
     </th:block>
   </body>
 </html>

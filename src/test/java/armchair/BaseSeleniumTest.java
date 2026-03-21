@@ -192,12 +192,22 @@ public abstract class BaseSeleniumTest {
     }
 
     /**
-     * Click a book action button (re-rank, remove, write review, rank, etc.) for a specific book.
+     * Click a book action button (re-rank, remove, write review, rank, categorize, etc.) for a specific book.
      */
     protected void clickBookAction(String bookTitle, String actionText) {
         webWait().until(ExpectedConditions.elementToBeClickable(By.xpath(
                 "//li[.//div[contains(@class,'book-title') and contains(.,'" + bookTitle + "')]]" +
                 "//button[normalize-space(text())='" + actionText + "']"
+        ))).click();
+    }
+
+    /**
+     * Click the "edit" link for a ranked book, navigating to its edit page.
+     */
+    protected void clickEditLink(String bookTitle) {
+        webWait().until(ExpectedConditions.elementToBeClickable(By.xpath(
+                "//li[.//div[contains(@class,'book-title') and contains(.,'" + bookTitle + "')]]" +
+                "//a[normalize-space(text())='edit']"
         ))).click();
     }
 
@@ -241,5 +251,14 @@ public abstract class BaseSeleniumTest {
             String path = d.getCurrentUrl().replace(baseUrl(), "");
             return path.startsWith(expectedPath);
         });
+    }
+
+    /**
+     * Assert that a radio button with the given name and value is selected.
+     */
+    protected void assertRadioSelected(String name, String value) {
+        webWait().until(d -> d.findElement(By.cssSelector(
+                "input[type='radio'][name='" + name + "'][value='" + value + "']"
+        )).isSelected());
     }
 }

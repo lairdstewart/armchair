@@ -67,19 +67,7 @@
             <ul class="book-list">
               <li th:each="book : ${wantToReadBooks}">
                 <span class="book-number-spacer"></span>
-                <th:block th:replace="~{fragments :: bookEntry(${book}, ~{:: .wtr-actions}, true, true)}">
-                  <span class="wtr-actions" th:remove="tag">
-                    <form th:action="@{/mark-as-read}" method="POST" style="display: inline;">
-                      <input type="hidden" name="bookId" th:value="${book.id()}" />
-                      <button type="submit" class="book-action-link">rank</button>
-                    </form>
-                    <a th:if="${book.workOlid() != null}" th:href="@{/editions/{workOlid}(workOlid=${book.workOlid()}, title=${book.title()}, author=${book.author()}, changeBookId=${book.id()})}" class="book-action-link">change edition</a>
-                    <form th:action="@{/remove-from-reading-list}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to remove this book?');">
-                      <input type="hidden" name="bookId" th:value="${book.id()}" />
-                      <button type="submit" class="book-action-link">remove</button>
-                    </form>
-                  </span>
-                </th:block>
+                <th:block th:replace="~{fragments :: bookEntry(${book}, ~{fragments :: libraryActions(${book})}, true, true)}" />
               </li>
             </ul>
             </div>

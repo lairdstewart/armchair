@@ -1,0 +1,43 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Armchair</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}" />
+  </head>
+  <body>
+    <div th:replace="~{fragments :: navbar}"></div>
+    <div class="page-content">
+      <a th:href="@{/my-books(selectedBookshelf=${selectedBookshelf})}" class="btn-back">back</a>
+      <h3>Edit <span th:text="${ranking.book.title}" th:remove="tag"></span></h3>
+      <form th:action="@{/save-edit-review}" method="POST">
+        <input type="hidden" name="rankingId" th:value="${ranking.id}" />
+        <div style="margin-bottom: 15px;">
+          <label><input type="radio" name="bookshelf" value="fiction" th:checked="${ranking.bookshelf.name() == 'FICTION'}" onchange="toggleCategory(false)" /> Fiction</label>
+          <label style="margin-left: 15px;"><input type="radio" name="bookshelf" value="nonfiction" th:checked="${ranking.bookshelf.name() == 'NONFICTION'}" onchange="toggleCategory(false)" /> Non-Fiction</label>
+          <label style="margin-left: 15px;"><input type="radio" name="bookshelf" value="want-to-read" th:checked="${ranking.bookshelf.name() == 'WANT_TO_READ'}" onchange="toggleCategory(true)" /> Want to Read</label>
+        </div>
+        <div id="category-group" style="margin-bottom: 15px;" th:style="${ranking.bookshelf.name() == 'WANT_TO_READ' ? 'margin-bottom: 15px; display: none;' : 'margin-bottom: 15px;'}">
+          <label><input type="radio" name="category" value="liked" th:checked="${ranking.category.name() == 'LIKED'}" /> liked it</label>
+          <label style="margin-left: 15px;"><input type="radio" name="category" value="ok" th:checked="${ranking.category.name() == 'OK'}" /> it was ok</label>
+          <label style="margin-left: 15px;"><input type="radio" name="category" value="disliked" th:checked="${ranking.category.name() == 'DISLIKED'}" /> didn't like it</label>
+        </div>
+        <div style="margin-bottom: 15px;">
+          <label for="review">Review (optional):</label><br />
+          <textarea id="review" name="review" rows="4" cols="50" maxlength="5000" placeholder="Write your thoughts about this book..." th:text="${ranking.review}"></textarea>
+        </div>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+          <button type="submit" class="btn">Save</button>
+          <button type="submit" th:formaction="@{/edit-rerank}" class="btn">Re-rank</button>
+          <a th:if="${ranking.book.workOlid != null}" th:href="@{/editions/{workOlid}(workOlid=${ranking.book.workOlid}, title=${ranking.book.title}, author=${ranking.book.author}, changeBookId=${ranking.id})}" class="btn" style="text-decoration: none;">Change Edition</a>
+          <button type="submit" th:formaction="@{/direct-remove}" name="bookId" th:value="${ranking.id}" class="btn" style="background-color: #c0392b; color: white; border-color: #a93226;" onclick="return confirm('Are you sure you want to remove this book?');">Remove</button>
+        </div>
+      </form>
+    </div>
+    <script>
+    function toggleCategory(isWantToRead) {
+      document.getElementById('category-group').style.display = isWantToRead ? 'none' : '';
+    }
+    </script>
+  </body>
+</html>

@@ -63,15 +63,13 @@ class RankingFlowTest extends BaseSeleniumTest {
         navigateTo("/my-books");
         selectRadio("typeSelector", "WANT_TO_READ");
 
-        driver.findElement(By.xpath(
-                "//div[@id='tab-WANT_TO_READ']//button[normalize-space(text())='rank']"
-        )).click();
+        clickEditLink("Dune");
 
-        assertTextPresent("Categorize Dune");
+        assertTextPresent("Edit Dune");
 
         selectRadio("bookshelf", "fiction");
         selectRadio("category", "liked");
-        clickButton("Continue");
+        clickButton("Save");
 
         assertOnPath("/my-books");
 
@@ -101,13 +99,11 @@ class RankingFlowTest extends BaseSeleniumTest {
         List<String> titles = getDisplayedBookTitles();
         assertThat(titles).containsExactly("Book A", "Book B", "Book C");
 
-        clickBookAction("Book C", "re-rank");
+        clickEditLink("Book C");
+        // Re-rank skips categorize — radios are already set on the edit page
+        clickButton("Re-rank");
 
-        selectRadio("bookshelf", "fiction");
-        selectRadio("category", "liked");
-        clickButton("Continue");
-
-        // Choose "new" until done to put Book C at top
+        // Goes straight to pairwise comparison — choose "new" until done to put Book C at top
         chooseNewUntilDone();
 
         assertOnPath("/my-books");
@@ -126,12 +122,12 @@ class RankingFlowTest extends BaseSeleniumTest {
         addRanking(user.getId(), dune, Bookshelf.FICTION, BookCategory.LIKED, 0);
 
         navigateTo("/my-books");
-        clickBookAction("Dune", "write review");
+        clickEditLink("Dune");
 
-        assertTextPresent("Dune");
+        assertTextPresent("Edit Dune");
 
         driver.findElement(By.id("review")).sendKeys("A science fiction masterpiece");
-        clickButton("Done");
+        clickButton("Save");
 
         assertOnPath("/my-books");
 

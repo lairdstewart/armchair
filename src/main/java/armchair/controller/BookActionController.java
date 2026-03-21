@@ -15,6 +15,9 @@ import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
@@ -141,6 +144,153 @@ public class BookActionController extends BaseController {
         sessionState.clearSearchAndResolveState(session);
 
         return "redirect:/my-books?selectedBookshelf=WANT_TO_READ";
+    }
+
+    @GetMapping("/edit-book/{rankingId}")
+    public String editBook(@PathVariable Long rankingId, Model model) {
+        Long userId = getCurrentUserId();
+        if (userId == null) {
+            return "redirect:/login";
+        }
+
+        Ranking ranking = rankingService.findRankingForUser(rankingId, userId);
+        if (ranking == null) {
+            return "redirect:/my-books";
+        }
+
+        addNavigationAttributes(model, "list");
+        model.addAttribute("ranking", ranking);
+        model.addAttribute("selectedBookshelf", ranking.getBookshelf().name());
+
+        return "edit-book";
+    }
+
+    @Transactional
+    @PostMapping("/save-edit-review")
+    public String saveEditReview(@RequestParam Long rankingId,
+                                 @RequestParam String bookshelf,
+                                 @RequestParam(required = false) String category,
+                                 @RequestParam(required = false) String review,
+                                 HttpSession session) {
+        Long userId = getCurrentUserId();
+        if (userId == null) {
+            return "redirect:/login";
+        }
+
+        Ranking ranking = rankingService.findRankingForUser(rankingId, userId);
+        if (ranking == null) {
+            return "redirect:/my-books";
+        }
+
+        String trimmedReview = trimReview(review);
+
+        if ("want-to-read".equals(bookshelf)) {
+            if (ranking.getBookshelf() == Bookshelf.WANT_TO_READ) {
+                ranking.setReview(trimmedReview);
+                rankingRepository.save(ranking);
+                return "redirect:/my-books?selectedBookshelf=WANT_TO_READ";
+            }
+            rankingService.deleteRankingAndCloseGap(userId, ranking);
+            Ranking wtr = rankingService.createWantToReadRanking(userId, ranking.getBook());
+            wtr.setReview(trimmedReview);
+            rankingRepository.save(wtr);
+            return "redirect:/my-books?selectedBookshelf=WANT_TO_READ";
+        }
+
+        Bookshelf newBookshelf;
+        BookCategory newCategory;
+        try {
+            newBookshelf = Bookshelf.fromString(bookshelf);
+            newCategory = BookCategory.fromString(category);
+        } catch (IllegalArgumentException e) {
+            return "redirect:/edit-book/" + rankingId;
+        }
+
+        ranking.setReview(trimmedReview);
+
+        boolean shelfChanged = ranking.getBookshelf() != newBookshelf;
+        boolean categoryChanged = ranking.getCategory() != newCategory;
+
+        if (shelfChanged || categoryChanged) {
+            return startRankingFlow(userId, ranking, newBookshelf, newCategory, trimmedReview, session);
+        }
+
+        rankingRepository.save(ranking);
+        return "redirect:/my-books?selectedBookshelf=" + ranking.getBookshelf().name();
+    }
+
+    @Transactional
+    @PostMapping("/edit-rerank")
+    public String editRerank(@RequestParam Long rankingId,
+                             @RequestParam String bookshelf,
+                             @RequestParam(required = false) String category,
+                             @RequestParam(required = false) String review,
+                             HttpSession session) {
+        Long userId = getCurrentUserId();
+        if (userId == null) {
+            return "redirect:/login";
+        }
+
+        Ranking ranking = rankingService.findRankingForUser(rankingId, userId);
+        if (ranking == null) {
+            return "redirect:/my-books";
+        }
+
+        String trimmedReview = trimReview(review);
+
+        if ("want-to-read".equals(bookshelf)) {
+            rankingService.deleteRankingAndCloseGap(userId, ranking);
+            Ranking wtr = rankingService.createWantToReadRanking(userId, ranking.getBook());
+            wtr.setReview(trimmedReview);
+            rankingRepository.save(wtr);
+            return "redirect:/my-books?selectedBookshelf=WANT_TO_READ";
+        }
+
+        Bookshelf newBookshelf;
+        BookCategory newCategory;
+        try {
+            newBookshelf = Bookshelf.fromString(bookshelf);
+            newCategory = BookCategory.fromString(category);
+        } catch (IllegalArgumentException e) {
+            return "redirect:/edit-book/" + rankingId;
+        }
+
+        return startRankingFlow(userId, ranking, newBookshelf, newCategory, trimmedReview, session);
+    }
+
+    private String startRankingFlow(Long userId, Ranking ranking, Bookshelf newBookshelf,
+                                    BookCategory newCategory, String review, HttpSession session) {
+        rankingService.restoreAbandonedBook(userId, sessionState.getRankingState(session));
+
+        Book book = ranking.getBook();
+        RankingState rankingState = new RankingState(book.getWorkOlid(), book.getTitle(), book.getAuthor(), ranking.getBookshelf(), null);
+        rankingState.setReviewBeingRanked(review);
+        rankingState.getRestoration().setOriginalCategory(ranking.getCategory());
+        rankingState.getRestoration().setOriginalPosition(ranking.getPosition());
+
+        rankingService.deleteRankingAndCloseGap(userId, ranking);
+
+        List<Ranking> currentList = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(
+                userId, newBookshelf, newCategory);
+
+        if (currentList.isEmpty()) {
+            rankingService.insertBookAtPosition(book.getWorkOlid(), book.getTitle(), book.getAuthor(),
+                    review, newBookshelf, newCategory, 0, userId, null);
+            sessionState.clearRankingState(session);
+            return "redirect:/my-books?selectedBookshelf=" + newBookshelf.name();
+        }
+
+        int lowIndex = 0;
+        int highIndex = currentList.size() - 1;
+        int compareToIndex = (lowIndex + highIndex) / 2;
+        rankingState.setBookshelf(newBookshelf);
+        rankingState.setCategory(newCategory);
+        rankingState.getBinarySearch().setCompareToIndex(compareToIndex);
+        rankingState.getBinarySearch().setLowIndex(lowIndex);
+        rankingState.getBinarySearch().setHighIndex(highIndex);
+        rankingState.setMode(RankingMode.RANK);
+        sessionState.saveRankingState(session, rankingState);
+        return "redirect:/rank/compare";
     }
 
     @PostMapping("/direct-review")
