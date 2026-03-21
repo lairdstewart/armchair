@@ -424,6 +424,7 @@ details[open] .review-toggle::before {
   background-color: white;
   color: black;
   font: inherit;
+  width: 300px;
 }
 
 /* Profile page buttons */
