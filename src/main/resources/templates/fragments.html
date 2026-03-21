@@ -39,7 +39,9 @@
               <span th:if="${book.firstPublishYear() != null}" th:text="${' (' + book.firstPublishYear() + ')'}"></span>
             </div>
             <span class="book-actions">
-              <th:block th:if="${actions != null}" th:replace="${actions}" />
+              <th:block th:if="${actions != null}">
+                <th:block th:replace="${actions}" />
+              </th:block>
             </span>
           </div>
           <img th:if="${showCover and book.coverUrl() != null}" class="book-cover" loading="lazy" th:src="${book.coverUrl()}" />
@@ -60,7 +62,9 @@
               </div>
               <span class="book-actions" onclick="event.stopPropagation()">
                 <span class="review-toggle"></span>
-                <th:block th:if="${actions != null}" th:replace="${actions}" />
+                <th:block th:if="${actions != null}">
+                  <th:block th:replace="${actions}" />
+                </th:block>
               </span>
             </div>
             <img th:if="${showCover and book.coverUrl() != null}" class="book-cover" loading="lazy" th:src="${book.coverUrl()}" />

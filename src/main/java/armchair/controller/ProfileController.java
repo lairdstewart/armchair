@@ -4,7 +4,7 @@ import armchair.dto.BookInfo;
 import armchair.dto.BookLists;
 import armchair.dto.ProfileDisplay;
 import armchair.dto.ProfileDisplayWithFollow;
-import armchair.dto.UserBookRank;
+
 import armchair.entity.BookCategory;
 import armchair.entity.Bookshelf;
 import armchair.entity.CuratedList;
@@ -83,17 +83,12 @@ public class ProfileController extends BaseController {
         boolean hasFiction = !fictionBooks.liked().isEmpty() || !fictionBooks.ok().isEmpty() || !fictionBooks.disliked().isEmpty() || !fictionBooks.unranked().isEmpty();
         boolean hasNonfiction = !nonfictionBooks.liked().isEmpty() || !nonfictionBooks.ok().isEmpty() || !nonfictionBooks.disliked().isEmpty() || !nonfictionBooks.unranked().isEmpty();
 
-        Long currentUserId = getCurrentUserId();
-        Map<Bookshelf, Map<BookCategory, List<Ranking>>> currentUserRankings = currentUserId != null ? rankingService.fetchAllRankingsGrouped(currentUserId) : Map.of();
-        Map<String, UserBookRank> userBooks = currentUserId != null ? rankingService.buildUserBooksMap(currentUserRankings) : Map.of();
-
         model.addAttribute("viewUsername", username);
         model.addAttribute("fictionRankedBooks", fictionBooks.toRankedList());
         model.addAttribute("nonfictionRankedBooks", nonfictionBooks.toRankedList());
         model.addAttribute("hasFiction", hasFiction);
         model.addAttribute("hasNonfiction", hasNonfiction);
         model.addAttribute("isCurated", isCurated);
-        model.addAttribute("userBooks", userBooks);
         model.addAttribute("wantToReadBooks", wantToReadBooks);
         model.addAttribute("hasWantToRead", !wantToReadBooks.isEmpty());
 

@@ -49,21 +49,7 @@
         <ol class="book-list">
           <li th:each="rb : ${fictionRankedBooks}">
             <span th:class="'book-number ' + ${rb.categoryClass()}" th:text="${rb.rankDisplay()}"></span>
-            <th:block th:replace="~{fragments :: bookEntry(${rb.book()}, ~{:: .fiction-actions}, true, true)}">
-              <span class="fiction-actions" th:remove="tag">
-                <form th:if="${rb.book().workOlid() != null && !userBooks.containsKey(rb.book().workOlid())}" th:action="@{/add-to-reading-list}" method="POST" style="display: inline;">
-                  <input type="hidden" name="workOlid" th:value="${rb.book().workOlid()}" />
-                  <input type="hidden" name="bookName" th:value="${rb.book().title()}" />
-                  <input type="hidden" name="author" th:value="${rb.book().author()}" />
-                  <input type="hidden" name="editionOlid" th:value="${rb.book().editionOlid()}" />
-                  <input type="hidden" name="returnUrl" th:value="${'/user/' + viewUsername}" />
-                  <button type="submit" class="book-action-link">want to read</button>
-                </form>
-                <a th:if="${rb.book().workOlid() != null && userBooks.containsKey(rb.book().workOlid())}"
-                   th:href="@{/my-books(selectedBookshelf=${userBooks.get(rb.book().workOlid()).bookshelf()})}"
-                   class="book-action-link">view in library</a>
-              </span>
-            </th:block>
+            <th:block th:replace="~{fragments :: bookEntry(${rb.book()}, null, true, true)}" />
           </li>
         </ol>
       </div>
@@ -73,21 +59,7 @@
         <ol class="book-list">
           <li th:each="rb : ${nonfictionRankedBooks}">
             <span th:class="'book-number ' + ${rb.categoryClass()}" th:text="${rb.rankDisplay()}"></span>
-            <th:block th:replace="~{fragments :: bookEntry(${rb.book()}, ~{:: .nonfiction-actions}, true, true)}">
-              <span class="nonfiction-actions" th:remove="tag">
-                <form th:if="${rb.book().workOlid() != null && !userBooks.containsKey(rb.book().workOlid())}" th:action="@{/add-to-reading-list}" method="POST" style="display: inline;">
-                  <input type="hidden" name="workOlid" th:value="${rb.book().workOlid()}" />
-                  <input type="hidden" name="bookName" th:value="${rb.book().title()}" />
-                  <input type="hidden" name="author" th:value="${rb.book().author()}" />
-                  <input type="hidden" name="editionOlid" th:value="${rb.book().editionOlid()}" />
-                  <input type="hidden" name="returnUrl" th:value="${'/user/' + viewUsername}" />
-                  <button type="submit" class="book-action-link">want to read</button>
-                </form>
-                <a th:if="${rb.book().workOlid() != null && userBooks.containsKey(rb.book().workOlid())}"
-                   th:href="@{/my-books(selectedBookshelf=${userBooks.get(rb.book().workOlid()).bookshelf()})}"
-                   class="book-action-link">view in library</a>
-              </span>
-            </th:block>
+            <th:block th:replace="~{fragments :: bookEntry(${rb.book()}, null, true, true)}" />
           </li>
         </ol>
       </div>
@@ -97,21 +69,7 @@
         <ul class="book-list">
           <li th:each="book : ${wantToReadBooks}">
             <span class="book-number-spacer"></span>
-            <th:block th:replace="~{fragments :: bookEntry(${book}, ~{:: .wanttoread-actions}, true, true)}">
-              <span class="wanttoread-actions" th:remove="tag">
-                <form th:if="${book.workOlid() != null && !userBooks.containsKey(book.workOlid())}" th:action="@{/add-to-reading-list}" method="POST" style="display: inline;">
-                  <input type="hidden" name="workOlid" th:value="${book.workOlid()}" />
-                  <input type="hidden" name="bookName" th:value="${book.title()}" />
-                  <input type="hidden" name="author" th:value="${book.author()}" />
-                  <input type="hidden" name="editionOlid" th:value="${book.editionOlid()}" />
-                  <input type="hidden" name="returnUrl" th:value="${'/user/' + viewUsername}" />
-                  <button type="submit" class="book-action-link">want to read</button>
-                </form>
-                <a th:if="${book.workOlid() != null && userBooks.containsKey(book.workOlid())}"
-                   th:href="@{/my-books(selectedBookshelf=${userBooks.get(book.workOlid()).bookshelf()})}"
-                   class="book-action-link">view in library</a>
-              </span>
-            </th:block>
+            <th:block th:replace="~{fragments :: bookEntry(${book}, null, true, true)}" />
           </li>
         </ul>
       </div>

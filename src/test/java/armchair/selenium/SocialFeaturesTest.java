@@ -91,7 +91,7 @@ class SocialFeaturesTest extends BaseSeleniumTest {
     }
 
     @Test
-    void addWantToReadFromOtherUserProfile() {
+    void publicProfileShowsNoBooksActionButtons() {
         User me = createUserAndLogin("reader");
         User other = createSecondUser("curator");
 
@@ -102,19 +102,8 @@ class SocialFeaturesTest extends BaseSeleniumTest {
         navigateTo("/user/curator");
         assertTextPresent("Dune");
 
-        // Click "want to read" on the book
-        clickButton("want to read");
-
-        // Should redirect back to the user's profile
-        assertOnPath("/user/curator");
-
-        // The button should now say "view in library" instead of "want to read"
-        assertTextPresent("view in library");
-
-        // Verify the book is in our want-to-read shelf
-        var wtrRankings = rankingRepository.findByUserIdAndBookshelfAndCategoryOrderByPositionAsc(
-                me.getId(), Bookshelf.WANT_TO_READ, BookCategory.UNRANKED);
-        assertThat(wtrRankings).hasSize(1);
-        assertThat(wtrRankings.get(0).getBook().getTitle()).isEqualTo("Dune");
+        // Verify no action buttons are shown on public profiles
+        assertThat(driver.findElements(By.xpath("//button[normalize-space(text())='want to read']"))).isEmpty();
+        assertThat(driver.findElements(By.xpath("//a[normalize-space(text())='view in library']"))).isEmpty();
     }
 }
