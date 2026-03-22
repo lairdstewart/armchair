@@ -99,10 +99,12 @@ public class CollaborativeFilteringAlgorithm implements RecommendationAlgorithm 
             for (Ranking r : otherRankings) {
                 Long bookId = r.getBook().getId();
                 if (ownBookIds.contains(bookId)) continue;
+                Double score = otherScores.get(bookId);
+                if (score == null) continue;
 
                 bookMap.putIfAbsent(bookId, r.getBook());
                 candidateData.computeIfAbsent(bookId, k -> new ArrayList<>())
-                        .add(new double[]{similarity, otherScores.get(bookId)});
+                        .add(new double[]{similarity, score});
             }
         }
 

@@ -501,9 +501,10 @@ class CollaborativeFilteringAlgorithmTest {
         }
 
         @Test
-        void otherUserWithOnlyUnrankedBooksThrowsNpe() {
+        void otherUserWithOnlyUnrankedBooksDoesNotThrow() {
             Book a = book(1L, "A");
             Book b = book(2L, "B");
+            Book random = book(99L, "Random");
 
             when(rankingRepository.findByUserIdAndBookshelfOrderByPositionAsc(1L, Bookshelf.FICTION))
                     .thenReturn(List.of(ranking(1L, a, Bookshelf.FICTION, BookCategory.LIKED, 0)));
@@ -513,9 +514,13 @@ class CollaborativeFilteringAlgorithmTest {
                             ranking(1L, a, Bookshelf.FICTION, BookCategory.LIKED, 0),
                             ranking(2L, b, Bookshelf.FICTION, BookCategory.UNRANKED, 0)
                     ));
+            when(curatedRankingRepository.findByBookshelfOrderByCuratedListIdAscPositionAsc(Bookshelf.FICTION))
+                    .thenReturn(List.of());
+            when(bookRepository.findRandomBooks()).thenReturn(List.of(random));
 
-            assertThrows(NullPointerException.class,
-                    () -> algorithm.getFictionRecommendations(1L, 10));
+            List<Book> recs = algorithm.getFictionRecommendations(1L, 10);
+            assertEquals(1, recs.size());
+            assertEquals("Random", recs.get(0).getTitle());
         }
     }
 }
