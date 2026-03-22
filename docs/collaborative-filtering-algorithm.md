@@ -43,9 +43,11 @@ The categories create the non-linearity — LIKED and DISLIKED each span only 0.
 over their books while OK spans 1.0, so strong opinions are more compressed
 (small positional differences matter more at the extremes). No sigmoid needed.
 
-**Pre-made lists:** Curated lists have no internal ordering. All their books are
-scored as 0.75 (LIKED midpoint). These act as synthetic users and are the
-primary cold-start solution.
+**Curated lists:** Curated lists act as synthetic users and are the primary
+cold-start solution. When a curated list has rankings (position ordering), its
+books are scored using position-based interpolation within the LIKED range
+[0.5, 1.0] — the same formula as user-ranked LIKED books. Single-book lists
+fall back to 0.75 (the LIKED midpoint).
 
 ## Step 2: Compute similarity between users
 
