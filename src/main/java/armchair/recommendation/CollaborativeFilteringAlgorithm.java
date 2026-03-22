@@ -151,10 +151,12 @@ public class CollaborativeFilteringAlgorithm implements RecommendationAlgorithm 
         for (Map.Entry<Long, List<double[]>> entry : candidateData.entrySet()) {
             List<double[]> pairs = entry.getValue();
             double weightedSum = 0;
+            double sumWeights = 0;
             for (double[] pair : pairs) {
                 weightedSum += pair[0] * pair[1];
+                sumWeights += Math.abs(pair[0]);
             }
-            double recScore = weightedSum / pairs.size();
+            double recScore = sumWeights == 0 ? 0 : weightedSum / sumWeights;
             scoredCandidates.add(Map.entry(entry.getKey(), recScore));
         }
 

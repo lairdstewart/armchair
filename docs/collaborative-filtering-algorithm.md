@@ -107,14 +107,23 @@ to 0.6 because they only share 3 books.
 ## Step 3: Score candidate books
 
 For each book `b` that the current user does NOT have in their library, compute
-a weighted average across all users who have it:
+a weighted average across all users who have it, using similarity as the weight:
 
 ```
-rec_score(b) = SUM(effective_similarity(me, u) * score(b, u)) / count(users who have b)
+rec_score(b) = SUM(effective_similarity(me, u) * score(b, u)) / SUM(|effective_similarity(me, u)|)
 ```
 
-Normalizing by user count prevents widely-read books from dominating and
-surfaces niche picks from highly similar users.
+The denominator is the sum of absolute similarities rather than the raw user
+count. This matters because zero similarity means "unknown taste" (no
+overlapping books), not "dissimilar." Dividing by user count would let unknown
+users inflate the denominator and penalize books that happen to appear on their
+lists. Using similarity as the weight ensures only users with actual taste signal
+affect the score.
+
+In the no-overlap fallback (all similarities = 1.0), this produces the same
+result as dividing by user count, since each user contributes weight 1.0.
+
+If all similarities for a candidate are exactly zero, the book scores 0.
 
 ## Step 4: Return top N
 
