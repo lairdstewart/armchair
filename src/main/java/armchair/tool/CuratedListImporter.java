@@ -141,11 +141,13 @@ public class CuratedListImporter {
             String review = entry.get("review");
 
             String categoryStr = entry.getOrDefault("category", "fiction");
-            if (!"fiction".equals(categoryStr) && !"non-fiction".equals(categoryStr)) {
-                throw new ImportException("Invalid 'category' \"" + categoryStr + "\" on " + bookLabel + " (" + title + "); expected 'fiction' or 'non-fiction'");
-            }
-
-            Bookshelf bookshelf = "fiction".equals(categoryStr) ? Bookshelf.FICTION : Bookshelf.NONFICTION;
+            Bookshelf bookshelf = switch (categoryStr) {
+                case "fiction" -> Bookshelf.FICTION;
+                case "non-fiction" -> Bookshelf.NONFICTION;
+                default -> throw new ImportException(
+                        "Invalid 'category' \"" + categoryStr + "\" on " + bookLabel
+                                + " (" + title + "); expected 'fiction' or 'non-fiction'");
+            };
             BookCategory category = isRanked ? BookCategory.LIKED : BookCategory.UNRANKED;
 
             Integer rankNum = isRanked ? Integer.parseInt(rank) : null;
