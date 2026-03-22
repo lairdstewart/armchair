@@ -30,6 +30,12 @@ import-lists: check-env
 	DATABASE_URL=$${$(or $(DB),DATABASE_URL)} \
 	./mvnw exec:java -Dexec.mainClass="armchair.tool.CuratedListImporter" -Dexec.args="$(FILE)"
 
+enrich-list: check-env
+	@test -n "$(FILE)" || (echo "Error: FILE is required. Usage: make enrich-list FILE=/path/to/file.json" && exit 1)
+	set -a && . $(ENV_FILE) && set +a && \
+	DATABASE_URL="$(LOCAL_DB_URL)" \
+	./mvnw exec:java -Dexec.mainClass="armchair.tool.CuratedListEnricher" -Dexec.args="$(FILE)"
+
 docker-build:
 	docker build -t armchair .
 

@@ -1,1101 +1,904 @@
 {
-  "username": "Top 100 Novels (Worldcat)",
-  "books": [
-{
-"rank":"1",
-"title":"Don Quixote",
-"author":"Miguel de Cervantes",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"2",
-"title":"Alice's Adventures in Wonderland",
-"author":"Lewis Carroll",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"3",
-"title":"The Adventures of Huckleberry Finn",
-"author":"Mark Twain",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"4",
-"title":"The Adventures of Tom Sawyer",
-"author":"Mark Twain",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"5",
-"title":"Treasure Island",
-"author":"Robert Louis Stevenson",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"6",
-"title":"Pride and Prejudice",
-"author":"Jane Austen",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"7",
-"title":"Wuthering Heights",
-"author":"Emily Brontë",
-"category":"fiction",
-"review":""
-},
-
-{
-"rank":"8",
-"title":"Jane Eyre",
-"author":"Charlotte Brontë",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"9",
-"title":"M",
-"author":"Dick by Herman Melville",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"10",
-"title":"The Scarlet Letter",
-"author":"Nathaniel Hawthorne",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"11",
-"title":"Gulliver's Travels",
-"author":"Jonathan Swift",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"12",
-"title":"The Pilgrim's Progress",
-"author":"John Bunyan",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"13",
-"title":"A Christmas Carol",
-"author":"Charles Dickens",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"14",
-"title":"David Copperfield",
-"author":"Charles Dickens",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"15",
-"title":"A Tale of Two Cities",
-"author":"Charles Dickens",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"16",
-"title":"Little Women",
-"author":"Louisa May Alcott",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"17",
-"title":"Great Expectations",
-"author":"Charles Dickens",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"18",
-"title":"The Hobbit, or, There and Back Again",
-"author":"J.R.R. Tolkien",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"19",
-"title":"Frankenstein, or, the Modern Prometheus",
-"author":"Mary Shelley",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"20",
-"title":"Oliver Twist",
-"author":"Charles Dickens",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"21",
-"title":"Uncle Tom's Cabin",
-"author":"Harriet Beecher Stowe",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"22",
-"title":"Crime and Punishment",
-"author":"Fyodor Dostoyevsky",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"23",
-"title":"Madame Bovary: Patterns of Provincial Life",
-"author":"Gustave Flaubert",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"24",
-"title":"The Return of the King",
-"author":"J.R.R. Tolkien",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"25",
-"title":"Dracula",
-"author":"Bram Stoker",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"26",
-"title":"The Three Musketeers",
-"author":"Alexandre Dumas",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"27",
-"title":"Brave New World",
-"author":"Aldous Huxley",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"28",
-"title":"War and Peace",
-"author":"Leo Tolstoy",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"29",
-"title":"To Kill a Mockingbird",
-"author":"Harper Lee",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"30",
-"title":"The Wizard of Oz",
-"author":"L. Frank Baum",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"31",
-"title":"Les Misérables",
-"author":"Victor Hugo",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"32",
-"title":"The Secret Garden",
-"author":"Frances Hodgson Burnett",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"33",
-"title":"Animal Farm",
-"author":"George Orwell",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"34",
-"title":"The Great Gat",
-"author":"by F. Scott Fitzgerald",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"35",
-"title":"The Little Prince",
-"author":"Antoine de Saint-Exupéry",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"36",
-"title":"The Call of the Wild",
-"author":"Jack London",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"37",
-"title":"20,000 Leagues Under the Sea",
-"author":"Jules Verne",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"38",
-"title":"Anna Karenina",
-"author":"Leo Tolstoy",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"39",
-"title":"The Wind in the Willows",
-"author":"Kenneth Grahame",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"40",
-"title":"The Picture of Dorian Gray",
-"author":"Oscar Wilde",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"41",
-"title":"The Grapes of Wrath",
-"author":"John Steinbeck",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"42",
-"title":"Sense and Sensibility",
-"author":"Jane Austen",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"43",
-"title":"The Last of the Mohicans",
-"author":"James Fenimore Cooper",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"44",
-"title":"Tess of the d'Urbervilles",
-"author":"Thomas Hardy",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"45",
-"title":"Harry Potter and the Sorcerer's Stone",
-"author":"J.K. Rowling",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"46",
-"title":"Heidi",
-"author":"Johanna Spyri",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"47",
-"title":"Ulysses",
-"author":"James Joyce",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"48",
-"title":"The Complete Sherlock Holmes",
-"author":"Arthur Conan Doyle",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"49",
-"title":"The Count of Monte Cristo",
-"author":"Alexandre Dumas",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"50",
-"title":"The Old Man and the Sea",
-"author":"Ernest Hemingway",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"51",
-"title":"The Lion, the Witch, and the Wardrobe",
-"author":"C.S. Lewis",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"52",
-"title":"The Hunchback of Notre Dame",
-"author":"Victor Hugo",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"53",
-"title":"Pinocchio",
-"author":"Carlo Collodi",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"54",
-"title":"One Hundred Years of Solitude",
-"author":"Gabriel Garcia Márquez",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"55",
-"title":"Ivanhoe",
-"author":"Walter Scott",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"56",
-"title":"The Red Badge of Courage",
-"author":"Stephen Crane",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"57",
-"title":"Anne of Green Gables",
-"author":"L.M. Montgomery",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"58",
-"title":"Black Beauty",
-"author":"Anna Sewell",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"59",
-"title":"Peter Pan",
-"author":"J.M. Barrie",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"60",
-"title":"A Farewell to Arms",
-"author":"Ernest Hemingway",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"61",
-"title":"The House of the Seven Gables",
-"author":"Nathaniel Hawthorne",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"62",
-"title":"Lord of the Flies",
-"author":"William Golding",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"63",
-"title":"The Prince and the Pauper",
-"author":"Mark Twain",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"64",
-"title":"A Portrait of the Artist as a Young Man",
-"author":"James Joyce",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"65",
-"title":"Lord Jim",
-"author":"Joseph Conrad",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"66",
-"title":"Harry Potter and the Chamber of Secrets",
-"author":"J.K. Rowling",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"67",
-"title":"The Red & the Black",
-"author":"Stendhal",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"68",
-"title":"The Stranger",
-"author":"Albert Camus",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"69",
-"title":"The Trial",
-"author":"Franz Kafka",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"70",
-"title":"Lady Chatterley's Lover",
-"author":"D.H. Lawrence",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"71",
-"title":"Kidnapped: The Adventures of David Balfour",
-"author":"Robert Louis Stevenson",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"72",
-"title":"The Catcher in the Rye",
-"author":"J.D. Salinger",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"73",
-"title":"Fahrenheit 451",
-"author":"Ray Bradbury",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"74",
-"title":"A Journey to the Center of the Earth",
-"author":"Jules Verne",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"75",
-"title":"Vanity Fair",
-"author":"William Makepeace Thackeray",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"76",
-"title":"All Quiet on the Western Front",
-"author":"Erich Maria Remarque",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"77",
-"title":"Gone with the Wind",
-"author":"Margaret Mitchell",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"78",
-"title":"My Ántonia",
-"author":"Willa Cather",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"79",
-"title":"Of Mice and Men",
-"author":"John Steinbeck",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"80",
-"title":"The Vicar of Wakefield",
-"author":"Oliver Goldsmith",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"81",
-"title":"A Connecticut Yankee in King Arthur's Court",
-"author":"Mark Twain",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"82",
-"title":"White Fang",
-"author":"Jack London",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"83",
-"title":"Fathers and Sons",
-"author":"Ivan Sergeevich Turgenev",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"84",
-"title":"Doctor Zhivago",
-"author":"Boris Leonidovich Pasternak",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"85",
-"title":"The Decameron",
-"author":"Giovanni Boccaccio",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"86",
-"title":"Nineteen Eighty-Four",
-"author":"George Orwell",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"87",
-"title":"The Jungle",
-"author":"Upton Sinclair",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"88",
-"title":"The Da Vinci Code",
-"author":"Dan Brown",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"89",
-"title":"Persuasion",
-"author":"Jane Austen",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"90",
-"title":"Mansfield Park",
-"author":"Jane Austen",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"91",
-"title":"Candide",
-"author":"Voltaire",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"92",
-"title":"For Whom the Bell Tolls",
-"author":"Ernest Hemingway",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"93",
-"title":"Far from the Madding Crowd",
-"author":"Thomas Hardy",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"94",
-"title":"The Fellowship of the Ring",
-"author":"J.R.R. Tolkien",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"95",
-"title":"The Return of the Native",
-"author":"Thomas Hardy",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"96",
-"title":"Sons and Lovers",
-"author":"D.H. Lawrence",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"97",
-"title":"Charlotte's Web",
-"author":"E.B. White",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"98",
-"title":"The Swiss Family Robinson",
-"author":"Johann David Wyss",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"99",
-"title":"Bleak House",
-"author":"Charles Dickens",
-"category":"fiction",
-"review":""
-},
-
-
-
-
-{
-"rank":"100",
-"title":"Père Goriot",
-"author":"Honoré de Balzac",
-"category":"fiction",
-"review":""
+  "username" : "Top 100 Novels (Worldcat)",
+  "books" : [ {
+    "rank" : "1",
+    "title" : "Don Quixote",
+    "author" : "Miguel de Cervantes",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL25543788W",
+    "cover_id" : null,
+    "first_publish_year" : "2020"
+  }, {
+    "rank" : "2",
+    "title" : "Alice's Adventures in Wonderland",
+    "author" : "Lewis Carroll",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL138052W",
+    "cover_id" : "10527843",
+    "first_publish_year" : "1865"
+  }, {
+    "rank" : "3",
+    "title" : "The Adventures of Huckleberry Finn",
+    "author" : "Mark Twain",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL37513138W",
+    "cover_id" : null,
+    "first_publish_year" : "1960"
+  }, {
+    "rank" : "4",
+    "title" : "The Adventures of Tom Sawyer",
+    "author" : "Mark Twain",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL53919W",
+    "cover_id" : "12043351",
+    "first_publish_year" : "1817"
+  }, {
+    "rank" : "5",
+    "title" : "Treasure Island",
+    "author" : "Robert Louis Stevenson",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL24034W",
+    "cover_id" : "13859660",
+    "first_publish_year" : "1880"
+  }, {
+    "rank" : "6",
+    "title" : "Pride and Prejudice",
+    "author" : "Jane Austen",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL66554W",
+    "cover_id" : "14348537",
+    "first_publish_year" : "1813"
+  }, {
+    "rank" : "7",
+    "title" : "Wuthering Heights",
+    "author" : "Emily Brontë",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL21177W",
+    "cover_id" : "12818862",
+    "first_publish_year" : "1846"
+  }, {
+    "rank" : "8",
+    "title" : "Jane Eyre",
+    "author" : "Charlotte Brontë",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL1095427W",
+    "cover_id" : "8235363",
+    "first_publish_year" : "1847"
+  }, {
+    "rank" : "9",
+    "title" : "Moby-Dick",
+    "author" : "Herman Melville",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL102749W",
+    "cover_id" : "10544254",
+    "first_publish_year" : "1851"
+  }, {
+    "rank" : "10",
+    "title" : "The Scarlet Letter",
+    "author" : "Nathaniel Hawthorne",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL455305W",
+    "cover_id" : "5654516",
+    "first_publish_year" : "1800"
+  }, {
+    "rank" : "11",
+    "title" : "Gulliver's Travels",
+    "author" : "Jonathan Swift",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL20600W",
+    "cover_id" : "12717083",
+    "first_publish_year" : "1726"
+  }, {
+    "rank" : "12",
+    "title" : "The Pilgrim's Progress",
+    "author" : "John Bunyan",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL107195W",
+    "cover_id" : "8229224",
+    "first_publish_year" : "1678"
+  }, {
+    "rank" : "13",
+    "title" : "A Christmas Carol",
+    "author" : "Charles Dickens",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL32466W",
+    "cover_id" : "12875748",
+    "first_publish_year" : "1843"
+  }, {
+    "rank" : "14",
+    "title" : "David Copperfield",
+    "author" : "Charles Dickens",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL8662242W",
+    "cover_id" : "1048892",
+    "first_publish_year" : "1800"
+  }, {
+    "rank" : "15",
+    "title" : "A Tale of Two Cities",
+    "author" : "Charles Dickens",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL8193465W",
+    "cover_id" : "13301713",
+    "first_publish_year" : "1800"
+  }, {
+    "rank" : "16",
+    "title" : "Little Women",
+    "author" : "Louisa May Alcott",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL29983W",
+    "cover_id" : "8775559",
+    "first_publish_year" : "1848"
+  }, {
+    "rank" : "17",
+    "title" : "Great Expectations",
+    "author" : "Charles Dickens",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL8721462W",
+    "cover_id" : "13322313",
+    "first_publish_year" : "1861"
+  }, {
+    "rank" : "18",
+    "title" : "The Hobbit, or, There and Back Again",
+    "author" : "J.R.R. Tolkien",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL38995451W",
+    "cover_id" : null,
+    "first_publish_year" : "1960"
+  }, {
+    "rank" : "19",
+    "title" : "Frankenstein, or, the Modern Prometheus",
+    "author" : "Mary Shelley",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL450063W",
+    "cover_id" : "12356249",
+    "first_publish_year" : "1818"
+  }, {
+    "rank" : "20",
+    "title" : "Oliver Twist",
+    "author" : "Charles Dickens",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL8193478W",
+    "cover_id" : "13300802",
+    "first_publish_year" : "1822"
+  }, {
+    "rank" : "21",
+    "title" : "Uncle Tom's Cabin",
+    "author" : "Harriet Beecher Stowe",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL152161W",
+    "cover_id" : "12728198",
+    "first_publish_year" : "1850"
+  }, {
+    "rank" : "22",
+    "title" : "Crime and Punishment",
+    "author" : "Fyodor Dostoyevsky",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL21974112W",
+    "cover_id" : "12246767",
+    "first_publish_year" : "1911"
+  }, {
+    "rank" : "23",
+    "title" : "Madame Bovary: Patterns of Provincial Life",
+    "author" : "Gustave Flaubert",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL31309794W",
+    "cover_id" : null,
+    "first_publish_year" : "1957"
+  }, {
+    "rank" : "24",
+    "title" : "The Return of the King",
+    "author" : "J.R.R. Tolkien",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL27455W",
+    "cover_id" : "14627062",
+    "first_publish_year" : "1950"
+  }, {
+    "rank" : "25",
+    "title" : "Dracula",
+    "author" : "Bram Stoker",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL85892W",
+    "cover_id" : "12216503",
+    "first_publish_year" : "1897"
+  }, {
+    "rank" : "26",
+    "title" : "The Three Musketeers",
+    "author" : "Alexandre Dumas",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL15196889W",
+    "cover_id" : "14564075",
+    "first_publish_year" : "1999"
+  }, {
+    "rank" : "27",
+    "title" : "Brave New World",
+    "author" : "Aldous Huxley",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL64365W",
+    "cover_id" : "8231823",
+    "first_publish_year" : "1932"
+  }, {
+    "rank" : "28",
+    "title" : "War and Peace",
+    "author" : "Leo Tolstoy",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL267171W",
+    "cover_id" : "12621906",
+    "first_publish_year" : "1864"
+  }, {
+    "rank" : "29",
+    "title" : "To Kill a Mockingbird",
+    "author" : "Harper Lee",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL3140822W",
+    "cover_id" : "14351077",
+    "first_publish_year" : "1960"
+  }, {
+    "rank" : "30",
+    "title" : "The Wizard of Oz",
+    "author" : "L. Frank Baum",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL18417W",
+    "cover_id" : "552443",
+    "first_publish_year" : "1899"
+  }, {
+    "rank" : "31",
+    "title" : "Les Misérables",
+    "author" : "Victor Hugo",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL1063588W",
+    "cover_id" : "12721865",
+    "first_publish_year" : "1862"
+  }, {
+    "rank" : "32",
+    "title" : "The Secret Garden",
+    "author" : "Frances Hodgson Burnett",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL69612W",
+    "cover_id" : "12622062",
+    "first_publish_year" : "1911"
+  }, {
+    "rank" : "33",
+    "title" : "Animal Farm",
+    "author" : "George Orwell",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL1168007W",
+    "cover_id" : "11261770",
+    "first_publish_year" : "1945"
+  }, {
+    "rank" : "34",
+    "title" : "The Great Gatsby",
+    "author" : "F. Scott Fitzgerald",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL468431W",
+    "cover_id" : "10590366",
+    "first_publish_year" : "1920"
+  }, {
+    "rank" : "35",
+    "title" : "The Little Prince",
+    "author" : "Antoine de Saint-Exupéry",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL24259583W",
+    "cover_id" : "10746692",
+    "first_publish_year" : "2003"
+  }, {
+    "rank" : "36",
+    "title" : "The Call of the Wild",
+    "author" : "Jack London",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL14942956W",
+    "cover_id" : "12393037",
+    "first_publish_year" : "1903"
+  }, {
+    "rank" : "37",
+    "title" : "20,000 Leagues Under the Sea",
+    "author" : "Jules Verne",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL17306195W",
+    "cover_id" : "7385699",
+    "first_publish_year" : "1998"
+  }, {
+    "rank" : "38",
+    "title" : "Anna Karenina",
+    "author" : "Leo Tolstoy",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL36073991W",
+    "cover_id" : null,
+    "first_publish_year" : "2016"
+  }, {
+    "rank" : "39",
+    "title" : "The Wind in the Willows",
+    "author" : "Kenneth Grahame",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL28570037W",
+    "cover_id" : "13335427",
+    "first_publish_year" : "1908"
+  }, {
+    "rank" : "40",
+    "title" : "The Picture of Dorian Gray",
+    "author" : "Oscar Wilde",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL8193416W",
+    "cover_id" : "14314858",
+    "first_publish_year" : "1890"
+  }, {
+    "rank" : "41",
+    "title" : "The Grapes of Wrath",
+    "author" : "John Steinbeck",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL23205W",
+    "cover_id" : "12715902",
+    "first_publish_year" : "1939"
+  }, {
+    "rank" : "42",
+    "title" : "Sense and Sensibility",
+    "author" : "Jane Austen",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL66562W",
+    "cover_id" : "9278292",
+    "first_publish_year" : "1811"
+  }, {
+    "rank" : "43",
+    "title" : "The Last of the Mohicans",
+    "author" : "James Fenimore Cooper",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL77958W",
+    "cover_id" : "8236937",
+    "first_publish_year" : "1826"
+  }, {
+    "rank" : "44",
+    "title" : "Tess of the d'Urbervilles",
+    "author" : "Thomas Hardy",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL44927W",
+    "cover_id" : "13109386",
+    "first_publish_year" : "1707"
+  }, {
+    "rank" : "45",
+    "title" : "Harry Potter and the Sorcerer's Stone",
+    "author" : "J.K. Rowling",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL32476081W",
+    "cover_id" : null,
+    "first_publish_year" : "2014"
+  }, {
+    "rank" : "46",
+    "title" : "Heidi",
+    "author" : "Johanna Spyri",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL1455042W",
+    "cover_id" : "2668686",
+    "first_publish_year" : "1885"
+  }, {
+    "rank" : "47",
+    "title" : "Ulysses",
+    "author" : "James Joyce",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL86318W",
+    "cover_id" : "13136548",
+    "first_publish_year" : "1914"
+  }, {
+    "rank" : "48",
+    "title" : "The Complete Sherlock Holmes",
+    "author" : "Arthur Conan Doyle",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL262554W",
+    "cover_id" : "12501284",
+    "first_publish_year" : "1900"
+  }, {
+    "rank" : "49",
+    "title" : "The Count of Monte Cristo",
+    "author" : "Alexandre Dumas",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL20201553W",
+    "cover_id" : "8851690",
+    "first_publish_year" : "1920"
+  }, {
+    "rank" : "50",
+    "title" : "The Old Man and the Sea",
+    "author" : "Ernest Hemingway",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL63073W",
+    "cover_id" : "463307",
+    "first_publish_year" : "1952"
+  }, {
+    "rank" : "51",
+    "title" : "The Lion, the Witch, and the Wardrobe",
+    "author" : "C.S. Lewis",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL71037W",
+    "cover_id" : "8441376",
+    "first_publish_year" : "1950"
+  }, {
+    "rank" : "52",
+    "title" : "The Hunchback of Notre Dame",
+    "author" : "Victor Hugo",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL17736010W",
+    "cover_id" : "8015311",
+    "first_publish_year" : "1924"
+  }, {
+    "rank" : "53",
+    "title" : "Pinocchio",
+    "author" : "Carlo Collodi",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL1527356W",
+    "cover_id" : "8597022",
+    "first_publish_year" : "1883"
+  }, {
+    "rank" : "54",
+    "title" : "One Hundred Years of Solitude",
+    "author" : "Gabriel Garcia Márquez",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL33647471W",
+    "cover_id" : "15093420",
+    "first_publish_year" : "1967"
+  }, {
+    "rank" : "55",
+    "title" : "Ivanhoe",
+    "author" : "Walter Scott",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL863808W",
+    "cover_id" : "314235",
+    "first_publish_year" : "1800"
+  }, {
+    "rank" : "56",
+    "title" : "The Red Badge of Courage",
+    "author" : "Stephen Crane",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL20844W",
+    "cover_id" : "8236915",
+    "first_publish_year" : "1855"
+  }, {
+    "rank" : "57",
+    "title" : "Anne of Green Gables",
+    "author" : "L.M. Montgomery",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL77746W",
+    "cover_id" : "14641084",
+    "first_publish_year" : "1908"
+  }, {
+    "rank" : "58",
+    "title" : "Black Beauty",
+    "author" : "Anna Sewell",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL15854658W",
+    "cover_id" : "5007492",
+    "first_publish_year" : "1877"
+  }, {
+    "rank" : "59",
+    "title" : "Peter Pan",
+    "author" : "J.M. Barrie",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL462072W",
+    "cover_id" : "14426417",
+    "first_publish_year" : "2006"
+  }, {
+    "rank" : "60",
+    "title" : "A Farewell to Arms",
+    "author" : "Ernest Hemingway",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL63072W",
+    "cover_id" : "7226599",
+    "first_publish_year" : "1929"
+  }, {
+    "rank" : "61",
+    "title" : "The House of the Seven Gables",
+    "author" : "Nathaniel Hawthorne",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL455288W",
+    "cover_id" : "10956643",
+    "first_publish_year" : "1851"
+  }, {
+    "rank" : "62",
+    "title" : "Lord of the Flies",
+    "author" : "William Golding",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL455327W",
+    "cover_id" : "8684447",
+    "first_publish_year" : "1954"
+  }, {
+    "rank" : "63",
+    "title" : "The Prince and the Pauper",
+    "author" : "Mark Twain",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL53994W",
+    "cover_id" : "8221267",
+    "first_publish_year" : "1881"
+  }, {
+    "rank" : "64",
+    "title" : "A Portrait of the Artist as a Young Man",
+    "author" : "James Joyce",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL86343W",
+    "cover_id" : "9328410",
+    "first_publish_year" : "1818"
+  }, {
+    "rank" : "65",
+    "title" : "Lord Jim",
+    "author" : "Joseph Conrad",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL38684W",
+    "cover_id" : "8236295",
+    "first_publish_year" : "1900"
+  }, {
+    "rank" : "66",
+    "title" : "Harry Potter and the Chamber of Secrets",
+    "author" : "J.K. Rowling",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL82537W",
+    "cover_id" : "15158664",
+    "first_publish_year" : "1998"
+  }, {
+    "rank" : "67",
+    "title" : "The Red & the Black",
+    "author" : "Stendhal",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL29697463W",
+    "cover_id" : null,
+    "first_publish_year" : "2017"
+  }, {
+    "rank" : "68",
+    "title" : "The Stranger",
+    "author" : "Albert Camus",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL31270346W",
+    "cover_id" : null,
+    "first_publish_year" : "1980"
+  }, {
+    "rank" : "69",
+    "title" : "The Trial",
+    "author" : "Franz Kafka",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL498691W",
+    "cover_id" : null,
+    "first_publish_year" : "1983"
+  }, {
+    "rank" : "70",
+    "title" : "Lady Chatterley's Lover",
+    "author" : "D.H. Lawrence",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL81180W",
+    "cover_id" : "12983362",
+    "first_publish_year" : "1900"
+  }, {
+    "rank" : "71",
+    "title" : "Kidnapped: The Adventures of David Balfour",
+    "author" : "Robert Louis Stevenson",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL40808163W",
+    "cover_id" : null,
+    "first_publish_year" : "2017"
+  }, {
+    "rank" : "72",
+    "title" : "The Catcher in the Rye",
+    "author" : "J.D. Salinger",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL3335245W",
+    "cover_id" : "9273490",
+    "first_publish_year" : "1945"
+  }, {
+    "rank" : "73",
+    "title" : "Fahrenheit 451",
+    "author" : "Ray Bradbury",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL103123W",
+    "cover_id" : "12993656",
+    "first_publish_year" : "1953"
+  }, {
+    "rank" : "74",
+    "title" : "A Journey to the Center of the Earth",
+    "author" : "Jules Verne",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL31557857W",
+    "cover_id" : null,
+    "first_publish_year" : "1962"
+  }, {
+    "rank" : "75",
+    "title" : "Vanity Fair",
+    "author" : "William Makepeace Thackeray",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL16313W",
+    "cover_id" : "417329",
+    "first_publish_year" : "1800"
+  }, {
+    "rank" : "76",
+    "title" : "All Quiet on the Western Front",
+    "author" : "Erich Maria Remarque",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL24208506W",
+    "cover_id" : "10655404",
+    "first_publish_year" : "2000"
+  }, {
+    "rank" : "77",
+    "title" : "Gone with the Wind",
+    "author" : "Margaret Mitchell",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL267933W",
+    "cover_id" : "14817133",
+    "first_publish_year" : "1936"
+  }, {
+    "rank" : "78",
+    "title" : "My Ántonia",
+    "author" : "Willa Cather",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL12791W",
+    "cover_id" : "8369013",
+    "first_publish_year" : "1818"
+  }, {
+    "rank" : "79",
+    "title" : "Of Mice and Men",
+    "author" : "John Steinbeck",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL23204W",
+    "cover_id" : "14319003",
+    "first_publish_year" : "1937"
+  }, {
+    "rank" : "80",
+    "title" : "The Vicar of Wakefield",
+    "author" : "Oliver Goldsmith",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL890896W",
+    "cover_id" : "6720851",
+    "first_publish_year" : "1111"
+  }, {
+    "rank" : "81",
+    "title" : "A Connecticut Yankee in King Arthur's Court",
+    "author" : "Mark Twain",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL54031W",
+    "cover_id" : "9168732",
+    "first_publish_year" : "1889"
+  }, {
+    "rank" : "82",
+    "title" : "White Fang",
+    "author" : "Jack London",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL74504W",
+    "cover_id" : "8236920",
+    "first_publish_year" : "1905"
+  }, {
+    "rank" : "83",
+    "title" : "Fathers and Sons",
+    "author" : "Ivan Sergeevich Turgenev",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL24519774W",
+    "cover_id" : "11149397",
+    "first_publish_year" : "2014"
+  }, {
+    "rank" : "84",
+    "title" : "Doctor Zhivago",
+    "author" : "Boris Leonidovich Pasternak",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL19375594W",
+    "cover_id" : "12713393",
+    "first_publish_year" : "1998"
+  }, {
+    "rank" : "85",
+    "title" : "The Decameron",
+    "author" : "Giovanni Boccaccio",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL7180608W",
+    "cover_id" : "2980638",
+    "first_publish_year" : "2007"
+  }, {
+    "rank" : "86",
+    "title" : "Nineteen Eighty-Four",
+    "author" : "George Orwell",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL1168083W",
+    "cover_id" : "9267242",
+    "first_publish_year" : "1949"
+  }, {
+    "rank" : "87",
+    "title" : "The Jungle",
+    "author" : "Upton Sinclair",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL114967W",
+    "cover_id" : "8231790",
+    "first_publish_year" : "1707"
+  }, {
+    "rank" : "88",
+    "title" : "The Da Vinci Code",
+    "author" : "Dan Brown",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL76837W",
+    "cover_id" : "9255229",
+    "first_publish_year" : "2003"
+  }, {
+    "rank" : "89",
+    "title" : "Persuasion",
+    "author" : "Jane Austen",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL66544W",
+    "cover_id" : "12824691",
+    "first_publish_year" : "1789"
+  }, {
+    "rank" : "90",
+    "title" : "Mansfield Park",
+    "author" : "Jane Austen",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL66530W",
+    "cover_id" : "14618737",
+    "first_publish_year" : "1814"
+  }, {
+    "rank" : "91",
+    "title" : "Candide",
+    "author" : "Voltaire",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL100672W",
+    "cover_id" : "12736044",
+    "first_publish_year" : "1746"
+  }, {
+    "rank" : "92",
+    "title" : "For Whom the Bell Tolls",
+    "author" : "Ernest Hemingway",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL63009W",
+    "cover_id" : "2560810",
+    "first_publish_year" : "1940"
+  }, {
+    "rank" : "93",
+    "title" : "Far from the Madding Crowd",
+    "author" : "Thomas Hardy",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL44995W",
+    "cover_id" : "902038",
+    "first_publish_year" : "1874"
+  }, {
+    "rank" : "94",
+    "title" : "The Fellowship of the Ring",
+    "author" : "J.R.R. Tolkien",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL27513W",
+    "cover_id" : "14627060",
+    "first_publish_year" : "1954"
+  }, {
+    "rank" : "95",
+    "title" : "The Return of the Native",
+    "author" : "Thomas Hardy",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL44994W",
+    "cover_id" : "8162989",
+    "first_publish_year" : "1878"
+  }, {
+    "rank" : "96",
+    "title" : "Sons and Lovers",
+    "author" : "D.H. Lawrence",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL81295W",
+    "cover_id" : "8246175",
+    "first_publish_year" : "1913"
+  }, {
+    "rank" : "97",
+    "title" : "Charlotte's Web",
+    "author" : "E.B. White",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL483391W",
+    "cover_id" : "8461797",
+    "first_publish_year" : "1952"
+  }, {
+    "rank" : "98",
+    "title" : "The Swiss Family Robinson",
+    "author" : "Johann David Wyss",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL20173104W",
+    "cover_id" : "8819908",
+    "first_publish_year" : "1979"
+  }, {
+    "rank" : "99",
+    "title" : "Bleak House",
+    "author" : "Charles Dickens",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL14868510W",
+    "cover_id" : "9279273",
+    "first_publish_year" : "1850"
+  }, {
+    "rank" : "100",
+    "title" : "Père Goriot",
+    "author" : "Honoré de Balzac",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL85047W",
+    "cover_id" : "8237944",
+    "first_publish_year" : "1800"
+  } ]
 }
-  ]
-}
-
-
-

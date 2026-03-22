@@ -8,7 +8,6 @@ import armchair.entity.CuratedRanking;
 import armchair.repository.CuratedListRepository;
 import armchair.repository.CuratedRankingRepository;
 import armchair.service.BookService;
-import armchair.service.OpenLibraryService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
@@ -32,7 +31,6 @@ import java.util.Map;
 
 public class CuratedListImporter {
     private static final Logger log = LoggerFactory.getLogger(CuratedListImporter.class);
-    private static final int API_RATE_LIMIT_DELAY_MS = 100;
 
     @Configuration
     @EnableAutoConfiguration(exclude = {SecurityAutoConfiguration.class, OAuth2ClientAutoConfiguration.class})
@@ -56,10 +54,9 @@ public class CuratedListImporter {
             CuratedListRepository curatedListRepository = context.getBean(CuratedListRepository.class);
             BookService bookService = context.getBean(BookService.class);
             CuratedRankingRepository curatedRankingRepository = context.getBean(CuratedRankingRepository.class);
-            OpenLibraryService openLibraryService = context.getBean(OpenLibraryService.class);
 
             try {
-                importFromJson(filePath, curatedListRepository, bookService, curatedRankingRepository, openLibraryService);
+                importFromJson(filePath, curatedListRepository, bookService, curatedRankingRepository);
             } catch (ImportException e) {
                 log.error(e.getMessage());
                 System.exit(1);
@@ -67,7 +64,8 @@ public class CuratedListImporter {
         }
     }
 
-    record JsonBook(String title, String author, String review, Bookshelf bookshelf, BookCategory category, Integer rank) {}
+    record JsonBook(String title, String author, String review, Bookshelf bookshelf, BookCategory category,
+                    Integer rank, String workOlid, Integer coverId, Integer firstPublishYear) {}
     record ParsedJsonList(String username, String description, List<JsonBook> books) {}
 
     static class ImportException extends RuntimeException {
@@ -96,20 +94,20 @@ public class CuratedListImporter {
 
         String description = (String) data.get("description");
 
-        List<Map<String, String>> books = (List<Map<String, String>>) data.get("books");
+        List<Map<String, Object>> books = (List<Map<String, Object>>) data.get("books");
         if (books == null) {
             throw new ImportException("No 'books' array found in " + source);
         }
 
         List<JsonBook> result = new ArrayList<>();
         for (int i = 0; i < books.size(); i++) {
-            Map<String, String> entry = books.get(i);
+            Map<String, Object> entry = books.get(i);
             String bookLabel = "book #" + (i + 1);
 
             if (!entry.containsKey("title")) {
                 throw new ImportException("Missing 'title' field on " + bookLabel);
             }
-            String title = entry.get("title");
+            String title = (String) entry.get("title");
             if (title == null || title.isBlank()) {
                 throw new ImportException("Empty 'title' on " + bookLabel);
             }
@@ -117,7 +115,7 @@ public class CuratedListImporter {
             if (!entry.containsKey("author")) {
                 throw new ImportException("Missing 'author' field on " + bookLabel + " (" + title + ")");
             }
-            String author = entry.get("author");
+            String author = (String) entry.get("author");
             if (author == null || author.isBlank()) {
                 throw new ImportException("Empty 'author' on " + bookLabel + " (" + title + ")");
             }
@@ -125,7 +123,7 @@ public class CuratedListImporter {
             if (!entry.containsKey("rank")) {
                 throw new ImportException("Missing 'rank' field on " + bookLabel + " (" + title + ")");
             }
-            String rank = entry.get("rank");
+            String rank = asString(entry.get("rank"));
             boolean isRanked = rank != null && !rank.isEmpty();
             if (isRanked) {
                 try {
@@ -138,9 +136,20 @@ public class CuratedListImporter {
             if (!entry.containsKey("review")) {
                 throw new ImportException("Missing 'review' field on " + bookLabel + " (" + title + ")");
             }
-            String review = entry.get("review");
+            String review = (String) entry.get("review");
 
-            String categoryStr = entry.getOrDefault("category", "fiction");
+            if (!entry.containsKey("work_olid")) {
+                throw new ImportException("Missing 'work_olid' field on " + bookLabel + " (" + title + ")");
+            }
+            String workOlid = (String) entry.get("work_olid");
+            if (workOlid == null || workOlid.isBlank()) {
+                throw new ImportException("Empty 'work_olid' on " + bookLabel + " (" + title + ")");
+            }
+
+            Integer coverId = parseOptionalInt(asString(entry.get("cover_id")), "cover_id", bookLabel, title);
+            Integer firstPublishYear = parseOptionalInt(asString(entry.get("first_publish_year")), "first_publish_year", bookLabel, title);
+
+            String categoryStr = asString(entry.getOrDefault("category", "fiction"));
             Bookshelf bookshelf = switch (categoryStr) {
                 case "fiction" -> Bookshelf.FICTION;
                 case "non-fiction" -> Bookshelf.NONFICTION;
@@ -151,7 +160,7 @@ public class CuratedListImporter {
             BookCategory category = isRanked ? BookCategory.LIKED : BookCategory.UNRANKED;
 
             Integer rankNum = isRanked ? Integer.parseInt(rank) : null;
-            result.add(new JsonBook(title, author, review, bookshelf, category, rankNum));
+            result.add(new JsonBook(title, author, review, bookshelf, category, rankNum, workOlid, coverId, firstPublishYear));
         }
 
         return new ParsedJsonList(username, description, result);
@@ -159,14 +168,14 @@ public class CuratedListImporter {
 
     static void importFromJson(String path, CuratedListRepository curatedListRepository,
                                        BookService bookService,
-                                       CuratedRankingRepository curatedRankingRepository, OpenLibraryService openLibraryService) {
+                                       CuratedRankingRepository curatedRankingRepository) {
         ParsedJsonList parsed = parseJsonFile(path);
-        importParsedList(parsed, curatedListRepository, bookService, curatedRankingRepository, openLibraryService);
+        importParsedList(parsed, curatedListRepository, bookService, curatedRankingRepository);
     }
 
     static void importParsedList(ParsedJsonList parsed, CuratedListRepository curatedListRepository,
                                          BookService bookService,
-                                         CuratedRankingRepository curatedRankingRepository, OpenLibraryService openLibraryService) {
+                                         CuratedRankingRepository curatedRankingRepository) {
         String username = parsed.username();
         List<JsonBook> allBooks = parsed.books();
 
@@ -201,46 +210,22 @@ public class CuratedListImporter {
         fictionRanked.sort(Comparator.comparingInt(JsonBook::rank));
         nonfictionRanked.sort(Comparator.comparingInt(JsonBook::rank));
 
-        importJsonBooks(curatedList, fictionRanked, bookService, curatedRankingRepository, openLibraryService);
-        importJsonBooks(curatedList, fictionUnranked, bookService, curatedRankingRepository, openLibraryService);
-        importJsonBooks(curatedList, nonfictionRanked, bookService, curatedRankingRepository, openLibraryService);
-        importJsonBooks(curatedList, nonfictionUnranked, bookService, curatedRankingRepository, openLibraryService);
+        importJsonBooks(curatedList, fictionRanked, bookService, curatedRankingRepository);
+        importJsonBooks(curatedList, fictionUnranked, bookService, curatedRankingRepository);
+        importJsonBooks(curatedList, nonfictionRanked, bookService, curatedRankingRepository);
+        importJsonBooks(curatedList, nonfictionUnranked, bookService, curatedRankingRepository);
 
         log.info("Finished importing: {}", username);
     }
 
     static void importJsonBooks(CuratedList curatedList, List<JsonBook> books,
                                         BookService bookService,
-                                        CuratedRankingRepository curatedRankingRepository, OpenLibraryService openLibraryService) {
+                                        CuratedRankingRepository curatedRankingRepository) {
         int position = 0;
         for (JsonBook jb : books) {
             try {
-                List<OpenLibraryService.BookResult> results = openLibraryService.searchBooks(jb.title() + ", " + jb.author());
-
-                String workOlid;
-                String editionOlid;
-                String title;
-                String author;
-                Integer firstPublishYear;
-                Integer coverId;
-                if (!results.isEmpty()) {
-                    OpenLibraryService.BookResult firstResult = results.get(0);
-                    workOlid = firstResult.workOlid();
-                    editionOlid = firstResult.editionOlid();
-                    title = firstResult.title();
-                    author = firstResult.author();
-                    firstPublishYear = firstResult.firstPublishYear();
-                    coverId = firstResult.coverId();
-                } else {
-                    author = jb.author();
-                    title = jb.title();
-                    workOlid = null;
-                    editionOlid = null;
-                    firstPublishYear = null;
-                    coverId = null;
-                }
-
-                Book book = bookService.findOrCreateBook(workOlid, editionOlid, title, author, firstPublishYear, coverId);
+                Book book = bookService.findOrCreateBook(
+                        jb.workOlid(), null, jb.title(), jb.author(), jb.firstPublishYear(), jb.coverId());
 
                 CuratedRanking ranking = new CuratedRanking(curatedList, book, jb.bookshelf(), jb.category(), position);
                 if (jb.review() != null && !jb.review().isEmpty()) {
@@ -250,17 +235,26 @@ public class CuratedListImporter {
 
                 log.info("  {}. {} by {}", position + 1, jb.title(), jb.author());
             } catch (Exception e) {
-                log.warn("  Skipped #{}: {} by {} — {}", position + 1, jb.title(), jb.author(), e.getMessage());
+                log.warn("  Skipped #{}: {} by {} -- {}", position + 1, jb.title(), jb.author(), e.getMessage());
             }
 
             position++;
-
-            try {
-                Thread.sleep(API_RATE_LIMIT_DELAY_MS);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
         }
     }
 
+    private static String asString(Object value) {
+        return value == null ? null : value.toString();
+    }
+
+    private static Integer parseOptionalInt(String value, String fieldName, String bookLabel, String title) {
+        if (value == null || value.isEmpty()) {
+            return null;
+        }
+        try {
+            return Integer.parseInt(value);
+        } catch (NumberFormatException e) {
+            throw new ImportException(
+                    "Non-numeric '" + fieldName + "' \"" + value + "\" on " + bookLabel + " (" + title + ")");
+        }
+    }
 }

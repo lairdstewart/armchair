@@ -8,7 +8,6 @@ import armchair.entity.CuratedRanking;
 import armchair.repository.CuratedListRepository;
 import armchair.repository.CuratedRankingRepository;
 import armchair.service.BookService;
-import armchair.service.OpenLibraryService;
 import armchair.tool.CuratedListImporter.ImportException;
 import armchair.tool.CuratedListImporter.JsonBook;
 import armchair.tool.CuratedListImporter.ParsedJsonList;
@@ -29,7 +28,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -37,6 +35,12 @@ class CuratedListImporterTest {
 
     @TempDir
     Path tempDir;
+
+    private static final String BOOK_JSON = """
+            {"title": "Dune", "author": "Frank Herbert", "rank": "1", "category": "fiction", "review": "Great book", "work_olid": "OL893415W", "cover_id": "12345", "first_publish_year": "1965"}""";
+
+    private static final String BOOK_JSON_MINIMAL = """
+            {"title": "Dune", "author": "Frank Herbert", "rank": "1", "review": "", "work_olid": "OL893415W"}""";
 
     // --- JSON parsing: valid input ---
 
@@ -46,11 +50,11 @@ class CuratedListImporterTest {
                 {
                   "username": "Test List",
                   "books": [
-                    {"title": "Dune", "author": "Frank Herbert", "rank": "1", "category": "fiction", "review": "Great book"},
-                    {"title": "1984", "author": "George Orwell", "rank": "2", "category": "fiction", "review": ""}
+                    %s,
+                    {"title": "1984", "author": "George Orwell", "rank": "2", "category": "fiction", "review": "", "work_olid": "OL1168083W", "cover_id": "9330515", "first_publish_year": "1949"}
                   ]
                 }
-                """;
+                """.formatted(BOOK_JSON);
         Path file = writeJson(json);
 
         ParsedJsonList result = CuratedListImporter.parseJsonFile(file.toString());
@@ -65,6 +69,9 @@ class CuratedListImporterTest {
         assertThat(first.bookshelf()).isEqualTo(Bookshelf.FICTION);
         assertThat(first.category()).isEqualTo(BookCategory.LIKED);
         assertThat(first.review()).isEqualTo("Great book");
+        assertThat(first.workOlid()).isEqualTo("OL893415W");
+        assertThat(first.coverId()).isEqualTo(12345);
+        assertThat(first.firstPublishYear()).isEqualTo(1965);
     }
 
     @Test
@@ -73,7 +80,7 @@ class CuratedListImporterTest {
                 {
                   "username": "Test",
                   "books": [
-                    {"title": "Dune", "author": "Frank Herbert", "rank": "", "category": "fiction", "review": ""}
+                    {"title": "Dune", "author": "Frank Herbert", "rank": "", "category": "fiction", "review": "", "work_olid": "OL893415W"}
                   ]
                 }
                 """;
@@ -92,7 +99,7 @@ class CuratedListImporterTest {
                 {
                   "username": "Test",
                   "books": [
-                    {"title": "Sapiens", "author": "Yuval Harari", "rank": "1", "category": "non-fiction", "review": ""}
+                    {"title": "Sapiens", "author": "Yuval Harari", "rank": "1", "category": "non-fiction", "review": "", "work_olid": "OL17075811W"}
                   ]
                 }
                 """;
@@ -109,10 +116,10 @@ class CuratedListImporterTest {
                 {
                   "username": "Test",
                   "books": [
-                    {"title": "Dune", "author": "Frank Herbert", "rank": "1", "review": ""}
+                    %s
                   ]
                 }
-                """;
+                """.formatted(BOOK_JSON_MINIMAL);
         Path file = writeJson(json);
 
         ParsedJsonList result = CuratedListImporter.parseJsonFile(file.toString());
@@ -141,7 +148,7 @@ class CuratedListImporterTest {
                 {
                   "username": "Test",
                   "books": [
-                    {"title": "Dune", "author": "Frank Herbert", "rank": "1", "review": null}
+                    {"title": "Dune", "author": "Frank Herbert", "rank": "1", "review": null, "work_olid": "OL893415W"}
                   ]
                 }
                 """;
@@ -150,6 +157,44 @@ class CuratedListImporterTest {
         ParsedJsonList result = CuratedListImporter.parseJsonFile(file.toString());
 
         assertThat(result.books().get(0).review()).isNull();
+    }
+
+    @Test
+    void parseNullCoverIdAndFirstPublishYearAllowed() throws IOException {
+        String json = """
+                {
+                  "username": "Test",
+                  "books": [
+                    {"title": "Dune", "author": "Frank Herbert", "rank": "1", "review": "", "work_olid": "OL893415W", "cover_id": null, "first_publish_year": null}
+                  ]
+                }
+                """;
+        Path file = writeJson(json);
+
+        ParsedJsonList result = CuratedListImporter.parseJsonFile(file.toString());
+
+        JsonBook book = result.books().get(0);
+        assertThat(book.coverId()).isNull();
+        assertThat(book.firstPublishYear()).isNull();
+    }
+
+    @Test
+    void parseMissingCoverIdAndFirstPublishYearAllowed() throws IOException {
+        String json = """
+                {
+                  "username": "Test",
+                  "books": [
+                    {"title": "Dune", "author": "Frank Herbert", "rank": "1", "review": "", "work_olid": "OL893415W"}
+                  ]
+                }
+                """;
+        Path file = writeJson(json);
+
+        ParsedJsonList result = CuratedListImporter.parseJsonFile(file.toString());
+
+        JsonBook book = result.books().get(0);
+        assertThat(book.coverId()).isNull();
+        assertThat(book.firstPublishYear()).isNull();
     }
 
     // --- JSON parsing: invalid input ---
@@ -174,9 +219,9 @@ class CuratedListImporterTest {
     void parseMissingUsernameThrows() throws IOException {
         String json = """
                 {
-                  "books": [{"title": "Dune", "author": "Frank Herbert", "rank": "1", "review": ""}]
+                  "books": [%s]
                 }
-                """;
+                """.formatted(BOOK_JSON_MINIMAL);
         Path file = writeJson(json);
 
         assertThatThrownBy(() -> CuratedListImporter.parseJsonFile(file.toString()))
@@ -218,7 +263,7 @@ class CuratedListImporterTest {
         String json = """
                 {
                   "username": "Test",
-                  "books": [{"author": "Frank Herbert", "rank": "1", "review": ""}]
+                  "books": [{"author": "Frank Herbert", "rank": "1", "review": "", "work_olid": "OL893415W"}]
                 }
                 """;
         Path file = writeJson(json);
@@ -233,7 +278,7 @@ class CuratedListImporterTest {
         String json = """
                 {
                   "username": "Test",
-                  "books": [{"title": "", "author": "Frank Herbert", "rank": "1", "review": ""}]
+                  "books": [{"title": "", "author": "Frank Herbert", "rank": "1", "review": "", "work_olid": "OL893415W"}]
                 }
                 """;
         Path file = writeJson(json);
@@ -248,7 +293,7 @@ class CuratedListImporterTest {
         String json = """
                 {
                   "username": "Test",
-                  "books": [{"title": "Dune", "rank": "1", "review": ""}]
+                  "books": [{"title": "Dune", "rank": "1", "review": "", "work_olid": "OL893415W"}]
                 }
                 """;
         Path file = writeJson(json);
@@ -263,7 +308,7 @@ class CuratedListImporterTest {
         String json = """
                 {
                   "username": "Test",
-                  "books": [{"title": "Dune", "author": "  ", "rank": "1", "review": ""}]
+                  "books": [{"title": "Dune", "author": "  ", "rank": "1", "review": "", "work_olid": "OL893415W"}]
                 }
                 """;
         Path file = writeJson(json);
@@ -278,7 +323,7 @@ class CuratedListImporterTest {
         String json = """
                 {
                   "username": "Test",
-                  "books": [{"title": "Dune", "author": "Frank Herbert", "review": ""}]
+                  "books": [{"title": "Dune", "author": "Frank Herbert", "review": "", "work_olid": "OL893415W"}]
                 }
                 """;
         Path file = writeJson(json);
@@ -293,7 +338,7 @@ class CuratedListImporterTest {
         String json = """
                 {
                   "username": "Test",
-                  "books": [{"title": "Dune", "author": "Frank Herbert", "rank": "abc", "review": ""}]
+                  "books": [{"title": "Dune", "author": "Frank Herbert", "rank": "abc", "review": "", "work_olid": "OL893415W"}]
                 }
                 """;
         Path file = writeJson(json);
@@ -308,7 +353,7 @@ class CuratedListImporterTest {
         String json = """
                 {
                   "username": "Test",
-                  "books": [{"title": "Dune", "author": "Frank Herbert", "rank": "1"}]
+                  "books": [{"title": "Dune", "author": "Frank Herbert", "rank": "1", "work_olid": "OL893415W"}]
                 }
                 """;
         Path file = writeJson(json);
@@ -319,11 +364,41 @@ class CuratedListImporterTest {
     }
 
     @Test
+    void parseMissingWorkOlidThrows() throws IOException {
+        String json = """
+                {
+                  "username": "Test",
+                  "books": [{"title": "Dune", "author": "Frank Herbert", "rank": "1", "review": ""}]
+                }
+                """;
+        Path file = writeJson(json);
+
+        assertThatThrownBy(() -> CuratedListImporter.parseJsonFile(file.toString()))
+                .isInstanceOf(ImportException.class)
+                .hasMessageContaining("Missing 'work_olid' field on book #1 (Dune)");
+    }
+
+    @Test
+    void parseEmptyWorkOlidThrows() throws IOException {
+        String json = """
+                {
+                  "username": "Test",
+                  "books": [{"title": "Dune", "author": "Frank Herbert", "rank": "1", "review": "", "work_olid": ""}]
+                }
+                """;
+        Path file = writeJson(json);
+
+        assertThatThrownBy(() -> CuratedListImporter.parseJsonFile(file.toString()))
+                .isInstanceOf(ImportException.class)
+                .hasMessageContaining("Empty 'work_olid' on book #1 (Dune)");
+    }
+
+    @Test
     void parseInvalidCategoryThrows() throws IOException {
         String json = """
                 {
                   "username": "Test",
-                  "books": [{"title": "Dune", "author": "Frank Herbert", "rank": "1", "review": "", "category": "mystery"}]
+                  "books": [{"title": "Dune", "author": "Frank Herbert", "rank": "1", "review": "", "work_olid": "OL893415W", "category": "mystery"}]
                 }
                 """;
         Path file = writeJson(json);
@@ -334,16 +409,46 @@ class CuratedListImporterTest {
     }
 
     @Test
+    void parseNonNumericCoverIdThrows() throws IOException {
+        String json = """
+                {
+                  "username": "Test",
+                  "books": [{"title": "Dune", "author": "Frank Herbert", "rank": "1", "review": "", "work_olid": "OL893415W", "cover_id": "abc"}]
+                }
+                """;
+        Path file = writeJson(json);
+
+        assertThatThrownBy(() -> CuratedListImporter.parseJsonFile(file.toString()))
+                .isInstanceOf(ImportException.class)
+                .hasMessageContaining("Non-numeric 'cover_id' \"abc\"");
+    }
+
+    @Test
+    void parseNonNumericFirstPublishYearThrows() throws IOException {
+        String json = """
+                {
+                  "username": "Test",
+                  "books": [{"title": "Dune", "author": "Frank Herbert", "rank": "1", "review": "", "work_olid": "OL893415W", "first_publish_year": "abc"}]
+                }
+                """;
+        Path file = writeJson(json);
+
+        assertThatThrownBy(() -> CuratedListImporter.parseJsonFile(file.toString()))
+                .isInstanceOf(ImportException.class)
+                .hasMessageContaining("Non-numeric 'first_publish_year' \"abc\"");
+    }
+
+    @Test
     void parseErrorMessageIncludesBookIndex() throws IOException {
         String json = """
                 {
                   "username": "Test",
                   "books": [
-                    {"title": "Good Book", "author": "Author", "rank": "1", "review": ""},
-                    {"title": "Bad Book", "author": "", "rank": "2", "review": ""}
+                    %s,
+                    {"title": "Bad Book", "author": "", "rank": "2", "review": "", "work_olid": "OL123W"}
                   ]
                 }
-                """;
+                """.formatted(BOOK_JSON_MINIMAL);
         Path file = writeJson(json);
 
         assertThatThrownBy(() -> CuratedListImporter.parseJsonFile(file.toString()))
@@ -358,13 +463,14 @@ class CuratedListImporterTest {
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("username", "Test");
         data.put("books", List.of(
-                Map.of("title", "Dune", "author", "Frank Herbert", "rank", "1", "review", "Great", "category", "fiction")
+                Map.of("title", "Dune", "author", "Frank Herbert", "rank", "1", "review", "Great", "category", "fiction", "work_olid", "OL893415W")
         ));
 
         ParsedJsonList result = CuratedListImporter.parseJsonData(data, "test");
 
         assertThat(result.username()).isEqualTo("Test");
         assertThat(result.books()).hasSize(1);
+        assertThat(result.books().get(0).workOlid()).isEqualTo("OL893415W");
     }
 
     @Test
@@ -405,7 +511,6 @@ class CuratedListImporterTest {
         CuratedListRepository curatedListRepo = mock(CuratedListRepository.class);
         BookService bookService = mock(BookService.class);
         CuratedRankingRepository curatedRankingRepo = mock(CuratedRankingRepository.class);
-        OpenLibraryService openLibraryService = mock(OpenLibraryService.class);
 
         when(curatedListRepo.findByUsername("Test List")).thenReturn(Optional.empty());
         ArgumentCaptor<CuratedList> listCaptor = ArgumentCaptor.forClass(CuratedList.class);
@@ -414,15 +519,14 @@ class CuratedListImporterTest {
             cl.setId(1L);
             return cl;
         });
-        when(openLibraryService.searchBooks(anyString())).thenReturn(List.of());
         when(bookService.findOrCreateBook(any(), any(), anyString(), anyString(), any(), any()))
-                .thenReturn(new Book(null, null, "Dune", "Frank Herbert", null, null));
+                .thenReturn(new Book("OL893415W", null, "Dune", "Frank Herbert", 1965, 12345));
 
         ParsedJsonList parsed = new ParsedJsonList("Test List", null, List.of(
-                new JsonBook("Dune", "Frank Herbert", "", Bookshelf.FICTION, BookCategory.LIKED, 1)
+                new JsonBook("Dune", "Frank Herbert", "", Bookshelf.FICTION, BookCategory.LIKED, 1, "OL893415W", 12345, 1965)
         ));
 
-        CuratedListImporter.importParsedList(parsed, curatedListRepo, bookService, curatedRankingRepo, openLibraryService);
+        CuratedListImporter.importParsedList(parsed, curatedListRepo, bookService, curatedRankingRepo);
 
         CuratedList savedList = listCaptor.getValue();
         assertThat(savedList.getUsername()).isEqualTo("Test List");
@@ -433,21 +537,19 @@ class CuratedListImporterTest {
         CuratedListRepository curatedListRepo = mock(CuratedListRepository.class);
         BookService bookService = mock(BookService.class);
         CuratedRankingRepository curatedRankingRepo = mock(CuratedRankingRepository.class);
-        OpenLibraryService openLibraryService = mock(OpenLibraryService.class);
 
         CuratedList existingList = new CuratedList("Test List");
         existingList.setId(42L);
         when(curatedListRepo.findByUsername("Test List")).thenReturn(Optional.of(existingList));
         when(curatedListRepo.save(any(CuratedList.class))).thenReturn(existingList);
-        when(openLibraryService.searchBooks(anyString())).thenReturn(List.of());
         when(bookService.findOrCreateBook(any(), any(), anyString(), anyString(), any(), any()))
-                .thenReturn(new Book(null, null, "Dune", "Frank Herbert", null, null));
+                .thenReturn(new Book("OL893415W", null, "Dune", "Frank Herbert", 1965, 12345));
 
         ParsedJsonList parsed = new ParsedJsonList("Test List", null, List.of(
-                new JsonBook("Dune", "Frank Herbert", "", Bookshelf.FICTION, BookCategory.LIKED, 1)
+                new JsonBook("Dune", "Frank Herbert", "", Bookshelf.FICTION, BookCategory.LIKED, 1, "OL893415W", 12345, 1965)
         ));
 
-        CuratedListImporter.importParsedList(parsed, curatedListRepo, bookService, curatedRankingRepo, openLibraryService);
+        CuratedListImporter.importParsedList(parsed, curatedListRepo, bookService, curatedRankingRepo);
 
         verify(curatedRankingRepo).deleteByCuratedListId(42L);
         verify(curatedListRepo).save(existingList);
@@ -458,7 +560,6 @@ class CuratedListImporterTest {
         CuratedListRepository curatedListRepo = mock(CuratedListRepository.class);
         BookService bookService = mock(BookService.class);
         CuratedRankingRepository curatedRankingRepo = mock(CuratedRankingRepository.class);
-        OpenLibraryService openLibraryService = mock(OpenLibraryService.class);
 
         when(curatedListRepo.findByUsername("Test")).thenReturn(Optional.empty());
         when(curatedListRepo.save(any(CuratedList.class))).thenAnswer(inv -> {
@@ -466,15 +567,14 @@ class CuratedListImporterTest {
             cl.setId(1L);
             return cl;
         });
-        when(openLibraryService.searchBooks(anyString())).thenReturn(List.of());
-        Book dune = new Book(null, null, "Dune", "Frank Herbert", null, null);
+        Book dune = new Book("OL893415W", null, "Dune", "Frank Herbert", 1965, 12345);
         when(bookService.findOrCreateBook(any(), any(), anyString(), anyString(), any(), any())).thenReturn(dune);
 
         ParsedJsonList parsed = new ParsedJsonList("Test", null, List.of(
-                new JsonBook("Dune", "Frank Herbert", "A review", Bookshelf.FICTION, BookCategory.LIKED, 1)
+                new JsonBook("Dune", "Frank Herbert", "A review", Bookshelf.FICTION, BookCategory.LIKED, 1, "OL893415W", 12345, 1965)
         ));
 
-        CuratedListImporter.importParsedList(parsed, curatedListRepo, bookService, curatedRankingRepo, openLibraryService);
+        CuratedListImporter.importParsedList(parsed, curatedListRepo, bookService, curatedRankingRepo);
 
         ArgumentCaptor<CuratedRanking> rankingCaptor = ArgumentCaptor.forClass(CuratedRanking.class);
         verify(curatedRankingRepo).save(rankingCaptor.capture());
@@ -492,7 +592,6 @@ class CuratedListImporterTest {
         CuratedListRepository curatedListRepo = mock(CuratedListRepository.class);
         BookService bookService = mock(BookService.class);
         CuratedRankingRepository curatedRankingRepo = mock(CuratedRankingRepository.class);
-        OpenLibraryService openLibraryService = mock(OpenLibraryService.class);
 
         when(curatedListRepo.findByUsername("Test")).thenReturn(Optional.empty());
         when(curatedListRepo.save(any(CuratedList.class))).thenAnswer(inv -> {
@@ -500,15 +599,14 @@ class CuratedListImporterTest {
             cl.setId(1L);
             return cl;
         });
-        when(openLibraryService.searchBooks(anyString())).thenReturn(List.of());
         when(bookService.findOrCreateBook(any(), any(), anyString(), anyString(), any(), any()))
-                .thenReturn(new Book(null, null, "Dune", "Frank Herbert", null, null));
+                .thenReturn(new Book("OL893415W", null, "Dune", "Frank Herbert", 1965, 12345));
 
         ParsedJsonList parsed = new ParsedJsonList("Test", null, List.of(
-                new JsonBook("Dune", "Frank Herbert", "", Bookshelf.FICTION, BookCategory.LIKED, 1)
+                new JsonBook("Dune", "Frank Herbert", "", Bookshelf.FICTION, BookCategory.LIKED, 1, "OL893415W", 12345, 1965)
         ));
 
-        CuratedListImporter.importParsedList(parsed, curatedListRepo, bookService, curatedRankingRepo, openLibraryService);
+        CuratedListImporter.importParsedList(parsed, curatedListRepo, bookService, curatedRankingRepo);
 
         ArgumentCaptor<CuratedRanking> rankingCaptor = ArgumentCaptor.forClass(CuratedRanking.class);
         verify(curatedRankingRepo).save(rankingCaptor.capture());
@@ -520,7 +618,6 @@ class CuratedListImporterTest {
         CuratedListRepository curatedListRepo = mock(CuratedListRepository.class);
         BookService bookService = mock(BookService.class);
         CuratedRankingRepository curatedRankingRepo = mock(CuratedRankingRepository.class);
-        OpenLibraryService openLibraryService = mock(OpenLibraryService.class);
 
         when(curatedListRepo.findByUsername("Test")).thenReturn(Optional.empty());
         when(curatedListRepo.save(any(CuratedList.class))).thenAnswer(inv -> {
@@ -528,18 +625,16 @@ class CuratedListImporterTest {
             cl.setId(1L);
             return cl;
         });
-        when(openLibraryService.searchBooks(anyString())).thenReturn(List.of());
         when(bookService.findOrCreateBook(any(), any(), anyString(), anyString(), any(), any()))
-                .thenAnswer(inv -> new Book(null, null, inv.getArgument(2), inv.getArgument(3), null, null));
+                .thenAnswer(inv -> new Book(inv.getArgument(0), null, inv.getArgument(2), inv.getArgument(3), null, null));
 
-        // Provide books out of rank order
         ParsedJsonList parsed = new ParsedJsonList("Test", null, List.of(
-                new JsonBook("Second", "Author B", "", Bookshelf.FICTION, BookCategory.LIKED, 2),
-                new JsonBook("First", "Author A", "", Bookshelf.FICTION, BookCategory.LIKED, 1),
-                new JsonBook("Third", "Author C", "", Bookshelf.FICTION, BookCategory.LIKED, 3)
+                new JsonBook("Second", "Author B", "", Bookshelf.FICTION, BookCategory.LIKED, 2, "OL2W", null, null),
+                new JsonBook("First", "Author A", "", Bookshelf.FICTION, BookCategory.LIKED, 1, "OL1W", null, null),
+                new JsonBook("Third", "Author C", "", Bookshelf.FICTION, BookCategory.LIKED, 3, "OL3W", null, null)
         ));
 
-        CuratedListImporter.importParsedList(parsed, curatedListRepo, bookService, curatedRankingRepo, openLibraryService);
+        CuratedListImporter.importParsedList(parsed, curatedListRepo, bookService, curatedRankingRepo);
 
         ArgumentCaptor<CuratedRanking> rankingCaptor = ArgumentCaptor.forClass(CuratedRanking.class);
         verify(curatedRankingRepo, org.mockito.Mockito.times(3)).save(rankingCaptor.capture());
@@ -558,7 +653,6 @@ class CuratedListImporterTest {
         CuratedListRepository curatedListRepo = mock(CuratedListRepository.class);
         BookService bookService = mock(BookService.class);
         CuratedRankingRepository curatedRankingRepo = mock(CuratedRankingRepository.class);
-        OpenLibraryService openLibraryService = mock(OpenLibraryService.class);
 
         when(curatedListRepo.findByUsername("Test")).thenReturn(Optional.empty());
         when(curatedListRepo.save(any(CuratedList.class))).thenAnswer(inv -> {
@@ -566,19 +660,17 @@ class CuratedListImporterTest {
             cl.setId(1L);
             return cl;
         });
-        when(openLibraryService.searchBooks(anyString())).thenReturn(List.of());
         when(bookService.findOrCreateBook(any(), any(), anyString(), anyString(), any(), any()))
-                .thenAnswer(inv -> new Book(null, null, inv.getArgument(2), inv.getArgument(3), null, null));
+                .thenAnswer(inv -> new Book(inv.getArgument(0), null, inv.getArgument(2), inv.getArgument(3), null, null));
 
-        // Mix of fiction/nonfiction, ranked/unranked
         ParsedJsonList parsed = new ParsedJsonList("Test", null, List.of(
-                new JsonBook("Fiction Ranked", "A", "", Bookshelf.FICTION, BookCategory.LIKED, 1),
-                new JsonBook("Nonfiction Unranked", "B", "", Bookshelf.NONFICTION, BookCategory.UNRANKED, null),
-                new JsonBook("Fiction Unranked", "C", "", Bookshelf.FICTION, BookCategory.UNRANKED, null),
-                new JsonBook("Nonfiction Ranked", "D", "", Bookshelf.NONFICTION, BookCategory.LIKED, 1)
+                new JsonBook("Fiction Ranked", "A", "", Bookshelf.FICTION, BookCategory.LIKED, 1, "OL1W", null, null),
+                new JsonBook("Nonfiction Unranked", "B", "", Bookshelf.NONFICTION, BookCategory.UNRANKED, null, "OL2W", null, null),
+                new JsonBook("Fiction Unranked", "C", "", Bookshelf.FICTION, BookCategory.UNRANKED, null, "OL3W", null, null),
+                new JsonBook("Nonfiction Ranked", "D", "", Bookshelf.NONFICTION, BookCategory.LIKED, 1, "OL4W", null, null)
         ));
 
-        CuratedListImporter.importParsedList(parsed, curatedListRepo, bookService, curatedRankingRepo, openLibraryService);
+        CuratedListImporter.importParsedList(parsed, curatedListRepo, bookService, curatedRankingRepo);
 
         ArgumentCaptor<CuratedRanking> rankingCaptor = ArgumentCaptor.forClass(CuratedRanking.class);
         verify(curatedRankingRepo, org.mockito.Mockito.times(4)).save(rankingCaptor.capture());
@@ -591,51 +683,26 @@ class CuratedListImporterTest {
         assertThat(saved.get(3).getBook().getTitle()).isEqualTo("Nonfiction Unranked");
     }
 
-    // --- importJsonBooks: OpenLibrary integration ---
+    // --- importJsonBooks: passes JSON fields directly to BookService ---
 
     @Test
-    void importUsesOpenLibraryResultWhenAvailable() {
+    void importPassesJsonFieldsDirectlyToBookService() {
         BookService bookService = mock(BookService.class);
         CuratedRankingRepository curatedRankingRepo = mock(CuratedRankingRepository.class);
-        OpenLibraryService openLibraryService = mock(OpenLibraryService.class);
 
-        OpenLibraryService.BookResult olResult = new OpenLibraryService.BookResult(
-                "OL123W", "OL456M", "Dune (OL)", "Frank Herbert (OL)", 1965, 12345, 10);
-        when(openLibraryService.searchBooks("Dune, Frank Herbert")).thenReturn(List.of(olResult));
-        Book book = new Book("OL123W", "OL456M", "Dune (OL)", "Frank Herbert (OL)", 1965, 12345);
-        when(bookService.findOrCreateBook("OL123W", "OL456M", "Dune (OL)", "Frank Herbert (OL)", 1965, 12345))
+        Book book = new Book("OL893415W", null, "Dune", "Frank Herbert", 1965, 12345);
+        when(bookService.findOrCreateBook("OL893415W", null, "Dune", "Frank Herbert", 1965, 12345))
                 .thenReturn(book);
 
         List<JsonBook> books = List.of(
-                new JsonBook("Dune", "Frank Herbert", "", Bookshelf.FICTION, BookCategory.LIKED, 1)
+                new JsonBook("Dune", "Frank Herbert", "", Bookshelf.FICTION, BookCategory.LIKED, 1, "OL893415W", 12345, 1965)
         );
 
         CuratedList curatedList = new CuratedList("Test");
         curatedList.setId(1L);
-        CuratedListImporter.importJsonBooks(curatedList, books, bookService, curatedRankingRepo, openLibraryService);
+        CuratedListImporter.importJsonBooks(curatedList, books, bookService, curatedRankingRepo);
 
-        verify(bookService).findOrCreateBook("OL123W", "OL456M", "Dune (OL)", "Frank Herbert (OL)", 1965, 12345);
-    }
-
-    @Test
-    void importFallsBackToJsonDataWhenNoOpenLibraryResult() {
-        BookService bookService = mock(BookService.class);
-        CuratedRankingRepository curatedRankingRepo = mock(CuratedRankingRepository.class);
-        OpenLibraryService openLibraryService = mock(OpenLibraryService.class);
-
-        when(openLibraryService.searchBooks(anyString())).thenReturn(List.of());
-        Book book = new Book(null, null, "Dune", "Frank Herbert", null, null);
-        when(bookService.findOrCreateBook(null, null, "Dune", "Frank Herbert", null, null)).thenReturn(book);
-
-        List<JsonBook> books = List.of(
-                new JsonBook("Dune", "Frank Herbert", "", Bookshelf.FICTION, BookCategory.LIKED, 1)
-        );
-
-        CuratedList curatedList = new CuratedList("Test");
-        curatedList.setId(1L);
-        CuratedListImporter.importJsonBooks(curatedList, books, bookService, curatedRankingRepo, openLibraryService);
-
-        verify(bookService).findOrCreateBook(null, null, "Dune", "Frank Herbert", null, null);
+        verify(bookService).findOrCreateBook("OL893415W", null, "Dune", "Frank Herbert", 1965, 12345);
     }
 
     // --- Helper ---

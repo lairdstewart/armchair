@@ -1,61 +1,76 @@
 {
-  "username": "Test Curated List",
-  "books": [
-    {
-      "rank": "1",
-      "title": "The Red and the Black",
-      "author": "Stendhal",
-      "category": "fiction",
-      "review": "Best translation is the one by Robert M. Adams."
-    },
-    {
-      "rank": "2",
-      "title": "Moby-Dick",
-      "author": "Melville",
-      "category": "fiction",
-      "review": ""
-    },
-    {
-      "rank": "3",
-      "title": "A Little Life",
-      "author": "Hanya Yanagihara",
-      "category": "fiction",
-      "review": "Operatically harrowing but no one could deny its power."
-    },
-    {
-      "rank": "1",
-      "title": "The Theory of Moral Sentiments",
-      "author": "Smith",
-      "category": "non-fiction",
-      "review": ""
-    },
-    {
-      "rank": "2",
-      "title": "In Praise of Commercial Culture",
-      "author": "Cowen",
-      "category": "non-fiction",
-      "review": "A compelling defense of market-driven art."
-    },
-    {
-      "rank": "",
-      "title": "Cryptonomicon",
-      "author": "Stephenson",
-      "category": "fiction",
-      "review": "A lot of science wrapped in a thrilling story."
-    },
-    {
-      "rank": "",
-      "title": "The Korean War",
-      "author": "Cumings",
-      "category": "non-fiction",
-      "review": ""
-    },
-    {
-      "rank": "",
-      "title": "The House of Mirth",
-      "author": "Wharton",
-      "category": "fiction",
-      "review": ""
-    }
-  ]
+  "username" : "Test Curated List",
+  "books" : [ {
+    "rank" : "1",
+    "title" : "The Red and the Black",
+    "author" : "Stendhal",
+    "category" : "fiction",
+    "review" : "Best translation is the one by Robert M. Adams.",
+    "work_olid" : "OL29697463W",
+    "cover_id" : null,
+    "first_publish_year" : "2017"
+  }, {
+    "rank" : "2",
+    "title" : "Moby-Dick",
+    "author" : "Melville",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL102749W",
+    "cover_id" : "10544254",
+    "first_publish_year" : "1851"
+  }, {
+    "rank" : "3",
+    "title" : "A Little Life",
+    "author" : "Hanya Yanagihara",
+    "category" : "fiction",
+    "review" : "Operatically harrowing but no one could deny its power.",
+    "work_olid" : "OL17370186W",
+    "cover_id" : "12065783",
+    "first_publish_year" : "2015"
+  }, {
+    "rank" : "1",
+    "title" : "The Theory of Moral Sentiments",
+    "author" : "Smith",
+    "category" : "non-fiction",
+    "review" : "",
+    "work_olid" : "OL4905700W",
+    "cover_id" : "2962984",
+    "first_publish_year" : "1986"
+  }, {
+    "rank" : "2",
+    "title" : "In Praise of Commercial Culture",
+    "author" : "Cowen",
+    "category" : "non-fiction",
+    "review" : "A compelling defense of market-driven art.",
+    "work_olid" : "OL489296W",
+    "cover_id" : "413401",
+    "first_publish_year" : "1998"
+  }, {
+    "rank" : "",
+    "title" : "Cryptonomicon",
+    "author" : "Stephenson",
+    "category" : "fiction",
+    "review" : "A lot of science wrapped in a thrilling story.",
+    "work_olid" : "OL38494W",
+    "cover_id" : "6424001",
+    "first_publish_year" : "1999"
+  }, {
+    "rank" : "",
+    "title" : "The Korean War",
+    "author" : "Cumings",
+    "category" : "non-fiction",
+    "review" : "",
+    "work_olid" : "OL15455133W",
+    "cover_id" : null,
+    "first_publish_year" : "2010"
+  }, {
+    "rank" : "",
+    "title" : "The House of Mirth",
+    "author" : "Wharton",
+    "category" : "fiction",
+    "review" : "",
+    "work_olid" : "OL98587W",
+    "cover_id" : "9329539",
+    "first_publish_year" : "1905"
+  } ]
 }
