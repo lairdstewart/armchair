@@ -3,11 +3,9 @@ package armchair.recommendation;
 import armchair.entity.Book;
 import armchair.entity.BookCategory;
 import armchair.entity.Bookshelf;
-import armchair.entity.CuratedList;
 import armchair.entity.CuratedRanking;
 import armchair.entity.Ranking;
 import armchair.repository.BookRepository;
-import armchair.repository.CuratedListRepository;
 import armchair.repository.CuratedRankingRepository;
 import armchair.repository.RankingRepository;
 import org.springframework.context.annotation.Primary;
@@ -43,16 +41,13 @@ public class CollaborativeFilteringAlgorithm implements RecommendationAlgorithm 
 
     private final RankingRepository rankingRepository;
     private final BookRepository bookRepository;
-    private final CuratedListRepository curatedListRepository;
     private final CuratedRankingRepository curatedRankingRepository;
 
     public CollaborativeFilteringAlgorithm(RankingRepository rankingRepository,
                                            BookRepository bookRepository,
-                                           CuratedListRepository curatedListRepository,
                                            CuratedRankingRepository curatedRankingRepository) {
         this.rankingRepository = rankingRepository;
         this.bookRepository = bookRepository;
-        this.curatedListRepository = curatedListRepository;
         this.curatedRankingRepository = curatedRankingRepository;
     }
 

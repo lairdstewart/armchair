@@ -8,7 +8,6 @@ import armchair.entity.CuratedRanking;
 import armchair.entity.Ranking;
 import armchair.entity.User;
 import armchair.repository.BookRepository;
-import armchair.repository.CuratedListRepository;
 import armchair.repository.CuratedRankingRepository;
 import armchair.repository.RankingRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -33,15 +32,13 @@ class CollaborativeFilteringAlgorithmTest {
     @Mock
     private BookRepository bookRepository;
     @Mock
-    private CuratedListRepository curatedListRepository;
-    @Mock
     private CuratedRankingRepository curatedRankingRepository;
 
     private CollaborativeFilteringAlgorithm algorithm;
 
     @BeforeEach
     void setUp() {
-        algorithm = new CollaborativeFilteringAlgorithm(rankingRepository, bookRepository, curatedListRepository, curatedRankingRepository);
+        algorithm = new CollaborativeFilteringAlgorithm(rankingRepository, bookRepository, curatedRankingRepository);
     }
 
     private static Book book(long id, String title) {
