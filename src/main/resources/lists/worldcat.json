@@ -1,5 +1,6 @@
 {
   "username" : "Top 100 Novels (Worldcat)",
+  "description" : "Worldcat's <a href=\"https://www.oclc.org/en/worldcat/library100.html\">The Library 100</a>.",
   "books" : [ {
     "rank" : "1",
     "title" : "Don Quixote",

@@ -1,5 +1,6 @@
 {
   "username": "100 Best Books of the 21st Century (The New York Times)",
+  "description" : "The New York Times' <a href=\"https://www.nytimes.com/interactive/2024/books/best-books-21st-century.html\">The 100 Best Books of the 21st Century</a>.",
   "books": [
     {
       "rank": "1",

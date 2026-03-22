@@ -1,5 +1,6 @@
 {
   "username" : "100 Best Novels (The Modern Library)",
+  "description" : "The Modern Library's <a href=\"https://sites.prh.com/modern-library-top-100\">100 Best Novels</a>.",
   "books" : [ {
     "rank" : "1",
     "title" : "ULYSSES",
