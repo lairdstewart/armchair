@@ -52,16 +52,16 @@ public class CollaborativeFilteringAlgorithm implements RecommendationAlgorithm 
     }
 
     @Override
-    public List<Book> getFictionRecommendations(Long userId, int limit) {
+    public List<ScoredBook> getFictionRecommendations(Long userId, int limit) {
         return getRecommendationsForBookshelf(userId, Bookshelf.FICTION, limit);
     }
 
     @Override
-    public List<Book> getNonfictionRecommendations(Long userId, int limit) {
+    public List<ScoredBook> getNonfictionRecommendations(Long userId, int limit) {
         return getRecommendationsForBookshelf(userId, Bookshelf.NONFICTION, limit);
     }
 
-    private List<Book> getRecommendationsForBookshelf(Long userId, Bookshelf bookshelf, int limit) {
+    private List<ScoredBook> getRecommendationsForBookshelf(Long userId, Bookshelf bookshelf, int limit) {
         // Get current user's scores for this bookshelf
         List<Ranking> myRankings = rankingRepository.findByUserIdAndBookshelfOrderByPositionAsc(userId, bookshelf);
         Map<Long, Double> myScores = computeUserScores(myRankings);
@@ -160,14 +160,15 @@ public class CollaborativeFilteringAlgorithm implements RecommendationAlgorithm 
         // Sort descending by score
         scoredCandidates.sort((a, b) -> Double.compare(b.getValue(), a.getValue()));
 
-        List<Book> result = scoredCandidates.stream()
+        List<ScoredBook> result = scoredCandidates.stream()
                 .limit(limit)
-                .map(e -> bookMap.get(e.getKey()))
+                .map(e -> new ScoredBook(bookMap.get(e.getKey()), e.getValue()))
                 .toList();
 
         if (result.isEmpty()) {
             return bookRepository.findRandomBooks().stream()
                     .limit(limit)
+                    .map(b -> new ScoredBook(b, 0.0))
                     .toList();
         }
 

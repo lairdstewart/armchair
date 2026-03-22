@@ -328,9 +328,9 @@ class CollaborativeFilteringAlgorithmTest {
             setupNoCuratedRankings(Bookshelf.FICTION);
             when(bookRepository.findRandomBooks()).thenReturn(List.of(random));
 
-            List<Book> recs = algorithm.getFictionRecommendations(1L, 10);
+            List<ScoredBook> recs = algorithm.getFictionRecommendations(1L, 10);
             assertEquals(1, recs.size());
-            assertEquals("Random", recs.get(0).getTitle());
+            assertEquals("Random", recs.get(0).book().getTitle());
         }
 
         @Test
@@ -346,9 +346,9 @@ class CollaborativeFilteringAlgorithmTest {
             setupNoCuratedRankings(Bookshelf.FICTION);
             when(bookRepository.findRandomBooks()).thenReturn(List.of(random));
 
-            List<Book> recs = algorithm.getFictionRecommendations(1L, 10);
+            List<ScoredBook> recs = algorithm.getFictionRecommendations(1L, 10);
             assertEquals(1, recs.size());
-            assertEquals("Random", recs.get(0).getTitle());
+            assertEquals("Random", recs.get(0).book().getTitle());
         }
 
         @Test
@@ -367,9 +367,9 @@ class CollaborativeFilteringAlgorithmTest {
                     ));
             setupNoCuratedRankings(Bookshelf.FICTION);
 
-            List<Book> recs = algorithm.getFictionRecommendations(1L, 10);
+            List<ScoredBook> recs = algorithm.getFictionRecommendations(1L, 10);
             assertEquals(1, recs.size());
-            assertEquals("Unique", recs.get(0).getTitle());
+            assertEquals("Unique", recs.get(0).book().getTitle());
         }
 
         @Test
@@ -399,10 +399,10 @@ class CollaborativeFilteringAlgorithmTest {
                     ));
             setupNoCuratedRankings(Bookshelf.FICTION);
 
-            List<Book> recs = algorithm.getFictionRecommendations(1L, 10);
+            List<ScoredBook> recs = algorithm.getFictionRecommendations(1L, 10);
             assertEquals(2, recs.size());
-            assertEquals("C", recs.get(0).getTitle());
-            assertEquals("D", recs.get(1).getTitle());
+            assertEquals("C", recs.get(0).book().getTitle());
+            assertEquals("D", recs.get(1).book().getTitle());
         }
 
         @Test
@@ -420,9 +420,9 @@ class CollaborativeFilteringAlgorithmTest {
                     ));
             setupNoCuratedRankings(Bookshelf.FICTION);
 
-            List<Book> recs = algorithm.getFictionRecommendations(1L, 10);
+            List<ScoredBook> recs = algorithm.getFictionRecommendations(1L, 10);
             assertEquals(1, recs.size());
-            assertEquals("B", recs.get(0).getTitle());
+            assertEquals("B", recs.get(0).book().getTitle());
         }
 
         @Test
@@ -443,7 +443,7 @@ class CollaborativeFilteringAlgorithmTest {
                     ));
             setupNoCuratedRankings(Bookshelf.FICTION);
 
-            List<Book> recs = algorithm.getFictionRecommendations(1L, 1);
+            List<ScoredBook> recs = algorithm.getFictionRecommendations(1L, 1);
             assertEquals(1, recs.size());
         }
 
@@ -472,11 +472,11 @@ class CollaborativeFilteringAlgorithmTest {
                             curatedRanking(100L, c, Bookshelf.FICTION, BookCategory.LIKED, 2)
                     ));
 
-            List<Book> recs = algorithm.getFictionRecommendations(1L, 10);
+            List<ScoredBook> recs = algorithm.getFictionRecommendations(1L, 10);
             // b and c are candidates (a is already owned). b should rank above c.
             assertEquals(2, recs.size());
-            assertEquals("B", recs.get(0).getTitle());
-            assertEquals("C", recs.get(1).getTitle());
+            assertEquals("B", recs.get(0).book().getTitle());
+            assertEquals("C", recs.get(1).book().getTitle());
         }
 
         @Test
@@ -495,9 +495,9 @@ class CollaborativeFilteringAlgorithmTest {
                     ));
             setupNoCuratedRankings(Bookshelf.NONFICTION);
 
-            List<Book> recs = algorithm.getNonfictionRecommendations(1L, 10);
+            List<ScoredBook> recs = algorithm.getNonfictionRecommendations(1L, 10);
             assertEquals(1, recs.size());
-            assertEquals("NF B", recs.get(0).getTitle());
+            assertEquals("NF B", recs.get(0).book().getTitle());
         }
 
         @Test
@@ -518,9 +518,9 @@ class CollaborativeFilteringAlgorithmTest {
                     .thenReturn(List.of());
             when(bookRepository.findRandomBooks()).thenReturn(List.of(random));
 
-            List<Book> recs = algorithm.getFictionRecommendations(1L, 10);
+            List<ScoredBook> recs = algorithm.getFictionRecommendations(1L, 10);
             assertEquals(1, recs.size());
-            assertEquals("Random", recs.get(0).getTitle());
+            assertEquals("Random", recs.get(0).book().getTitle());
         }
     }
 }

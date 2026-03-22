@@ -52,9 +52,9 @@ class FollowersLikedAlgorithmTest {
                 List.of(FOLLOWED_ID_1), BookCategory.LIKED, Bookshelf.FICTION))
                 .thenReturn(List.of(makeRanking(book, Bookshelf.FICTION, BookCategory.LIKED)));
 
-        List<Book> recs = algorithm.getFictionRecommendations(USER_ID, 10);
+        List<ScoredBook> recs = algorithm.getFictionRecommendations(USER_ID, 10);
 
-        assertThat(recs).containsExactly(book);
+        assertThat(recs).extracting(ScoredBook::book).containsExactly(book);
     }
 
     @Test
@@ -72,9 +72,9 @@ class FollowersLikedAlgorithmTest {
                         makeRanking(notRanked, Bookshelf.FICTION, BookCategory.LIKED)
                 ));
 
-        List<Book> recs = algorithm.getFictionRecommendations(USER_ID, 10);
+        List<ScoredBook> recs = algorithm.getFictionRecommendations(USER_ID, 10);
 
-        assertThat(recs).containsExactly(notRanked);
+        assertThat(recs).extracting(ScoredBook::book).containsExactly(notRanked);
     }
 
     @Test
@@ -84,9 +84,9 @@ class FollowersLikedAlgorithmTest {
         when(followRepository.findByFollowerId(USER_ID)).thenReturn(List.of());
         when(bookRepository.findRandomBooks()).thenReturn(List.of(randomBook));
 
-        List<Book> recs = algorithm.getFictionRecommendations(USER_ID, 10);
+        List<ScoredBook> recs = algorithm.getFictionRecommendations(USER_ID, 10);
 
-        assertThat(recs).containsExactly(randomBook);
+        assertThat(recs).extracting(ScoredBook::book).containsExactly(randomBook);
     }
 
     @Test
@@ -101,9 +101,9 @@ class FollowersLikedAlgorithmTest {
                 .thenReturn(List.of());
         when(bookRepository.findRandomBooks()).thenReturn(List.of(randomBook));
 
-        List<Book> recs = algorithm.getFictionRecommendations(USER_ID, 10);
+        List<ScoredBook> recs = algorithm.getFictionRecommendations(USER_ID, 10);
 
-        assertThat(recs).containsExactly(randomBook);
+        assertThat(recs).extracting(ScoredBook::book).containsExactly(randomBook);
     }
 
     @Test
@@ -121,7 +121,7 @@ class FollowersLikedAlgorithmTest {
                         makeRanking(sharedBook, Bookshelf.FICTION, BookCategory.LIKED)
                 ));
 
-        List<Book> recs = algorithm.getFictionRecommendations(USER_ID, 10);
+        List<ScoredBook> recs = algorithm.getFictionRecommendations(USER_ID, 10);
 
         assertThat(recs).hasSize(1);
     }
@@ -138,9 +138,9 @@ class FollowersLikedAlgorithmTest {
                 List.of(FOLLOWED_ID_1), BookCategory.LIKED, Bookshelf.FICTION))
                 .thenReturn(List.of(makeRanking(likedBook, Bookshelf.FICTION, BookCategory.LIKED)));
 
-        List<Book> recs = algorithm.getFictionRecommendations(USER_ID, 10);
+        List<ScoredBook> recs = algorithm.getFictionRecommendations(USER_ID, 10);
 
-        assertThat(recs).containsExactly(likedBook);
+        assertThat(recs).extracting(ScoredBook::book).containsExactly(likedBook);
     }
 
     @Test
@@ -155,8 +155,8 @@ class FollowersLikedAlgorithmTest {
                 List.of(FOLLOWED_ID_1), BookCategory.LIKED, Bookshelf.FICTION))
                 .thenReturn(List.of(makeRanking(fictionBook, Bookshelf.FICTION, BookCategory.LIKED)));
 
-        List<Book> fictionRecs = algorithm.getFictionRecommendations(USER_ID, 10);
-        assertThat(fictionRecs).containsExactly(fictionBook);
+        List<ScoredBook> fictionRecs = algorithm.getFictionRecommendations(USER_ID, 10);
+        assertThat(fictionRecs).extracting(ScoredBook::book).containsExactly(fictionBook);
     }
 
     @Test
@@ -170,9 +170,9 @@ class FollowersLikedAlgorithmTest {
                 List.of(FOLLOWED_ID_1), BookCategory.LIKED, Bookshelf.NONFICTION))
                 .thenReturn(List.of(makeRanking(nonfictionBook, Bookshelf.NONFICTION, BookCategory.LIKED)));
 
-        List<Book> recs = algorithm.getNonfictionRecommendations(USER_ID, 10);
+        List<ScoredBook> recs = algorithm.getNonfictionRecommendations(USER_ID, 10);
 
-        assertThat(recs).containsExactly(nonfictionBook);
+        assertThat(recs).extracting(ScoredBook::book).containsExactly(nonfictionBook);
     }
 
     @Test
@@ -192,7 +192,7 @@ class FollowersLikedAlgorithmTest {
                         makeRanking(book3, Bookshelf.FICTION, BookCategory.LIKED)
                 ));
 
-        List<Book> recs = algorithm.getFictionRecommendations(USER_ID, 2);
+        List<ScoredBook> recs = algorithm.getFictionRecommendations(USER_ID, 2);
 
         assertThat(recs).hasSize(2);
     }
@@ -210,9 +210,9 @@ class FollowersLikedAlgorithmTest {
                 .thenReturn(List.of(makeRanking(book, Bookshelf.FICTION, BookCategory.LIKED)));
         when(bookRepository.findRandomBooks()).thenReturn(List.of(randomBook));
 
-        List<Book> recs = algorithm.getFictionRecommendations(USER_ID, 10);
+        List<ScoredBook> recs = algorithm.getFictionRecommendations(USER_ID, 10);
 
-        assertThat(recs).containsExactly(randomBook);
+        assertThat(recs).extracting(ScoredBook::book).containsExactly(randomBook);
     }
 
     private static User userWithId(Long id) {

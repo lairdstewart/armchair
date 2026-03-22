@@ -44,11 +44,11 @@ public class HomeController extends BaseController {
         new RankedBookInfo(
             new BookInfo(null, "OL1168083W", null, "1984", "George Orwell",
                 null, 1949, 14416004),
-            "1", "liked"),
+            "92%", "liked"),
         new RankedBookInfo(
             new BookInfo(null, "OL64228W", null, "Brave New World", "Aldous Huxley",
                 null, 1932, 4022957),
-            "2", "liked")
+            "87%", "liked")
     );
 
     @GetMapping("/")

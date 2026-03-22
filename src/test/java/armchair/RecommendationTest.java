@@ -1,6 +1,6 @@
 package armchair;
 
-import armchair.dto.BookInfo;
+import armchair.dto.RankedBookInfo;
 import armchair.entity.Book;
 import armchair.entity.BookCategory;
 import armchair.entity.Bookshelf;
@@ -112,10 +112,10 @@ class RecommendationTest extends BaseIntegrationTest {
                 .andExpect(status().isOk())
                 .andReturn();
 
-        List<BookInfo> fictionRecs = (List<BookInfo>) result.getModelAndView().getModel().get("fictionRecs");
+        List<RankedBookInfo> fictionRecs = (List<RankedBookInfo>) result.getModelAndView().getModel().get("fictionRecs");
         assertThat(fictionRecs).isNotNull();
         assertThat(fictionRecs).isNotEmpty();
-        assertThat(fictionRecs).anyMatch(b -> "Recommended Book".equals(b.title()));
-        assertThat(fictionRecs).anyMatch(b -> "Great Author".equals(b.author()));
+        assertThat(fictionRecs).anyMatch(b -> "Recommended Book".equals(b.book().title()));
+        assertThat(fictionRecs).anyMatch(b -> "Great Author".equals(b.book().author()));
     }
 }

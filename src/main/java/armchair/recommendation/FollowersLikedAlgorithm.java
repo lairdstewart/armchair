@@ -1,9 +1,7 @@
 package armchair.recommendation;
 
-import armchair.entity.Book;
 import armchair.entity.BookCategory;
 import armchair.entity.Bookshelf;
-import armchair.entity.Follow;
 import armchair.entity.Ranking;
 import armchair.repository.BookRepository;
 import armchair.repository.FollowRepository;
@@ -30,16 +28,16 @@ public class FollowersLikedAlgorithm implements RecommendationAlgorithm {
     }
 
     @Override
-    public List<Book> getFictionRecommendations(Long userId, int limit) {
+    public List<ScoredBook> getFictionRecommendations(Long userId, int limit) {
         return getRecommendationsForBookshelf(userId, Bookshelf.FICTION, limit);
     }
 
     @Override
-    public List<Book> getNonfictionRecommendations(Long userId, int limit) {
+    public List<ScoredBook> getNonfictionRecommendations(Long userId, int limit) {
         return getRecommendationsForBookshelf(userId, Bookshelf.NONFICTION, limit);
     }
 
-    private List<Book> getRecommendationsForBookshelf(Long userId, Bookshelf bookshelf, int limit) {
+    private List<ScoredBook> getRecommendationsForBookshelf(Long userId, Bookshelf bookshelf, int limit) {
         List<Long> followedUserIds = followRepository.findByFollowerId(userId).stream()
                 .map(f -> f.getFollowed().getId())
                 .toList();
@@ -47,13 +45,14 @@ public class FollowersLikedAlgorithm implements RecommendationAlgorithm {
         if (!followedUserIds.isEmpty()) {
             Set<Long> ownBookIds = new HashSet<>(rankingRepository.findBookIdsByUserId(userId));
 
-            List<Book> socialRecs = rankingRepository
+            List<ScoredBook> socialRecs = rankingRepository
                     .findByUserIdInAndCategoryAndBookshelfOrderByPositionAsc(followedUserIds, BookCategory.LIKED, bookshelf)
                     .stream()
                     .map(Ranking::getBook)
                     .filter(book -> !ownBookIds.contains(book.getId()))
                     .distinct()
                     .limit(limit)
+                    .map(book -> new ScoredBook(book, 1.0))
                     .toList();
 
             if (!socialRecs.isEmpty()) {
@@ -63,6 +62,7 @@ public class FollowersLikedAlgorithm implements RecommendationAlgorithm {
 
         return bookRepository.findRandomBooks().stream()
                 .limit(limit)
+                .map(b -> new ScoredBook(b, 0.0))
                 .toList();
     }
 }

@@ -30,20 +30,20 @@
         </div>
         <div th:if="${fictionRankedCount >= minRankedBooks && !fictionRecs.isEmpty()}">
           <ol class="book-list">
-            <li th:each="book, iter : ${fictionRecs}">
-              <span class="book-number liked" th:text="${iter.index + 1}"></span>
-              <th:block th:replace="~{fragments :: bookEntry(${book}, ~{:: .fiction-rec-actions}, true, true)}">
+            <li th:each="rb : ${fictionRecs}">
+              <span class="book-percent" th:text="${rb.rankDisplay()}"></span>
+              <th:block th:replace="~{fragments :: bookEntry(${rb.book()}, ~{:: .fiction-rec-actions}, true, true)}">
                 <span class="fiction-rec-actions">
-                  <form th:if="${book.workOlid() != null && !userBooks.containsKey(book.workOlid())}" th:action="@{/add-to-reading-list}" method="POST" style="display: inline;">
-                    <input type="hidden" name="workOlid" th:value="${book.workOlid()}" />
-                    <input type="hidden" name="bookName" th:value="${book.title()}" />
-                    <input type="hidden" name="author" th:value="${book.author()}" />
-                    <input type="hidden" name="editionOlid" th:value="${book.editionOlid()}" />
+                  <form th:if="${rb.book().workOlid() != null && !userBooks.containsKey(rb.book().workOlid())}" th:action="@{/add-to-reading-list}" method="POST" style="display: inline;">
+                    <input type="hidden" name="workOlid" th:value="${rb.book().workOlid()}" />
+                    <input type="hidden" name="bookName" th:value="${rb.book().title()}" />
+                    <input type="hidden" name="author" th:value="${rb.book().author()}" />
+                    <input type="hidden" name="editionOlid" th:value="${rb.book().editionOlid()}" />
                     <input type="hidden" name="returnUrl" value="/recs" />
                     <button type="submit" class="book-action-link">want to read</button>
                   </form>
-                  <a th:if="${book.workOlid() != null && userBooks.containsKey(book.workOlid())}"
-                     th:href="@{/my-books(selectedBookshelf=${userBooks.get(book.workOlid()).bookshelf()})}"
+                  <a th:if="${rb.book().workOlid() != null && userBooks.containsKey(rb.book().workOlid())}"
+                     th:href="@{/my-books(selectedBookshelf=${userBooks.get(rb.book().workOlid()).bookshelf()})}"
                      class="book-action-link">view in library</a>
                 </span>
               </th:block>
@@ -61,20 +61,20 @@
         </div>
         <div th:if="${nonfictionRankedCount >= minRankedBooks && !nonfictionRecs.isEmpty()}">
           <ol class="book-list">
-            <li th:each="book, iter : ${nonfictionRecs}">
-              <span class="book-number liked" th:text="${iter.index + 1}"></span>
-              <th:block th:replace="~{fragments :: bookEntry(${book}, ~{:: .nonfiction-rec-actions}, true, true)}">
+            <li th:each="rb : ${nonfictionRecs}">
+              <span class="book-percent" th:text="${rb.rankDisplay()}"></span>
+              <th:block th:replace="~{fragments :: bookEntry(${rb.book()}, ~{:: .nonfiction-rec-actions}, true, true)}">
                 <span class="nonfiction-rec-actions">
-                  <form th:if="${book.workOlid() != null && !userBooks.containsKey(book.workOlid())}" th:action="@{/add-to-reading-list}" method="POST" style="display: inline;">
-                    <input type="hidden" name="workOlid" th:value="${book.workOlid()}" />
-                    <input type="hidden" name="bookName" th:value="${book.title()}" />
-                    <input type="hidden" name="author" th:value="${book.author()}" />
-                    <input type="hidden" name="editionOlid" th:value="${book.editionOlid()}" />
+                  <form th:if="${rb.book().workOlid() != null && !userBooks.containsKey(rb.book().workOlid())}" th:action="@{/add-to-reading-list}" method="POST" style="display: inline;">
+                    <input type="hidden" name="workOlid" th:value="${rb.book().workOlid()}" />
+                    <input type="hidden" name="bookName" th:value="${rb.book().title()}" />
+                    <input type="hidden" name="author" th:value="${rb.book().author()}" />
+                    <input type="hidden" name="editionOlid" th:value="${rb.book().editionOlid()}" />
                     <input type="hidden" name="returnUrl" value="/recs?tab=NONFICTION" />
                     <button type="submit" class="book-action-link">want to read</button>
                   </form>
-                  <a th:if="${book.workOlid() != null && userBooks.containsKey(book.workOlid())}"
-                     th:href="@{/my-books(selectedBookshelf=${userBooks.get(book.workOlid()).bookshelf()})}"
+                  <a th:if="${rb.book().workOlid() != null && userBooks.containsKey(rb.book().workOlid())}"
+                     th:href="@{/my-books(selectedBookshelf=${userBooks.get(rb.book().workOlid()).bookshelf()})}"
                      class="book-action-link">view in library</a>
                 </span>
               </th:block>

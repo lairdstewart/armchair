@@ -30,7 +30,8 @@ form {
 }
 
 .book-list li > .book-number,
-.book-list li > .book-number-spacer {
+.book-list li > .book-number-spacer,
+.book-list li > .book-percent {
   /* Center with book cover: (76px cover - 30px number) / 2 = 23px */
   margin-top: 23px;
 }
@@ -71,6 +72,27 @@ form {
   border-style: solid;
   box-sizing: content-box;
   user-select: none;
+}
+
+.book-percent {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  height: 26px;
+  padding: 0 3px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: bold;
+  color: black;
+  margin-right: 8px;
+  flex-shrink: 0;
+  border-width: 2px;
+  border-style: solid;
+  box-sizing: content-box;
+  user-select: none;
+  background-color: #E8F5E9;
+  border-color: #4CAF50;
 }
 
 .book-number.liked {

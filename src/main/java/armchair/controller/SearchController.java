@@ -4,6 +4,7 @@ import armchair.controller.ControllerUtils.PaginationResult;
 import armchair.dto.BookInfo;
 import armchair.dto.ProfileDisplay;
 import armchair.dto.ProfileDisplayWithFollow;
+import armchair.dto.RankedBookInfo;
 import armchair.dto.UserBookRank;
 import armchair.entity.Book;
 import armchair.entity.BookCategory;
@@ -15,6 +16,7 @@ import armchair.entity.RankingMode;
 import armchair.entity.RankingState;
 import armchair.entity.User;
 import armchair.recommendation.RecommendationAlgorithm;
+import armchair.recommendation.ScoredBook;
 import armchair.repository.BookRepository;
 import armchair.repository.CuratedListRepository;
 import armchair.repository.CuratedRankingRepository;
@@ -284,18 +286,16 @@ public class SearchController extends BaseController {
         long fictionRankedCount = rankingRepository.countByUserIdAndBookshelfAndCategoryIn(userId, Bookshelf.FICTION, RANKED_CATEGORIES);
         long nonfictionRankedCount = rankingRepository.countByUserIdAndBookshelfAndCategoryIn(userId, Bookshelf.NONFICTION, RANKED_CATEGORIES);
 
-        List<BookInfo> fictionRecs = List.of();
+        List<RankedBookInfo> fictionRecs = List.of();
         if (fictionRankedCount >= MIN_RANKED_BOOKS_FOR_RECS) {
             fictionRecs = recommendationAlgorithm.getFictionRecommendations(userId, RECOMMENDATIONS_LIMIT).stream()
-                    .map(b -> new BookInfo(b.getId(), b.getWorkOlid(), b.getEditionOlid(),
-                            b.getTitle(), b.getAuthor(), null, b.getFirstPublishYear(), b.getCoverId()))
+                    .map(SearchController::toRecDisplay)
                     .toList();
         }
-        List<BookInfo> nonfictionRecs = List.of();
+        List<RankedBookInfo> nonfictionRecs = List.of();
         if (nonfictionRankedCount >= MIN_RANKED_BOOKS_FOR_RECS) {
             nonfictionRecs = recommendationAlgorithm.getNonfictionRecommendations(userId, RECOMMENDATIONS_LIMIT).stream()
-                    .map(b -> new BookInfo(b.getId(), b.getWorkOlid(), b.getEditionOlid(),
-                            b.getTitle(), b.getAuthor(), null, b.getFirstPublishYear(), b.getCoverId()))
+                    .map(SearchController::toRecDisplay)
                     .toList();
         }
         model.addAttribute("fictionRecs", fictionRecs);
@@ -309,6 +309,14 @@ public class SearchController extends BaseController {
         model.addAttribute("userBooks", userBooks);
 
         return "recs";
+    }
+
+    private static RankedBookInfo toRecDisplay(ScoredBook sb) {
+        Book b = sb.book();
+        BookInfo info = new BookInfo(b.getId(), b.getWorkOlid(), b.getEditionOlid(),
+                b.getTitle(), b.getAuthor(), null, b.getFirstPublishYear(), b.getCoverId());
+        long pct = Math.round((sb.score() + 1.0) / 2.0 * 100.0);
+        return new RankedBookInfo(info, pct + "%", "liked");
     }
 
     @GetMapping("/editions/{workOlid}")
