@@ -5,17 +5,48 @@
     <title>Armchair</title>
     <link rel="stylesheet" th:href="@{/css/style.css}" />
     <link rel="icon" type="image/svg+xml" th:href="@{/logo.svg}" />
+    <script th:src="@{/js/cover-fallback.js}"></script>
   </head>
   <body>
     <div th:replace="~{fragments :: navbar}"></div>
     <div class="page-content">
       <h3>About</h3>
       <p>
-        Armchair is Beli for books. Rank the books you've read head-to-head, and
-        share your lists with friends. Discover new books from other users and
-        our curated lists. Rank 10 books to receive personalized
-        recommendations.
+        Welcome! Armchair is Beli for books. In Armchair you can review and rank
+        head-to-head your books:
       </p>
+
+      <ol class="book-list">
+        <li th:each="rb : ${exampleRankedBooks}">
+          <span th:class="'book-number ' + ${rb.categoryClass()}" th:text="${rb.rankDisplay()}"></span>
+          <th:block th:replace="~{fragments :: bookEntry(${rb.book()}, null, true, true)}" />
+        </li>
+      </ol>
+
+      <br>
+      <p>... follow friends and browse their lists:</p>
+
+      <div th:each="profile : ${exampleProfiles}" style="margin-bottom: 4px;">
+        <a th:href="@{/user/{username}(username=${profile.username()})}" th:text="${profile.username()}"></a>
+        <span th:text="${profile.stats()}"></span>
+      </div>
+
+      <br>
+      <p>... and receive personalized recommendations:</p>
+
+      <ol class="book-list">
+        <li th:each="rb : ${exampleRecs}">
+          <span th:class="'book-number ' + ${rb.categoryClass()}" th:text="${rb.rankDisplay()}"></span>
+          <th:block th:replace="~{fragments :: bookEntry(${rb.book()}, null, true, true)}" />
+        </li>
+      </ol>
+
+      <br>
+      <p>
+        More books are written each year than can be read in a lifetime. Armchair
+        helps you be thoughtful in choosing your next read.
+      </p>
+
       <h3>Privacy</h3>
       <p>
         Anyone can view profiles and curated lists. To create a list, you'll
@@ -35,5 +66,6 @@
         <a href="mailto:help@armchairlist.com">help@armchairlist.com</a>.
       </p>
     </div>
+    <script th:src="@{/js/review-toggle.js}"></script>
   </body>
 </html>
