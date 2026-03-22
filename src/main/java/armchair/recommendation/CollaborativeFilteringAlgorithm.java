@@ -31,7 +31,6 @@ import java.util.stream.Collectors;
 public class CollaborativeFilteringAlgorithm implements RecommendationAlgorithm {
 
     private static final int CONFIDENCE_THRESHOLD = 5;
-    private static final double CURATED_LIST_SCORE = 0.75;
     private static final double DISLIKED_SINGLE = -0.75;
     private static final double DISLIKED_LOW = -1.0;
     private static final double DISLIKED_RANGE = 0.5;
@@ -70,7 +69,7 @@ public class CollaborativeFilteringAlgorithm implements RecommendationAlgorithm 
     private List<Book> getRecommendationsForBookshelf(Long userId, Bookshelf bookshelf, int limit) {
         // Get current user's scores for this bookshelf
         List<Ranking> myRankings = rankingRepository.findByUserIdAndBookshelfOrderByPositionAsc(userId, bookshelf);
-        Map<Long, Double> myScores = computeUserScores(myRankings, false);
+        Map<Long, Double> myScores = computeUserScores(myRankings);
 
         // Book IDs the current user already has (across all bookshelves)
         Set<Long> ownBookIds = new HashSet<>(rankingRepository.findBookIdsByUserId(userId));
@@ -95,7 +94,7 @@ public class CollaborativeFilteringAlgorithm implements RecommendationAlgorithm 
             List<Ranking> otherRankings = entry.getValue();
             if (otherRankings.isEmpty()) continue;
 
-            Map<Long, Double> otherScores = computeUserScores(otherRankings, false);
+            Map<Long, Double> otherScores = computeUserScores(otherRankings);
 
             double similarity = computeSimilarity(myScores, otherScores);
             if (similarity != 0.0) {
@@ -178,8 +177,11 @@ public class CollaborativeFilteringAlgorithm implements RecommendationAlgorithm 
 
     private Map<Long, Double> computeCuratedScores(List<CuratedRanking> rankings) {
         Map<Long, Double> scores = new HashMap<>();
-        for (CuratedRanking r : rankings) {
-            scores.put(r.getBook().getId(), CURATED_LIST_SCORE);
+        int n = rankings.size();
+        for (int idx = 0; idx < n; idx++) {
+            int i = (n - 1) - idx;
+            double score = computeScore(BookCategory.LIKED, i, n);
+            scores.put(rankings.get(idx).getBook().getId(), score);
         }
         return scores;
     }
@@ -189,15 +191,8 @@ public class CollaborativeFilteringAlgorithm implements RecommendationAlgorithm 
      * Rankings are ordered by position ascending (position 0 = best).
      * The algorithm wants i=0 as worst, so we reverse: i = (N-1) - idx.
      */
-    Map<Long, Double> computeUserScores(List<Ranking> rankings, boolean isCurated) {
+    Map<Long, Double> computeUserScores(List<Ranking> rankings) {
         Map<Long, Double> scores = new HashMap<>();
-
-        if (isCurated) {
-            for (Ranking r : rankings) {
-                scores.put(r.getBook().getId(), CURATED_LIST_SCORE);
-            }
-            return scores;
-        }
 
         // Group by category, preserving position order
         Map<BookCategory, List<Ranking>> byCategory = new HashMap<>();

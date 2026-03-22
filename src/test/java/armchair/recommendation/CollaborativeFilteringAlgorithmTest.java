@@ -168,21 +168,8 @@ class CollaborativeFilteringAlgorithmTest {
 
         @Test
         void emptyRankingsReturnEmptyMap() {
-            Map<Long, Double> scores = algorithm.computeUserScores(List.of(), false);
+            Map<Long, Double> scores = algorithm.computeUserScores(List.of());
             assertTrue(scores.isEmpty());
-        }
-
-        @Test
-        void curatedUserGetsFixedScore() {
-            Book b1 = book(1L, "Book 1");
-            Book b2 = book(2L, "Book 2");
-            List<Ranking> rankings = List.of(
-                    ranking(1L, b1, Bookshelf.FICTION, BookCategory.LIKED, 0),
-                    ranking(1L, b2, Bookshelf.FICTION, BookCategory.DISLIKED, 1)
-            );
-            Map<Long, Double> scores = algorithm.computeUserScores(rankings, true);
-            assertEquals(0.75, scores.get(1L));
-            assertEquals(0.75, scores.get(2L));
         }
 
         @Test
@@ -193,7 +180,7 @@ class CollaborativeFilteringAlgorithmTest {
                     ranking(1L, b1, Bookshelf.FICTION, BookCategory.LIKED, 0),
                     ranking(1L, b2, Bookshelf.FICTION, BookCategory.UNRANKED, 1)
             );
-            Map<Long, Double> scores = algorithm.computeUserScores(rankings, false);
+            Map<Long, Double> scores = algorithm.computeUserScores(rankings);
             assertTrue(scores.containsKey(1L));
             assertFalse(scores.containsKey(2L));
         }
@@ -204,7 +191,7 @@ class CollaborativeFilteringAlgorithmTest {
             List<Ranking> rankings = List.of(
                     ranking(1L, b, Bookshelf.FICTION, BookCategory.LIKED, 0)
             );
-            Map<Long, Double> scores = algorithm.computeUserScores(rankings, false);
+            Map<Long, Double> scores = algorithm.computeUserScores(rankings);
             // Single LIKED book: n=1, computeScore returns 0.75
             assertEquals(0.75, scores.get(1L), 1e-9);
         }
@@ -215,7 +202,7 @@ class CollaborativeFilteringAlgorithmTest {
             List<Ranking> rankings = List.of(
                     ranking(1L, b, Bookshelf.FICTION, BookCategory.DISLIKED, 0)
             );
-            Map<Long, Double> scores = algorithm.computeUserScores(rankings, false);
+            Map<Long, Double> scores = algorithm.computeUserScores(rankings);
             assertEquals(-0.75, scores.get(1L), 1e-9);
         }
 
@@ -225,7 +212,7 @@ class CollaborativeFilteringAlgorithmTest {
             List<Ranking> rankings = List.of(
                     ranking(1L, b, Bookshelf.FICTION, BookCategory.OK, 0)
             );
-            Map<Long, Double> scores = algorithm.computeUserScores(rankings, false);
+            Map<Long, Double> scores = algorithm.computeUserScores(rankings);
             assertEquals(0.0, scores.get(1L), 1e-9);
         }
 
@@ -239,7 +226,7 @@ class CollaborativeFilteringAlgorithmTest {
                     ranking(1L, best, Bookshelf.FICTION, BookCategory.LIKED, 0),
                     ranking(1L, worst, Bookshelf.FICTION, BookCategory.LIKED, 1)
             );
-            Map<Long, Double> scores = algorithm.computeUserScores(rankings, false);
+            Map<Long, Double> scores = algorithm.computeUserScores(rankings);
             // n=2, best is idx=0 -> i=(2-1)-0=1 -> 0.5 + 0.5*1/1 = 1.0
             assertEquals(1.0, scores.get(1L), 1e-9);
             // worst is idx=1 -> i=(2-1)-1=0 -> 0.5 + 0.5*0/1 = 0.5
@@ -255,7 +242,7 @@ class CollaborativeFilteringAlgorithmTest {
                     ranking(1L, best, Bookshelf.FICTION, BookCategory.DISLIKED, 0),
                     ranking(1L, worst, Bookshelf.FICTION, BookCategory.DISLIKED, 1)
             );
-            Map<Long, Double> scores = algorithm.computeUserScores(rankings, false);
+            Map<Long, Double> scores = algorithm.computeUserScores(rankings);
             // best: idx=0 -> i=1 -> -1.0 + 0.5*1/1 = -0.5
             assertEquals(-0.5, scores.get(1L), 1e-9);
             // worst: idx=1 -> i=0 -> -1.0 + 0.5*0/1 = -1.0
@@ -271,7 +258,7 @@ class CollaborativeFilteringAlgorithmTest {
                     ranking(1L, best, Bookshelf.FICTION, BookCategory.OK, 0),
                     ranking(1L, worst, Bookshelf.FICTION, BookCategory.OK, 1)
             );
-            Map<Long, Double> scores = algorithm.computeUserScores(rankings, false);
+            Map<Long, Double> scores = algorithm.computeUserScores(rankings);
             // best: idx=0 -> i=1 -> -0.5 + 1.0*1/1 = 0.5
             assertEquals(0.5, scores.get(1L), 1e-9);
             // worst: idx=1 -> i=0 -> -0.5 + 1.0*0/1 = -0.5
@@ -288,7 +275,7 @@ class CollaborativeFilteringAlgorithmTest {
                     ranking(1L, ok, Bookshelf.FICTION, BookCategory.OK, 1),
                     ranking(1L, disliked, Bookshelf.FICTION, BookCategory.DISLIKED, 2)
             );
-            Map<Long, Double> scores = algorithm.computeUserScores(rankings, false);
+            Map<Long, Double> scores = algorithm.computeUserScores(rankings);
             // Each category has n=1, so single-item formulas apply
             assertEquals(0.75, scores.get(1L), 1e-9);   // LIKED single
             assertEquals(0.0, scores.get(3L), 1e-9);    // OK single
@@ -305,7 +292,7 @@ class CollaborativeFilteringAlgorithmTest {
                     ranking(1L, b1, Bookshelf.FICTION, BookCategory.LIKED, 1),
                     ranking(1L, b2, Bookshelf.FICTION, BookCategory.LIKED, 2)
             );
-            Map<Long, Double> scores = algorithm.computeUserScores(rankings, false);
+            Map<Long, Double> scores = algorithm.computeUserScores(rankings);
             // n=3
             // b0: idx=0 -> i=2 -> 0.5 + 0.5*2/2 = 1.0
             assertEquals(1.0, scores.get(1L), 1e-9);
@@ -464,8 +451,8 @@ class CollaborativeFilteringAlgorithmTest {
         }
 
         @Test
-        void curatedListScoresAreFlat() {
-            // A curated list's books all get 0.75 regardless of category/position
+        void curatedListUsesPositionBasedScoring() {
+            // Curated list books are scored by position like LIKED books [0.5, 1.0]
             Book a = book(1L, "A");
             Book b = book(2L, "B");
             Book c = book(3L, "C");
@@ -480,7 +467,7 @@ class CollaborativeFilteringAlgorithmTest {
                             ranking(1L, a, Bookshelf.FICTION, BookCategory.LIKED, 0)
                     ));
 
-            // Curated list has books in different categories - all get flat 0.75
+            // Curated list: a(pos 0) > b(pos 1) > c(pos 2)
             when(curatedRankingRepository.findByBookshelfOrderByCuratedListIdAscPositionAsc(Bookshelf.FICTION))
                     .thenReturn(List.of(
                             curatedRanking(100L, a, Bookshelf.FICTION, BookCategory.LIKED, 0),
@@ -489,8 +476,10 @@ class CollaborativeFilteringAlgorithmTest {
                     ));
 
             List<Book> recs = algorithm.getFictionRecommendations(1L, 10);
-            // Both b and c should be recommended with same score (0.75 * similarity)
+            // b and c are candidates (a is already owned). b should rank above c.
             assertEquals(2, recs.size());
+            assertEquals("B", recs.get(0).getTitle());
+            assertEquals("C", recs.get(1).getTitle());
         }
 
         @Test
