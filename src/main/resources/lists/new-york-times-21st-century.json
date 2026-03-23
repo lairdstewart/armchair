@@ -1,6 +1,6 @@
 {
   "username": "100 Best Books of the 21st Century (The New York Times)",
-  "description" : "The New York Times' <a href=\"https://www.nytimes.com/interactive/2024/books/best-books-21st-century.html\">The 100 Best Books of the 21st Century</a>.",
+  "description": "The New York Times' <a href=\"https://www.nytimes.com/interactive/2024/books/best-books-21st-century.html\">The 100 Best Books of the 21st Century</a>.",
   "books": [
     {
       "rank": "1",
@@ -368,9 +368,9 @@
       "author": "Annie Ernaux; translated by Alison L. Strayer",
       "category": "non-fiction",
       "review": "Spanning decades, this is an outlier in Ernaux’s oeuvre; unlike her other books, with their tight close-ups on moments in her life, here such intimacies are embedded in the larger sweep of social history. She moves between the chorus of conventional wisdom and the specifics of her own experiences, showing how even an artist with such a singular vision could recognize herself as a creature of her cohort and her culture. Most moving to me is how she begins and ends by listing images she can still recall — a merry-go-round in the park; graffiti in a restroom — that have been inscribed into her memory, yet are ultimately ephemeral. — Jennifer Szalai",
-      "work_olid": "OL45109W",
-      "cover_id": "5935009",
-      "first_publish_year": "1722"
+      "work_olid": "OL102389W",
+      "cover_id": "968944",
+      "first_publish_year": "2001"
     },
     {
       "rank": "38",
@@ -718,9 +718,9 @@
       "author": "Svetlana Alexievich; translated by Bela Shayevich",
       "category": "non-fiction",
       "review": "Of all the 20th century’s grand failed experiments, few came to more inglorious ends than the aspiring empire known, for a scant seven decades, as the U.S.S.R. The death of the dream of Communism reverberates through the Nobel-winning Alexievich’s oral history, and her unflinching portrait of the people who survived the Soviet state (or didn’t) — ex-prisoners, Communist Party officials, ordinary citizens of all stripes — makes for an excoriating, eye-opening read.",
-      "work_olid": "OL27872715W",
-      "cover_id": null,
-      "first_publish_year": "2022"
+      "work_olid": "OL16813790W",
+      "cover_id": "14341222",
+      "first_publish_year": "2013"
     },
     {
       "rank": "73",
@@ -828,9 +828,9 @@
       "author": "Benjamín Labatut; translated by Adrian Nathan West",
       "category": "fiction",
       "review": "You don’t have to know anything about quantum theory to start reading this book, a deeply researched, exquisitely imagined group portrait of tormented geniuses. By the end, you’ll know enough to be terrified. Labatut is interested in how the pursuit of scientific certainty can lead to, or arise from, states of extreme psychological and spiritual upheaval. His characters — Niels Bohr, Werner Heisenberg and Erwin Schrödinger, among others — discover a universe that defies rational comprehension. After them, “scientific method and its object could no longer be prised apart.” That may sound abstract, but in Labatut’s hands the story of quantum physics is violent, suspenseful and finally heartbreaking. — A.O. Scott",
-      "work_olid": "OL27515826W",
-      "cover_id": null,
-      "first_publish_year": "2021"
+      "work_olid": "OL28769111W",
+      "cover_id": "11416803",
+      "first_publish_year": "2019"
     },
     {
       "rank": "84",
