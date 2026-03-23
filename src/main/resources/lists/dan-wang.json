@@ -1,644 +1,716 @@
 {
-  "username" : "Dan Wang",
-  "description" : "Curated from <a href=\"https://danwang.co/books/\">danwang.co/books</a>. Dan Wang is research fellow at Stanford's Hoover Indstitution focused on technology and China",
-  "books" : [ {
-    "rank" : "1",
-    "title" : "The Red and the Black",
-    "author" : "Stendhal",
-    "category" : "fiction",
-    "review" : "Best translation is the one by Robert M. Adams. Burton Raffel translation is good too.",
-    "work_olid" : "OL29697463W",
-    "cover_id" : null,
-    "first_publish_year" : "2017"
-  }, {
-    "rank" : "2",
-    "title" : "The Theory of Moral Sentiments",
-    "author" : "Smith",
-    "category" : "non-fiction",
-    "review" : "",
-    "work_olid" : "OL4905700W",
-    "cover_id" : "2962984",
-    "first_publish_year" : "1986"
-  }, {
-    "rank" : "3",
-    "title" : "Moby-Dick",
-    "author" : "Melville",
-    "category" : "fiction",
-    "review" : "",
-    "work_olid" : "OL102749W",
-    "cover_id" : "10544254",
-    "first_publish_year" : "1851"
-  }, {
-    "rank" : "4",
-    "title" : "In Praise of Commercial Culture",
-    "author" : "Cowen",
-    "category" : "non-fiction",
-    "review" : "",
-    "work_olid" : "OL489296W",
-    "cover_id" : "413401",
-    "first_publish_year" : "1998"
-  }, {
-    "rank" : "5",
-    "title" : "The House of Mirth",
-    "author" : "Wharton",
-    "category" : "fiction",
-    "review" : "",
-    "work_olid" : "OL98587W",
-    "cover_id" : "9329539",
-    "first_publish_year" : "1905"
-  }, {
-    "rank" : "6",
-    "title" : "The Constitution of Liberty",
-    "author" : "Hayek",
-    "category" : "non-fiction",
-    "review" : "",
-    "work_olid" : "OL1164995W",
-    "cover_id" : "8151148",
-    "first_publish_year" : "1960"
-  }, {
-    "rank" : "7",
-    "title" : "The Rest is Noise",
-    "author" : "Ross",
-    "category" : "non-fiction",
-    "review" : "Runs through the personalities of the 20th century. My favorite book on music.",
-    "work_olid" : "OL265777W",
-    "cover_id" : "1188468",
-    "first_publish_year" : "2007"
-  }, {
-    "rank" : "8",
-    "title" : "Simple Rules for a Complex World",
-    "author" : "Epstein",
-    "category" : "non-fiction",
-    "review" : "",
-    "work_olid" : "OL16959168W",
-    "cover_id" : "414016",
-    "first_publish_year" : "1995"
-  }, {
-    "rank" : "9",
-    "title" : "Swann's Way",
-    "author" : "Proust",
-    "category" : "fiction",
-    "review" : "Translation by Lydia Davis",
-    "work_olid" : "OL40603375W",
-    "cover_id" : null,
-    "first_publish_year" : "2016"
-  }, {
-    "rank" : "10",
-    "title" : "Zero to One",
-    "author" : "Thiel & Masters",
-    "category" : "non-fiction",
-    "review" : "Based on CS 183 lecture notes. If you must pick one, read the lecture notes. The radicalism of the ideas were mainstreamed for the book.",
-    "work_olid" : "OL17078706W",
-    "cover_id" : "9002334",
-    "first_publish_year" : "2001"
-  }, {
-    "rank" : "11",
-    "title" : "Micromotives and Macrobehavior",
-    "author" : "Schelling",
-    "category" : "non-fiction",
-    "review" : "",
-    "work_olid" : "OL2259853W",
-    "cover_id" : "4614128",
-    "first_publish_year" : "1978"
-  }, {
-    "rank" : "12",
-    "title" : "The Strategy of Conflict",
-    "author" : "Schelling",
-    "category" : "non-fiction",
-    "review" : "",
-    "work_olid" : "OL2259845W",
-    "cover_id" : "414074",
-    "first_publish_year" : "1960"
-  }, {
-    "rank" : "13",
-    "title" : "The Machinery of Freedom",
-    "author" : "Friedman",
-    "category" : "non-fiction",
-    "review" : "",
-    "work_olid" : "OL3256701W",
-    "cover_id" : "604607",
-    "first_publish_year" : "1973"
-  }, {
-    "rank" : "14",
-    "title" : "Dao De Jing",
-    "author" : "Laozi",
-    "category" : "non-fiction",
-    "review" : "",
-    "work_olid" : "OL25202530W",
-    "cover_id" : "13270881",
-    "first_publish_year" : "2001"
-  }, {
-    "rank" : "15",
-    "title" : "1491",
-    "author" : "Charles C. Mann",
-    "category" : "non-fiction",
-    "review" : "",
-    "work_olid" : "OL3494320W",
-    "cover_id" : "803118",
-    "first_publish_year" : "2005"
-  }, {
-    "rank" : "16",
-    "title" : "Discover Your Inner Economist",
-    "author" : "Cowen",
-    "category" : "non-fiction",
-    "review" : "",
-    "work_olid" : "OL489305W",
-    "cover_id" : "8259671",
-    "first_publish_year" : "2007"
-  }, {
-    "rank" : "17",
-    "title" : "More Money Than God",
-    "author" : "Mallaby",
-    "category" : "non-fiction",
-    "review" : "",
-    "work_olid" : "OL15598621W",
-    "cover_id" : "7608213",
-    "first_publish_year" : "2010"
-  }, {
-    "rank" : "18",
-    "title" : "The Idea Factory",
-    "author" : "Gertner",
-    "category" : "non-fiction",
-    "review" : "History of the place that labs that developed radar, transistors, satellites, cell phone telephony, and more.",
-    "work_olid" : "OL16184356W",
-    "cover_id" : "7272459",
-    "first_publish_year" : "2012"
-  }, {
-    "rank" : "19",
-    "title" : "Worldly Philosopher: The Odyssey of Albert O. Hirschman",
-    "author" : "Adelman",
-    "category" : "non-fiction",
-    "review" : "",
-    "work_olid" : "OL19968864W",
-    "cover_id" : "13085008",
-    "first_publish_year" : "2013"
-  }, {
-    "rank" : "20",
-    "title" : "The Charterhouse of Parma",
-    "author" : "Stendhal",
-    "category" : "fiction",
-    "review" : "",
-    "work_olid" : "OL33927903W",
-    "cover_id" : null,
-    "first_publish_year" : "1944"
-  }, {
-    "rank" : "21",
-    "title" : "The Rational Optimist",
-    "author" : "Ridley",
-    "category" : "non-fiction",
-    "review" : "A wonderful book about the scientific achievements that's given us better nutrition, longer lifespans, and easier access to energy, etc.",
-    "work_olid" : "OL14928967W",
-    "cover_id" : "7024445",
-    "first_publish_year" : "2010"
-  }, {
-    "rank" : "22",
-    "title" : "Dialogues (Crito and Phaedo)",
-    "author" : "Plato",
-    "category" : "non-fiction",
-    "review" : "In particular Crito and Phaedo.",
-    "work_olid" : "OL43177762W",
-    "cover_id" : null,
-    "first_publish_year" : "1899"
-  }, {
-    "rank" : "23",
-    "title" : "The Great Stagnation",
-    "author" : "Cowen",
-    "category" : "non-fiction",
-    "review" : "",
-    "work_olid" : "OL17569194W",
-    "cover_id" : "7839953",
-    "first_publish_year" : "2011"
-  }, {
-    "rank" : "24",
-    "title" : "Average is Over",
-    "author" : "Cowen",
-    "category" : "non-fiction",
-    "review" : "",
-    "work_olid" : "OL17362758W",
-    "cover_id" : "13048107",
-    "first_publish_year" : "2013"
-  }, {
-    "rank" : "25",
-    "title" : "Bonfire of the Vanities",
-    "author" : "Wolfe",
-    "category" : "fiction",
-    "review" : "",
-    "work_olid" : "OL1925470W",
-    "cover_id" : "10548223",
-    "first_publish_year" : "1987"
-  }, {
-    "rank" : "26",
-    "title" : "Effi Briest",
-    "author" : "Fontane",
-    "category" : "fiction",
-    "review" : "Translation by Ritchie Robertson. There's so much nuance; the most exciting plot detail isn't even described, only discussed afterwards.",
-    "work_olid" : "OL857189W",
-    "cover_id" : "756212",
-    "first_publish_year" : "1894"
-  }, {
-    "rank" : "27",
-    "title" : "Cousin Bette",
-    "author" : "Balzac",
-    "category" : "fiction",
-    "review" : "",
-    "work_olid" : "OL85232W",
-    "cover_id" : "8243268",
-    "first_publish_year" : "1888"
-  }, {
-    "rank" : "28",
-    "title" : "Lights in the Tunnel",
-    "author" : "Ford",
-    "category" : "non-fiction",
-    "review" : "",
-    "work_olid" : "OL16650228W",
-    "cover_id" : "7127983",
-    "first_publish_year" : "2009"
-  }, {
-    "rank" : "29",
-    "title" : "Beware of Pity",
-    "author" : "Zweig",
-    "category" : "fiction",
-    "review" : "",
-    "work_olid" : "OL7700937W",
-    "cover_id" : null,
-    "first_publish_year" : "1974"
-  }, {
-    "rank" : "30",
-    "title" : "Radicals for Capitalism",
-    "author" : "Doherty",
-    "category" : "non-fiction",
-    "review" : "Details the rise of the American libertarian movement. Serious study, but the personalities are so crazy that it's fun to read.",
-    "work_olid" : "OL3496646W",
-    "cover_id" : "852967",
-    "first_publish_year" : "2007"
-  }, {
-    "rank" : "31",
-    "title" : "Breakfast at Tiffany's",
-    "author" : "Capote",
-    "category" : "fiction",
-    "review" : "",
-    "work_olid" : "OL1992167W",
-    "cover_id" : "100108",
-    "first_publish_year" : "1956"
-  }, {
-    "rank" : "32",
-    "title" : "The Economic Naturalist",
-    "author" : "Frank",
-    "category" : "non-fiction",
-    "review" : "Short stories about the economic way of thinking.",
-    "work_olid" : "OL1980810W",
-    "cover_id" : "5048635",
-    "first_publish_year" : "2007"
-  }, {
-    "rank" : "33",
-    "title" : "Steve Jobs",
-    "author" : "Isaacson",
-    "category" : "non-fiction",
-    "review" : "",
-    "work_olid" : "OL16085155W",
-    "cover_id" : "12374726",
-    "first_publish_year" : "2011"
-  }, {
-    "rank" : "34",
-    "title" : "Macbeth",
-    "author" : "Shakespeare",
-    "category" : "fiction",
-    "review" : "",
-    "work_olid" : "OL258902W",
-    "cover_id" : "872432",
-    "first_publish_year" : "1508"
-  }, {
-    "rank" : "35",
-    "title" : "Romeo and Juliet",
-    "author" : "Shakespeare",
-    "category" : "fiction",
-    "review" : "",
-    "work_olid" : "OL362427W",
-    "cover_id" : "8257991",
-    "first_publish_year" : "1597"
-  }, {
-    "rank" : "36",
-    "title" : "Merchant of Venice",
-    "author" : "Shakespeare",
-    "category" : "fiction",
-    "review" : "",
-    "work_olid" : "OL258758W",
-    "cover_id" : "7182819",
-    "first_publish_year" : "1600"
-  }, {
-    "rank" : "37",
-    "title" : "Othello",
-    "author" : "Shakespeare",
-    "category" : "fiction",
-    "review" : "",
-    "work_olid" : "OL258850W",
-    "cover_id" : "7165018",
-    "first_publish_year" : "1622"
-  }, {
-    "rank" : "38",
-    "title" : "The Unwinding",
-    "author" : "Packer",
-    "category" : "non-fiction",
-    "review" : "",
-    "work_olid" : "OL17081413W",
-    "cover_id" : "9046566",
-    "first_publish_year" : "2013"
-  }, {
-    "rank" : "39",
-    "title" : "The Count of Monte Cristo",
-    "author" : "Dumas",
-    "category" : "fiction",
-    "review" : "",
-    "work_olid" : "OL20201553W",
-    "cover_id" : "8851690",
-    "first_publish_year" : "1920"
-  }, {
-    "rank" : "40",
-    "title" : "Atlas Shrugged",
-    "author" : "Rand",
-    "category" : "fiction",
-    "review" : "",
-    "work_olid" : "OL731644W",
-    "cover_id" : "362277",
-    "first_publish_year" : "1936"
-  }, {
-    "rank" : "41",
-    "title" : "The Fountainhead",
-    "author" : "Rand",
-    "category" : "fiction",
-    "review" : "",
-    "work_olid" : "OL731663W",
-    "cover_id" : "6767765",
-    "first_publish_year" : "1943"
-  }, {
-    "rank" : "42",
-    "title" : "The World as I Found It",
-    "author" : "Duffy",
-    "category" : "fiction",
-    "review" : "A novel about the interactions of Russell, Wittgenstein, and G.E. Moore. Very fun.",
-    "work_olid" : "OL3342936W",
-    "cover_id" : "4116226",
-    "first_publish_year" : "1987"
-  }, {
-    "rank" : "43",
-    "title" : "The Castle",
-    "author" : "Kafka",
-    "category" : "fiction",
-    "review" : "",
-    "work_olid" : "OL29274029W",
-    "cover_id" : null,
-    "first_publish_year" : "1957"
-  }, {
-    "rank" : "44",
-    "title" : "The Metamorphosis",
-    "author" : "Kafka",
-    "category" : "fiction",
-    "review" : "",
-    "work_olid" : "OL15176533W",
-    "cover_id" : "6889547",
-    "first_publish_year" : "1996"
-  }, {
-    "rank" : "45",
-    "title" : "Stoner",
-    "author" : "Williams",
-    "category" : "fiction",
-    "review" : "",
-    "work_olid" : "OL3511459W",
-    "cover_id" : "8310729",
-    "first_publish_year" : "1965"
-  }, {
-    "rank" : "46",
-    "title" : "The Undercover Economist",
-    "author" : "Harford",
-    "category" : "non-fiction",
-    "review" : "Best parts were the sections about price discrimination.",
-    "work_olid" : "OL16308405W",
-    "cover_id" : "8168506",
-    "first_publish_year" : "2012"
-  }, {
-    "rank" : "47",
-    "title" : "Lolita",
-    "author" : "Nabokov",
-    "category" : "fiction",
-    "review" : "",
-    "work_olid" : "OL627084W",
-    "cover_id" : "12984540",
-    "first_publish_year" : "1777"
-  }, {
-    "rank" : "48",
-    "title" : "The Myth of the Rational Voter",
-    "author" : "Caplan",
-    "category" : "non-fiction",
-    "review" : "",
-    "work_olid" : "OL8328796W",
-    "cover_id" : "444409",
-    "first_publish_year" : "2007"
-  }, {
-    "rank" : "49",
-    "title" : "Germinal",
-    "author" : "Zola",
-    "category" : "fiction",
-    "review" : "",
-    "work_olid" : "OL118986W",
-    "cover_id" : "8236935",
-    "first_publish_year" : "1885"
-  }, {
-    "rank" : "50",
-    "title" : "The Black Swan",
-    "author" : "Taleb",
-    "category" : "non-fiction",
-    "review" : "",
-    "work_olid" : "OL3295030W",
-    "cover_id" : "5721840",
-    "first_publish_year" : "2005"
-  }, {
-    "rank" : "51",
-    "title" : "The Armchair Economist",
-    "author" : "Landsburg",
-    "category" : "non-fiction",
-    "review" : "",
-    "work_olid" : "OL16416504W",
-    "cover_id" : "9284082",
-    "first_publish_year" : "2012"
-  }, {
-    "rank" : "52",
-    "title" : "Darwin's Dangerous Idea",
-    "author" : "Dennett",
-    "category" : "non-fiction",
-    "review" : "",
-    "work_olid" : "OL2463712W",
-    "cover_id" : "3889800",
-    "first_publish_year" : "1995"
-  }, {
-    "rank" : "53",
-    "title" : "The Age of Innocence",
-    "author" : "Wharton",
-    "category" : "fiction",
-    "review" : "",
-    "work_olid" : "OL98491W",
-    "cover_id" : "11196262",
-    "first_publish_year" : "1920"
-  }, {
-    "rank" : "54",
-    "title" : "The Righteous Mind",
-    "author" : "Haidt",
-    "category" : "non-fiction",
-    "review" : "Kevin Simler put it best: \"How humans actually, empirically, think about morality.\"",
-    "work_olid" : "OL16568840W",
-    "cover_id" : "7256782",
-    "first_publish_year" : "2012"
-  }, {
-    "rank" : "55",
-    "title" : "Thinking Differently",
-    "author" : "Cowen & Grandin",
-    "category" : "non-fiction",
-    "review" : "",
-    "work_olid" : "OL29546307W",
-    "cover_id" : "13191709",
-    "first_publish_year" : "2018"
-  }, {
-    "rank" : "56",
-    "title" : "Days of Fire",
-    "author" : "Baker",
-    "category" : "non-fiction",
-    "review" : "",
-    "work_olid" : "OL19110719W",
-    "cover_id" : "11615562",
-    "first_publish_year" : "2013"
-  }, {
-    "rank" : "57",
-    "title" : "The Big Short",
-    "author" : "Lewis",
-    "category" : "non-fiction",
-    "review" : "",
-    "work_olid" : "OL15118378W",
-    "cover_id" : "6386926",
-    "first_publish_year" : "2009"
-  }, {
-    "rank" : "58",
-    "title" : "100 Plus",
-    "author" : "Arrison",
-    "category" : "non-fiction",
-    "review" : "",
-    "work_olid" : "OL15946872W",
-    "cover_id" : "9470782",
-    "first_publish_year" : "2011"
-  }, {
-    "rank" : "59",
-    "title" : "Alice's Adventures in Wonderland",
-    "author" : "Carroll",
-    "category" : "fiction",
-    "review" : "",
-    "work_olid" : "OL138052W",
-    "cover_id" : "10527843",
-    "first_publish_year" : "1865"
-  }, {
-    "rank" : "60",
-    "title" : "Hateship, Friendship, Courtship, Loveship",
-    "author" : "Alice Munro",
-    "category" : "fiction",
-    "review" : "",
-    "work_olid" : "OL931669W",
-    "cover_id" : "11239158",
-    "first_publish_year" : "1998"
-  }, {
-    "rank" : "61",
-    "title" : "Bourgeois Virtues & Bourgeois Dignity",
-    "author" : "McCloskey",
-    "category" : "non-fiction",
-    "review" : "First 50 pages of the Apology in Virtues is most worth reading.",
-    "work_olid" : "OL2721638W",
-    "cover_id" : "1148334",
-    "first_publish_year" : "2006"
-  }, {
-    "rank" : "62",
-    "title" : "The Up Side of Down",
-    "author" : "McArdle",
-    "category" : "non-fiction",
-    "review" : "",
-    "work_olid" : "OL19706742W",
-    "cover_id" : "11736117",
-    "first_publish_year" : "2014"
-  }, {
-    "rank" : "63",
-    "title" : "The Moon is a Harsh Mistress",
-    "author" : "Heinlein",
-    "category" : "fiction",
-    "review" : "",
-    "work_olid" : "OL59704W",
-    "cover_id" : "14631258",
-    "first_publish_year" : "1965"
-  }, {
-    "rank" : "64",
-    "title" : "Heart of Darkness",
-    "author" : "Conrad",
-    "category" : "fiction",
-    "review" : "",
-    "work_olid" : "OL38663W",
-    "cover_id" : "12307847",
-    "first_publish_year" : "1899"
-  }, {
-    "rank" : "65",
-    "title" : "Min Kamp Vol. 1",
-    "author" : "Knausgaard",
-    "category" : "non-fiction",
-    "review" : "Uncomfortable, mesmerizing.",
-    "work_olid" : "OL16415706W",
-    "cover_id" : "9159180",
-    "first_publish_year" : "2012"
-  }, {
-    "rank" : "66",
-    "title" : "Liar's Poker",
-    "author" : "Lewis",
-    "category" : "non-fiction",
-    "review" : "",
-    "work_olid" : "OL7944812W",
-    "cover_id" : "204556",
-    "first_publish_year" : "1989"
-  }, {
-    "rank" : "67",
-    "title" : "Keynes Hayek",
-    "author" : "Wapshott",
-    "category" : "non-fiction",
-    "review" : "",
-    "work_olid" : "OL16282899W",
-    "cover_id" : "9426769",
-    "first_publish_year" : "2011"
-  }, {
-    "rank" : "68",
-    "title" : "The Worldly Philosophers",
-    "author" : "Heilbroner",
-    "category" : "non-fiction",
-    "review" : "The first economics-y book I read; I spent two years of undergrad wondering when we were going to cover Thorstein Veblen.",
-    "work_olid" : "OL1847023W",
-    "cover_id" : "15106531",
-    "first_publish_year" : "1953"
-  }, {
-    "rank" : "69",
-    "title" : "Nudge",
-    "author" : "Thaler & Sunstein",
-    "category" : "non-fiction",
-    "review" : "Super well argued, I couldn't continue to be a knee-jerk skeptic.",
-    "work_olid" : "OL3936258W",
-    "cover_id" : "6402116",
-    "first_publish_year" : "2008"
-  }, {
-    "rank" : "70",
-    "title" : "Patrick Melrose series",
-    "author" : "St. Aubyn",
-    "category" : "fiction",
-    "review" : "",
-    "work_olid" : "OL12091223W",
-    "cover_id" : "14428294",
-    "first_publish_year" : "1992"
-  }, {
-    "rank" : "71",
-    "title" : "The Color of Magic",
-    "author" : "Terry Pratchett",
-    "category" : "fiction",
-    "review" : "When I was little I read most of the Discworld series. I really liked them, but haven't picked any of them up again.",
-    "work_olid" : "OL20639336W",
-    "cover_id" : "9255347",
-    "first_publish_year" : "2019"
-  } ]
+  "username": "Dan Wang",
+  "description": "Curated from <a href=\"https://danwang.co/books/\">danwang.co/books</a>. Dan Wang is research fellow at Stanford's Hoover Indstitution focused on technology and China",
+  "books": [
+    {
+      "rank": "1",
+      "title": "The Red and the Black",
+      "author": "Stendhal",
+      "category": "fiction",
+      "review": "Best translation is the one by Robert M. Adams. Burton Raffel translation is good too.",
+      "work_olid": "OL733640W",
+      "cover_id": "8231413",
+      "first_publish_year": "1830"
+    },
+    {
+      "rank": "2",
+      "title": "The Theory of Moral Sentiments",
+      "author": "Smith",
+      "category": "non-fiction",
+      "review": "",
+      "work_olid": "OL76826W",
+      "cover_id": "5584363",
+      "first_publish_year": "1759"
+    },
+    {
+      "rank": "3",
+      "title": "Moby-Dick",
+      "author": "Melville",
+      "category": "fiction",
+      "review": "",
+      "work_olid": "OL102749W",
+      "cover_id": "10544254",
+      "first_publish_year": "1851"
+    },
+    {
+      "rank": "4",
+      "title": "In Praise of Commercial Culture",
+      "author": "Cowen",
+      "category": "non-fiction",
+      "review": "",
+      "work_olid": "OL489296W",
+      "cover_id": "413401",
+      "first_publish_year": "1998"
+    },
+    {
+      "rank": "5",
+      "title": "The House of Mirth",
+      "author": "Wharton",
+      "category": "fiction",
+      "review": "",
+      "work_olid": "OL98587W",
+      "cover_id": "9329539",
+      "first_publish_year": "1905"
+    },
+    {
+      "rank": "6",
+      "title": "The Constitution of Liberty",
+      "author": "Hayek",
+      "category": "non-fiction",
+      "review": "",
+      "work_olid": "OL1164995W",
+      "cover_id": "8151148",
+      "first_publish_year": "1960"
+    },
+    {
+      "rank": "7",
+      "title": "The Rest is Noise",
+      "author": "Ross",
+      "category": "non-fiction",
+      "review": "Runs through the personalities of the 20th century. My favorite book on music.",
+      "work_olid": "OL265777W",
+      "cover_id": "1188468",
+      "first_publish_year": "2007"
+    },
+    {
+      "rank": "8",
+      "title": "Simple Rules for a Complex World",
+      "author": "Epstein",
+      "category": "non-fiction",
+      "review": "",
+      "work_olid": "OL16959168W",
+      "cover_id": "414016",
+      "first_publish_year": "1995"
+    },
+    {
+      "rank": "9",
+      "title": "Swann's Way",
+      "author": "Proust",
+      "category": "fiction",
+      "review": "Translation by Lydia Davis",
+      "work_olid": "OL30053009W",
+      "cover_id": "11967344",
+      "first_publish_year": "1913"
+    },
+    {
+      "rank": "10",
+      "title": "Zero to One",
+      "author": "Thiel & Masters",
+      "category": "non-fiction",
+      "review": "Based on CS 183 lecture notes. If you must pick one, read the lecture notes. The radicalism of the ideas were mainstreamed for the book.",
+      "work_olid": "OL17078706W",
+      "cover_id": "9002334",
+      "first_publish_year": "2001"
+    },
+    {
+      "rank": "11",
+      "title": "Micromotives and Macrobehavior",
+      "author": "Schelling",
+      "category": "non-fiction",
+      "review": "",
+      "work_olid": "OL2259853W",
+      "cover_id": "4614128",
+      "first_publish_year": "1978"
+    },
+    {
+      "rank": "12",
+      "title": "The Strategy of Conflict",
+      "author": "Schelling",
+      "category": "non-fiction",
+      "review": "",
+      "work_olid": "OL2259845W",
+      "cover_id": "414074",
+      "first_publish_year": "1960"
+    },
+    {
+      "rank": "13",
+      "title": "The Machinery of Freedom",
+      "author": "Friedman",
+      "category": "non-fiction",
+      "review": "",
+      "work_olid": "OL3256701W",
+      "cover_id": "604607",
+      "first_publish_year": "1973"
+    },
+    {
+      "rank": "14",
+      "title": "Dao De Jing",
+      "author": "Laozi",
+      "category": "non-fiction",
+      "review": "",
+      "work_olid": "OL25202530W",
+      "cover_id": "13270881",
+      "first_publish_year": "2001"
+    },
+    {
+      "rank": "15",
+      "title": "1491",
+      "author": "Charles C. Mann",
+      "category": "non-fiction",
+      "review": "",
+      "work_olid": "OL3494320W",
+      "cover_id": "803118",
+      "first_publish_year": "2005"
+    },
+    {
+      "rank": "16",
+      "title": "Discover Your Inner Economist",
+      "author": "Cowen",
+      "category": "non-fiction",
+      "review": "",
+      "work_olid": "OL489305W",
+      "cover_id": "8259671",
+      "first_publish_year": "2007"
+    },
+    {
+      "rank": "17",
+      "title": "More Money Than God",
+      "author": "Mallaby",
+      "category": "non-fiction",
+      "review": "",
+      "work_olid": "OL15598621W",
+      "cover_id": "7608213",
+      "first_publish_year": "2010"
+    },
+    {
+      "rank": "18",
+      "title": "The Idea Factory",
+      "author": "Gertner",
+      "category": "non-fiction",
+      "review": "History of the place that labs that developed radar, transistors, satellites, cell phone telephony, and more.",
+      "work_olid": "OL16184356W",
+      "cover_id": "7272459",
+      "first_publish_year": "2012"
+    },
+    {
+      "rank": "19",
+      "title": "Worldly Philosopher: The Odyssey of Albert O. Hirschman",
+      "author": "Adelman",
+      "category": "non-fiction",
+      "review": "",
+      "work_olid": "OL19968864W",
+      "cover_id": "13085008",
+      "first_publish_year": "2013"
+    },
+    {
+      "rank": "20",
+      "title": "The Charterhouse of Parma",
+      "author": "Stendhal",
+      "category": "fiction",
+      "review": "",
+      "work_olid": "OL33927903W",
+      "cover_id": null,
+      "first_publish_year": "1944"
+    },
+    {
+      "rank": "21",
+      "title": "The Rational Optimist",
+      "author": "Ridley",
+      "category": "non-fiction",
+      "review": "A wonderful book about the scientific achievements that's given us better nutrition, longer lifespans, and easier access to energy, etc.",
+      "work_olid": "OL14928967W",
+      "cover_id": "7024445",
+      "first_publish_year": "2010"
+    },
+    {
+      "rank": "22",
+      "title": "Dialogues (Crito and Phaedo)",
+      "author": "Plato",
+      "category": "non-fiction",
+      "review": "In particular Crito and Phaedo.",
+      "work_olid": "OL43177762W",
+      "cover_id": null,
+      "first_publish_year": "1899"
+    },
+    {
+      "rank": "23",
+      "title": "The Great Stagnation",
+      "author": "Cowen",
+      "category": "non-fiction",
+      "review": "",
+      "work_olid": "OL17569194W",
+      "cover_id": "7839953",
+      "first_publish_year": "2011"
+    },
+    {
+      "rank": "24",
+      "title": "Average is Over",
+      "author": "Cowen",
+      "category": "non-fiction",
+      "review": "",
+      "work_olid": "OL17362758W",
+      "cover_id": "13048107",
+      "first_publish_year": "2013"
+    },
+    {
+      "rank": "25",
+      "title": "Bonfire of the Vanities",
+      "author": "Wolfe",
+      "category": "fiction",
+      "review": "",
+      "work_olid": "OL1925470W",
+      "cover_id": "10548223",
+      "first_publish_year": "1987"
+    },
+    {
+      "rank": "26",
+      "title": "Effi Briest",
+      "author": "Fontane",
+      "category": "fiction",
+      "review": "Translation by Ritchie Robertson. There's so much nuance; the most exciting plot detail isn't even described, only discussed afterwards.",
+      "work_olid": "OL857189W",
+      "cover_id": "756212",
+      "first_publish_year": "1894"
+    },
+    {
+      "rank": "27",
+      "title": "Cousin Bette",
+      "author": "Balzac",
+      "category": "fiction",
+      "review": "",
+      "work_olid": "OL85232W",
+      "cover_id": "8243268",
+      "first_publish_year": "1888"
+    },
+    {
+      "rank": "28",
+      "title": "Lights in the Tunnel",
+      "author": "Ford",
+      "category": "non-fiction",
+      "review": "",
+      "work_olid": "OL16650228W",
+      "cover_id": "7127983",
+      "first_publish_year": "2009"
+    },
+    {
+      "rank": "29",
+      "title": "Beware of Pity",
+      "author": "Zweig",
+      "category": "fiction",
+      "review": "",
+      "work_olid": "OL7700937W",
+      "cover_id": null,
+      "first_publish_year": "1974"
+    },
+    {
+      "rank": "30",
+      "title": "Radicals for Capitalism",
+      "author": "Doherty",
+      "category": "non-fiction",
+      "review": "Details the rise of the American libertarian movement. Serious study, but the personalities are so crazy that it's fun to read.",
+      "work_olid": "OL3496646W",
+      "cover_id": "852967",
+      "first_publish_year": "2007"
+    },
+    {
+      "rank": "31",
+      "title": "Breakfast at Tiffany's",
+      "author": "Capote",
+      "category": "fiction",
+      "review": "",
+      "work_olid": "OL1992167W",
+      "cover_id": "100108",
+      "first_publish_year": "1956"
+    },
+    {
+      "rank": "32",
+      "title": "The Economic Naturalist",
+      "author": "Frank",
+      "category": "non-fiction",
+      "review": "Short stories about the economic way of thinking.",
+      "work_olid": "OL1980810W",
+      "cover_id": "5048635",
+      "first_publish_year": "2007"
+    },
+    {
+      "rank": "33",
+      "title": "Steve Jobs",
+      "author": "Isaacson",
+      "category": "non-fiction",
+      "review": "",
+      "work_olid": "OL16085155W",
+      "cover_id": "12374726",
+      "first_publish_year": "2011"
+    },
+    {
+      "rank": "34",
+      "title": "Macbeth",
+      "author": "Shakespeare",
+      "category": "fiction",
+      "review": "",
+      "work_olid": "OL258902W",
+      "cover_id": "872432",
+      "first_publish_year": "1508"
+    },
+    {
+      "rank": "35",
+      "title": "Romeo and Juliet",
+      "author": "Shakespeare",
+      "category": "fiction",
+      "review": "",
+      "work_olid": "OL362427W",
+      "cover_id": "8257991",
+      "first_publish_year": "1597"
+    },
+    {
+      "rank": "36",
+      "title": "Merchant of Venice",
+      "author": "Shakespeare",
+      "category": "fiction",
+      "review": "",
+      "work_olid": "OL258758W",
+      "cover_id": "7182819",
+      "first_publish_year": "1600"
+    },
+    {
+      "rank": "37",
+      "title": "Othello",
+      "author": "Shakespeare",
+      "category": "fiction",
+      "review": "",
+      "work_olid": "OL258850W",
+      "cover_id": "7165018",
+      "first_publish_year": "1622"
+    },
+    {
+      "rank": "38",
+      "title": "The Unwinding",
+      "author": "Packer",
+      "category": "non-fiction",
+      "review": "",
+      "work_olid": "OL17081413W",
+      "cover_id": "9046566",
+      "first_publish_year": "2013"
+    },
+    {
+      "rank": "39",
+      "title": "The Count of Monte Cristo",
+      "author": "Dumas",
+      "category": "fiction",
+      "review": "",
+      "work_olid": "OL20201553W",
+      "cover_id": "8851690",
+      "first_publish_year": "1920"
+    },
+    {
+      "rank": "40",
+      "title": "Atlas Shrugged",
+      "author": "Rand",
+      "category": "fiction",
+      "review": "",
+      "work_olid": "OL731644W",
+      "cover_id": "362277",
+      "first_publish_year": "1936"
+    },
+    {
+      "rank": "41",
+      "title": "The Fountainhead",
+      "author": "Rand",
+      "category": "fiction",
+      "review": "",
+      "work_olid": "OL731663W",
+      "cover_id": "6767765",
+      "first_publish_year": "1943"
+    },
+    {
+      "rank": "42",
+      "title": "The World as I Found It",
+      "author": "Duffy",
+      "category": "fiction",
+      "review": "A novel about the interactions of Russell, Wittgenstein, and G.E. Moore. Very fun.",
+      "work_olid": "OL3342936W",
+      "cover_id": "4116226",
+      "first_publish_year": "1987"
+    },
+    {
+      "rank": "43",
+      "title": "The Castle",
+      "author": "Kafka",
+      "category": "fiction",
+      "review": "",
+      "work_olid": "OL29274029W",
+      "cover_id": null,
+      "first_publish_year": "1957"
+    },
+    {
+      "rank": "44",
+      "title": "The Metamorphosis",
+      "author": "Kafka",
+      "category": "fiction",
+      "review": "",
+      "work_olid": "OL15176533W",
+      "cover_id": "6889547",
+      "first_publish_year": "1996"
+    },
+    {
+      "rank": "45",
+      "title": "Stoner",
+      "author": "Williams",
+      "category": "fiction",
+      "review": "",
+      "work_olid": "OL3511459W",
+      "cover_id": "8310729",
+      "first_publish_year": "1965"
+    },
+    {
+      "rank": "46",
+      "title": "The Undercover Economist",
+      "author": "Harford",
+      "category": "non-fiction",
+      "review": "Best parts were the sections about price discrimination.",
+      "work_olid": "OL16308405W",
+      "cover_id": "8168506",
+      "first_publish_year": "2012"
+    },
+    {
+      "rank": "47",
+      "title": "Lolita",
+      "author": "Nabokov",
+      "category": "fiction",
+      "review": "",
+      "work_olid": "OL627084W",
+      "cover_id": "12984540",
+      "first_publish_year": "1955"
+    },
+    {
+      "rank": "48",
+      "title": "The Myth of the Rational Voter",
+      "author": "Caplan",
+      "category": "non-fiction",
+      "review": "",
+      "work_olid": "OL8328796W",
+      "cover_id": "444409",
+      "first_publish_year": "2007"
+    },
+    {
+      "rank": "49",
+      "title": "Germinal",
+      "author": "Zola",
+      "category": "fiction",
+      "review": "",
+      "work_olid": "OL118986W",
+      "cover_id": "8236935",
+      "first_publish_year": "1885"
+    },
+    {
+      "rank": "50",
+      "title": "The Black Swan",
+      "author": "Taleb",
+      "category": "non-fiction",
+      "review": "",
+      "work_olid": "OL3295030W",
+      "cover_id": "5721840",
+      "first_publish_year": "2005"
+    },
+    {
+      "rank": "51",
+      "title": "The Armchair Economist",
+      "author": "Landsburg",
+      "category": "non-fiction",
+      "review": "",
+      "work_olid": "OL16416504W",
+      "cover_id": "9284082",
+      "first_publish_year": "2012"
+    },
+    {
+      "rank": "52",
+      "title": "Darwin's Dangerous Idea",
+      "author": "Dennett",
+      "category": "non-fiction",
+      "review": "",
+      "work_olid": "OL2463712W",
+      "cover_id": "3889800",
+      "first_publish_year": "1995"
+    },
+    {
+      "rank": "53",
+      "title": "The Age of Innocence",
+      "author": "Wharton",
+      "category": "fiction",
+      "review": "",
+      "work_olid": "OL98491W",
+      "cover_id": "11196262",
+      "first_publish_year": "1920"
+    },
+    {
+      "rank": "54",
+      "title": "The Righteous Mind",
+      "author": "Haidt",
+      "category": "non-fiction",
+      "review": "Kevin Simler put it best: \"How humans actually, empirically, think about morality.\"",
+      "work_olid": "OL16568840W",
+      "cover_id": "7256782",
+      "first_publish_year": "2012"
+    },
+    {
+      "rank": "55",
+      "title": "Thinking Differently",
+      "author": "Cowen & Grandin",
+      "category": "non-fiction",
+      "review": "",
+      "work_olid": "OL29546307W",
+      "cover_id": "13191709",
+      "first_publish_year": "2018"
+    },
+    {
+      "rank": "56",
+      "title": "Days of Fire",
+      "author": "Baker",
+      "category": "non-fiction",
+      "review": "",
+      "work_olid": "OL19110719W",
+      "cover_id": "11615562",
+      "first_publish_year": "2013"
+    },
+    {
+      "rank": "57",
+      "title": "The Big Short",
+      "author": "Lewis",
+      "category": "non-fiction",
+      "review": "",
+      "work_olid": "OL15118378W",
+      "cover_id": "6386926",
+      "first_publish_year": "2009"
+    },
+    {
+      "rank": "58",
+      "title": "100 Plus",
+      "author": "Arrison",
+      "category": "non-fiction",
+      "review": "",
+      "work_olid": "OL15946872W",
+      "cover_id": "9470782",
+      "first_publish_year": "2011"
+    },
+    {
+      "rank": "59",
+      "title": "Alice's Adventures in Wonderland",
+      "author": "Carroll",
+      "category": "fiction",
+      "review": "",
+      "work_olid": "OL138052W",
+      "cover_id": "10527843",
+      "first_publish_year": "1865"
+    },
+    {
+      "rank": "60",
+      "title": "Hateship, Friendship, Courtship, Loveship",
+      "author": "Alice Munro",
+      "category": "fiction",
+      "review": "",
+      "work_olid": "OL931669W",
+      "cover_id": "11239158",
+      "first_publish_year": "1998"
+    },
+    {
+      "rank": "61",
+      "title": "Bourgeois Virtues & Bourgeois Dignity",
+      "author": "McCloskey",
+      "category": "non-fiction",
+      "review": "First 50 pages of the Apology in Virtues is most worth reading.",
+      "work_olid": "OL2721638W",
+      "cover_id": "1148334",
+      "first_publish_year": "2006"
+    },
+    {
+      "rank": "62",
+      "title": "The Up Side of Down",
+      "author": "McArdle",
+      "category": "non-fiction",
+      "review": "",
+      "work_olid": "OL19706742W",
+      "cover_id": "11736117",
+      "first_publish_year": "2014"
+    },
+    {
+      "rank": "63",
+      "title": "The Moon is a Harsh Mistress",
+      "author": "Heinlein",
+      "category": "fiction",
+      "review": "",
+      "work_olid": "OL59704W",
+      "cover_id": "14631258",
+      "first_publish_year": "1965"
+    },
+    {
+      "rank": "64",
+      "title": "Heart of Darkness",
+      "author": "Conrad",
+      "category": "fiction",
+      "review": "",
+      "work_olid": "OL38663W",
+      "cover_id": "12307847",
+      "first_publish_year": "1899"
+    },
+    {
+      "rank": "65",
+      "title": "Min Kamp Vol. 1",
+      "author": "Knausgaard",
+      "category": "non-fiction",
+      "review": "Uncomfortable, mesmerizing.",
+      "work_olid": "OL16415706W",
+      "cover_id": "9159180",
+      "first_publish_year": "2012"
+    },
+    {
+      "rank": "66",
+      "title": "Liar's Poker",
+      "author": "Lewis",
+      "category": "non-fiction",
+      "review": "",
+      "work_olid": "OL7944812W",
+      "cover_id": "204556",
+      "first_publish_year": "1989"
+    },
+    {
+      "rank": "67",
+      "title": "Keynes Hayek",
+      "author": "Wapshott",
+      "category": "non-fiction",
+      "review": "",
+      "work_olid": "OL16282899W",
+      "cover_id": "9426769",
+      "first_publish_year": "2011"
+    },
+    {
+      "rank": "68",
+      "title": "The Worldly Philosophers",
+      "author": "Heilbroner",
+      "category": "non-fiction",
+      "review": "The first economics-y book I read; I spent two years of undergrad wondering when we were going to cover Thorstein Veblen.",
+      "work_olid": "OL1847023W",
+      "cover_id": "15106531",
+      "first_publish_year": "1953"
+    },
+    {
+      "rank": "69",
+      "title": "Nudge",
+      "author": "Thaler & Sunstein",
+      "category": "non-fiction",
+      "review": "Super well argued, I couldn't continue to be a knee-jerk skeptic.",
+      "work_olid": "OL3936258W",
+      "cover_id": "6402116",
+      "first_publish_year": "2008"
+    },
+    {
+      "rank": "70",
+      "title": "Patrick Melrose series",
+      "author": "St. Aubyn",
+      "category": "fiction",
+      "review": "",
+      "work_olid": "OL12091223W",
+      "cover_id": "14428294",
+      "first_publish_year": "1992"
+    },
+    {
+      "rank": "71",
+      "title": "The Color of Magic",
+      "author": "Terry Pratchett",
+      "category": "fiction",
+      "review": "When I was little I read most of the Discworld series. I really liked them, but haven't picked any of them up again.",
+      "work_olid": "OL20639336W",
+      "cover_id": "9255347",
+      "first_publish_year": "2019"
+    }
+  ]
 }
