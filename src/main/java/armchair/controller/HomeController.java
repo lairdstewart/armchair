@@ -1,9 +1,7 @@
 package armchair.controller;
 
 import armchair.dto.BookInfo;
-import armchair.dto.ProfileDisplay;
 import armchair.dto.RankedBookInfo;
-import armchair.service.UserService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,12 +10,6 @@ import java.util.List;
 
 @Controller
 public class HomeController extends BaseController {
-
-    private final UserService userService;
-
-    public HomeController(UserService userService) {
-        this.userService = userService;
-    }
 
     private static final List<RankedBookInfo> EXAMPLE_RANKED_BOOKS = List.of(
         new RankedBookInfo(
@@ -56,12 +48,6 @@ public class HomeController extends BaseController {
         addNavigationAttributes(model, "about");
         model.addAttribute("exampleRankedBooks", EXAMPLE_RANKED_BOOKS);
         model.addAttribute("exampleRecs", EXAMPLE_RECS);
-
-        List<ProfileDisplay> profiles = userRepository.findRecentPublicProfiles().stream()
-            .limit(2)
-            .map(userService::createProfileDisplay)
-            .toList();
-        model.addAttribute("exampleProfiles", profiles);
 
         return "welcome";
     }

@@ -1,7 +1,7 @@
 <!doctype html>
 <html xmlns:th="http://www.thymeleaf.org">
   <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Armchair</title>
     <link rel="stylesheet" th:href="@{/css/style.css}" />
     <link rel="icon" type="image/svg+xml" th:href="@{/logo.svg}" />
@@ -12,39 +12,47 @@
     <div class="page-content">
       <h3>About</h3>
       <p>
-        Welcome! Armchair is Beli for books. In Armchair you can review and rank
-        head-to-head your books:
+        Armchair is Beli for books. You can review and rank books in fiction and
+        non-fiction lists. To get started, add books through the "Search" tab,
+        or import your library from Goodreads. After ranking a few your list
+        will look something like this:
       </p>
 
       <ol class="book-list">
         <li th:each="rb : ${exampleRankedBooks}">
-          <span th:class="'book-number ' + ${rb.categoryClass()}" th:text="${rb.rankDisplay()}"></span>
-          <th:block th:replace="~{fragments :: bookEntry(${rb.book()}, null, true, true)}" />
+          <span
+            th:class="'book-number ' + ${rb.categoryClass()}"
+            th:text="${rb.rankDisplay()}"
+          ></span>
+          <th:block
+            th:replace="~{fragments :: bookEntry(${rb.book()}, null, true, true)}"
+          />
         </li>
       </ol>
 
-      <br>
-      <p>... follow friends and browse their lists:</p>
-
-      <div th:each="profile : ${exampleProfiles}" style="margin-bottom: 4px;">
-        <a th:href="@{/user/{username}(username=${profile.username()})}" th:text="${profile.username()}"></a>
-        <span th:text="${profile.stats()}"></span>
-      </div>
-
-      <br>
-      <p>... and receive personalized recommendations:</p>
+      Before ranking each book, you'll categorize it as "liked it", "it was ok",
+      and "didn't like it" corresponding to the green, yellow, and red tags.
+      <br />
+      <p>
+        To find your next read, find friends' lists in the "Search" tab or
+        curated lists from popular publications. Finally, once you've ranked 10
+        books in your fiction or non-fiction list, you'll receive personalized
+        recommendations in the "Recs" tab.
+      </p>
 
       <ol class="book-list">
         <li th:each="rb : ${exampleRecs}">
           <span class="book-percent" th:text="${rb.rankDisplay()}"></span>
-          <th:block th:replace="~{fragments :: bookEntry(${rb.book()}, null, true, true)}" />
+          <th:block
+            th:replace="~{fragments :: bookEntry(${rb.book()}, null, true, true)}"
+          />
         </li>
       </ol>
 
-      <br>
+      <br />
       <p>
-        More books are written each year than can be read in a lifetime. Armchair
-        helps you be thoughtful in choosing your next read.
+        More books are written each year than can be read in a lifetime.
+        Armchair helps you be thoughtful in choosing your next read.
       </p>
 
       <h3>Privacy</h3>
